@@ -1,7 +1,8 @@
 ---
 phase: 1
 slug: foundation
-status: draft
+status: approved
+reviewed_at: 2026-05-02T00:00:00Z
 shadcn_initialized: false
 preset: none
 created: 2026-05-02
@@ -56,18 +57,20 @@ Source: PRD_Frontend §4.2.3
 
 ## Typography
 
+Exactly 4 sizes and 2 weights are declared. No exceptions.
+
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
-| Body | 16px (desktop) / 15px (mobile) | 400 (regular) | 1.5 | Form labels, paragraphs, helper text |
-| Label | 14px | 500 (medium) | 1.4 | Input labels, secondary text, button labels |
+| Label | 14px | 600 (semibold) | 1.4 | Input labels, error messages, step indicators, secondary text, button labels |
+| Body | 16px | 400 (regular) | 1.5 | Form helper text, paragraphs, placeholder descriptions |
 | Heading | 20px | 600 (semibold) | 1.25 | Auth card titles (e.g., "Crie sua conta") |
-| Display | 24px | 700 (bold) | 1.2 | Brand name / logo text if text-based |
+| Display | 24px | 600 (semibold) | 1.2 | Brand name / logo text if text-based |
 
-Font size exceptions:
-- Small / muted text (error messages, character counts): 12px at weight 400, line-height 1.4
-- Step indicators in 2-step signup flow: 12px at weight 500
+**Weight rationale:** 400 (regular) for body/helper text; 600 (semibold) for all labels, headings, display, and buttons. Weights 500 and 700 are not used.
 
-Source: PRD_Frontend §4.2.2 — scale uses `--text-sm` through `--text-2xl`. Phase 1 uses `sm`, `base`, `xl`, `2xl` only.
+**Size rationale:** 14px covers labels, error messages, and step indicators — color and weight provide sufficient visual differentiation without a separate 12px size. 12px is not used.
+
+Source: PRD_Frontend §4.2.2 — scale uses `--text-sm` (14px), `--text-base` (16px), `--text-xl` (20px), `--text-2xl` (24px).
 
 ---
 
@@ -107,6 +110,8 @@ Accent is NOT used for: card borders, section headings, dividers, disabled state
 ## Copywriting Contract
 
 Language: PT-BR throughout. Tone: professional and warm, no corporate jargon, no excessive exclamation marks.
+
+**CTA noun convention:** Single-word CTAs ("Entrar", "Continuar") follow PT-BR convention where the card heading provides the noun context. The card heading is always visible immediately above the CTA and supplies the missing object (e.g., "Entrar na sua conta" → "Entrar"). No additional noun is needed in the button label itself.
 
 ### Screen: Login (`/login`)
 
@@ -224,7 +229,7 @@ Language: PT-BR throughout. Tone: professional and warm, no corporate jargon, no
 ### Form Validation Timing
 
 - Validate on blur (not on change) — prevents aggressive feedback while typing.
-- Show error message below the field, text `text-sm text-error-500`.
+- Show error message below the field, text `text-sm text-error-500` (14px weight 600, color #D85A30).
 - Input border changes to `border-error-500` on error state.
 - On successful blur correction: border returns to default, error message disappears.
 - Submit button: disabled until all required fields pass client-side validation.
@@ -278,6 +283,8 @@ display: flex; align-items: center; justify-content: center
 padding: 16px (mobile) / 0 (desktop)
 ```
 
+**Focal point:** The auth card is the single focal point on every screen. It is horizontally and vertically centered in the viewport. No competing elements (navigation, sidebars, banners) appear on auth screens.
+
 ### Auth Card
 
 ```
@@ -292,7 +299,7 @@ box-shadow: 0 1px 3px rgba(0,0,0,0.08)
 ### Logo / Brand
 
 - Position: centered above card heading.
-- SGS wordmark or logomark — to be provided at implementation time. Use text "SGS" in `--color-primary-700` at 24px bold as placeholder.
+- SGS wordmark or logomark — to be provided at implementation time. Use text "SGS" in `--color-primary-700` at 24px weight 600 as placeholder.
 - No background on logo area — sits on `--color-neutral-50` canvas.
 
 ### Signup Step Indicator
