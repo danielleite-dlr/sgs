@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { HealthModule } from './health/health.module';
+import { AppConfigModule } from './config/config.module';
 import { envSchema } from './config/env.schema';
 import configuration from './config/configuration';
 
@@ -23,6 +24,7 @@ import configuration from './config/configuration';
         return result.data;
       },
     }),
+    AppConfigModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       typePaths: ['./src/**/*.graphql'],
