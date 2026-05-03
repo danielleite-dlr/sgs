@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Phase 1 UI-SPEC approved
-last_updated: "2026-05-03T01:49:49.142Z"
-last_activity: 2026-05-03 -- Phase 01 execution started
+status: in-progress
+stopped_at: "Completed 01-01-monorepo-docker-PLAN.md"
+last_updated: "2026-05-03T01:59:03Z"
+last_activity: "2026-05-03 — Plan 01-01 monorepo-docker complete (6 tasks, 32 files)"
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 7
-  completed_plans: 0
-  percent: 0
+  total_plans: 1
+  completed_plans: 1
+  percent: 5
 ---
 
 # Project State
@@ -21,35 +21,35 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-02)
 
 **Core value:** Profissional do beleza consegue agendar, atender, cobrar e comunicar com cliente em um único fluxo — sem sair da plataforma.
-**Current focus:** Phase 01 — foundation
+**Current focus:** Phase 1 in progress — Plan 01-01 complete, ready for Plan 01-02
 
 ## Current Position
 
-Phase: 01 (foundation) — EXECUTING
-Plan: 1 of 7
-Status: Executing Phase 01
-Last activity: 2026-05-03 -- Phase 01 execution started
+Phase: 1 of 5 (Foundation)
+Plan: 1 of ? in current phase
+Status: In progress
+Last activity: 2026-05-03 — Plan 01-01 monorepo-docker complete (6 tasks, 32 files)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 5%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: —
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 8 min
+- Total execution time: 0.13 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| Phase 1: Foundation | 1 | 8 min | 8 min |
 
 **Recent Trend:**
 
-- Last 5 plans: —
-- Trend: —
+- Last 5 plans: 8 min
+- Trend: baseline established
 
 *Updated after each plan completion*
 
@@ -63,6 +63,10 @@ Recent decisions affecting current work:
 - Pre-Phase 1: PgBouncer é obrigatório em transaction-mode — sem ele RLS vaza entre conexões de pool
 - Pre-Phase 1: Iniciar verificação WABA (WhatsApp Business Account) com Meta imediatamente — processo demora 1–4 semanas, fora do controle da engenharia
 - Pre-Phase 1: Decidir Pagar.me vs Stripe Connect antes de iniciar Phase 3 — design da interface PaymentGateway depende do modelo
+- Plan 01-01: Valkey 8 chosen over Redis — MIT license, binary compatible with Redis 7.2
+- Plan 01-01: Fastify adapter for NestJS — better throughput than Express
+- Plan 01-01: AppConfigService typed wrapper pattern for env access across all NestJS modules
+- Plan 01-01: Schema-first GraphQL SDL (typePaths pattern) — matches PRD specification
 
 ### Pending Todos
 
@@ -75,6 +79,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-03T01:46:56.500Z
-Stopped at: Phase 1 UI-SPEC approved
-Resume file: None
+Last session: 2026-05-03T01:59:03Z
+Stopped at: Completed 01-01-monorepo-docker-PLAN.md
+Resume file: .planning/phases/01-foundation/01-monorepo-docker-SUMMARY.md

@@ -170,7 +170,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/? | Not started | - |
+| 1. Foundation | 1/? | In progress | - |
 | 2. Core Domain | 0/? | Not started | - |
 | 3. Core Operations | 0/? | Not started | - |
 | 4. Bridal & Contracts | 0/? | Not started | - |

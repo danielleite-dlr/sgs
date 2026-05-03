@@ -1,0 +1,22 @@
+{
+  "name": "sgs",
+  "private": true,
+  "version": "0.0.1",
+  "description": "SGS — Plataforma de Gestão para Salões de Beleza",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "docker compose up -d && pnpm --filter @sgs/backend dev & pnpm --filter @sgs/frontend dev",
+    "install:all": "pnpm install",
+    "build": "pnpm --filter @sgs/backend build && pnpm --filter @sgs/frontend build",
+    "test": "pnpm --filter @sgs/backend test",
+    "lint": "pnpm --filter @sgs/backend lint && pnpm --filter @sgs/frontend lint",
+    "format": "pnpm --filter @sgs/backend format && pnpm --filter @sgs/frontend format"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.4"
+}
