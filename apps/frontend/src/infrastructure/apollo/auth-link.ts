@@ -1,21 +1,18 @@
-import { ApolloLink } from '@apollo/client';
+import { setContext } from '@apollo/client/link/context';
 import { useAuthStore } from '../stores/auth.store';
 
 /**
- * Apollo Link that injects the Bearer token from Zustand auth store
- * into every GraphQL request Authorization header.
+ * Apollo Link that injects the Bearer token and organization ID
+ * from Zustand auth store into every GraphQL request header.
  */
-export const authLink = new ApolloLink((operation, forward) => {
-  const accessToken = useAuthStore.getState().accessToken;
+export const authLink = setContext((_operation, { headers }) => {
+  const { accessToken, organizationId } = useAuthStore.getState();
 
-  if (accessToken) {
-    operation.setContext(({ headers = {} }) => ({
-      headers: {
-        ...headers,
-        authorization: `Bearer ${accessToken}`,
-      },
-    }));
-  }
-
-  return forward(operation);
+  return {
+    headers: {
+      ...headers,
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      ...(organizationId ? { 'X-Organization-Id': organizationId } : {}),
+    },
+  };
 });

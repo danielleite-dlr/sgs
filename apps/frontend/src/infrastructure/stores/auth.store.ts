@@ -1,70 +1,65 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { immer } from 'zustand/middleware/immer';
 
-export interface AuthUser {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  organizationId: string;
-}
-
-export interface AuthState {
+export interface AuthSession {
   accessToken: string | null;
-  user: AuthUser | null;
-  isAuthenticated: boolean;
+  /** NOTE: refresh token in localStorage is acceptable for Phase 1; rotate to httpOnly cookie in v2 */
+  refreshToken: string | null;
+  userId: string | null;
+  memberId: string | null;
+  organizationId: string | null;
+  roleName: string | null;
+  permissions: string[];
 }
 
-export interface AuthActions {
-  setSession: (token: string, user: AuthUser) => void;
+interface AuthActions {
+  setSession: (s: AuthSession) => void;
+  updateAccessToken: (accessToken: string) => void;
   clearSession: () => void;
-  updateUser: (partial: Partial<AuthUser>) => void;
 }
 
-export type AuthStore = AuthState & AuthActions;
+export type AuthStore = AuthSession & AuthActions;
 
-const initialState: AuthState = {
+const initialState: AuthSession = {
   accessToken: null,
-  user: null,
-  isAuthenticated: false,
+  refreshToken: null,
+  userId: null,
+  memberId: null,
+  organizationId: null,
+  roleName: null,
+  permissions: [],
 };
 
 export const useAuthStore = create<AuthStore>()(
   persist(
-    immer((set) => ({
+    (set) => ({
       ...initialState,
 
-      setSession: (token: string, user: AuthUser) =>
-        set((state) => {
-          state.accessToken = token;
-          state.user = user;
-          state.isAuthenticated = true;
-        }),
+      setSession: (s: AuthSession) => set(s),
 
-      clearSession: () =>
-        set((state) => {
-          state.accessToken = null;
-          state.user = null;
-          state.isAuthenticated = false;
-        }),
+      updateAccessToken: (accessToken: string) => set({ accessToken }),
 
-      updateUser: (partial: Partial<AuthUser>) =>
-        set((state) => {
-          if (state.user) {
-            Object.assign(state.user, partial);
-          }
-        }),
-    })),
+      clearSession: () => set(initialState),
+    }),
     {
       name: 'sgs-auth',
       storage: createJSONStorage(() => localStorage),
-      // Only persist the token and user data, not actions
-      partialize: (state) => ({
-        accessToken: state.accessToken,
-        user: state.user,
-        isAuthenticated: state.isAuthenticated,
+      // Only persist tokens + identity — never re-hydrate stale permissions
+      partialize: (s) => ({
+        accessToken: s.accessToken,
+        refreshToken: s.refreshToken,
+        userId: s.userId,
+        memberId: s.memberId,
+        organizationId: s.organizationId,
+        roleName: s.roleName,
+        permissions: s.permissions,
       }),
     },
   ),
 );
+
+export function selectIsAuthenticated(
+  s: ReturnType<typeof useAuthStore.getState>,
+): boolean {
+  return !!s.accessToken && !!s.userId;
+}

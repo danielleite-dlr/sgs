@@ -1,96 +1,100 @@
 {
   "common": {
     "appName": "SGS",
-    "tagline": "Plataforma de Gestão para Salões de Beleza",
-    "loading": "Carregando...",
-    "error": "Erro",
-    "success": "Sucesso",
-    "cancel": "Cancelar",
-    "confirm": "Confirmar",
-    "save": "Salvar",
-    "delete": "Excluir",
-    "edit": "Editar",
-    "back": "Voltar",
-    "next": "Próximo",
-    "previous": "Anterior",
-    "close": "Fechar",
-    "search": "Buscar",
-    "filter": "Filtrar",
-    "clear": "Limpar",
-    "required": "Obrigatório",
-    "optional": "Opcional"
+    "loading": "Carregando…",
+    "error": "Algo deu errado. Tente novamente."
   },
-  "auth": {
-    "login": {
-      "title": "Entrar no SGS",
-      "subtitle": "Acesse sua conta para gerenciar seu salão",
-      "emailLabel": "E-mail",
-      "emailPlaceholder": "seu@email.com",
-      "passwordLabel": "Senha",
-      "passwordPlaceholder": "Sua senha",
-      "submitButton": "Entrar",
-      "forgotPassword": "Esqueceu a senha?",
-      "noAccount": "Ainda não tem conta?",
-      "createAccount": "Criar conta grátis",
-      "loading": "Entrando...",
-      "successMessage": "Login realizado com sucesso!",
-      "errorInvalidCredentials": "E-mail ou senha incorretos",
-      "errorGeneric": "Ocorreu um erro ao fazer login. Tente novamente."
-    },
-    "register": {
-      "title": "Criar conta no SGS",
-      "subtitle": "Comece a gerenciar seu salão hoje mesmo",
-      "nameLabel": "Nome completo",
-      "namePlaceholder": "Seu nome",
-      "emailLabel": "E-mail",
-      "emailPlaceholder": "seu@email.com",
-      "passwordLabel": "Senha",
-      "passwordPlaceholder": "Mínimo 8 caracteres",
-      "confirmPasswordLabel": "Confirmar senha",
-      "confirmPasswordPlaceholder": "Repita sua senha",
-      "salonNameLabel": "Nome do salão",
-      "salonNamePlaceholder": "Nome do seu estabelecimento",
-      "submitButton": "Criar conta",
-      "alreadyHaveAccount": "Já tem uma conta?",
-      "login": "Entrar",
-      "loading": "Criando conta...",
-      "successMessage": "Conta criada com sucesso! Verifique seu e-mail.",
-      "errorEmailTaken": "Este e-mail já está cadastrado",
-      "errorPasswordMismatch": "As senhas não coincidem",
-      "errorGeneric": "Ocorreu um erro ao criar sua conta. Tente novamente."
-    },
-    "forgotPassword": {
-      "title": "Recuperar senha",
-      "subtitle": "Informe seu e-mail para receber as instruções de recuperação",
-      "emailLabel": "E-mail",
-      "emailPlaceholder": "seu@email.com",
-      "submitButton": "Enviar instruções",
-      "backToLogin": "Voltar para o login",
-      "loading": "Enviando...",
-      "successMessage": "E-mail enviado! Verifique sua caixa de entrada.",
-      "errorEmailNotFound": "E-mail não encontrado",
-      "errorGeneric": "Ocorreu um erro ao enviar o e-mail. Tente novamente."
-    },
-    "resetPassword": {
-      "title": "Redefinir senha",
-      "subtitle": "Escolha uma nova senha para sua conta",
-      "passwordLabel": "Nova senha",
-      "passwordPlaceholder": "Mínimo 8 caracteres",
-      "confirmPasswordLabel": "Confirmar nova senha",
-      "confirmPasswordPlaceholder": "Repita sua nova senha",
-      "submitButton": "Redefinir senha",
-      "loading": "Redefinindo...",
-      "successMessage": "Senha redefinida com sucesso!",
-      "errorTokenInvalid": "Link de recuperação inválido ou expirado",
-      "errorPasswordMismatch": "As senhas não coincidem",
-      "errorGeneric": "Ocorreu um erro ao redefinir a senha. Tente novamente."
-    },
-    "logout": {
-      "confirmTitle": "Sair da conta",
-      "confirmMessage": "Tem certeza que deseja sair?",
-      "confirmButton": "Sair",
-      "cancelButton": "Cancelar"
+  "login": {
+    "pageTitle": "Entrar — SGS",
+    "cardHeading": "Entrar na sua conta",
+    "emailLabel": "E-mail",
+    "emailPlaceholder": "seu@email.com",
+    "passwordLabel": "Senha",
+    "passwordPlaceholder": "••••••••",
+    "primaryCta": "Entrar",
+    "loadingCta": "Entrando…",
+    "linkToSignup": "Não tem conta? Criar conta",
+    "forgotPassword": "Esqueceu a senha?",
+    "errors": {
+      "wrongCredentials": "E-mail ou senha incorretos.",
+      "unverified": "Verifique seu e-mail antes de entrar.",
+      "resendVerification": "Reenviar verificação",
+      "serverGeneric": "Algo deu errado. Tente novamente."
     }
+  },
+  "signup": {
+    "pageTitle": "Criar conta — SGS",
+    "step1": {
+      "cardHeading": "Crie sua conta",
+      "stepIndicator": "Passo 1 de 2",
+      "nameLabel": "Nome completo",
+      "namePlaceholder": "Maria da Silva",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "seu@email.com",
+      "passwordLabel": "Senha",
+      "passwordPlaceholder": "Mínimo 8 caracteres",
+      "primaryCta": "Continuar",
+      "linkToLogin": "Já tem conta? Entrar",
+      "errors": {
+        "emailExists": "E-mail já cadastrado.",
+        "loginInstead": "Entrar na conta",
+        "emailFormat": "Digite um e-mail válido.",
+        "passwordTooShort": "A senha deve ter pelo menos 8 caracteres.",
+        "nameTooShort": "Digite seu nome completo."
+      }
+    },
+    "step2": {
+      "cardHeading": "Qual é o nome do seu salão?",
+      "stepIndicator": "Passo 2 de 2",
+      "salonNameLabel": "Nome do salão",
+      "salonNamePlaceholder": "Ex.: Studio Beleza, Salão da Ana",
+      "primaryCta": "Criar conta",
+      "loadingCta": "Criando conta…",
+      "backLink": "Voltar",
+      "errors": {
+        "salonNameTooShort": "Digite o nome do seu salão.",
+        "serverGeneric": "Não foi possível criar sua conta. Tente novamente."
+      }
+    }
+  },
+  "verifyEmail": {
+    "pageTitle": "Verifique seu e-mail — SGS",
+    "cardHeading": "Verifique seu e-mail",
+    "body": "Enviamos um link de verificação para {{email}}. Acesse sua caixa de entrada e clique no link para ativar sua conta.",
+    "resendCta": "Reenviar e-mail",
+    "loadingCta": "Reenviando…",
+    "successAfterResend": "E-mail reenviado. Verifique sua caixa de entrada.",
+    "rateLimitNote": "Aguarde {{seconds}} segundos para reenviar novamente.",
+    "wrongEmailLink": "E-mail errado? Voltar ao cadastro"
+  },
+  "verifyEmailSuccess": {
+    "pageTitle": "E-mail verificado — SGS",
+    "cardHeading": "E-mail verificado com sucesso!",
+    "body": "Sua conta está ativa. Agora você pode entrar na plataforma.",
+    "primaryCta": "Entrar agora"
+  },
+  "invitation": {
+    "pageTitle": "Convite — SGS",
+    "cardHeading": "Você foi convidado para {{salonName}}",
+    "body": "{{inviterName}} convidou você para entrar na equipe. Crie sua senha para aceitar o convite.",
+    "nameLabel": "Seu nome",
+    "namePlaceholder": "Como você quer ser chamado(a)",
+    "passwordLabel": "Crie uma senha",
+    "passwordPlaceholder": "Mínimo 8 caracteres",
+    "primaryCta": "Aceitar convite",
+    "loadingCta": "Aceitando…",
+    "errors": {
+      "expiredHeading": "Este convite expirou",
+      "expiredBody": "Peça ao administrador do salão para enviar um novo convite.",
+      "alreadyUsed": "Este convite já foi utilizado. Tente entrar com sua conta.",
+      "serverGeneric": "Não foi possível aceitar o convite. Tente novamente."
+    }
+  },
+  "notFound": {
+    "pageTitle": "Página não encontrada — SGS",
+    "heading": "Página não encontrada",
+    "body": "O endereço que você acessou não existe ou foi movido.",
+    "primaryCta": "Voltar ao início"
   },
   "dashboard": {
     "title": "Painel",

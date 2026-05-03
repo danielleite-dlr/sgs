@@ -3,29 +3,33 @@ import { useAuthStore } from '../stores/auth.store';
 
 /**
  * Apollo Link that handles GraphQL and network errors globally.
- * On UNAUTHENTICATED error: clears the auth session so the app
- * redirects to login (handled by router guards).
+ * On UNAUTHENTICATED error: clears the auth session and redirects to /login.
+ * On FORBIDDEN: clears session (security — assume token tampering).
  */
 export const errorLink = onError(({ graphQLErrors, networkError }) => {
   if (graphQLErrors) {
-    for (const { message, extensions } of graphQLErrors) {
-      const code = extensions?.code as string | undefined;
+    for (const err of graphQLErrors) {
+      const code = err.extensions?.code as string | undefined;
 
-      if (code === 'UNAUTHENTICATED') {
-        // Token expired or invalid — clear session to trigger auth redirect
+      if (code === 'UNAUTHENTICATED' || code === 'FORBIDDEN') {
         useAuthStore.getState().clearSession();
+        if (
+          typeof window !== 'undefined' &&
+          !window.location.pathname.startsWith('/login')
+        ) {
+          window.location.assign('/login');
+        }
         return;
       }
 
       if (import.meta.env.DEV) {
-        console.error(`[GraphQL Error] ${code}: ${message}`);
+        console.error(`[apollo] GraphQL error ${code ?? 'UNKNOWN'}: ${err.message}`);
       }
     }
   }
 
   if (networkError) {
-    if (import.meta.env.DEV) {
-      console.error(`[Network Error] ${networkError.message}`);
-    }
+    // Sentry capture will be wired in QA phase. Console for now.
+    console.error('[apollo] networkError', networkError);
   }
 });
