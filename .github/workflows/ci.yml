@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r typecheck
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r lint --if-present
+
+  tenant-isolation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: cp .env.example .env
+
+      - name: Boot infra (postgres + pgbouncer + valkey)
+        run: docker compose up -d postgres pgbouncer valkey
+
+      - name: Wait for healthy
+        run: |
+          for i in $(seq 1 60); do
+            healthy=$(docker compose ps --format json | jq -r '[.[] | select(.Service != "backend" and .Service != "frontend")] | [.[].Health] | unique | join(",")')
+            if [ "$healthy" = "healthy" ]; then exit 0; fi
+            sleep 5
+          done
+          docker compose ps
+          exit 1
+
+      - name: Install backend deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply migrations (sgs_migrator via DIRECT_URL)
+        working-directory: apps/backend
+        run: pnpm prisma:migrate:deploy
+        env:
+          DIRECT_URL: postgresql://sgs_migrator:change_me_in_production@localhost:5432/sgs_dev
+          DATABASE_URL: postgresql://sgs_app:change_me_in_production@localhost:5433/sgs_dev?pgbouncer=true&connection_limit=10
+
+      - name: Generate Prisma client
+        working-directory: apps/backend
+        run: pnpm prisma:generate
+        env:
+          DIRECT_URL: postgresql://sgs_migrator:change_me_in_production@localhost:5432/sgs_dev
+          DATABASE_URL: postgresql://sgs_app:change_me_in_production@localhost:5433/sgs_dev?pgbouncer=true&connection_limit=10
+
+      - name: Run RLS isolation suite
+        working-directory: apps/backend
+        run: pnpm test:integration
+        env:
+          DIRECT_URL: postgresql://sgs_migrator:change_me_in_production@localhost:5432/sgs_dev
+          DATABASE_URL: postgresql://sgs_app:change_me_in_production@localhost:5433/sgs_dev?pgbouncer=true&connection_limit=10
+
+      - name: Confirm PgBouncer is in transaction mode
+        run: |
+          cat docker-compose.yml | grep -E "POOL_MODE|pool_mode" | grep -i "transaction"
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
