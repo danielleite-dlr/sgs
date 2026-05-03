@@ -10,7 +10,7 @@
 ### Infraestrutura
 
 - [x] **INFRA-01**: Monorepo NestJS + React configurado com Docker Compose para dev environment completo (backend, frontend, postgres, redis, meilisearch)
-- [ ] **INFRA-02**: PgBouncer em transaction-mode com 2 roles DB (`sgs_migrator` com BYPASSRLS, `sgs_app` sem) e FORCE ROW LEVEL SECURITY em todas as tabelas tenant-scoped
+- [x] **INFRA-02**: PgBouncer em transaction-mode com 2 roles DB (`sgs_migrator` com BYPASSRLS, `sgs_app` sem) e FORCE ROW LEVEL SECURITY em todas as tabelas tenant-scoped
 - [ ] **INFRA-03**: Redis com AOF persistence (`appendonly yes`) + BullMQ para filas de jobs assíncronos
 
 ### Autenticação
@@ -122,7 +122,7 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | INFRA-01 | Phase 1 | Complete — Plan 01-01 (2026-05-03) |
-| INFRA-02 | Phase 1 | Pending |
+| INFRA-02 | Phase 1 | Complete — Plan 01-02 (2026-05-03) |
 | INFRA-03 | Phase 1 | Pending |
 | AUTH-01 | Phase 1 | Pending |
 | AUTH-02 | Phase 1 | Pending |

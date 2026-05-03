@@ -12,7 +12,7 @@ export const envSchema = z.object({
     .string()
     .url()
     .describe('PgBouncer connection string for app runtime (sgs_app role)'),
-  DIRECT_DATABASE_URL: z
+  DIRECT_URL: z
     .string()
     .url()
     .describe(

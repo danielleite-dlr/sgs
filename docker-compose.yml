@@ -100,7 +100,7 @@ services:
       NODE_ENV: development
       PORT: 3000
       DATABASE_URL: postgres://sgs_app:${POSTGRES_PASSWORD:-sgs_password}@pgbouncer:5432/${POSTGRES_DB:-sgs_dev}
-      DIRECT_DATABASE_URL: postgres://${POSTGRES_USER:-sgs_migrator}:${POSTGRES_PASSWORD:-sgs_password}@postgres:5432/${POSTGRES_DB:-sgs_dev}
+      DIRECT_URL: postgres://${POSTGRES_USER:-sgs_migrator}:${POSTGRES_PASSWORD:-sgs_password}@postgres:5432/${POSTGRES_DB:-sgs_dev}
       REDIS_URL: redis://valkey:6379
       MEILISEARCH_URL: http://meilisearch:7700
       MEILISEARCH_KEY: ${MEILISEARCH_KEY:-dev_master_key_change_in_prod}
