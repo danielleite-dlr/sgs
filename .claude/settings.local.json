@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(gsd:do)",
+      "Skill(gsd:do:*)",
+      "Skill(gsd:new-project)",
+      "Skill(gsd:new-project:*)",
+      "Skill(gsd:discuss-phase)",
+      "Skill(gsd:discuss-phase:*)"
+    ]
+  }
+}
