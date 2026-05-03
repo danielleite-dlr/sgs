@@ -1,0 +1,213 @@
+{
+  "common": {
+    "appName": "SGS",
+    "loading": "Carregando…",
+    "error": "Algo deu errado. Tente novamente."
+  },
+  "login": {
+    "pageTitle": "Entrar — SGS",
+    "cardHeading": "Entrar na sua conta",
+    "emailLabel": "E-mail",
+    "emailPlaceholder": "seu@email.com",
+    "passwordLabel": "Senha",
+    "passwordPlaceholder": "••••••••",
+    "primaryCta": "Entrar",
+    "loadingCta": "Entrando…",
+    "linkToSignup": "Não tem conta? Criar conta",
+    "forgotPassword": "Esqueceu a senha?",
+    "errors": {
+      "wrongCredentials": "E-mail ou senha incorretos.",
+      "unverified": "Verifique seu e-mail antes de entrar.",
+      "resendVerification": "Reenviar verificação",
+      "serverGeneric": "Algo deu errado. Tente novamente."
+    }
+  },
+  "signup": {
+    "pageTitle": "Criar conta — SGS",
+    "step1": {
+      "cardHeading": "Crie sua conta",
+      "stepIndicator": "Passo 1 de 2",
+      "nameLabel": "Nome completo",
+      "namePlaceholder": "Maria da Silva",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "seu@email.com",
+      "passwordLabel": "Senha",
+      "passwordPlaceholder": "Mínimo 8 caracteres",
+      "primaryCta": "Continuar",
+      "linkToLogin": "Já tem conta? Entrar",
+      "errors": {
+        "emailExists": "E-mail já cadastrado.",
+        "loginInstead": "Entrar na conta",
+        "emailFormat": "Digite um e-mail válido.",
+        "passwordTooShort": "A senha deve ter pelo menos 8 caracteres.",
+        "nameTooShort": "Digite seu nome completo."
+      }
+    },
+    "step2": {
+      "cardHeading": "Qual é o nome do seu salão?",
+      "stepIndicator": "Passo 2 de 2",
+      "salonNameLabel": "Nome do salão",
+      "salonNamePlaceholder": "Ex.: Studio Beleza, Salão da Ana",
+      "primaryCta": "Criar conta",
+      "loadingCta": "Criando conta…",
+      "backLink": "Voltar",
+      "errors": {
+        "salonNameTooShort": "Digite o nome do seu salão.",
+        "serverGeneric": "Não foi possível criar sua conta. Tente novamente."
+      }
+    }
+  },
+  "verifyEmail": {
+    "pageTitle": "Verifique seu e-mail — SGS",
+    "cardHeading": "Verifique seu e-mail",
+    "body": "Enviamos um link de verificação para {{email}}. Acesse sua caixa de entrada e clique no link para ativar sua conta.",
+    "resendCta": "Reenviar e-mail",
+    "loadingCta": "Reenviando…",
+    "successAfterResend": "E-mail reenviado. Verifique sua caixa de entrada.",
+    "rateLimitNote": "Aguarde {{seconds}} segundos para reenviar novamente.",
+    "wrongEmailLink": "E-mail errado? Voltar ao cadastro"
+  },
+  "verifyEmailSuccess": {
+    "pageTitle": "E-mail verificado — SGS",
+    "cardHeading": "E-mail verificado com sucesso!",
+    "body": "Sua conta está ativa. Agora você pode entrar na plataforma.",
+    "primaryCta": "Entrar agora"
+  },
+  "invitation": {
+    "pageTitle": "Convite — SGS",
+    "cardHeading": "Você foi convidado para {{salonName}}",
+    "body": "{{inviterName}} convidou você para entrar na equipe. Crie sua senha para aceitar o convite.",
+    "nameLabel": "Seu nome",
+    "namePlaceholder": "Como você quer ser chamado(a)",
+    "passwordLabel": "Crie uma senha",
+    "passwordPlaceholder": "Mínimo 8 caracteres",
+    "primaryCta": "Aceitar convite",
+    "loadingCta": "Aceitando…",
+    "errors": {
+      "expiredHeading": "Este convite expirou",
+      "expiredBody": "Peça ao administrador do salão para enviar um novo convite.",
+      "alreadyUsed": "Este convite já foi utilizado. Tente entrar com sua conta.",
+      "serverGeneric": "Não foi possível aceitar o convite. Tente novamente."
+    }
+  },
+  "notFound": {
+    "pageTitle": "Página não encontrada — SGS",
+    "heading": "Página não encontrada",
+    "body": "O endereço que você acessou não existe ou foi movido.",
+    "primaryCta": "Voltar ao início"
+  },
+  "dashboard": {
+    "title": "Painel",
+    "welcome": "Bem-vindo, {{name}}!",
+    "todaySummary": "Resumo de hoje",
+    "appointments": "Agendamentos",
+    "clients": "Clientes",
+    "revenue": "Receita",
+    "noAppointments": "Nenhum agendamento para hoje"
+  },
+  "appointments": {
+    "title": "Agendamentos",
+    "new": "Novo agendamento",
+    "today": "Hoje",
+    "upcoming": "Próximos",
+    "past": "Anteriores",
+    "status": {
+      "scheduled": "Agendado",
+      "confirmed": "Confirmado",
+      "inProgress": "Em andamento",
+      "completed": "Concluído",
+      "cancelled": "Cancelado",
+      "noShow": "Não compareceu"
+    },
+    "fields": {
+      "client": "Cliente",
+      "service": "Serviço",
+      "professional": "Profissional",
+      "date": "Data",
+      "time": "Horário",
+      "duration": "Duração",
+      "notes": "Observações",
+      "status": "Status"
+    }
+  },
+  "clients": {
+    "title": "Clientes",
+    "new": "Novo cliente",
+    "search": "Buscar cliente",
+    "fields": {
+      "name": "Nome",
+      "phone": "Telefone",
+      "email": "E-mail",
+      "birthdate": "Data de nascimento",
+      "notes": "Observações"
+    }
+  },
+  "services": {
+    "title": "Serviços",
+    "new": "Novo serviço",
+    "fields": {
+      "name": "Nome do serviço",
+      "duration": "Duração (min)",
+      "price": "Preço",
+      "category": "Categoria",
+      "active": "Ativo"
+    }
+  },
+  "professionals": {
+    "title": "Profissionais",
+    "new": "Novo profissional",
+    "fields": {
+      "name": "Nome",
+      "role": "Função",
+      "services": "Serviços",
+      "schedule": "Horários"
+    }
+  },
+  "financial": {
+    "title": "Financeiro",
+    "revenue": "Receita",
+    "expenses": "Despesas",
+    "balance": "Saldo",
+    "period": {
+      "today": "Hoje",
+      "thisWeek": "Esta semana",
+      "thisMonth": "Este mês",
+      "custom": "Personalizado"
+    }
+  },
+  "settings": {
+    "title": "Configurações",
+    "organization": "Minha empresa",
+    "team": "Equipe",
+    "notifications": "Notificações",
+    "billing": "Plano e cobrança",
+    "security": "Segurança"
+  },
+  "errors": {
+    "generic": "Ocorreu um erro inesperado. Tente novamente.",
+    "network": "Erro de conexão. Verifique sua internet.",
+    "unauthorized": "Você não tem permissão para realizar esta ação.",
+    "notFound": "Recurso não encontrado.",
+    "sessionExpired": "Sua sessão expirou. Faça login novamente.",
+    "validation": {
+      "required": "Este campo é obrigatório",
+      "email": "Informe um e-mail válido",
+      "minLength": "Mínimo {{min}} caracteres",
+      "maxLength": "Máximo {{max}} caracteres",
+      "passwordMatch": "As senhas devem ser iguais",
+      "phone": "Informe um telefone válido",
+      "cpf": "CPF inválido",
+      "cnpj": "CNPJ inválido"
+    }
+  },
+  "navigation": {
+    "dashboard": "Painel",
+    "appointments": "Agendamentos",
+    "clients": "Clientes",
+    "services": "Serviços",
+    "professionals": "Profissionais",
+    "financial": "Financeiro",
+    "settings": "Configurações",
+    "logout": "Sair"
+  }
+}
