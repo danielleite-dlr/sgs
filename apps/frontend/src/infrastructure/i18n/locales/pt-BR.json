@@ -1,0 +1,209 @@
+{
+  "common": {
+    "appName": "SGS",
+    "tagline": "Plataforma de Gestão para Salões de Beleza",
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "back": "Voltar",
+    "next": "Próximo",
+    "previous": "Anterior",
+    "close": "Fechar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "clear": "Limpar",
+    "required": "Obrigatório",
+    "optional": "Opcional"
+  },
+  "auth": {
+    "login": {
+      "title": "Entrar no SGS",
+      "subtitle": "Acesse sua conta para gerenciar seu salão",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "seu@email.com",
+      "passwordLabel": "Senha",
+      "passwordPlaceholder": "Sua senha",
+      "submitButton": "Entrar",
+      "forgotPassword": "Esqueceu a senha?",
+      "noAccount": "Ainda não tem conta?",
+      "createAccount": "Criar conta grátis",
+      "loading": "Entrando...",
+      "successMessage": "Login realizado com sucesso!",
+      "errorInvalidCredentials": "E-mail ou senha incorretos",
+      "errorGeneric": "Ocorreu um erro ao fazer login. Tente novamente."
+    },
+    "register": {
+      "title": "Criar conta no SGS",
+      "subtitle": "Comece a gerenciar seu salão hoje mesmo",
+      "nameLabel": "Nome completo",
+      "namePlaceholder": "Seu nome",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "seu@email.com",
+      "passwordLabel": "Senha",
+      "passwordPlaceholder": "Mínimo 8 caracteres",
+      "confirmPasswordLabel": "Confirmar senha",
+      "confirmPasswordPlaceholder": "Repita sua senha",
+      "salonNameLabel": "Nome do salão",
+      "salonNamePlaceholder": "Nome do seu estabelecimento",
+      "submitButton": "Criar conta",
+      "alreadyHaveAccount": "Já tem uma conta?",
+      "login": "Entrar",
+      "loading": "Criando conta...",
+      "successMessage": "Conta criada com sucesso! Verifique seu e-mail.",
+      "errorEmailTaken": "Este e-mail já está cadastrado",
+      "errorPasswordMismatch": "As senhas não coincidem",
+      "errorGeneric": "Ocorreu um erro ao criar sua conta. Tente novamente."
+    },
+    "forgotPassword": {
+      "title": "Recuperar senha",
+      "subtitle": "Informe seu e-mail para receber as instruções de recuperação",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "seu@email.com",
+      "submitButton": "Enviar instruções",
+      "backToLogin": "Voltar para o login",
+      "loading": "Enviando...",
+      "successMessage": "E-mail enviado! Verifique sua caixa de entrada.",
+      "errorEmailNotFound": "E-mail não encontrado",
+      "errorGeneric": "Ocorreu um erro ao enviar o e-mail. Tente novamente."
+    },
+    "resetPassword": {
+      "title": "Redefinir senha",
+      "subtitle": "Escolha uma nova senha para sua conta",
+      "passwordLabel": "Nova senha",
+      "passwordPlaceholder": "Mínimo 8 caracteres",
+      "confirmPasswordLabel": "Confirmar nova senha",
+      "confirmPasswordPlaceholder": "Repita sua nova senha",
+      "submitButton": "Redefinir senha",
+      "loading": "Redefinindo...",
+      "successMessage": "Senha redefinida com sucesso!",
+      "errorTokenInvalid": "Link de recuperação inválido ou expirado",
+      "errorPasswordMismatch": "As senhas não coincidem",
+      "errorGeneric": "Ocorreu um erro ao redefinir a senha. Tente novamente."
+    },
+    "logout": {
+      "confirmTitle": "Sair da conta",
+      "confirmMessage": "Tem certeza que deseja sair?",
+      "confirmButton": "Sair",
+      "cancelButton": "Cancelar"
+    }
+  },
+  "dashboard": {
+    "title": "Painel",
+    "welcome": "Bem-vindo, {{name}}!",
+    "todaySummary": "Resumo de hoje",
+    "appointments": "Agendamentos",
+    "clients": "Clientes",
+    "revenue": "Receita",
+    "noAppointments": "Nenhum agendamento para hoje"
+  },
+  "appointments": {
+    "title": "Agendamentos",
+    "new": "Novo agendamento",
+    "today": "Hoje",
+    "upcoming": "Próximos",
+    "past": "Anteriores",
+    "status": {
+      "scheduled": "Agendado",
+      "confirmed": "Confirmado",
+      "inProgress": "Em andamento",
+      "completed": "Concluído",
+      "cancelled": "Cancelado",
+      "noShow": "Não compareceu"
+    },
+    "fields": {
+      "client": "Cliente",
+      "service": "Serviço",
+      "professional": "Profissional",
+      "date": "Data",
+      "time": "Horário",
+      "duration": "Duração",
+      "notes": "Observações",
+      "status": "Status"
+    }
+  },
+  "clients": {
+    "title": "Clientes",
+    "new": "Novo cliente",
+    "search": "Buscar cliente",
+    "fields": {
+      "name": "Nome",
+      "phone": "Telefone",
+      "email": "E-mail",
+      "birthdate": "Data de nascimento",
+      "notes": "Observações"
+    }
+  },
+  "services": {
+    "title": "Serviços",
+    "new": "Novo serviço",
+    "fields": {
+      "name": "Nome do serviço",
+      "duration": "Duração (min)",
+      "price": "Preço",
+      "category": "Categoria",
+      "active": "Ativo"
+    }
+  },
+  "professionals": {
+    "title": "Profissionais",
+    "new": "Novo profissional",
+    "fields": {
+      "name": "Nome",
+      "role": "Função",
+      "services": "Serviços",
+      "schedule": "Horários"
+    }
+  },
+  "financial": {
+    "title": "Financeiro",
+    "revenue": "Receita",
+    "expenses": "Despesas",
+    "balance": "Saldo",
+    "period": {
+      "today": "Hoje",
+      "thisWeek": "Esta semana",
+      "thisMonth": "Este mês",
+      "custom": "Personalizado"
+    }
+  },
+  "settings": {
+    "title": "Configurações",
+    "organization": "Minha empresa",
+    "team": "Equipe",
+    "notifications": "Notificações",
+    "billing": "Plano e cobrança",
+    "security": "Segurança"
+  },
+  "errors": {
+    "generic": "Ocorreu um erro inesperado. Tente novamente.",
+    "network": "Erro de conexão. Verifique sua internet.",
+    "unauthorized": "Você não tem permissão para realizar esta ação.",
+    "notFound": "Recurso não encontrado.",
+    "sessionExpired": "Sua sessão expirou. Faça login novamente.",
+    "validation": {
+      "required": "Este campo é obrigatório",
+      "email": "Informe um e-mail válido",
+      "minLength": "Mínimo {{min}} caracteres",
+      "maxLength": "Máximo {{max}} caracteres",
+      "passwordMatch": "As senhas devem ser iguais",
+      "phone": "Informe um telefone válido",
+      "cpf": "CPF inválido",
+      "cnpj": "CNPJ inválido"
+    }
+  },
+  "navigation": {
+    "dashboard": "Painel",
+    "appointments": "Agendamentos",
+    "clients": "Clientes",
+    "services": "Serviços",
+    "professionals": "Profissionais",
+    "financial": "Financeiro",
+    "settings": "Configurações",
+    "logout": "Sair"
+  }
+}
