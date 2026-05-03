@@ -22,8 +22,8 @@ export class AppConfigService {
     return this.config.get('DATABASE_URL', { infer: true });
   }
 
-  get directDatabaseUrl(): string {
-    return this.config.get('DIRECT_DATABASE_URL', { infer: true });
+  get directUrl(): string {
+    return this.config.get('DIRECT_URL', { infer: true });
   }
 
   get redisUrl(): string {
