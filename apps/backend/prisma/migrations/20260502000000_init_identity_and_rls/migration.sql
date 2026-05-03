@@ -266,29 +266,35 @@ CREATE TRIGGER tg_members_before_update
 
 -- ─── 5. Row Level Security — tenant-scoped tables ────────────────────────────
 -- NOTE: The second arg `true` to current_setting = missing_ok.
--- When app.current_organization is unset, the UUID cast on empty string fails
--- and the query returns 0 rows (fail-closed). Never returns wrong-tenant data.
+-- nullif(..., '') ensures that RESET (which sets value to empty string '') is
+-- treated as NULL, so the UUID cast returns NULL instead of throwing an error.
+-- NULL = id always evaluates to false/unknown → fail-closed: 0 rows returned.
+-- This is required for PgBouncer transaction-mode compatibility where SET LOCAL
+-- resets on transaction commit, temporarily leaving an empty string value.
+
+-- Helper macro: safe UUID cast that treats empty string as NULL
+-- nullif(current_setting('app.current_organization', true), '')::uuid
 
 -- organizations
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE organizations FORCE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON organizations
-  USING (id = current_setting('app.current_organization', true)::uuid)
-  WITH CHECK (id = current_setting('app.current_organization', true)::uuid);
+  USING (id = nullif(current_setting('app.current_organization', true), '')::uuid)
+  WITH CHECK (id = nullif(current_setting('app.current_organization', true), '')::uuid);
 
 -- members
 ALTER TABLE members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE members FORCE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON members
-  USING (organization_id = current_setting('app.current_organization', true)::uuid)
-  WITH CHECK (organization_id = current_setting('app.current_organization', true)::uuid);
+  USING (organization_id = nullif(current_setting('app.current_organization', true), '')::uuid)
+  WITH CHECK (organization_id = nullif(current_setting('app.current_organization', true), '')::uuid);
 
 -- roles (system roles: organization_id IS NULL — accessible from any tenant context)
 ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE roles FORCE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON roles
-  USING (organization_id IS NULL OR organization_id = current_setting('app.current_organization', true)::uuid)
-  WITH CHECK (organization_id IS NULL OR organization_id = current_setting('app.current_organization', true)::uuid);
+  USING (organization_id IS NULL OR organization_id = nullif(current_setting('app.current_organization', true), '')::uuid)
+  WITH CHECK (organization_id IS NULL OR organization_id = nullif(current_setting('app.current_organization', true), '')::uuid);
 
 -- role_permissions (accessed via JOIN to roles, filtered by parent role's org)
 ALTER TABLE role_permissions ENABLE ROW LEVEL SECURITY;
@@ -298,7 +304,7 @@ CREATE POLICY tenant_isolation ON role_permissions
     EXISTS (
       SELECT 1 FROM roles r
       WHERE r.id = role_permissions.role_id
-        AND (r.organization_id IS NULL OR r.organization_id = current_setting('app.current_organization', true)::uuid)
+        AND (r.organization_id IS NULL OR r.organization_id = nullif(current_setting('app.current_organization', true), '')::uuid)
     )
   );
 
@@ -306,15 +312,15 @@ CREATE POLICY tenant_isolation ON role_permissions
 ALTER TABLE member_invitations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE member_invitations FORCE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON member_invitations
-  USING (organization_id = current_setting('app.current_organization', true)::uuid)
-  WITH CHECK (organization_id = current_setting('app.current_organization', true)::uuid);
+  USING (organization_id = nullif(current_setting('app.current_organization', true), '')::uuid)
+  WITH CHECK (organization_id = nullif(current_setting('app.current_organization', true), '')::uuid);
 
 -- outbox_events
 ALTER TABLE outbox_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE outbox_events FORCE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON outbox_events
-  USING (organization_id = current_setting('app.current_organization', true)::uuid)
-  WITH CHECK (organization_id = current_setting('app.current_organization', true)::uuid);
+  USING (organization_id = nullif(current_setting('app.current_organization', true), '')::uuid)
+  WITH CHECK (organization_id = nullif(current_setting('app.current_organization', true), '')::uuid);
 
 -- ─── 6. Grant runtime privileges to sgs_app ──────────────────────────────────
 GRANT USAGE ON SCHEMA public TO sgs_app;
