@@ -47,3 +47,7 @@ coverage/
 
 # Vite cache
 .vite/
+
+# Claude Code worktrees and settings
+.claude/worktrees/
+.claude/settings.local.json
