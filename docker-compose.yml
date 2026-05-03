@@ -1,0 +1,158 @@
+version: '3.9'
+
+services:
+  # ─── PostgreSQL 16 ───────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: sgs_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sgs_migrator}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sgs_password}
+      POSTGRES_DB: ${POSTGRES_DB:-sgs_dev}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sgs_migrator} -d ${POSTGRES_DB:-sgs_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - sgs_network
+
+  # ─── PgBouncer (transaction-mode connection pooler) ──────────────────────────
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: sgs_pgbouncer
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "postgres://${POSTGRES_USER:-sgs_migrator}:${POSTGRES_PASSWORD:-sgs_password}@postgres:5432/${POSTGRES_DB:-sgs_dev}"
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 20
+      MIN_POOL_SIZE: 5
+      RESERVE_POOL_SIZE: 5
+      SERVER_RESET_QUERY: DISCARD ALL
+      IGNORE_STARTUP_PARAMETERS: extra_float_digits
+    ports:
+      - "${PGBOUNCER_PORT:-5433}:5432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sgs_network
+
+  # ─── Valkey 8 (Redis-compatible, MIT license) ────────────────────────────────
+  valkey:
+    image: valkey/valkey:8-alpine
+    container_name: sgs_valkey
+    restart: unless-stopped
+    command: valkey-server --appendonly yes --appendfsync everysec
+    volumes:
+      - valkey_data:/data
+    ports:
+      - "${VALKEY_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - sgs_network
+
+  # ─── Meilisearch v1.7 ────────────────────────────────────────────────────────
+  meilisearch:
+    image: getmeili/meilisearch:v1.7
+    container_name: sgs_meilisearch
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_KEY:-dev_master_key_change_in_prod}
+      MEILI_ENV: ${MEILI_ENV:-development}
+      MEILI_LOG_LEVEL: ${MEILI_LOG_LEVEL:-INFO}
+    volumes:
+      - meilisearch_data:/meili_data
+    ports:
+      - "${MEILISEARCH_PORT:-7700}:7700"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - sgs_network
+
+  # ─── Backend (NestJS) ─────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: sgs_backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgres://sgs_app:${POSTGRES_PASSWORD:-sgs_password}@pgbouncer:5432/${POSTGRES_DB:-sgs_dev}
+      DIRECT_DATABASE_URL: postgres://${POSTGRES_USER:-sgs_migrator}:${POSTGRES_PASSWORD:-sgs_password}@postgres:5432/${POSTGRES_DB:-sgs_dev}
+      REDIS_URL: redis://valkey:6379
+      MEILISEARCH_URL: http://meilisearch:7700
+      MEILISEARCH_KEY: ${MEILISEARCH_KEY:-dev_master_key_change_in_prod}
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_min_32_chars_change_in_prod}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev_refresh_secret_min_32_chars_change_in_prod}
+      FRONTEND_URL: http://localhost:5173
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@sgs.app}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+    volumes:
+      - ./apps/backend/src:/app/src:ro
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_started
+      valkey:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    networks:
+      - sgs_network
+
+  # ─── Frontend (React + Vite) ──────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: sgs_frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: http://localhost:3000
+      VITE_GRAPHQL_URL: http://localhost:3000/graphql
+    volumes:
+      - ./apps/frontend/src:/app/src:ro
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    depends_on:
+      - backend
+    networks:
+      - sgs_network
+
+volumes:
+  postgres_data:
+    driver: local
+  valkey_data:
+    driver: local
+  meilisearch_data:
+    driver: local
+
+networks:
+  sgs_network:
+    driver: bridge
