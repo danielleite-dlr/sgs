@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { GraphQLModule } from '@nestjs/graphql';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { HealthModule } from './health/health.module';
 import { AppConfigModule } from './config/config.module';
 import { DatabaseModule } from './database/database.module';
+import { GraphqlModule } from './graphql/graphql.module';
+import { QueueModule } from './queue/queue.module';
+import { EmailModule } from './email/email.module';
+import { AuthModule } from './auth/auth.module';
 import { envSchema } from './config/env.schema';
 import configuration from './config/configuration';
 
@@ -27,12 +29,10 @@ import configuration from './config/configuration';
     }),
     AppConfigModule,
     DatabaseModule,
-    GraphQLModule.forRoot<ApolloDriverConfig>({
-      driver: ApolloDriver,
-      typePaths: ['./src/**/*.graphql'],
-      playground: process.env.NODE_ENV !== 'production',
-      introspection: process.env.NODE_ENV !== 'production',
-    }),
+    GraphqlModule,
+    QueueModule,
+    EmailModule,
+    AuthModule,
     HealthModule,
   ],
 })
