@@ -7,6 +7,8 @@ import { GraphqlModule } from './graphql/graphql.module';
 import { QueueModule } from './queue/queue.module';
 import { EmailModule } from './email/email.module';
 import { AuthModule } from './auth/auth.module';
+import { AuthzModule } from './authz/authz.module';
+import { IdentityModule } from './identity/identity.module';
 import { envSchema } from './config/env.schema';
 import configuration from './config/configuration';
 
@@ -33,6 +35,8 @@ import configuration from './config/configuration';
     QueueModule,
     EmailModule,
     AuthModule,
+    AuthzModule,
+    IdentityModule,
     HealthModule,
   ],
 })
