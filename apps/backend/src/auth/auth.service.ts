@@ -276,7 +276,7 @@ export class AuthService {
     };
   }
 
-  private async issueSession(
+  async issueSession(
     userId: string,
     email: string,
     fullName: string,

@@ -1,0 +1,39 @@
+extend type Mutation {
+  inviteMember(input: InviteMemberInput!): InviteMemberPayload!
+  acceptInvitation(input: AcceptInvitationInput!): AuthPayload!
+  revokeInvitation(invitationId: UUID!): RevokeInvitationPayload!
+}
+
+extend type Query {
+  pendingInvitations: [PendingInvitation!]!
+}
+
+input InviteMemberInput {
+  email: Email!
+  roleName: String!
+}
+
+input AcceptInvitationInput {
+  token: String!
+  fullName: String!
+  password: String!
+}
+
+type InviteMemberPayload {
+  invitationId: UUID
+  expiresAt: DateTime
+  errors: [UserError!]!
+}
+
+type RevokeInvitationPayload {
+  success: Boolean!
+  errors: [UserError!]!
+}
+
+type PendingInvitation {
+  id: UUID!
+  email: Email!
+  roleName: String!
+  expiresAt: DateTime!
+  createdAt: DateTime!
+}
