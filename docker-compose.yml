@@ -109,8 +109,8 @@ services:
       FRONTEND_URL: http://localhost:5173
       EMAIL_FROM: ${EMAIL_FROM:-noreply@sgs.app}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
-    volumes:
-      - ./apps/backend/src:/app/src:ro
+    # volumes:  # bind-mount disabled — Docker Desktop on D: drive showing empty src
+    #   - ./apps/backend/src:/app/src:ro
     ports:
       - "${BACKEND_PORT:-3000}:3000"
     depends_on:
@@ -136,8 +136,8 @@ services:
     environment:
       VITE_API_URL: http://localhost:3000
       VITE_GRAPHQL_URL: http://localhost:3000/graphql
-    volumes:
-      - ./apps/frontend/src:/app/src:ro
+    # volumes:  # bind-mount disabled — Docker Desktop on D: drive showing empty src
+    #   - ./apps/frontend/src:/app/src:ro
     ports:
       - "${FRONTEND_PORT:-5173}:5173"
     depends_on:
