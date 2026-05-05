@@ -1,0 +1,116 @@
+mutation Signup($input: SignupInput!) {
+  signup(input: $input) {
+    accessToken
+    refreshToken
+    session {
+      userId
+      email
+      fullName
+      memberships {
+        memberId
+        organizationId
+        organizationName
+        roleName
+      }
+    }
+    errors {
+      code
+      message
+      field
+    }
+  }
+}
+
+mutation Login($input: LoginInput!) {
+  login(input: $input) {
+    accessToken
+    refreshToken
+    session {
+      userId
+      email
+      fullName
+      memberships {
+        memberId
+        organizationId
+        organizationName
+        roleName
+      }
+    }
+    errors {
+      code
+      message
+      field
+    }
+  }
+}
+
+mutation VerifyEmail($input: VerifyEmailInput!) {
+  verifyEmail(input: $input) {
+    success
+    errors {
+      code
+      message
+    }
+  }
+}
+
+mutation ResendVerification($input: ResendVerificationInput!) {
+  resendVerification(input: $input) {
+    success
+    cooldownSeconds
+    errors {
+      code
+      message
+    }
+  }
+}
+
+mutation RefreshSession($input: RefreshInput!) {
+  refreshSession(input: $input) {
+    accessToken
+    refreshToken
+    session {
+      userId
+      email
+      fullName
+      memberships {
+        memberId
+        organizationId
+        organizationName
+        roleName
+      }
+    }
+    errors {
+      code
+      message
+    }
+  }
+}
+
+mutation Logout($input: RefreshInput!) {
+  logout(input: $input) {
+    success
+  }
+}
+
+mutation AcceptInvitation($input: AcceptInvitationInput!) {
+  acceptInvitation(input: $input) {
+    accessToken
+    refreshToken
+    session {
+      userId
+      email
+      fullName
+      memberships {
+        memberId
+        organizationId
+        organizationName
+        roleName
+      }
+    }
+    errors {
+      code
+      message
+    }
+  }
+}

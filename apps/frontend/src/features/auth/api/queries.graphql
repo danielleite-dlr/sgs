@@ -1,0 +1,13 @@
+query Me {
+  me {
+    userId
+    email
+    fullName
+    memberships {
+      memberId
+      organizationId
+      organizationName
+      roleName
+    }
+  }
+}
