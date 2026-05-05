@@ -17,7 +17,7 @@
 
 - [x] **AUTH-01**: Usuário consegue criar conta e fazer login com email/senha usando JWT (access 15min + refresh 30 dias)
 - [x] **AUTH-02**: Sessão do usuário persiste entre refreshes de browser via refresh token rotation
-- [ ] **AUTH-03**: Sistema aplica RBAC com 4 roles configuráveis: Administrador, Gerente, Atendente, Profissional
+- [x] **AUTH-03**: Sistema aplica RBAC com 4 roles configuráveis: Administrador, Gerente, Atendente, Profissional
 
 ### Catálogo
 
@@ -126,7 +126,7 @@
 | INFRA-03 | Phase 1 | Complete |
 | AUTH-01 | Phase 1 | Complete |
 | AUTH-02 | Phase 1 | Complete |
-| AUTH-03 | Phase 1 | Pending |
+| AUTH-03 | Phase 1 | Complete |
 | CAT-01 | Phase 2 | Pending |
 | CAT-02 | Phase 2 | Pending |
 | CAT-03 | Phase 2 | Pending |

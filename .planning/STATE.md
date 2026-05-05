@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-foundation/01-backend-auth-core-PLAN.md
-last_updated: "2026-05-05T17:10:08.228Z"
+stopped_at: Completed 01-foundation/01-backend-rbac-invitations-PLAN.md
+last_updated: "2026-05-05T18:50:54.452Z"
 last_activity: 2026-05-05
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 7
-  completed_plans: 4
+  completed_plans: 5
   percent: 10
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 1 of 5 (Foundation)
-Plan: 4 of 6 in current phase
+Plan: 5 of 6 in current phase
 Status: Ready to execute
 Last activity: 2026-05-05
 
@@ -54,6 +54,7 @@ Progress: [██░░░░░░░░] 10%
 *Updated after each plan completion*
 | Phase 01-foundation P03 | 120 | 2 tasks | 33 files |
 | Phase 01-foundation P04 | 527677min | 3 tasks | 22 files |
+| Phase 01-foundation P05 | 68 | 2 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,9 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: prisma.$transaction for signup (not TenantContextService) — no org context exists yet at signup time
 - [Phase 01-foundation]: Refresh token reuse detection revokes entire family — compromise assumption
 - [Phase 01-foundation]: auth.graphql uses extend type Query/Mutation — base types in root.graphql
+- [Phase 01-foundation]: Permission check queries role_permissions DB table (not JWT payload) — permissions authoritative in DB, JWT carries only roleName
+- [Phase 01-foundation]: Relaxed SELECT USING(true) on member_invitations — token_hash is the secret, application enforces WHERE token_hash = hash, modify ops remain tenant-scoped
+- [Phase 01-foundation]: AuthService.issueSession refactored private→public for InvitationService.accept reuse without duplicating token-issuing logic
 
 ### Pending Todos
 
@@ -93,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-05T17:09:54.346Z
-Stopped at: Completed 01-foundation/01-backend-auth-core-PLAN.md
+Last session: 2026-05-05T18:50:54.365Z
+Stopped at: Completed 01-foundation/01-backend-rbac-invitations-PLAN.md
 Resume file: None
