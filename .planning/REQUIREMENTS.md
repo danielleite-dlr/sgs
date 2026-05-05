@@ -11,12 +11,12 @@
 
 - [x] **INFRA-01**: Monorepo NestJS + React configurado com Docker Compose para dev environment completo (backend, frontend, postgres, redis, meilisearch)
 - [x] **INFRA-02**: PgBouncer em transaction-mode com 2 roles DB (`sgs_migrator` com BYPASSRLS, `sgs_app` sem) e FORCE ROW LEVEL SECURITY em todas as tabelas tenant-scoped
-- [ ] **INFRA-03**: Redis com AOF persistence (`appendonly yes`) + BullMQ para filas de jobs assíncronos
+- [x] **INFRA-03**: Redis com AOF persistence (`appendonly yes`) + BullMQ para filas de jobs assíncronos
 
 ### Autenticação
 
-- [ ] **AUTH-01**: Usuário consegue criar conta e fazer login com email/senha usando JWT (access 15min + refresh 30 dias)
-- [ ] **AUTH-02**: Sessão do usuário persiste entre refreshes de browser via refresh token rotation
+- [x] **AUTH-01**: Usuário consegue criar conta e fazer login com email/senha usando JWT (access 15min + refresh 30 dias)
+- [x] **AUTH-02**: Sessão do usuário persiste entre refreshes de browser via refresh token rotation
 - [ ] **AUTH-03**: Sistema aplica RBAC com 4 roles configuráveis: Administrador, Gerente, Atendente, Profissional
 
 ### Catálogo
@@ -123,9 +123,9 @@
 |-------------|-------|--------|
 | INFRA-01 | Phase 1 | Complete — Plan 01-01 (2026-05-03) |
 | INFRA-02 | Phase 1 | Complete — Plan 01-02 (2026-05-03) |
-| INFRA-03 | Phase 1 | Pending |
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
+| INFRA-03 | Phase 1 | Complete |
+| AUTH-01 | Phase 1 | Complete |
+| AUTH-02 | Phase 1 | Complete |
 | AUTH-03 | Phase 1 | Pending |
 | CAT-01 | Phase 2 | Pending |
 | CAT-02 | Phase 2 | Pending |
