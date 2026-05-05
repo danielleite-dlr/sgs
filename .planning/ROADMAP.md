@@ -39,7 +39,7 @@ Construir um SaaS multi-tenant completo para salões de beleza, partindo da fund
 4. Um CI smoke test verifica que queries da `sgs_app` role não conseguem ler dados de outra organização (RLS enforcement comprovado)
 5. PgBouncer está em transaction-mode e o CI test confirma que `SET LOCAL` para `app.current_tenant_id` não vaza entre conexões
 
-**Plans:** 5/7 plans executed
+**Plans:** 6/7 plans executed
 
 Plans:
 - [x] 01-PLAN-monorepo-docker.md — pnpm monorepo + Docker Compose stack (postgres, pgbouncer, valkey, backend, frontend) booting in <5min
@@ -170,7 +170,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 5/7 | In Progress|  |
+| 1. Foundation | 6/7 | In Progress|  |
 | 2. Core Domain | 0/? | Not started | - |
 | 3. Core Operations | 0/? | Not started | - |
 | 4. Bridal & Contracts | 0/? | Not started | - |

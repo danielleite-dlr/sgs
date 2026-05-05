@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-foundation/01-backend-rbac-invitations-PLAN.md
-last_updated: "2026-05-05T18:50:54.452Z"
+stopped_at: "Completed 01-foundation/01-frontend-auth-pages-PLAN.md tasks 1-2; paused at Task 3 checkpoint:human-verify"
+last_updated: "2026-05-05T20:07:42.532Z"
 last_activity: 2026-05-05
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
   percent: 10
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 1 of 5 (Foundation)
-Plan: 5 of 6 in current phase
+Plan: 6 of 6 in current phase
 Status: Ready to execute
 Last activity: 2026-05-05
 
@@ -55,6 +55,7 @@ Progress: [██░░░░░░░░] 10%
 | Phase 01-foundation P03 | 120 | 2 tasks | 33 files |
 | Phase 01-foundation P04 | 527677min | 3 tasks | 22 files |
 | Phase 01-foundation P05 | 68 | 2 tasks | 17 files |
+| Phase 01-foundation P06 | 59 | 2 tasks | 22 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,8 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: Permission check queries role_permissions DB table (not JWT payload) — permissions authoritative in DB, JWT carries only roleName
 - [Phase 01-foundation]: Relaxed SELECT USING(true) on member_invitations — token_hash is the secret, application enforces WHERE token_hash = hash, modify ops remain tenant-scoped
 - [Phase 01-foundation]: AuthService.issueSession refactored private→public for InvitationService.accept reuse without duplicating token-issuing logic
+- [Phase 01-foundation]: Generic 'Aceitar convite' heading used for InvitationPage — AcceptInvitation mutation does not return orgName/inviterName; deferred to Phase 2 schema extension
+- [Phase 01-foundation]: auth.api.ts uses manual gql tagged templates (not codegen) — codegen integration deferred to plan 07 (CI integration)
 
 ### Pending Todos
 
@@ -97,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-05T18:50:54.365Z
-Stopped at: Completed 01-foundation/01-backend-rbac-invitations-PLAN.md
+Last session: 2026-05-05T20:07:31.835Z
+Stopped at: Completed 01-foundation/01-frontend-auth-pages-PLAN.md tasks 1-2; paused at Task 3 checkpoint:human-verify
 Resume file: None
