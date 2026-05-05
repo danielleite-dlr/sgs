@@ -5,8 +5,8 @@ RUN npm install -g pnpm@9
 
 # ─── Dependencies ─────────────────────────────────────────────────────────────
 FROM base AS deps
-COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --frozen-lockfile
+COPY package.json ./
+RUN pnpm install --no-frozen-lockfile
 
 # ─── Development ──────────────────────────────────────────────────────────────
 FROM base AS development
