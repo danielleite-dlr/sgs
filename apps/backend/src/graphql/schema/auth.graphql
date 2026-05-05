@@ -1,0 +1,79 @@
+extend type Query {
+  me: AuthSession
+}
+
+extend type Mutation {
+  signup(input: SignupInput!): AuthPayload!
+  verifyEmail(input: VerifyEmailInput!): VerifyEmailPayload!
+  resendVerification(input: ResendVerificationInput!): ResendVerificationPayload!
+  login(input: LoginInput!): AuthPayload!
+  refreshSession(input: RefreshInput!): AuthPayload!
+  logout(input: RefreshInput!): LogoutPayload!
+}
+
+input SignupInput {
+  fullName: String!
+  email: Email!
+  password: String!
+  salonName: String!
+  segment: String
+}
+
+input VerifyEmailInput {
+  token: String!
+}
+
+input ResendVerificationInput {
+  email: Email!
+}
+
+input LoginInput {
+  email: Email!
+  password: String!
+}
+
+input RefreshInput {
+  refreshToken: String!
+}
+
+type AuthSession {
+  userId: UUID!
+  email: Email!
+  fullName: String!
+  memberships: [Membership!]!
+}
+
+type Membership {
+  memberId: UUID!
+  organizationId: UUID!
+  organizationName: String!
+  roleName: String!
+}
+
+type AuthPayload {
+  accessToken: String
+  refreshToken: String
+  session: AuthSession
+  errors: [UserError!]!
+}
+
+type VerifyEmailPayload {
+  success: Boolean!
+  errors: [UserError!]!
+}
+
+type ResendVerificationPayload {
+  success: Boolean!
+  cooldownSeconds: Int
+  errors: [UserError!]!
+}
+
+type LogoutPayload {
+  success: Boolean!
+}
+
+type UserError {
+  code: String!
+  message: String!
+  field: String
+}

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { randomBytes } from 'node:crypto';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../database/prisma.service';
 import { PasswordService } from './password.service';
 import { AuthError, JwtAccessPayload } from './types';
