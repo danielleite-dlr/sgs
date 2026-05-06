@@ -9,6 +9,8 @@ import { EmailModule } from './email/email.module';
 import { AuthModule } from './auth/auth.module';
 import { AuthzModule } from './authz/authz.module';
 import { IdentityModule } from './identity/identity.module';
+import { CatalogModule } from './catalog/catalog.module';
+import { ClientsModule } from './clients/clients.module';
 import { envSchema } from './config/env.schema';
 import configuration from './config/configuration';
 
@@ -37,6 +39,8 @@ import configuration from './config/configuration';
     AuthModule,
     AuthzModule,
     IdentityModule,
+    CatalogModule,
+    ClientsModule,
     HealthModule,
   ],
 })
