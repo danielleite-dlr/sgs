@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: "Completed 01-foundation/01-frontend-auth-pages-PLAN.md tasks 1-2; paused at Task 3 checkpoint:human-verify"
-last_updated: "2026-05-05T20:07:42.532Z"
-last_activity: 2026-05-05
+status: verifying
+stopped_at: Completed 01-foundation/01-frontend-auth-pages-PLAN.md (plan 06 of 7) — all 3 tasks complete including browser verification; ready for 01-ci-integration
+last_updated: "2026-05-06T02:53:00.786Z"
+last_activity: 2026-05-06
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 7
   completed_plans: 6
-  percent: 10
+  percent: 86
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 1 of 5 (Foundation)
-Plan: 6 of 6 in current phase
-Status: Ready to execute
-Last activity: 2026-05-05
+Plan: 6 of 7 complete in current phase (01-ci-integration is next)
+Status: Executing — plan 06 complete, plan 07 ready
+Last activity: 2026-05-06
 
-Progress: [██░░░░░░░░] 10%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
@@ -55,7 +55,7 @@ Progress: [██░░░░░░░░] 10%
 | Phase 01-foundation P03 | 120 | 2 tasks | 33 files |
 | Phase 01-foundation P04 | 527677min | 3 tasks | 22 files |
 | Phase 01-foundation P05 | 68 | 2 tasks | 17 files |
-| Phase 01-foundation P06 | 59 | 2 tasks | 22 files |
+| Phase 01-foundation P06 | 90 | 3 tasks | 24 files |
 
 ## Accumulated Context
 
@@ -87,6 +87,9 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: AuthService.issueSession refactored private→public for InvitationService.accept reuse without duplicating token-issuing logic
 - [Phase 01-foundation]: Generic 'Aceitar convite' heading used for InvitationPage — AcceptInvitation mutation does not return orgName/inviterName; deferred to Phase 2 schema extension
 - [Phase 01-foundation]: auth.api.ts uses manual gql tagged templates (not codegen) — codegen integration deferred to plan 07 (CI integration)
+- [Phase 01-foundation]: PgBouncer AUTH_TYPE=trust chosen as dev workaround — scram-sha-256 incompatible with PG16 pool mode without auth_query; backend connects direct to postgres for dev; fix in plan 07
+- [Phase 01-foundation]: sgs_app temporarily granted BYPASSRLS for dev — signup creates org without tenant context; fix in plan 07 via SECURITY DEFINER function or role split
+- [Phase 01-foundation]: auth.api.ts uses manual gql tagged templates (not codegen) — codegen integration deferred to plan 07
 
 ### Pending Todos
 
@@ -100,6 +103,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-05T20:07:31.835Z
-Stopped at: Completed 01-foundation/01-frontend-auth-pages-PLAN.md tasks 1-2; paused at Task 3 checkpoint:human-verify
+Last session: 2026-05-06T02:53:00.777Z
+Stopped at: Completed 01-foundation/01-frontend-auth-pages-PLAN.md (plan 06 of 7) — all 3 tasks complete including browser verification; ready for 01-ci-integration
 Resume file: None

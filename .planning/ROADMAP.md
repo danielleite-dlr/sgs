@@ -44,10 +44,10 @@ Construir um SaaS multi-tenant completo para salões de beleza, partindo da fund
 Plans:
 - [x] 01-PLAN-monorepo-docker.md — pnpm monorepo + Docker Compose stack (postgres, pgbouncer, valkey, backend, frontend) booting in <5min
 - [x] 01-PLAN-database-rls.md — Prisma schema, identity tables, FORCE ROW LEVEL SECURITY, TenantContextService, CI RLS isolation suite
-- [ ] 01-PLAN-frontend-scaffold.md — Tailwind 3 + shadcn/ui design tokens, Apollo Client, Zustand auth store, react-i18next pt-BR, React Router
-- [ ] 01-PLAN-backend-auth-core.md — Signup with org creation, email verification (Resend), login, refresh-token rotation, JWT access tokens
-- [ ] 01-PLAN-backend-rbac-invitations.md — 4 system roles + permission catalog + RequirePermission guard + member invitation flow
-- [ ] 01-PLAN-frontend-auth-pages.md — Login, Signup (2-step), Verify Email, Invitation Acceptance, 404 pages per UI-SPEC
+- [x] 01-PLAN-frontend-scaffold.md — Tailwind 3 + shadcn/ui design tokens, Apollo Client, Zustand auth store, react-i18next pt-BR, React Router
+- [x] 01-PLAN-backend-auth-core.md — Signup with org creation, email verification (Resend), login, refresh-token rotation, JWT access tokens
+- [x] 01-PLAN-backend-rbac-invitations.md — 4 system roles + permission catalog + RequirePermission guard + member invitation flow
+- [x] 01-PLAN-frontend-auth-pages.md — Login, Signup (2-step), Verify Email, Invitation Acceptance, 404 pages per UI-SPEC
 - [ ] 01-PLAN-ci-integration.md — TestEmailAdapter, full-auth-flow integration test, complete CI workflow, operator README, phase summary
 
 **UI hint:** yes
@@ -170,7 +170,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 6/7 | In Progress|  |
+| 1. Foundation | 6/7 | In Progress | - |
 | 2. Core Domain | 0/? | Not started | - |
 | 3. Core Operations | 0/? | Not started | - |
 | 4. Bridal & Contracts | 0/? | Not started | - |
