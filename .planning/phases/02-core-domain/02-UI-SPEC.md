@@ -153,7 +153,7 @@ Responsive breakpoints:
 │    ├ Categorias    │  ← /catalogo/categorias
 │    ├ Serviços      │  ← /catalogo/servicos
 │    ├ Pacotes       │  ← /catalogo/pacotes
-│    ├ Produtos      │  ← /catalogo/produtos (+ badge if low stock)
+│    ├ Produtos      │  ← /catalogo/produtos (+ warning icon if low stock)
 │    └ Comissões     │  ← /catalogo/comissoes
 │  ⊙ Clientes        │  ← /clientes
 ├────────────────────┤
@@ -170,11 +170,13 @@ Responsive breakpoints:
 - Active sub-item: left border 2px `primary.500`, background `primary.50/60`
 - Focus: `outline-2 outline-primary-500 outline-offset-2`
 
-**Products sidebar item — low stock badge:**
-When any product in the org has `stock_quantity <= min_stock_level`, show a count badge on the "Produtos" sidebar item:
-- Badge: `bg-error-500 text-white` rounded-full, 16px wide × 16px tall (minimum), 10px font — exception to 14px label rule for this compact badge only
-- Badge shows the count of low-stock products (e.g., "3")
-- Tooltip on hover: "3 produtos com estoque baixo"
+**Products sidebar item — low stock indicator:**
+When any product in the org has `stock_quantity <= min_stock_level`, show a `TriangleAlert` lucide-react icon on the "Produtos" sidebar nav item:
+- Icon: `TriangleAlert` from lucide-react, sized `h-4 w-4` (icon sizing — not a font-size declaration), color `warning.500` (`#EF9F27`)
+- Icon is placed inline-right of the "Produtos" label text
+- Tooltip on hover: `"{N} produto(s) com estoque baixo"` (shadcn Tooltip, delay 300ms)
+- No numeric badge text — count is communicated exclusively via Tooltip
+- `aria-label` on the icon element: `"Estoque baixo: {N} produto(s)"` for screen readers
 
 **Mobile header (< 768px):**
 ```
@@ -451,7 +453,7 @@ Flow:
 | Tabs | `tabs` | Client detail: Dados / Histórico |
 | Sheet | `sheet` | Mobile CRUD form drawer; mobile sidebar |
 | DropdownMenu | `dropdown-menu` | Row actions (3-dot menu), user avatar menu in sidebar footer |
-| Tooltip | `tooltip` | Low-stock badge info, collapsed sidebar labels, disabled filter labels |
+| Tooltip | `tooltip` | Low-stock sidebar warning icon info, collapsed sidebar labels, disabled filter labels |
 | Skeleton | `skeleton` | Loading state for list rows |
 | Badge | `badge` | Status indicators, low-stock, role badges |
 | Breadcrumb | `breadcrumb` | Navigation hierarchy on catalog + client detail pages |
@@ -525,17 +527,17 @@ Language: PT-BR throughout. Tone: professional and warm, no corporate jargon. Ac
 
 ### Form CTAs
 
-| Element | Copy |
-|---------|------|
-| Save (create) | `Salvar` |
-| Save (edit) | `Salvar alterações` |
-| Save loading state | `Salvando…` |
-| Cancel | `Cancelar` |
-| Discard dirty form confirm | `Descartar alterações?` |
-| Discard yes | `Sim, descartar` |
-| Discard no | `Continuar editando` |
-| Add pricing variant | `Adicionar variante` |
-| Add service to package | `Adicionar serviço` |
+| Element | Copy | Note |
+|---------|------|------|
+| Save (create) | `Salvar` | — |
+| Save (edit) | `Salvar alterações` | — |
+| Save loading state | `Salvando…` | — |
+| Cancel | `Cancelar` | Noun context is provided by the dialog heading (e.g., "Novo Serviço") — same justification as Phase 1 §Copywriting. No standalone noun needed. |
+| Discard dirty form confirm | `Descartar alterações?` | — |
+| Discard yes | `Sim, descartar` | — |
+| Discard no | `Continuar editando` | — |
+| Add pricing variant | `Adicionar variante` | — |
+| Add service to package | `Adicionar serviço` | — |
 
 ### Dialog Headings
 
@@ -731,6 +733,16 @@ All Phase 1 accessibility rules apply. Phase 2 additions:
 - Price inputs: `aria-label` includes currency context (e.g., "Preço base em reais").
 - All color contrast: inherited Phase 1 token choices pass 4.5:1 for normal text, 3:1 for large text.
 - `#888780` on `#FFFFFF`: 3.1:1 — used only for 14px weight 600 (large text threshold). Do not use `#888780` at 14px weight 400 on white backgrounds in critical content.
+
+**Icon-only elements — mandatory aria-labels:**
+
+| Element | Location | `aria-label` value | Additional |
+|---------|----------|--------------------|------------|
+| Bell icon (BellIcon lucide) | Mobile header | `"Notificações (em breve)"` | `aria-disabled="true"` |
+| Reorder Up button (ChevronUp lucide) | Category/service list order column | `"Mover {nome} para cima"` | `disabled` when first item |
+| Reorder Down button (ChevronDown lucide) | Category/service list order column | `"Mover {nome} para baixo"` | `disabled` when last item |
+| Pricing variant delete (TrashIcon lucide) | PricingVariantsEditor row | `"Remover variante"` | `aria-label` must include row context if multiple variants visible simultaneously |
+| Low-stock warning icon (TriangleAlert lucide) | Sidebar "Produtos" nav item | `"Estoque baixo: {N} produto(s)"` | Paired with Tooltip for sighted users |
 
 ---
 
