@@ -10,7 +10,8 @@ Construir um SaaS multi-tenant completo para salões de beleza, partindo da fund
 
 ## Phases
 
-- [x] **Phase 1: Foundation** - Infraestrutura multi-tenant, autenticação e RLS — pré-requisito não negociável para tudo (completed 2026-05-06)
+- [x] **Phase 1: Foundation** - Infraestrutura multi-tenant, autenticação e RLS — pré-requisito não negociável para tudo
+ (completed 2026-05-06)
 - [ ] **Phase 2: Core Domain** - Catálogo de serviços/produtos e perfis de clientes — o inventário do negócio
 - [ ] **Phase 3: Core Operations** - Loop atômico de agendamento + POS + financeiro + comissões
 - [ ] **Phase 4: Bridal & Contracts** - Vertical de noivas, contratos de evento e IA de otimização de agenda
@@ -75,7 +76,17 @@ Plans:
 4. Proprietário consegue configurar regra de comissão de 20% para um serviço específico e ver a regra aplicada ao profissional correto
 5. Atendente consegue criar perfil de cliente com CPF e visualizar o histórico completo de visitas e consumo daquele cliente
 
-**Plans:** TBD
+**Plans:** 8 plans
+
+Plans:
+- [ ] 02-database-schema-PLAN.md — Phase 2 Prisma migration (10 tables + RLS), permissions catalog, empty bounded-context modules
+- [ ] 02-frontend-appshell-PLAN.md — AppShell + SidebarNav + PageHeader + DataTable + 15 shadcn primitives + 9 routes
+- [ ] 02-backend-catalog-services-PLAN.md — Categories, Services (with pricing variants), Packages CRUD via GraphQL
+- [ ] 02-backend-products-stock-PLAN.md — Products CRUD + adjustStock with movements audit + low-stock notifications
+- [ ] 02-backend-commissions-clients-PLAN.md — CommissionRule scope-first CRUD + Clients with CPF + history stub
+- [ ] 02-frontend-catalog-categorias-servicos-PLAN.md — Categorias + Serviços screens with PricingVariantsEditor
+- [ ] 02-frontend-pacotes-produtos-comissoes-PLAN.md — Pacotes (price-vs-sum) + Produtos (StockBadge, AdjustStockDialog) + Comissões (scope-first)
+- [ ] 02-frontend-clientes-PLAN.md — Clientes list + create/edit + detail with Dados/Histórico tabs + CPF mask/duplicate lookup
 
 **UI hint:** yes
 
