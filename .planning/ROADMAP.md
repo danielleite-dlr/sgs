@@ -39,7 +39,7 @@ Construir um SaaS multi-tenant completo para salões de beleza, partindo da fund
 4. Um CI smoke test verifica que queries da `sgs_app` role não conseguem ler dados de outra organização (RLS enforcement comprovado)
 5. PgBouncer está em transaction-mode e o CI test confirma que `SET LOCAL` para `app.current_tenant_id` não vaza entre conexões
 
-**Plans:** 8/7 plans complete
+**Plans:** 7/7 plans complete
 
 Plans:
 - [x] 01-PLAN-monorepo-docker.md — pnpm monorepo + Docker Compose stack (postgres, pgbouncer, valkey, backend, frontend) booting in <5min
@@ -48,7 +48,7 @@ Plans:
 - [x] 01-PLAN-backend-auth-core.md — Signup with org creation, email verification (Resend), login, refresh-token rotation, JWT access tokens
 - [x] 01-PLAN-backend-rbac-invitations.md — 4 system roles + permission catalog + RequirePermission guard + member invitation flow
 - [x] 01-PLAN-frontend-auth-pages.md — Login, Signup (2-step), Verify Email, Invitation Acceptance, 404 pages per UI-SPEC
-- [ ] 01-PLAN-ci-integration.md — TestEmailAdapter, full-auth-flow integration test, complete CI workflow, operator README, phase summary
+- [x] 01-PLAN-ci-integration.md — TestEmailAdapter, full-auth-flow integration test, complete CI workflow, operator README, phase summary
 
 **UI hint:** yes
 
@@ -170,7 +170,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 8/7 | Complete   | 2026-05-06 |
+| 1. Foundation | 7/7 | Complete   | 2026-05-06 |
 | 2. Core Domain | 0/? | Not started | - |
 | 3. Core Operations | 0/? | Not started | - |
 | 4. Bridal & Contracts | 0/? | Not started | - |

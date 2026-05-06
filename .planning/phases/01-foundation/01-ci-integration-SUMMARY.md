@@ -47,8 +47,8 @@ key_decisions:
 metrics:
   duration_minutes: 45
   completed: "2026-05-06"
-  tasks_completed: 2
-  tasks_at_checkpoint: 1
+  tasks_completed: 3
+  tasks_at_checkpoint: 0
   files_created: 6
   files_modified: 5
   commits: 2
@@ -63,7 +63,7 @@ requirements-completed: [INFRA-01, AUTH-01, AUTH-02, AUTH-03]
 
 - **Duration:** ~45 min
 - **Completed:** 2026-05-06
-- **Tasks:** 2 executed + 1 checkpoint (awaiting CI verification)
+- **Tasks:** 3 (all complete — Task 3 approved by user)
 - **Files created:** 6
 - **Files modified:** 5
 
@@ -110,15 +110,23 @@ requirements-completed: [INFRA-01, AUTH-01, AUTH-02, AUTH-03]
 - 7 follow-ups for future phases (not Phase 2 blockers)
 - 5 dev environment known issues with workarounds
 
-## Checkpoint (Task 3 — awaiting CI verification)
+## Task 3: CI Verification (approved by user)
 
-**Status:** AWAITING — returned CHECKPOINT REACHED to orchestrator.
+**Status:** APPROVED — user reviewed implementation and approved without remote CI run.
 
-**What to verify:**
-1. Push branch → GitHub Actions run → `integration` job passes (all 5 spec files green)
-2. `boot-time` job passes (stack healthy in <300s)
-3. `frontend-codegen` job passes (types generated from live schema)
-4. README quick-start works on fresh clone
+**Approval basis:**
+- No GitHub remote configured at time of review — CI cannot run remotely
+- User approved via code-review trust (option A: trust and proceed)
+- All 5 integration test spec files exist and are wired to `pnpm test:integration`
+- CI workflow (`.github/workflows/ci.yml`) is structurally complete with all 4 jobs
+- Implementation verified locally: TestEmailAdapter compiles, full-auth-flow spec exists, CI YAML is syntactically valid
+
+**CI readiness when remote is added:**
+1. `typecheck` — ready (`pnpm -r typecheck`)
+2. `lint` — ready (`pnpm -r lint --if-present`)
+3. `boot-time` — ready (asserts Phase 1 SC #1, 300s timeout)
+4. `integration` — ready (runs all 5 specs: rls-isolation, auth.e2e, rbac.e2e, invitation.e2e, full-auth-flow)
+5. `frontend-codegen` — ready (introspects live backend, asserts `src/gql/graphql.ts` exists)
 
 ## Deviations from Plan
 
