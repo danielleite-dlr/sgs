@@ -28,10 +28,19 @@ model Organization {
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  members      Member[]
-  roles        Role[]
-  invitations  MemberInvitation[]
-  outboxEvents OutboxEvent[]
+  members         Member[]
+  roles           Role[]
+  invitations     MemberInvitation[]
+  outboxEvents    OutboxEvent[]
+  categories      Category[]
+  services        Service[]
+  pricingVariants ServicePricingVariant[]
+  packages        Package[]
+  products        Product[]
+  stockMovements  StockMovement[]
+  commissionRules CommissionRule[]
+  clients         Client[]
+  notifications   Notification[]
 
   @@unique([documentNumber], name: "uq_organizations_document")
   @@map("organizations")
@@ -89,13 +98,17 @@ model Member {
   displayName    String    @map("display_name") @db.VarChar(255)
   isProfessional Boolean   @default(false) @map("is_professional")
   status         String    @default("active") @db.VarChar(20)
+  seniorityTier  String?   @map("seniority_tier") @db.VarChar(20)
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  user         User         @relation(fields: [userId], references: [id])
-  role         Role         @relation(fields: [roleId], references: [id])
+  organization    Organization     @relation(fields: [organizationId], references: [id])
+  user            User             @relation(fields: [userId], references: [id])
+  role            Role             @relation(fields: [roleId], references: [id])
+  stockMovements  StockMovement[]
+  notifications   Notification[]
+  commissionRules CommissionRule[]
 
   @@unique([organizationId, userId], name: "uq_members_org_user")
   @@index([organizationId, status], name: "ix_members_org_status")
@@ -176,4 +189,207 @@ model OutboxEvent {
 
   @@index([status, createdAt], name: "ix_outbox_status_created")
   @@map("outbox_events")
+}
+
+// ===== Catalog =====
+
+model Category {
+  id             String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  parentId       String?   @map("parent_id") @db.Uuid
+  name           String    @db.VarChar(120)
+  displayOrder   Int       @default(0) @map("display_order")
+  coverImageUrl  String?   @map("cover_image_url") @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  organization    Organization     @relation(fields: [organizationId], references: [id])
+  parent          Category?        @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children        Category[]       @relation("CategoryHierarchy")
+  services        Service[]
+  commissionRules CommissionRule[]
+
+  @@index([organizationId, parentId], name: "ix_categories_org_parent")
+  @@index([organizationId, parentId, displayOrder], name: "ix_categories_org_order")
+  @@map("categories")
+}
+
+model Service {
+  id                     String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId         String    @map("organization_id") @db.Uuid
+  categoryId             String    @map("category_id") @db.Uuid
+  name                   String    @db.VarChar(160)
+  basePrice              Decimal   @map("base_price") @db.Decimal(12, 2)
+  defaultDurationMinutes Int       @map("default_duration_minutes")
+  displayOrder           Int       @default(0) @map("display_order")
+  coverImageUrl          String?   @map("cover_image_url") @db.Text
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt              DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  organization    Organization            @relation(fields: [organizationId], references: [id])
+  category        Category                @relation(fields: [categoryId], references: [id])
+  pricingVariants ServicePricingVariant[]
+  packages        PackageService[]
+  commissionRules CommissionRule[]
+
+  @@index([organizationId, categoryId], name: "ix_services_org_category")
+  @@map("services")
+}
+
+model ServicePricingVariant {
+  id              String   @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId  String   @map("organization_id") @db.Uuid
+  serviceId       String   @map("service_id") @db.Uuid
+  name            String   @db.VarChar(120)
+  durationMinutes Int      @map("duration_minutes")
+  seniorityTier   String?  @map("seniority_tier") @db.VarChar(20)
+  price           Decimal  @db.Decimal(12, 2)
+  displayOrder    Int      @default(0) @map("display_order")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  service      Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId], name: "ix_spv_service")
+  @@map("service_pricing_variants")
+}
+
+model Package {
+  id              String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId  String    @map("organization_id") @db.Uuid
+  name            String    @db.VarChar(160)
+  price           Decimal   @db.Decimal(12, 2)
+  validForDays    Int?      @map("valid_for_days")
+  coverImageUrl   String?   @map("cover_image_url") @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  organization Organization     @relation(fields: [organizationId], references: [id])
+  services     PackageService[]
+
+  @@index([organizationId], name: "ix_packages_org")
+  @@map("packages")
+}
+
+model PackageService {
+  packageId    String @map("package_id") @db.Uuid
+  serviceId    String @map("service_id") @db.Uuid
+  quantity     Int    @default(1)
+  displayOrder Int    @default(0) @map("display_order")
+
+  package Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@id([packageId, serviceId])
+  @@map("package_services")
+}
+
+model Product {
+  id              String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId  String    @map("organization_id") @db.Uuid
+  name            String    @db.VarChar(160)
+  sku             String    @db.VarChar(60)
+  costPrice       Decimal   @default(0) @map("cost_price") @db.Decimal(12, 2)
+  salePrice       Decimal   @map("sale_price") @db.Decimal(12, 2)
+  stockQuantity   Int       @default(0) @map("stock_quantity")
+  minStockLevel   Int       @default(0) @map("min_stock_level")
+  unit            String    @db.VarChar(10)
+  coverImageUrl   String?   @map("cover_image_url") @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  organization    Organization     @relation(fields: [organizationId], references: [id])
+  stockMovements  StockMovement[]
+  commissionRules CommissionRule[]
+
+  @@unique([organizationId, sku], name: "uq_products_org_sku")
+  @@index([organizationId], name: "ix_products_org")
+  @@map("products")
+}
+
+model StockMovement {
+  id             String   @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  delta          Int
+  type           String   @db.VarChar(20)
+  reason         String?  @db.Text
+  performedBy    String?  @map("performed_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  product      Product      @relation(fields: [productId], references: [id])
+  performer    Member?      @relation(fields: [performedBy], references: [id])
+
+  @@index([productId, createdAt(sort: Desc)], name: "ix_sm_product_created")
+  @@index([organizationId, createdAt(sort: Desc)], name: "ix_sm_org_created")
+  @@map("stock_movements")
+}
+
+model CommissionRule {
+  id             String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  scopeType      String    @map("scope_type") @db.VarChar(20)
+  serviceId      String?   @map("service_id") @db.Uuid
+  memberId       String?   @map("member_id") @db.Uuid
+  categoryId     String?   @map("category_id") @db.Uuid
+  productId      String?   @map("product_id") @db.Uuid
+  kind           String    @db.VarChar(20)
+  value          Decimal   @db.Decimal(12, 4)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  service      Service?     @relation(fields: [serviceId], references: [id])
+  member       Member?      @relation(fields: [memberId], references: [id])
+  category     Category?    @relation(fields: [categoryId], references: [id])
+  product      Product?     @relation(fields: [productId], references: [id])
+
+  @@map("commission_rules")
+}
+
+// ===== Clients =====
+
+model Client {
+  id             String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  fullName       String    @map("full_name") @db.VarChar(255)
+  phone          String?   @db.VarChar(30)
+  email          String?   @db.VarChar(255)
+  cpf            String?   @db.VarChar(14)
+  birthDate      DateTime? @map("birth_date") @db.Date
+  address        String?   @db.Text
+  notes          String?   @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+  version        Int       @default(1)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, fullName], name: "ix_clients_org_name")
+  @@map("clients")
+}
+
+// ===== Notifications =====
+
+model Notification {
+  id             String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  memberId       String?   @map("member_id") @db.Uuid
+  kind           String    @db.VarChar(40)
+  payload        Json      @default("{}") @db.JsonB
+  readAt         DateTime? @map("read_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  member       Member?      @relation(fields: [memberId], references: [id])
+
+  @@map("notifications")
 }
