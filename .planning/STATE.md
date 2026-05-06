@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 01-foundation/01-frontend-auth-pages-PLAN.md (plan 06 of 7) — all 3 tasks complete including browser verification; ready for 01-ci-integration
-last_updated: "2026-05-06T02:53:00.786Z"
+status: executing
+stopped_at: Completed 01-foundation/01-ci-integration-PLAN.md — Tasks 1+2 complete, at checkpoint Task 3 (human-verify CI green)
+last_updated: "2026-05-06T03:13:45.432Z"
 last_activity: 2026-05-06
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 8
   percent: 86
 ---
 
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 1 of 5 (Foundation)
-Plan: 6 of 7 complete in current phase (01-ci-integration is next)
-Status: Executing — plan 06 complete, plan 07 ready
+Plan: 7 of 7 complete in current phase (01-ci-integration is next)
+Status: Ready to execute
 Last activity: 2026-05-06
 
 Progress: [█████████░] 86%
@@ -56,6 +56,7 @@ Progress: [█████████░] 86%
 | Phase 01-foundation P04 | 527677min | 3 tasks | 22 files |
 | Phase 01-foundation P05 | 68 | 2 tasks | 17 files |
 | Phase 01-foundation P06 | 90 | 3 tasks | 24 files |
+| Phase 01-foundation P07 | 45 | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,9 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: PgBouncer AUTH_TYPE=trust chosen as dev workaround — scram-sha-256 incompatible with PG16 pool mode without auth_query; backend connects direct to postgres for dev; fix in plan 07
 - [Phase 01-foundation]: sgs_app temporarily granted BYPASSRLS for dev — signup creates org without tenant context; fix in plan 07 via SECURITY DEFINER function or role split
 - [Phase 01-foundation]: auth.api.ts uses manual gql tagged templates (not codegen) — codegen integration deferred to plan 07
+- [Phase 01-foundation]: EMAIL_ADAPTER Symbol token (not string) for type-safe DI override — TestEmailAdapter used in integration tests via .overrideProvider
+- [Phase 01-foundation]: full-auth-flow relogins after TOKEN_REUSE_DETECTED family revocation — both old and new tokens are invalid after family revoke
+- [Phase 01-foundation]: frontend-codegen CI job asserts src/gql/graphql.ts (client-preset output dir), not src/types/graphql.ts
 
 ### Pending Todos
 
@@ -103,6 +107,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-06T02:53:00.777Z
-Stopped at: Completed 01-foundation/01-frontend-auth-pages-PLAN.md (plan 06 of 7) — all 3 tasks complete including browser verification; ready for 01-ci-integration
+Last session: 2026-05-06T03:13:45.426Z
+Stopped at: Completed 01-foundation/01-ci-integration-PLAN.md — Tasks 1+2 complete, at checkpoint Task 3 (human-verify CI green)
 Resume file: None

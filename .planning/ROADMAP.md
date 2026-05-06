@@ -10,7 +10,7 @@ Construir um SaaS multi-tenant completo para salões de beleza, partindo da fund
 
 ## Phases
 
-- [ ] **Phase 1: Foundation** - Infraestrutura multi-tenant, autenticação e RLS — pré-requisito não negociável para tudo
+- [x] **Phase 1: Foundation** - Infraestrutura multi-tenant, autenticação e RLS — pré-requisito não negociável para tudo (completed 2026-05-06)
 - [ ] **Phase 2: Core Domain** - Catálogo de serviços/produtos e perfis de clientes — o inventário do negócio
 - [ ] **Phase 3: Core Operations** - Loop atômico de agendamento + POS + financeiro + comissões
 - [ ] **Phase 4: Bridal & Contracts** - Vertical de noivas, contratos de evento e IA de otimização de agenda
@@ -39,7 +39,7 @@ Construir um SaaS multi-tenant completo para salões de beleza, partindo da fund
 4. Um CI smoke test verifica que queries da `sgs_app` role não conseguem ler dados de outra organização (RLS enforcement comprovado)
 5. PgBouncer está em transaction-mode e o CI test confirma que `SET LOCAL` para `app.current_tenant_id` não vaza entre conexões
 
-**Plans:** 6/7 plans executed
+**Plans:** 8/7 plans complete
 
 Plans:
 - [x] 01-PLAN-monorepo-docker.md — pnpm monorepo + Docker Compose stack (postgres, pgbouncer, valkey, backend, frontend) booting in <5min
@@ -170,7 +170,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 6/7 | In Progress | - |
+| 1. Foundation | 8/7 | Complete   | 2026-05-06 |
 | 2. Core Domain | 0/? | Not started | - |
 | 3. Core Operations | 0/? | Not started | - |
 | 4. Bridal & Contracts | 0/? | Not started | - |
