@@ -1,16 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ResendAdapter } from './resend.adapter';
+import { EMAIL_ADAPTER } from './email.module';
+import type { EmailAdapter } from './resend.adapter';
 import type { Env } from '../config/env.schema';
 
 /**
  * EmailService — composed messaging API for SGS transactional emails.
- * Delegates to ResendAdapter for actual delivery.
+ * Delegates to the EMAIL_ADAPTER token (ResendAdapter in production,
+ * TestEmailAdapter in integration tests).
  */
 @Injectable()
 export class EmailService {
   constructor(
-    private readonly resend: ResendAdapter,
+    @Inject(EMAIL_ADAPTER) private readonly adapter: EmailAdapter,
     private readonly config: ConfigService<Env, true>,
   ) {}
 
@@ -21,7 +23,7 @@ export class EmailService {
   ): Promise<void> {
     const appUrl = this.config.get('FRONTEND_URL', { infer: true });
     const link = `${appUrl}/verificar-email/sucesso?token=${encodeURIComponent(token)}`;
-    await this.resend.send({
+    await this.adapter.send({
       to,
       subject: 'Verifique seu e-mail — SGS',
       html: `<p>Olá, ${fullName},</p>
@@ -40,7 +42,7 @@ export class EmailService {
   ): Promise<void> {
     const appUrl = this.config.get('FRONTEND_URL', { infer: true });
     const link = `${appUrl}/convite/${encodeURIComponent(token)}`;
-    await this.resend.send({
+    await this.adapter.send({
       to,
       subject: `Convite para ${salonName} — SGS`,
       html: `<p>${inviterName} convidou você para entrar na equipe de ${salonName}.</p>

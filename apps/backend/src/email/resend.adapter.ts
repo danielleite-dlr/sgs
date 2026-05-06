@@ -9,6 +9,11 @@ export interface SendEmailParams {
   text?: string;
 }
 
+/** Common interface for all email delivery adapters (production + test). */
+export interface EmailAdapter {
+  send(params: SendEmailParams): Promise<void>;
+}
+
 /**
  * ResendAdapter — thin HTTP client for the Resend transactional email API.
  *
@@ -16,7 +21,7 @@ export interface SendEmailParams {
  * sending. This allows local development without a Resend account.
  */
 @Injectable()
-export class ResendAdapter {
+export class ResendAdapter implements EmailAdapter {
   private readonly logger = new Logger(ResendAdapter.name);
 
   constructor(private readonly config: ConfigService<Env, true>) {}
