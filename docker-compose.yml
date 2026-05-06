@@ -39,6 +39,7 @@ services:
       RESERVE_POOL_SIZE: 5
       SERVER_RESET_QUERY: DISCARD ALL
       IGNORE_STARTUP_PARAMETERS: extra_float_digits
+      AUTH_TYPE: trust
     ports:
       - "${PGBOUNCER_PORT:-5433}:5432"
     depends_on:
@@ -99,7 +100,7 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3000
-      DATABASE_URL: postgres://sgs_app:${POSTGRES_PASSWORD:-sgs_password}@pgbouncer:5432/${POSTGRES_DB:-sgs_dev}
+      DATABASE_URL: postgres://sgs_app:sgs_password@postgres:5432/${POSTGRES_DB:-sgs_dev}
       DIRECT_URL: postgres://${POSTGRES_USER:-sgs_migrator}:${POSTGRES_PASSWORD:-sgs_password}@postgres:5432/${POSTGRES_DB:-sgs_dev}
       REDIS_URL: redis://valkey:6379
       MEILISEARCH_URL: http://meilisearch:7700

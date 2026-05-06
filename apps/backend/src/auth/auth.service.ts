@@ -105,7 +105,7 @@ export class AuthService {
           legalName: input.salonName,
           tradeName: input.salonName,
           documentType: 'CNPJ', // placeholder — collected in onboarding (D-10)
-          documentNumber: `pending-${Date.now()}`, // unique placeholder; org admin will fill in
+          documentNumber: Date.now().toString().slice(-14), // unique 14-char placeholder; org admin fills CNPJ in onboarding
           email: emailLower,
           subdomain,
           segment: input.segment ?? 'salon',
