@@ -21,15 +21,15 @@
 
 ### Catálogo
 
-- [ ] **CAT-01**: Proprietário consegue criar categorias hierárquicas e serviços com precificação dinâmica (variações por duração, profissional, seniority)
-- [ ] **CAT-02**: Proprietário consegue criar pacotes combinando múltiplos serviços com preço próprio
-- [ ] **CAT-03**: Proprietário consegue cadastrar produtos com controle de estoque e alertas de nível mínimo
-- [ ] **CAT-04**: Proprietário consegue configurar regras de comissão por serviço, produto e profissional (fixo ou percentual)
+- [x] **CAT-01**: Proprietário consegue criar categorias hierárquicas e serviços com precificação dinâmica (variações por duração, profissional, seniority)
+- [x] **CAT-02**: Proprietário consegue criar pacotes combinando múltiplos serviços com preço próprio
+- [x] **CAT-03**: Proprietário consegue cadastrar produtos com controle de estoque e alertas de nível mínimo
+- [x] **CAT-04**: Proprietário consegue configurar regras de comissão por serviço, produto e profissional (fixo ou percentual)
 
 ### Clientes
 
-- [ ] **CLI-01**: Atendente consegue criar e editar perfil de cliente com CPF, contatos, data de aniversário e observações
-- [ ] **CLI-02**: Atendente consegue visualizar histórico completo de atendimentos, produtos consumidos e comandas do cliente
+- [x] **CLI-01**: Atendente consegue criar e editar perfil de cliente com CPF, contatos, data de aniversário e observações
+- [x] **CLI-02**: Atendente consegue visualizar histórico completo de atendimentos, produtos consumidos e comandas do cliente
 - [ ] **CLI-03**: Proprietário consegue criar grupo de noivas associando noiva principal + acompanhantes para o mesmo evento
 
 ### Agendamento
@@ -127,12 +127,12 @@
 | AUTH-01 | Phase 1 | Complete |
 | AUTH-02 | Phase 1 | Complete |
 | AUTH-03 | Phase 1 | Complete |
-| CAT-01 | Phase 2 | Pending |
-| CAT-02 | Phase 2 | Pending |
-| CAT-03 | Phase 2 | Pending |
-| CAT-04 | Phase 2 | Pending |
-| CLI-01 | Phase 2 | Pending |
-| CLI-02 | Phase 2 | Pending |
+| CAT-01 | Phase 2 | Complete |
+| CAT-02 | Phase 2 | Complete |
+| CAT-03 | Phase 2 | Complete |
+| CAT-04 | Phase 2 | Complete |
+| CLI-01 | Phase 2 | Complete |
+| CLI-02 | Phase 2 | Complete |
 | CLI-03 | Phase 4 | Pending |
 | SCHED-01 | Phase 3 | Pending |
 | SCHED-02 | Phase 3 | Pending |

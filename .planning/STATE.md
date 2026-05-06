@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Completed 01-foundation/01-ci-integration-PLAN.md — all 3 tasks complete. Phase 1 Foundation done.
-last_updated: "2026-05-06T04:36:48.478Z"
+status: executing
+stopped_at: Completed 02-core-domain/02-database-schema-PLAN.md — all 3 tasks complete. Phase 2 database foundation done.
+last_updated: "2026-05-06T11:59:17.786Z"
 last_activity: 2026-05-06
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 15
-  completed_plans: 8
+  completed_plans: 9
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-02)
 
 **Core value:** Profissional do beleza consegue agendar, atender, cobrar e comunicar com cliente em um único fluxo — sem sair da plataforma.
-**Current focus:** Phase 1 complete — all 7 plans executed. Ready to begin Phase 2 (Core Domain) planning.
+**Current focus:** Phase 02 — core-domain
 
 ## Current Position
 
-Phase: 1 of 5 (Foundation)
-Plan: 7 of 7 complete (Phase 1 Foundation fully done)
-Status: Phase 1 complete — ready to plan Phase 2
+Phase: 02 (core-domain) — EXECUTING
+Plan: 2 of 8
+Status: Ready to execute
 Last activity: 2026-05-06
 
 Progress: [██████████] 100% (Phase 1 of 5)
@@ -57,6 +57,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 01-foundation P05 | 68 | 2 tasks | 17 files |
 | Phase 01-foundation P06 | 90 | 3 tasks | 24 files |
 | Phase 01-foundation P07 | 45 | 2 tasks | 11 files |
+| Phase 02-core-domain P01 | 14 | 3 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,9 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: EMAIL_ADAPTER Symbol token (not string) for type-safe DI override — TestEmailAdapter used in integration tests via .overrideProvider
 - [Phase 01-foundation]: full-auth-flow relogins after TOKEN_REUSE_DETECTED family revocation — both old and new tokens are invalid after family revoke
 - [Phase 01-foundation]: frontend-codegen CI job asserts src/gql/graphql.ts (client-preset output dir), not src/types/graphql.ts
+- [Phase 02-core-domain]: One consolidated Phase 2 migration owns all 11 new tables + members.seniority_tier — Wave 2 plans only add feature code to pre-staged modules
+- [Phase 02-core-domain]: PackageService junction uses EXISTS subquery on packages for tenant isolation (no organization_id column on junction table)
+- [Phase 02-core-domain]: commission_rules.value uses DECIMAL(12,4) for extra precision on percentage rates
 
 ### Pending Todos
 
@@ -107,6 +111,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-06T04:36:48.452Z
-Stopped at: Completed 01-foundation/01-ci-integration-PLAN.md — all 3 tasks complete. Phase 1 Foundation done.
+Last session: 2026-05-06T11:59:17.779Z
+Stopped at: Completed 02-core-domain/02-database-schema-PLAN.md — all 3 tasks complete. Phase 2 database foundation done.
 Resume file: None
