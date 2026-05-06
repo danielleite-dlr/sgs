@@ -34,7 +34,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm -r lint --if-present
 
-  tenant-isolation:
+  integration:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,7 +53,7 @@ jobs:
       - name: Wait for healthy
         run: |
           for i in $(seq 1 60); do
-            healthy=$(docker compose ps --format json | jq -r '[.[] | select(.Service != "backend" and .Service != "frontend")] | [.[].Health] | unique | join(",")')
+            healthy=$(docker compose ps --format json | jq -r '[.[] | select(.Service != "backend" and .Service != "frontend" and .Service != "meilisearch")] | [.[].Health] | unique | join(",")')
             if [ "$healthy" = "healthy" ]; then exit 0; fi
             sleep 5
           done
@@ -77,17 +77,100 @@ jobs:
           DIRECT_URL: postgresql://sgs_migrator:change_me_in_production@localhost:5432/sgs_dev
           DATABASE_URL: postgresql://sgs_app:change_me_in_production@localhost:5433/sgs_dev?pgbouncer=true&connection_limit=10
 
-      - name: Run RLS isolation suite
+      - name: Run all integration suites
+        # Runs: rls-isolation, auth.e2e, rbac.e2e, invitation.e2e, full-auth-flow
         working-directory: apps/backend
         run: pnpm test:integration
         env:
+          NODE_ENV: test
           DIRECT_URL: postgresql://sgs_migrator:change_me_in_production@localhost:5432/sgs_dev
           DATABASE_URL: postgresql://sgs_app:change_me_in_production@localhost:5433/sgs_dev?pgbouncer=true&connection_limit=10
+          JWT_SECRET: ci_access_secret_at_least_32_chars_long_xxxxx
+          JWT_REFRESH_SECRET: ci_refresh_secret_at_least_32_chars_long_xxxxx
+          FRONTEND_URL: http://localhost:5173
+          EMAIL_FROM: ci@test.local
 
       - name: Confirm PgBouncer is in transaction mode
         run: |
           cat docker-compose.yml | grep -E "POOL_MODE|pool_mode" | grep -i "transaction"
 
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
+
+  boot-time:
+    # Asserts Phase 1 Success Criterion #1: full stack boots in <5 minutes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env
+      - name: Time docker compose up
+        run: |
+          start=$(date +%s)
+          docker compose up -d --build
+          # Wait for all services healthy (postgres, pgbouncer, valkey, meilisearch, backend, frontend)
+          for i in $(seq 1 60); do
+            total=$(docker compose ps --format json | jq '. | length')
+            healthy=$(docker compose ps --format json | jq '[.[] | select(.Health == "healthy")] | length')
+            started=$(docker compose ps --format json | jq '[.[] | select(.State == "running")] | length')
+            if [ "$total" -gt 0 ] && [ "$healthy" -gt 0 ] && [ "$started" = "$total" ]; then
+              end=$(date +%s)
+              elapsed=$((end - start))
+              echo "Boot time: ${elapsed}s"
+              if [ $elapsed -gt 300 ]; then
+                echo "FAIL: boot exceeded 5 minutes (Phase 1 SC #1)"
+                docker compose ps
+                exit 1
+              fi
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "FAIL: services did not become healthy within 5 minutes"
+          docker compose ps
+          exit 1
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
+
+  frontend-codegen:
+    # D-08: graphql-codegen is the chosen codegen pipeline; this job verifies it
+    # runs end-to-end against the live backend schema.
+    runs-on: ubuntu-latest
+    needs: integration
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: cp .env.example .env
+      - name: Boot backend and its dependencies
+        run: docker compose up -d postgres pgbouncer valkey meilisearch backend
+      - name: Wait for backend health
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:3000/health >/dev/null 2>&1; then exit 0; fi
+            sleep 5
+          done
+          docker compose logs backend
+          exit 1
+      - name: Apply migrations
+        run: |
+          docker compose exec -T backend pnpm prisma:migrate:deploy
+        env:
+          DIRECT_URL: postgresql://sgs_migrator:change_me_in_production@localhost:5432/sgs_dev
+      - run: pnpm install --frozen-lockfile
+      - name: Generate GraphQL types
+        working-directory: apps/frontend
+        run: pnpm codegen
+        env:
+          VITE_API_URL: http://localhost:3000
+      - name: Assert generated types exist
+        run: test -f apps/frontend/src/gql/graphql.ts
       - name: Tear down
         if: always()
         run: docker compose down -v
