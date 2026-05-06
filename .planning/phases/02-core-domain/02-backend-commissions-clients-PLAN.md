@@ -5,12 +5,16 @@ type: execute
 wave: 2
 depends_on: [01]
 files_modified:
+  - apps/backend/src/graphql/schema/identity.graphql
   - apps/backend/src/graphql/schema/commissions.graphql
   - apps/backend/src/graphql/schema/clients.graphql
   - apps/backend/src/catalog/commissions/commissions.service.ts
   - apps/backend/src/catalog/commissions/commissions.resolver.ts
   - apps/backend/src/catalog/commissions/dto/commission.input.ts
   - apps/backend/src/catalog/commissions/commissions.module.ts
+  - apps/backend/src/identity/members.service.ts
+  - apps/backend/src/identity/members.resolver.ts
+  - apps/backend/src/identity/identity.module.ts
   - apps/backend/src/clients/clients.service.ts
   - apps/backend/src/clients/clients.resolver.ts
   - apps/backend/src/clients/clients.module.ts
@@ -18,6 +22,7 @@ files_modified:
   - apps/backend/src/clients/cpf.util.ts
   - apps/backend/test/integration/commission-rules.e2e.spec.ts
   - apps/backend/test/integration/clients.e2e.spec.ts
+  - apps/backend/test/integration/members.e2e.spec.ts
 autonomous: true
 requirements: [CAT-04, CLI-01, CLI-02]
 
@@ -31,7 +36,12 @@ must_haves:
     - "clientHistory query returns empty array in Phase 2 (Phase 3 fills it)"
     - "Client requires at least one of (phone, email)"
     - "All ops tenant-scoped via runWithTenant; RLS proven by integration test"
+    - "members query returns active org members (deletedAt IS NULL) gated by MEMBER_READ — required by frontend Plan 07 commission rule member picker"
+    - "Member GraphQL type defined in identity.graphql — referenced cross-SDL by commissions.graphql via NestJS typePaths glob"
   artifacts:
+    - path: "apps/backend/src/graphql/schema/identity.graphql"
+      provides: "Defines Member type + members query for cross-SDL reference (consumed by commissions.graphql + frontend commission rule picker)"
+      contains: "type Member"
     - path: "apps/backend/src/graphql/schema/commissions.graphql"
       provides: "SDL for CommissionRule + 5 scope types + create/update/delete + list-with-resolved-target"
       contains: "type CommissionRule"
@@ -41,6 +51,9 @@ must_haves:
     - path: "apps/backend/src/catalog/commissions/commissions.service.ts"
       provides: "CRUD enforcing scope_shape contract from Plan 01 DB migration"
       min_lines: 100
+    - path: "apps/backend/src/identity/members.service.ts"
+      provides: "list active members of org (used by frontend commission picker + future schedule UI)"
+      min_lines: 30
     - path: "apps/backend/src/clients/clients.service.ts"
       provides: "Client CRUD + duplicate lookup + empty-history stub"
       min_lines: 120
@@ -60,14 +73,22 @@ must_haves:
       to: "Phase 3 implementation slot"
       via: "currently returns []; phase 3 replaces with real aggregator"
       pattern: "history"
+    - from: "commissions.graphql Member reference"
+      to: "identity.graphql Member type"
+      via: "NestJS GraphQL typePaths glob ['./src/**/*.graphql'] resolves cross-SDL refs at boot"
+      pattern: "type Member"
+    - from: "members.resolver.ts"
+      to: "@RequirePermission(MEMBER_READ)"
+      via: "Phase 1 already grants MEMBER_READ to ADMIN/MANAGER/ATTENDANT/PROFESSIONAL"
+      pattern: "MEMBER_READ"
 ---
 
 <objective>
-Implement the remaining Phase 2 backend domains: commission_rules CRUD (config only, calculation is Phase 3) and clients (CRUD + duplicate-lookup + history stub). Both leverage `runWithTenant`, are gated by `@RequirePermission`, and ship with integration tests proving tenant isolation, business validation, and RBAC.
+Implement the remaining Phase 2 backend domains: commission_rules CRUD (config only, calculation is Phase 3), clients (CRUD + duplicate-lookup + history stub), and a thin `members` query exposed from the existing identity module so the frontend commission rule picker can resolve member options. All ops leverage `runWithTenant`, are gated by `@RequirePermission`, and ship with integration tests proving tenant isolation, business validation, and RBAC.
 
-Purpose: CAT-04 ("regras de comissão por serviço/produto/profissional") and CLI-01/CLI-02 ("perfil + histórico"). Phase 3 will implement automatic commission calculation on comanda close (consuming the rules) and populate the client history aggregator. This plan delivers the CRUD + structural query slots they need.
+Purpose: CAT-04 ("regras de comissão por serviço/produto/profissional") and CLI-01/CLI-02 ("perfil + histórico"). Phase 3 will implement automatic commission calculation on comanda close (consuming the rules) and populate the client history aggregator. This plan delivers the CRUD + structural query slots they need, plus the cross-SDL `Member` type definition that commissions.graphql depends on.
 
-Output: Two NestJS modules (commissions, clients) plus a CPF validation utility, two GraphQL SDL files, two integration test specs.
+Output: Three NestJS modules (commissions, clients, members extension to identity) plus a CPF validation utility, three GraphQL SDL updates, three integration test specs.
 </objective>
 
 <execution_context>
@@ -85,6 +106,8 @@ Output: Two NestJS modules (commissions, clients) plus a CPF validation utility,
 @apps/backend/src/database/tenant-context.service.ts
 @apps/backend/src/authz/permissions.catalog.ts
 @apps/backend/src/auth/auth.service.ts
+@apps/backend/src/identity/identity.module.ts
+@apps/backend/src/graphql/schema/identity.graphql
 
 <interfaces>
 <!-- Plan 01 outputs commission_rules + clients tables already exist -->
@@ -111,26 +134,41 @@ CPF validation algorithm (D-21): Brazilian CPF checksum
 - Compute first verifier digit using sum of first 9 digits × weights 10..2 mod 11
 - Compute second verifier using first 10 digits × weights 11..2 mod 11
 - Both verifiers must match positions 10 and 11
+
+Permissions (Phase 1 catalog already defines `MEMBER_READ` and grants it to ALL four roles):
+- MEMBER_READ → list members (this plan adds the query gated by it)
+- COMMISSION_READ / COMMISSION_WRITE — added by Plan 01 catalog extension (verify present, else extend)
+- CLIENT_READ / CLIENT_WRITE — added by Plan 01 catalog extension
+
+GraphQL typePaths (already configured in `apps/backend/src/graphql/graphql.module.ts`):
+- `typePaths: ['./src/**/*.graphql']` — globs ALL .graphql files under src/. Member type defined in identity.graphql is automatically visible to commissions.graphql at schema build time. No imports needed.
 </interfaces>
 </context>
 
 <tasks>
 
 <task type="auto" tdd="true">
-  <name>Task 1: Commission rules CRUD with scope precedence + conflict detection</name>
+  <name>Task 1: Commission rules CRUD with scope precedence + conflict detection + Member type/query for cross-SDL reference</name>
   <files>
+    apps/backend/src/graphql/schema/identity.graphql
     apps/backend/src/graphql/schema/commissions.graphql
     apps/backend/src/catalog/commissions/commissions.service.ts
     apps/backend/src/catalog/commissions/commissions.resolver.ts
     apps/backend/src/catalog/commissions/dto/commission.input.ts
     apps/backend/src/catalog/commissions/commissions.module.ts
+    apps/backend/src/identity/members.service.ts
+    apps/backend/src/identity/members.resolver.ts
+    apps/backend/src/identity/identity.module.ts
     apps/backend/test/integration/commission-rules.e2e.spec.ts
+    apps/backend/test/integration/members.e2e.spec.ts
   </files>
   <read_first>
-    - apps/backend/prisma/schema.prisma (CommissionRule model)
+    - apps/backend/prisma/schema.prisma (CommissionRule model, Member model)
     - apps/backend/prisma/migrations/20260506000000_phase2_catalog_clients/migration.sql (unique partial indexes for conflict detection)
     - .planning/phases/02-core-domain/02-CONTEXT.md (D-16, D-17, D-18, D-19)
     - apps/backend/src/auth/auth.service.ts (errorPayload pattern)
+    - apps/backend/src/identity/invitation.resolver.ts (existing identity resolver pattern — extend module to add MembersResolver)
+    - apps/backend/src/authz/permissions.catalog.ts (confirm MEMBER_READ present — already granted to all 4 roles in Phase 1)
   </read_first>
   <behavior>
     - createCommissionRule({ scopeType, kind, value, memberId?, serviceId?, categoryId?, productId? }) validates the scope shape (matches D-17 contract) before insert
@@ -139,9 +177,114 @@ CPF validation algorithm (D-21): Brazilian CPF checksum
     - listCommissionRules returns rules with resolved targets (member.displayName, service.name, etc.) for UI display
     - softDeleteCommissionRule sets deleted_at — once deleted, the unique partial index allows a new rule for the same scope
     - Validate `kind ∈ {fixed, percentage}` and `value >= 0`. For `kind=percentage`, `value <= 100` (UI displays as %; 0–100 expected).
+    - members query returns active (deletedAt IS NULL) members of the current org with id + displayName + role for the frontend picker
+    - members query gated by MEMBER_READ — Phase 1 already grants MEMBER_READ to all 4 roles, so any authenticated user in the org can list members
   </behavior>
   <action>
-**A. Create `apps/backend/src/graphql/schema/commissions.graphql`:**
+**A. Extend `apps/backend/src/graphql/schema/identity.graphql`** by adding the `Member` type and `members` query. This is the **single source of truth** for the `Member` type — `commissions.graphql` references it but the GraphQL `typePaths: ['./src/**/*.graphql']` glob in `graphql.module.ts` resolves the cross-SDL reference at schema build time. APPEND (do NOT overwrite existing invitation SDL):
+
+```graphql
+# ===== Members (added Phase 2 — needed by commissions.graphql cross-SDL reference) =====
+
+extend type Query {
+  members: [Member!]!
+}
+
+type Member {
+  id: UUID!
+  displayName: String!
+  email: Email!
+  roleName: String!
+  seniorityTier: SeniorityTier
+  createdAt: DateTime!
+}
+
+enum SeniorityTier { junior pleno senior }
+```
+
+NOTE: If Plan 03 already defined `SeniorityTier` (D-08 lives somewhere — check `catalog.graphql`), DO NOT redeclare it here; remove from this SDL and rely on the existing definition. Use `grep -rn "enum SeniorityTier" apps/backend/src/graphql/schema/` to verify before committing. If it doesn't exist anywhere, this SDL owns it.
+
+**B. Create `apps/backend/src/identity/members.service.ts`:**
+
+```ts
+import { Injectable } from '@nestjs/common';
+import { TenantContextService } from '../database/tenant-context.service';
+
+@Injectable()
+export class MembersService {
+  constructor(private readonly tenant: TenantContextService) {}
+
+  async listActive(orgId: string) {
+    return this.tenant.runWithTenant(orgId, (tx) =>
+      tx.member.findMany({
+        where: { organizationId: orgId, deletedAt: null },
+        select: {
+          id: true,
+          displayName: true,
+          email: true,
+          seniorityTier: true,
+          createdAt: true,
+          role: { select: { name: true } },
+        },
+        orderBy: { displayName: 'asc' },
+      }).then((rows) => rows.map((r) => ({
+        id: r.id,
+        displayName: r.displayName,
+        email: r.email,
+        roleName: r.role?.name ?? 'UNKNOWN',
+        seniorityTier: r.seniorityTier ?? null,
+        createdAt: r.createdAt,
+      }))),
+    );
+  }
+}
+```
+
+NOTE: If `Member.deletedAt` does not exist in the Prisma schema (Phase 1 may have used a different soft-delete column), drop the `deletedAt: null` filter and rely on `Member.status` or whatever Phase 1 established. Read `apps/backend/prisma/schema.prisma` Member model to verify.
+
+**C. Create `apps/backend/src/identity/members.resolver.ts`:**
+
+```ts
+import { Args, Query, Resolver } from '@nestjs/graphql';
+import { MembersService } from './members.service';
+import { RequirePermission } from '../authz/decorators/require-permission.decorator';
+import { CurrentOrganization } from '../authz/decorators/current-organization.decorator';
+import { PERMISSIONS } from '../authz/permissions.catalog';
+
+@Resolver()
+export class MembersResolver {
+  constructor(private readonly members: MembersService) {}
+
+  @Query()
+  @RequirePermission(PERMISSIONS.MEMBER_READ)
+  async members(@CurrentOrganization() orgId: string) {
+    return this.members.listActive(orgId);
+  }
+}
+```
+
+Use the same `@CurrentOrganization` / `@RequirePermission` decorators that Phase 1's `InvitationResolver` uses. If those decorator names differ in Phase 1, mirror the existing resolver's exact pattern.
+
+**D. Update `apps/backend/src/identity/identity.module.ts`** to register the new providers:
+
+```ts
+import { Module } from '@nestjs/common';
+import { DatabaseModule } from '../database/database.module';
+import { AuthzModule } from '../authz/authz.module';
+import { InvitationService } from './invitation.service';
+import { InvitationResolver } from './invitation.resolver';
+import { MembersService } from './members.service';
+import { MembersResolver } from './members.resolver';
+
+@Module({
+  imports: [DatabaseModule, AuthzModule],
+  providers: [InvitationService, InvitationResolver, MembersService, MembersResolver],
+  exports: [InvitationService, MembersService],
+})
+export class IdentityModule {}
+```
+
+**E. Create `apps/backend/src/graphql/schema/commissions.graphql`:**
 
 ```graphql
 # ===== Commission Rules =====
@@ -195,9 +338,9 @@ type CommissionRulePayload {
 }
 ```
 
-NOTE: `Member` and `Service`, `Category`, `Product` types are referenced — they are defined by Plans 03/04. As long as resolvers don't return null payloads for those branches, GraphQL resolves the references at field time. Backend boot order via NestJS module imports handles this.
+NOTE: `Member`, `Service`, `Category`, `Product` types are referenced — they are defined by Plans 03/04 and the new identity.graphql Member type. NestJS GraphQL `typePaths: ['./src/**/*.graphql']` glob (configured in `apps/backend/src/graphql/graphql.module.ts`) discovers all SDL files at boot, so the cross-SDL Member reference resolves automatically. Backend boot will fail with "Unknown type Member" if step A is not committed first — keep them in the same commit.
 
-**B. Create `dto/commission.input.ts`:**
+**F. Create `dto/commission.input.ts`:**
 
 ```ts
 import { IsEnum, IsOptional, IsUUID, Matches } from 'class-validator';
@@ -224,7 +367,7 @@ export class UpdateCommissionRuleInput {
 }
 ```
 
-**C. Create `commissions.service.ts`:**
+**G. Create `commissions.service.ts`:**
 
 ```ts
 import { Injectable } from '@nestjs/common';
@@ -361,11 +504,18 @@ export class CommissionsService {
 }
 ```
 
-**D. Create `commissions.resolver.ts`** with `COMMISSION_READ`/`COMMISSION_WRITE` gating. Same structure as previous resolvers.
+**H. Create `commissions.resolver.ts`** with `COMMISSION_READ`/`COMMISSION_WRITE` gating. Same structure as previous resolvers.
 
-**E. Update `commissions.module.ts`** to register providers.
+**I. Update `commissions.module.ts`** to register providers.
 
-**F. Create integration test `commission-rules.e2e.spec.ts`:**
+**J. Create integration test `members.e2e.spec.ts`:**
+1. Authenticated ADMIN of org A calls `members` query → returns the seeded ADMIN + any invited members
+2. ATTENDANT calls `members` → returns same list (MEMBER_READ granted to all roles)
+3. Unauthenticated request → returns auth error (not OK)
+4. RLS: org B's ADMIN cannot see org A's members (returns only org B members)
+5. Soft-deleted member excluded (if `deletedAt` exists in Member model)
+
+**K. Create integration test `commission-rules.e2e.spec.ts`:**
 1. ADMIN creates default org rule (scopeType='default', kind='percentage', value='10') — succeeds
 2. ADMIN creates second default rule → COMMISSION_SCOPE_CONFLICT
 3. After softDelete of first default rule, creating a new one → succeeds
@@ -374,22 +524,31 @@ export class CommissionsService {
 6. Create rule referencing non-existent serviceId → REFERENCE_NOT_FOUND
 7. MANAGER can READ but not WRITE (per Plan 01 D-02 — MANAGER lacks COMMISSION_WRITE)
 8. RLS: org B cannot read org A's rules
+9. Schema boot smoke: backend starts and `members`, `commissionRules` queries appear in introspection — proves Member type is resolvable cross-SDL
   </action>
   <verify>
-    <automated>cd apps/backend &amp;&amp; pnpm typecheck &amp;&amp; pnpm test:int -- --testPathPattern commission-rules</automated>
+    <automated>cd apps/backend &amp;&amp; pnpm typecheck &amp;&amp; pnpm test:int -- --testPathPattern "(commission-rules|members)"</automated>
   </verify>
   <acceptance_criteria>
+    - `identity.graphql` defines `type Member` with `id, displayName, email, roleName, seniorityTier, createdAt` fields and `members: [Member!]!` query
     - `commissions.graphql` defines 5-value `enum CommissionScopeType` and 2-value `enum CommissionKind`
     - `commissions.service.ts` &gt;= 100 lines, contains `Prisma.PrismaClientKnownRequestError` with `e.code === 'P2002'` branch
     - `validateScopeShape` covers all 5 scope types
-    - 8 integration tests pass
-    - Test 7 confirms MANAGER role gets FORBIDDEN on createCommissionRule
-    - Test 3 confirms unique partial index excludes soft-deleted (re-create works after delete)
+    - `members.service.ts` exports `listActive(orgId)` returning array of `{ id, displayName, email, roleName, seniorityTier, createdAt }`
+    - `members.resolver.ts` gated by `@RequirePermission(PERMISSIONS.MEMBER_READ)`
+    - `identity.module.ts` exports `MembersService` (so other modules could consume it later)
+    - 9 commission-rules integration tests pass + 5 members tests pass
+    - Test 7 (commission) confirms MANAGER role gets FORBIDDEN on createCommissionRule
+    - Test 3 (commission) confirms unique partial index excludes soft-deleted (re-create works after delete)
+    - Test 9 (commission boot smoke) confirms cross-SDL Member resolution works (introspection returns Member type)
+    - Backend boots cleanly with `pnpm --filter @sgs/backend start:dev` (no "Unknown type Member" SDL errors)
   </acceptance_criteria>
   <done>
     - Commission rules CRUD operational with strict shape validation, conflict detection, range checks
     - DB unique partial indexes leveraged for conflict detection
     - Soft delete enables scope reuse
+    - Member type defined and members query exposed for frontend commission picker
+    - Cross-SDL Member reference resolves cleanly via NestJS typePaths glob
   </done>
 </task>
 
@@ -798,21 +957,24 @@ export class ClientsModule {}
 </tasks>
 
 <verification>
-- `commissions.graphql` and `clients.graphql` parse on backend boot
-- Both modules registered, exporting their services for Phase 3 to import
+- `identity.graphql`, `commissions.graphql`, and `clients.graphql` parse together on backend boot (no "Unknown type Member" SDL errors)
+- All three modules registered, exporting their services for Phase 3 to import
 - All resolvers gated by appropriate permissions
 - All DB ops wrapped in `runWithTenant`
-- 21 integration tests across both specs pass
+- 27 integration tests across all specs pass (5 members + 9 commission-rules + 13 clients)
 - CPF unit tests pass independently of DB
+- GraphQL introspection at /graphql shows: createCommissionRule, clients, clientsByField, clientHistory, members
 </verification>
 
 <success_criteria>
 - `pnpm --filter @sgs/backend typecheck` exits 0
 - All integration tests in this plan pass
-- Backend boot smoke (Nest test harness) succeeds with new modules registered
-- GraphQL playground introspection at /graphql shows: createCommissionRule, clients, clientsByField, clientHistory mutations/queries
+- Backend boot smoke (Nest test harness) succeeds with new modules registered AND cross-SDL Member type resolves
+- GraphQL playground introspection at /graphql shows: createCommissionRule, clients, clientsByField, clientHistory, members queries/mutations
 </success_criteria>
 
 <output>
-After completion, create `.planning/phases/02-core-domain/02-backend-commissions-clients-SUMMARY.md` documenting commission rule scope contract, CPF validation algorithm, client history stub interface (so Phase 3 has the exact GraphQL shape to implement against).
+After completion, create `.planning/phases/02-core-domain/02-backend-commissions-clients-SUMMARY.md` documenting commission rule scope contract, CPF validation algorithm, client history stub interface (so Phase 3 has the exact GraphQL shape to implement against), and the new `members` query + `Member` type contract (so frontend Plan 07 picker has exact field list).
 </output>
+</content>
+</invoke>

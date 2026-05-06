@@ -8,13 +8,16 @@ files_modified:
   - apps/frontend/src/features/catalog/api/pacotes.api.ts
   - apps/frontend/src/features/catalog/api/produtos.api.ts
   - apps/frontend/src/features/catalog/api/comissoes.api.ts
+  - apps/frontend/src/features/catalog/api/members.api.ts
   - apps/frontend/src/features/catalog/components/PackagePriceSummary.tsx
   - apps/frontend/src/features/catalog/components/PackageServicesPicker.tsx
   - apps/frontend/src/features/catalog/components/PacoteForm.tsx
   - apps/frontend/src/features/catalog/components/ProdutoForm.tsx
   - apps/frontend/src/features/catalog/components/AdjustStockDialog.tsx
   - apps/frontend/src/components/ui/stock-badge.tsx
+  - apps/frontend/src/components/ui/textarea.tsx
   - apps/frontend/src/features/catalog/components/CommissionRuleForm.tsx
+  - apps/frontend/src/features/catalog/components/EntityCombobox.tsx
   - apps/frontend/src/pages/PacotesPage.tsx
   - apps/frontend/src/pages/ProdutosPage.tsx
   - apps/frontend/src/pages/ComissoesPage.tsx
@@ -33,6 +36,7 @@ must_haves:
     - "User clicks 'Ajustar estoque' on a product, enters delta + reason, stock updates and movement audited"
     - "Sidebar 'Produtos' nav item shows TriangleAlert icon with tooltip when lowStockCount > 0"
     - "User creates commission rule via radio scope flow: Profissional+Serviço → both pickers / Serviço → service picker / Categoria → category select / Produto → product picker / Padrão → no extras"
+    - "Each conditional picker (member, service, category, product) is concrete and queries its respective Apollo source — no placeholders"
     - "Submitting conflicting commission scope returns COMMISSION_SCOPE_CONFLICT error rendered as inline Alert"
     - "Commissions list shows resolved target name (e.g., 'Ana — Corte feminino' for member_service rules)"
   artifacts:
@@ -45,12 +49,18 @@ must_haves:
     - path: "apps/frontend/src/components/ui/stock-badge.tsx"
       provides: "Inline error-tinted badge for low-stock products"
       min_lines: 30
+    - path: "apps/frontend/src/components/ui/textarea.tsx"
+      provides: "shadcn Textarea primitive (added unconditionally in Task 2)"
+      min_lines: 10
     - path: "apps/frontend/src/features/catalog/components/AdjustStockDialog.tsx"
       provides: "Dialog for delta + reason adjustStock mutation per UI-SPEC §Stock Adjustment Dialog"
       min_lines: 80
+    - path: "apps/frontend/src/features/catalog/components/EntityCombobox.tsx"
+      provides: "Generic Popover+Command combobox used by CommissionRuleForm (member, service, product variants)"
+      min_lines: 60
     - path: "apps/frontend/src/features/catalog/components/CommissionRuleForm.tsx"
-      provides: "Radio-driven scope-first form per UI-SPEC §Commission Rule Scope UX"
-      min_lines: 150
+      provides: "Radio-driven scope-first form per UI-SPEC §Commission Rule Scope UX with 4 concrete conditional pickers"
+      min_lines: 200
   key_links:
     - from: "AppShell.tsx"
       to: "lowStockCount query"
@@ -61,17 +71,21 @@ must_haves:
       via: "selected services × quantity feeds individualSum prop"
       pattern: "PackagePriceSummary"
     - from: "CommissionRuleForm.tsx"
-      to: "scope conditional fields"
-      via: "watch('scopeType') drives which combobox renders"
+      to: "scope conditional pickers (MemberCombobox/ServiceCombobox/CategorySelect/ProductCombobox)"
+      via: "watch('scopeType') drives which combobox renders; setValue() binds picker selection to memberId/serviceId/categoryId/productId"
       pattern: "scopeType"
+    - from: "members.api.ts MembersQuery"
+      to: "Plan 05 backend members resolver"
+      via: "Apollo useQuery — gated server-side by MEMBER_READ"
+      pattern: "MembersQuery"
 ---
 
 <objective>
-Build the remaining catalog screens: Pacotes (with price-vs-sum transparency), Produtos (with low-stock badge + sidebar warning + adjustStock dialog), and Comissões (with scope-first radio flow). Wire `lowStockCount` into AppShell so the sidebar warning icon works app-wide.
+Build the remaining catalog screens: Pacotes (with price-vs-sum transparency), Produtos (with low-stock badge + sidebar warning + adjustStock dialog), and Comissões (with scope-first radio flow and four CONCRETE conditional pickers — no placeholder stubs). Wire `lowStockCount` into AppShell so the sidebar warning icon works app-wide. Install the shadcn `textarea` primitive (used by AdjustStockDialog).
 
 Purpose: Phase 2 success criteria 2, 3, 4 — package with 3 services and own price; product with min stock alert; commission rule of 20% applied to specific service.
 
-Output: Three complete feature pages with their forms, the low-stock indicator pipeline, and AdjustStockDialog.
+Output: Three complete feature pages with their forms, the low-stock indicator pipeline, AdjustStockDialog, and a fully-wired CommissionRuleForm with concrete pickers for member/service/category/product scopes.
 </objective>
 
 <execution_context>
@@ -94,9 +108,12 @@ Output: Three complete feature pages with their forms, the low-stock indicator p
 @apps/frontend/src/components/layout/SidebarNav.tsx
 @apps/frontend/src/features/catalog/components/CategoriaForm.tsx
 @apps/frontend/src/features/catalog/components/ServicoForm.tsx
+@apps/frontend/src/features/catalog/components/PackageServicesPicker.tsx
+@apps/frontend/src/features/catalog/api/categorias.api.ts
+@apps/frontend/src/features/catalog/api/servicos.api.ts
 
 <interfaces>
-<!-- Plan 02 (sidebar lowStockCount prop), Plan 04 (lowStockCount query), Plan 06 (form/dialog patterns) -->
+<!-- Plan 02 (sidebar lowStockCount prop), Plan 04 (lowStockCount query), Plan 05 (commission + members), Plan 06 (form/dialog patterns) -->
 
 From Plan 04 GraphQL SDL (products.graphql):
 - Query lowStockCount: Int!
@@ -106,15 +123,25 @@ From Plan 04 GraphQL SDL (products.graphql):
 
 From Plan 03 GraphQL SDL (catalog.graphql):
 - Query packages: [Package!]!
+- Query categories: [Category!]! (used by CategorySelect for category-scope commission rule)
+- Query services: [Service!]!     (used by ServiceCombobox)
 - Mutation createPackage(input: { name, price, services: [{ serviceId, quantity? }] })
 - Package.individualSum (server-computed) + Package.services (resolved with embedded service objects)
 
-From Plan 05 GraphQL SDL (commissions.graphql):
-- Mutation createCommissionRule(input: { scopeType, kind, value, memberId?, serviceId?, categoryId?, productId? })
-- Errors: COMMISSION_SCOPE_CONFLICT, SCOPE_INVALID, VALUE_OUT_OF_RANGE, REFERENCE_NOT_FOUND
+From Plan 05 GraphQL SDL:
+- commissions.graphql: Mutation createCommissionRule(input: { scopeType, kind, value, memberId?, serviceId?, categoryId?, productId? })
+- commissions.graphql Errors: COMMISSION_SCOPE_CONFLICT, SCOPE_INVALID, VALUE_OUT_OF_RANGE, REFERENCE_NOT_FOUND
+- identity.graphql: Query members: [Member!]! { id, displayName, email, roleName, seniorityTier, createdAt }
+
+From Plan 06 PackageServicesPicker (reference pattern for combobox):
+- Uses Popover + Command shadcn composition
+- Maintains open/close state, filters list as user types
+- onSelect commits the value via callback (this plan's EntityCombobox follows the same pattern)
 
 From Plan 02:
 - `<SidebarNav lowStockCount={N} />` prop already supported — just needs the AppShell to fetch and pass.
+- shadcn primitives installed: Popover, Command, Select, RadioGroup, Dialog, Alert
+- shadcn `textarea` was NOT installed in Plan 02 — Task 2 of THIS plan installs it
 </interfaces>
 </context>
 
@@ -185,7 +212,7 @@ export function PackagePriceSummary({ individualSum, packagePrice }: { individua
 }
 ```
 
-**C. Create `apps/frontend/src/features/catalog/components/PackageServicesPicker.tsx`** — uses Combobox (Popover + Command) per UI-SPEC §Component Inventory. Multi-select w/ quantity:
+**C. Create `apps/frontend/src/features/catalog/components/PackageServicesPicker.tsx`** — uses Combobox (Popover + Command) per UI-SPEC §Component Inventory. Multi-select w/ quantity. **This is the canonical reference pattern Task 3 will reuse for commission pickers** — keep it clean and well-commented:
 
 ```tsx
 import { useState } from 'react';
@@ -475,8 +502,9 @@ describe('PackagePriceSummary', () => {
 </task>
 
 <task type="auto" tdd="true">
-  <name>Task 2: Produtos page with StockBadge, AdjustStockDialog, AppShell low-stock wiring</name>
+  <name>Task 2: Install shadcn textarea + Produtos page with StockBadge, AdjustStockDialog, AppShell low-stock wiring</name>
   <files>
+    apps/frontend/src/components/ui/textarea.tsx
     apps/frontend/src/features/catalog/api/produtos.api.ts
     apps/frontend/src/components/ui/stock-badge.tsx
     apps/frontend/src/features/catalog/components/AdjustStockDialog.tsx
@@ -499,9 +527,22 @@ describe('PackagePriceSummary', () => {
     - AppShell fetches `lowStockCount` and passes to SidebarNav
   </behavior>
   <action>
-**A. Create `apps/frontend/src/features/catalog/api/produtos.api.ts`** with `ProductsQuery` (lowStockOnly variable), `CreateProductMutation`, `UpdateProductMutation`, `AdjustStockMutation`, `SoftDeleteProductMutation`, `LowStockCountQuery`.
+**A. Install the shadcn `textarea` primitive UNCONDITIONALLY (first step). The file MUST exist before AdjustStockDialog is created.** Run from monorepo root:
 
-**B. Create `apps/frontend/src/components/ui/stock-badge.tsx`:**
+```bash
+pnpm --filter @sgs/frontend dlx shadcn@latest add textarea
+```
+
+Then verify:
+```bash
+test -f apps/frontend/src/components/ui/textarea.tsx && echo "textarea installed" || echo "INSTALL FAILED"
+```
+
+If the file is not present after the command runs, abort the task and surface the error — do NOT continue to Step B. The textarea primitive is REQUIRED by AdjustStockDialog (Step C). The file is now part of the plan's `files_modified` and must be committed.
+
+**B. Create `apps/frontend/src/features/catalog/api/produtos.api.ts`** with `ProductsQuery` (lowStockOnly variable), `CreateProductMutation`, `UpdateProductMutation`, `AdjustStockMutation`, `SoftDeleteProductMutation`, `LowStockCountQuery`.
+
+**C. Create `apps/frontend/src/components/ui/stock-badge.tsx`:**
 
 ```tsx
 import { TriangleAlert } from 'lucide-react';
@@ -527,7 +568,7 @@ export function StockBadge({ quantity, minLevel, unit }: { quantity: number; min
 }
 ```
 
-**C. Create `apps/frontend/src/features/catalog/components/AdjustStockDialog.tsx`:**
+**D. Create `apps/frontend/src/features/catalog/components/AdjustStockDialog.tsx`:**
 
 ```tsx
 import { useForm } from 'react-hook-form';
@@ -539,7 +580,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';  // add via shadcn if missing
+import { Textarea } from '@/components/ui/textarea';
+// ↑ This import REQUIRES the shadcn textarea primitive installed in Step A.
 import { AdjustStockMutation, ProductsQuery, LowStockCountQuery } from '../api/produtos.api';
 import { toast } from 'sonner';
 
@@ -554,8 +596,20 @@ export function AdjustStockDialog({ product, open, onClose }: {
   onClose: () => void;
 }) {
   const { t } = useTranslation();
+  // Use cache.evict to invalidate Product entity instead of refetchQueries with hardcoded variables.
+  // ProdutosPage owns its own ProductsQuery variables (page-state-dependent); evicting the Product
+  // entity + ROOT_QUERY.lowStockCount lets each consumer refetch with its own variables.
   const [adjust, { loading }] = useMutation(AdjustStockMutation, {
-    refetchQueries: [{ query: ProductsQuery, variables: { lowStockOnly: false } }, { query: LowStockCountQuery }],
+    update(cache, { data }) {
+      const updatedId = data?.adjustStock?.product?.id ?? product.id;
+      cache.evict({ id: cache.identify({ __typename: 'Product', id: updatedId }) });
+      cache.evict({ fieldName: 'lowStockCount' });
+      cache.evict({ fieldName: 'products' });
+      cache.gc();
+    },
+    // Refetch lowStockCount so AppShell sidebar warning updates immediately.
+    refetchQueries: [{ query: LowStockCountQuery }],
+    awaitRefetchQueries: true,
   });
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -618,15 +672,15 @@ export function AdjustStockDialog({ product, open, onClose }: {
 }
 ```
 
-If `Textarea` shadcn primitive isn't installed yet, run `pnpm dlx shadcn@latest add textarea`.
+NOTE: The `update(cache, ...)` callback uses `cache.evict` + `cache.gc()` to invalidate the cached Product and the `products` field — this works regardless of what `lowStockOnly` variable ProdutosPage is currently using. `LowStockCountQuery` is refetched explicitly because the AppShell sidebar warning depends on it.
 
-**D. Create `apps/frontend/src/features/catalog/components/ProdutoForm.tsx`** — fields per UI-SPEC §Form Field Labels Products:
+**E. Create `apps/frontend/src/features/catalog/components/ProdutoForm.tsx`** — fields per UI-SPEC §Form Field Labels Products:
 - name, sku, cost price, sale price, stock quantity (CREATE only — disabled on edit), min stock level, unit (Select with un/ml/g)
 - On edit, render disabled stock field with hint "Use Ajustar estoque para alterar."
 
-**E. Create `apps/frontend/src/pages/ProdutosPage.tsx`** with DataTable, AdjustStockDialog wired to dropdown menu, empty state with `ShoppingBag` icon.
+**F. Create `apps/frontend/src/pages/ProdutosPage.tsx`** with DataTable, AdjustStockDialog wired to dropdown menu, empty state with `ShoppingBag` icon.
 
-**F. Update `apps/frontend/src/components/layout/AppShell.tsx`** to fetch lowStockCount:
+**G. Update `apps/frontend/src/components/layout/AppShell.tsx`** to fetch lowStockCount:
 
 ```tsx
 import { useQuery } from '@apollo/client';
@@ -641,7 +695,7 @@ const lowStockCount = data?.lowStockCount ?? 0;
 
 Refetch on visibility change is a nice-to-have — pollInterval 60s is sufficient for Phase 2.
 
-**G. Append to `pt-BR.json`:**
+**H. Append to `pt-BR.json`:**
 
 ```json
 "catalog": {
@@ -693,7 +747,7 @@ Refetch on visibility change is a nice-to-have — pollInterval 60s is sufficien
 }
 ```
 
-**H. Test `produto-form.test.tsx`:**
+**I. Test `produto-form.test.tsx`:**
 1. Mount in create mode — stock field is enabled; submitting with valid data calls createProduct
 2. Mount in edit mode — stock field is disabled (verify with `expect(input).toBeDisabled()`)
 3. Submit with stockQuantity=0, minStockLevel=5 → no low-stock immediate (low-stock detection happens server-side only)
@@ -701,11 +755,13 @@ Refetch on visibility change is a nice-to-have — pollInterval 60s is sufficien
 5. Submit triggers SKU_TAKEN error → form.setError on `sku` field
   </action>
   <verify>
-    <automated>cd apps/frontend &amp;&amp; pnpm typecheck &amp;&amp; pnpm test -- src/features/catalog/__tests__/produto-form.test.tsx</automated>
+    <automated>cd apps/frontend &amp;&amp; test -f src/components/ui/textarea.tsx &amp;&amp; pnpm typecheck &amp;&amp; pnpm test -- src/features/catalog/__tests__/produto-form.test.tsx</automated>
   </verify>
   <acceptance_criteria>
+    - `apps/frontend/src/components/ui/textarea.tsx` exists (installed via shadcn CLI in Step A)
     - `stock-badge.tsx` &gt;= 30 lines; renders error-tinted badge only when `quantity <= minLevel`
     - `AdjustStockDialog.tsx` &gt;= 80 lines; live "Novo estoque: X un" preview from form watch
+    - `AdjustStockDialog.tsx` uses `update(cache, ...)` with `cache.evict` to invalidate Product + lowStockCount + products field (NOT hardcoded refetchQueries variables — this avoids variable-mismatch with ProdutosPage state)
     - `ProdutoForm.tsx` disables stockQuantity input when initial is provided
     - `AppShell.tsx` calls `useQuery(LowStockCountQuery)` and passes `lowStockCount` to `SidebarNav`
     - `ProdutosPage.tsx` replaces "Em breve" placeholder; shows `<StockBadge />` in stock column
@@ -713,6 +769,7 @@ Refetch on visibility change is a nice-to-have — pollInterval 60s is sufficien
     - Sidebar warning icon shows when AppShell receives lowStockCount > 0 (verify by mocking the query in a smoke render)
   </acceptance_criteria>
   <done>
+    - shadcn textarea primitive installed and committed
     - Produtos page operational with full CRUD + adjustStock + low-stock badge
     - Sidebar warning icon hooked to live lowStockCount query
     - Tests prove form behavior (stock disabled on edit, SKU validation, error mapping)
@@ -720,69 +777,222 @@ Refetch on visibility change is a nice-to-have — pollInterval 60s is sufficien
 </task>
 
 <task type="auto" tdd="true">
-  <name>Task 3: Comissões page with scope-first radio flow</name>
+  <name>Task 3: Comissões page with scope-first radio flow and four CONCRETE conditional pickers</name>
   <files>
     apps/frontend/src/features/catalog/api/comissoes.api.ts
+    apps/frontend/src/features/catalog/api/members.api.ts
+    apps/frontend/src/features/catalog/components/EntityCombobox.tsx
     apps/frontend/src/features/catalog/components/CommissionRuleForm.tsx
     apps/frontend/src/pages/ComissoesPage.tsx
     apps/frontend/src/features/catalog/__tests__/commission-rule-form.test.tsx
   </files>
   <read_first>
     - .planning/phases/02-core-domain/02-UI-SPEC.md §Commission Rule Scope UX, §Commission Scope Radio Options
-    - apps/frontend/src/features/catalog/api/servicos.api.ts (for service combobox), categorias.api.ts, produtos.api.ts (for category/product pickers)
-    - apps/frontend/src/components/ui/radio-group.tsx (Plan 02)
+    - apps/frontend/src/features/catalog/components/PackageServicesPicker.tsx (Plan 06 — Popover+Command pattern reference for EntityCombobox)
+    - apps/frontend/src/features/catalog/api/servicos.api.ts (for ServicesQuery)
+    - apps/frontend/src/features/catalog/api/categorias.api.ts (for CategoriesQuery)
+    - apps/frontend/src/features/catalog/api/produtos.api.ts (for ProductsQuery from Task 2)
+    - apps/frontend/src/components/ui/radio-group.tsx, popover.tsx, command.tsx, select.tsx (Plan 02)
   </read_first>
   <behavior>
     - CommissionRuleForm uses RadioGroup: 5 scope options
-    - Conditional fields appear based on watched scopeType:
-      - member_service: Member combobox + Service combobox
-      - service: Service combobox
-      - category: Category select
-      - product: Product combobox
+    - Conditional fields appear based on watched scopeType — EACH PICKER IS A CONCRETE COMPONENT, NOT A PLACEHOLDER:
+      - member_service: MemberCombobox + ServiceCombobox (two side-by-side EntityCombobox instances)
+      - service: ServiceCombobox only
+      - category: shadcn Select with flat hierarchical category list (root + indented children)
+      - product: ProductCombobox
       - default: no scope fields
     - Then always: kind RadioGroup (fixed/percentage) + value Input (R$ or % suffix based on kind)
     - Submit calls createCommissionRule
-    - On COMMISSION_SCOPE_CONFLICT error: show inline Alert above DialogFooter linking to existing rule (link element only — actual link can target a static "/catalogo/comissoes" with query param, or just be a hint)
+    - On COMMISSION_SCOPE_CONFLICT error: show inline Alert above DialogFooter
     - List page shows resolved target name in single column (e.g., "Profissional + Serviço: Ana — Corte feminino", "Serviço: Hidratação", "Padrão da organização")
   </behavior>
   <action>
-**A. Create `apps/frontend/src/features/catalog/api/comissoes.api.ts`** with `CommissionRulesQuery`, `CreateCommissionRuleMutation`, `UpdateCommissionRuleMutation`, `SoftDeleteCommissionRuleMutation`. Also include `MembersQuery` (assumes existing /me query exposes members; if not, add a minimal `members: [Member!]!` query to backend OR use the existing `me` query memberships — verify with codegen).
+**A. Create `apps/frontend/src/features/catalog/api/comissoes.api.ts`** with `CommissionRulesQuery`, `CreateCommissionRuleMutation`, `UpdateCommissionRuleMutation`, `SoftDeleteCommissionRuleMutation`. Include `member { id displayName }`, `service { id name }`, `category { id name }`, `product { id name }` in the `CommissionRule` fragment so the list page can render resolved target names.
 
-If a `members` query is missing in Plan 03/05, add it to `apps/backend/src/graphql/schema/identity.graphql` as a follow-up — but Plan 02 should already expose Member through the auth resolver. Inspect `identity.graphql` first:
+**B. Create `apps/frontend/src/features/catalog/api/members.api.ts`:**
 
-```bash
-cat apps/backend/src/graphql/schema/identity.graphql
+```ts
+import { graphql } from '@/gql';
+
+export const MembersQuery = graphql(`
+  query Members {
+    members {
+      id
+      displayName
+      email
+      roleName
+      seniorityTier
+    }
+  }
+`);
 ```
 
-If `members: [Member!]!` query does not exist, add it as a tiny patch in `apps/backend/src/identity/` (1 query, 1 resolver method, gated by MEMBER_READ permission — already in catalog). Otherwise Combobox cannot resolve member.
+This consumes the `members: [Member!]!` query added by Plan 05 to identity.graphql, gated server-side by MEMBER_READ.
 
-**B. Create `apps/frontend/src/features/catalog/components/CommissionRuleForm.tsx`:**
-
-Layout:
-1. Top: RadioGroup `scopeType` with 5 options (label + helper text per UI-SPEC §Commission Scope Radio Options)
-2. Conditional combobox/select per scope
-3. Divider
-4. Kind RadioGroup (`fixed` / `percentage`) — same pattern
-5. Value Input — placeholder "R$ 0,00" if fixed, "0%" if percentage. Display suffix: "R$" or "%" depending on kind
-6. DialogFooter with Cancelar/Salvar
-7. If `errors[0].code === 'COMMISSION_SCOPE_CONFLICT'`: render `<Alert variant="warning">` above footer with copy "Já existe uma regra para este escopo. Edite a regra existente."
+**C. Create `apps/frontend/src/features/catalog/components/EntityCombobox.tsx`** — generic single-select Popover+Command combobox. This component is reused by Member, Service, and Product pickers in Step E. Pattern mirrors PackageServicesPicker but for single-select binding to a form field:
 
 ```tsx
-import { useForm } from 'react-hook-form';
+import { useState, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ChevronsUpDown, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+
+export interface EntityComboboxItem { id: string; label: string; sublabel?: string; }
+
+export interface EntityComboboxProps {
+  items: EntityComboboxItem[];
+  value: string | null | undefined;
+  onChange: (id: string | null) => void;
+  placeholder: string;
+  searchPlaceholder?: string;
+  emptyText?: string;
+  triggerLabel?: ReactNode;
+  disabled?: boolean;
+  loading?: boolean;
+}
+
+export function EntityCombobox({
+  items, value, onChange, placeholder, searchPlaceholder, emptyText, disabled, loading,
+}: EntityComboboxProps) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const selected = items.find((i) => i.id === value) ?? null;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          disabled={disabled || loading}
+          className="w-full justify-between"
+        >
+          <span className={cn('truncate', !selected && 'text-neutral-500')}>
+            {selected ? selected.label : (loading ? t('common.loading') : placeholder)}
+          </span>
+          <ChevronsUpDown className="ml-sm h-4 w-4 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)] min-w-[280px]">
+        <Command>
+          <CommandInput placeholder={searchPlaceholder ?? t('catalog.combobox.searchPlaceholder')} />
+          <CommandList>
+            <CommandEmpty>{emptyText ?? t('catalog.combobox.empty')}</CommandEmpty>
+            <CommandGroup>
+              {items.map((item) => (
+                <CommandItem
+                  key={item.id}
+                  value={`${item.label} ${item.sublabel ?? ''}`}
+                  onSelect={() => { onChange(item.id); setOpen(false); }}
+                >
+                  <Check className={cn('mr-sm h-4 w-4', selected?.id === item.id ? 'opacity-100' : 'opacity-0')} />
+                  <div className="flex flex-col">
+                    <span>{item.label}</span>
+                    {item.sublabel && <span className="text-xs text-neutral-500">{item.sublabel}</span>}
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+```
+
+**D. Append to `pt-BR.json`** (combobox + commission keys):
+
+```json
+"common": {
+  "loading": "Carregando…"
+},
+"catalog": {
+  ...,
+  "combobox": {
+    "searchPlaceholder": "Buscar…",
+    "empty": "Nenhum resultado."
+  },
+  "comissao": {
+    "form": {
+      "scopeLabel": "Tipo de regra",
+      "kindLabel": "Tipo de comissão",
+      "valueFixedLabel": "Valor",
+      "valuePercentLabel": "Percentual",
+      "memberLabel": "Profissional",
+      "memberPlaceholder": "Selecione o profissional",
+      "memberSearchPlaceholder": "Buscar profissional…",
+      "memberEmpty": "Nenhum profissional encontrado.",
+      "serviceLabel": "Serviço",
+      "servicePlaceholder": "Selecione o serviço",
+      "serviceSearchPlaceholder": "Buscar serviço…",
+      "serviceEmpty": "Nenhum serviço encontrado.",
+      "categoryLabel": "Categoria",
+      "categoryPlaceholder": "Selecione a categoria",
+      "productLabel": "Produto",
+      "productPlaceholder": "Selecione o produto",
+      "productSearchPlaceholder": "Buscar produto…",
+      "productEmpty": "Nenhum produto encontrado."
+    },
+    "scope": {
+      "member_service": { "label": "Profissional + Serviço", "helper": "Regra específica para um profissional em um serviço." },
+      "service":        { "label": "Serviço",                "helper": "Aplica-se a qualquer profissional que realizar este serviço." },
+      "category":       { "label": "Categoria",              "helper": "Aplica-se a todos os serviços desta categoria." },
+      "product":        { "label": "Produto",                "helper": "Comissão sobre a venda deste produto." },
+      "default":        { "label": "Padrão da organização",  "helper": "Aplica-se a todas as vendas sem regra específica." }
+    },
+    "kind": {
+      "fixed": "Valor fixo (R$)",
+      "percentage": "Percentual (%)"
+    },
+    "table": {
+      "rule": "Regra",
+      "kind": "Tipo",
+      "value": "Valor",
+      "actions": "Ações"
+    },
+    "empty": {
+      "heading": "Nenhuma regra de comissão",
+      "body": "Configure como os profissionais são remunerados.",
+      "cta": "Nova regra"
+    },
+    "errors": {
+      "scopeConflict": "Já existe uma regra para este escopo. Edite a regra existente.",
+      "valueOutOfRange": "Percentual deve ser entre 0 e 100."
+    }
+  }
+}
+```
+
+**E. Create `apps/frontend/src/features/catalog/components/CommissionRuleForm.tsx`** — full form with all four conditional pickers concrete (NO placeholder comments):
+
+```tsx
+import { useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DialogFooter } from '@/components/ui/dialog';
 import { CreateCommissionRuleMutation, CommissionRulesQuery } from '../api/comissoes.api';
-import { useState } from 'react';
-// import combobox subcomponents for member/service/category/product pickers — Plan 06 PackageServicesPicker as reference
+import { MembersQuery } from '../api/members.api';
+import { ServicesQuery } from '../api/servicos.api';
+import { CategoriesQuery } from '../api/categorias.api';
+import { ProductsQuery } from '../api/produtos.api';
+import { EntityCombobox } from './EntityCombobox';
 
 const SCOPES = ['member_service', 'service', 'category', 'product', 'default'] as const;
 const KINDS = ['fixed', 'percentage'] as const;
@@ -796,25 +1006,60 @@ const schema = z.object({
   kind: z.enum(KINDS),
   value: z.string().regex(/^\d+(\.\d{1,4})?$/),
 }).superRefine((d, ctx) => {
-  if (d.scopeType === 'member_service' && (!d.memberId || !d.serviceId)) ctx.addIssue({ code: 'custom', path: ['scopeType'], message: 'Selecione profissional e serviço.' });
+  if (d.scopeType === 'member_service') {
+    if (!d.memberId) ctx.addIssue({ code: 'custom', path: ['memberId'], message: 'Selecione um profissional.' });
+    if (!d.serviceId) ctx.addIssue({ code: 'custom', path: ['serviceId'], message: 'Selecione um serviço.' });
+  }
   if (d.scopeType === 'service' && !d.serviceId) ctx.addIssue({ code: 'custom', path: ['serviceId'], message: 'Selecione um serviço.' });
   if (d.scopeType === 'category' && !d.categoryId) ctx.addIssue({ code: 'custom', path: ['categoryId'], message: 'Selecione uma categoria.' });
   if (d.scopeType === 'product' && !d.productId) ctx.addIssue({ code: 'custom', path: ['productId'], message: 'Selecione um produto.' });
 });
+
+type FormValues = z.infer<typeof schema>;
 
 export function CommissionRuleForm({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
   const [createRule, { loading }] = useMutation(CreateCommissionRuleMutation, { refetchQueries: [{ query: CommissionRulesQuery }] });
   const [conflictError, setConflictError] = useState<string | null>(null);
 
-  const form = useForm<z.infer<typeof schema>>({
+  // Lazy-load each picker source (Apollo dedupes if already cached)
+  const { data: membersData, loading: membersLoading } = useQuery(MembersQuery);
+  const { data: servicesData, loading: servicesLoading } = useQuery(ServicesQuery);
+  const { data: categoriesData, loading: categoriesLoading } = useQuery(CategoriesQuery);
+  const { data: productsData, loading: productsLoading } = useQuery(ProductsQuery, { variables: { lowStockOnly: false } });
+
+  const memberItems = (membersData?.members ?? []).map((m: any) => ({
+    id: m.id, label: m.displayName, sublabel: m.roleName,
+  }));
+  const serviceItems = (servicesData?.services ?? []).map((s: any) => ({
+    id: s.id, label: s.name,
+  }));
+  // Flatten root + children for category select (parents listed, children indented under their parent)
+  const categoryFlatItems = (categoriesData?.categories ?? []).flatMap((root: any) => [
+    { id: root.id, name: root.name, isChild: false },
+    ...((root.children ?? []).map((c: any) => ({ id: c.id, name: c.name, isChild: true }))),
+  ]);
+  const productItems = (productsData?.products ?? []).map((p: any) => ({
+    id: p.id, label: p.name, sublabel: p.sku,
+  }));
+
+  const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { scopeType: 'default', kind: 'percentage', value: '0' },
   });
   const scopeType = form.watch('scopeType');
   const kind = form.watch('kind');
 
-  async function onSubmit(values: z.infer<typeof schema>) {
+  // Reset scope-specific fields when scope changes (avoid leaking stale ids on submit)
+  function onScopeChange(next: FormValues['scopeType']) {
+    form.setValue('scopeType', next);
+    form.setValue('memberId', undefined);
+    form.setValue('serviceId', undefined);
+    form.setValue('categoryId', undefined);
+    form.setValue('productId', undefined);
+  }
+
+  async function onSubmit(values: FormValues) {
     setConflictError(null);
     const input: any = { scopeType: values.scopeType, kind: values.kind, value: values.value };
     if (values.scopeType === 'member_service') { input.memberId = values.memberId; input.serviceId = values.serviceId; }
@@ -826,7 +1071,7 @@ export function CommissionRuleForm({ onClose }: { onClose: () => void }) {
     const errors = res.data?.createCommissionRule.errors ?? [];
     if (errors.length) {
       if (errors[0].code === 'COMMISSION_SCOPE_CONFLICT') {
-        setConflictError(errors[0].message);
+        setConflictError(t('catalog.comissao.errors.scopeConflict'));
         return;
       }
       if (errors[0].field) form.setError(errors[0].field as any, { message: errors[0].message });
@@ -839,11 +1084,12 @@ export function CommissionRuleForm({ onClose }: { onClose: () => void }) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-md">
+        {/* Scope radio group */}
         <FormField control={form.control} name="scopeType"
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t('catalog.comissao.form.scopeLabel')}</FormLabel>
-              <RadioGroup value={field.value} onValueChange={field.onChange} className="space-y-sm">
+              <RadioGroup value={field.value} onValueChange={(v) => onScopeChange(v as FormValues['scopeType'])} className="space-y-sm">
                 {SCOPES.map((s) => (
                   <div key={s} className="flex items-start gap-sm">
                     <RadioGroupItem value={s} id={`scope-${s}`} />
@@ -858,21 +1104,118 @@ export function CommissionRuleForm({ onClose }: { onClose: () => void }) {
             </FormItem>
           )} />
 
-        {/* Conditional fields per scope. Use Plan 06 picker pattern. For brevity, scope-conditional combobox/select wiring follows the same pattern as PackageServicesPicker (Popover + Command). Replace the individual fields with the appropriate picker. */}
-        {scopeType === 'member_service' && (<>
-          {/* Member combobox */}
-          {/* Service combobox */}
-        </>)}
-        {scopeType === 'service' && (<>
-          {/* Service combobox */}
-        </>)}
-        {scopeType === 'category' && (<>
-          {/* Category select (flat list) */}
-        </>)}
-        {scopeType === 'product' && (<>
-          {/* Product combobox */}
-        </>)}
+        {/* === Conditional pickers — CONCRETE, no placeholders === */}
 
+        {scopeType === 'member_service' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+            <Controller control={form.control} name="memberId"
+              render={({ field, fieldState }) => (
+                <FormItem>
+                  <FormLabel>{t('catalog.comissao.form.memberLabel')} *</FormLabel>
+                  <FormControl>
+                    <EntityCombobox
+                      items={memberItems}
+                      value={field.value ?? null}
+                      onChange={(id) => field.onChange(id ?? undefined)}
+                      placeholder={t('catalog.comissao.form.memberPlaceholder')}
+                      searchPlaceholder={t('catalog.comissao.form.memberSearchPlaceholder')}
+                      emptyText={t('catalog.comissao.form.memberEmpty')}
+                      loading={membersLoading}
+                    />
+                  </FormControl>
+                  {fieldState.error && <p className="text-sm text-error-500">{fieldState.error.message}</p>}
+                </FormItem>
+              )} />
+            <Controller control={form.control} name="serviceId"
+              render={({ field, fieldState }) => (
+                <FormItem>
+                  <FormLabel>{t('catalog.comissao.form.serviceLabel')} *</FormLabel>
+                  <FormControl>
+                    <EntityCombobox
+                      items={serviceItems}
+                      value={field.value ?? null}
+                      onChange={(id) => field.onChange(id ?? undefined)}
+                      placeholder={t('catalog.comissao.form.servicePlaceholder')}
+                      searchPlaceholder={t('catalog.comissao.form.serviceSearchPlaceholder')}
+                      emptyText={t('catalog.comissao.form.serviceEmpty')}
+                      loading={servicesLoading}
+                    />
+                  </FormControl>
+                  {fieldState.error && <p className="text-sm text-error-500">{fieldState.error.message}</p>}
+                </FormItem>
+              )} />
+          </div>
+        )}
+
+        {scopeType === 'service' && (
+          <Controller control={form.control} name="serviceId"
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <FormLabel>{t('catalog.comissao.form.serviceLabel')} *</FormLabel>
+                <FormControl>
+                  <EntityCombobox
+                    items={serviceItems}
+                    value={field.value ?? null}
+                    onChange={(id) => field.onChange(id ?? undefined)}
+                    placeholder={t('catalog.comissao.form.servicePlaceholder')}
+                    searchPlaceholder={t('catalog.comissao.form.serviceSearchPlaceholder')}
+                    emptyText={t('catalog.comissao.form.serviceEmpty')}
+                    loading={servicesLoading}
+                  />
+                </FormControl>
+                {fieldState.error && <p className="text-sm text-error-500">{fieldState.error.message}</p>}
+              </FormItem>
+            )} />
+        )}
+
+        {scopeType === 'category' && (
+          <Controller control={form.control} name="categoryId"
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <FormLabel>{t('catalog.comissao.form.categoryLabel')} *</FormLabel>
+                <FormControl>
+                  <Select value={field.value ?? ''} onValueChange={(v) => field.onChange(v || undefined)} disabled={categoriesLoading}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('catalog.comissao.form.categoryPlaceholder')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categoryFlatItems.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          <span className={c.isChild ? 'pl-md text-neutral-500' : 'font-semibold'}>
+                            {c.isChild ? `↳ ${c.name}` : c.name}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                {fieldState.error && <p className="text-sm text-error-500">{fieldState.error.message}</p>}
+              </FormItem>
+            )} />
+        )}
+
+        {scopeType === 'product' && (
+          <Controller control={form.control} name="productId"
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <FormLabel>{t('catalog.comissao.form.productLabel')} *</FormLabel>
+                <FormControl>
+                  <EntityCombobox
+                    items={productItems}
+                    value={field.value ?? null}
+                    onChange={(id) => field.onChange(id ?? undefined)}
+                    placeholder={t('catalog.comissao.form.productPlaceholder')}
+                    searchPlaceholder={t('catalog.comissao.form.productSearchPlaceholder')}
+                    emptyText={t('catalog.comissao.form.productEmpty')}
+                    loading={productsLoading}
+                  />
+                </FormControl>
+                {fieldState.error && <p className="text-sm text-error-500">{fieldState.error.message}</p>}
+              </FormItem>
+            )} />
+        )}
+
+        {/* === Kind + value === */}
         <FormField control={form.control} name="kind"
           render={({ field }) => (
             <FormItem>
@@ -911,9 +1254,15 @@ export function CommissionRuleForm({ onClose }: { onClose: () => void }) {
 }
 ```
 
-NOTE: The conditional comboboxes are stubbed in this plan for brevity. Executor implements them by composing `Popover + Command` per the PackageServicesPicker pattern from Task 1 (or a simpler `Select` for category since the count is small). Each conditional combobox queries the relevant list (members, services, categories, products) and binds value to the form field.
+Each conditional block is concrete:
+- `member_service`: Two `<EntityCombobox>` instances side-by-side fed by `MembersQuery` and `ServicesQuery`
+- `service`: One `<EntityCombobox>` fed by `ServicesQuery`
+- `category`: shadcn `<Select>` with flat list (root categories bold, children indented with arrow `↳`)
+- `product`: One `<EntityCombobox>` fed by `ProductsQuery` (showing SKU as sublabel)
 
-**C. Create `apps/frontend/src/pages/ComissoesPage.tsx`** with DataTable. Single "Regra" column shows resolved target:
+`onScopeChange` clears the previous scope's id fields when switching, preventing stale references in the submitted input.
+
+**F. Create `apps/frontend/src/pages/ComissoesPage.tsx`** with DataTable. Single "Regra" column shows resolved target:
 - `member_service`: "Profissional + Serviço — {member.displayName} / {service.name}"
 - `service`: "Serviço — {service.name}"
 - `category`: "Categoria — {category.name}"
@@ -922,72 +1271,40 @@ NOTE: The conditional comboboxes are stubbed in this plan for brevity. Executor 
 
 Other columns: Tipo (kind), Valor (formatted as R$ X,XX or X% based on kind), actions. Empty state: `Percent` icon, heading "Nenhuma regra de comissão".
 
-**D. Append to `pt-BR.json`:**
-
-```json
-"catalog": {
-  ...,
-  "comissao": {
-    "form": {
-      "scopeLabel": "Tipo de regra",
-      "kindLabel": "Tipo de comissão",
-      "valueFixedLabel": "Valor",
-      "valuePercentLabel": "Percentual"
-    },
-    "scope": {
-      "member_service": { "label": "Profissional + Serviço", "helper": "Regra específica para um profissional em um serviço." },
-      "service":        { "label": "Serviço",                "helper": "Aplica-se a qualquer profissional que realizar este serviço." },
-      "category":       { "label": "Categoria",              "helper": "Aplica-se a todos os serviços desta categoria." },
-      "product":        { "label": "Produto",                "helper": "Comissão sobre a venda deste produto." },
-      "default":        { "label": "Padrão da organização",  "helper": "Aplica-se a todas as vendas sem regra específica." }
-    },
-    "kind": {
-      "fixed": "Valor fixo (R$)",
-      "percentage": "Percentual (%)"
-    },
-    "table": {
-      "rule": "Regra",
-      "kind": "Tipo",
-      "value": "Valor",
-      "actions": "Ações"
-    },
-    "empty": {
-      "heading": "Nenhuma regra de comissão",
-      "body": "Configure como os profissionais são remunerados.",
-      "cta": "Nova regra"
-    },
-    "errors": {
-      "scopeConflict": "Já existe uma regra para este escopo. Edite a regra existente.",
-      "valueOutOfRange": "Percentual deve ser entre 0 e 100."
-    }
-  }
-}
-```
-
-**E. Test `commission-rule-form.test.tsx`:**
-1. Initial render — scope='default' selected (default radio), no scope-specific fields visible
-2. Selecting scope='service' — service combobox/select appears
-3. Selecting scope='member_service' — both member AND service pickers visible
-4. Submitting `default + percentage + 10` calls createCommissionRule with `{ scopeType: 'default', kind: 'percentage', value: '10' }`
-5. Mutation returning COMMISSION_SCOPE_CONFLICT error → renders Alert with conflict copy
-6. Mutation returning VALUE_OUT_OF_RANGE → form.setError on value field
+**G. Test `commission-rule-form.test.tsx`** — uses MockedProvider with mocks for MembersQuery, ServicesQuery, CategoriesQuery, ProductsQuery:
+1. Initial render — scope='default' selected, no scope-specific picker visible
+2. Selecting scope='service' — service combobox appears and is bound to `serviceId` field
+3. Selecting scope='member_service' — both member AND service combobox visible
+4. Selecting scope='category' — category Select appears with flat hierarchical options (parent + indented children)
+5. Selecting scope='product' — product combobox appears showing SKU sublabels
+6. Submitting `default + percentage + 10` calls createCommissionRule with `{ scopeType: 'default', kind: 'percentage', value: '10' }` (no scope-specific ids)
+7. Submitting `service` scope without selecting a service → zod superRefine error on serviceId
+8. Mutation returning COMMISSION_SCOPE_CONFLICT error → renders Alert with conflict copy
+9. Mutation returning VALUE_OUT_OF_RANGE → form.setError on value field
+10. Switching scope clears previously-selected ids (verify by selecting service in 'service' scope, switching to 'category', switching back to 'service' → field is empty)
   </action>
   <verify>
     <automated>cd apps/frontend &amp;&amp; pnpm typecheck &amp;&amp; pnpm test -- src/features/catalog/__tests__/commission-rule-form.test.tsx</automated>
   </verify>
   <acceptance_criteria>
     - `comissoes.api.ts` exports 4 operations
-    - `CommissionRuleForm.tsx` &gt;= 150 lines, contains `superRefine` for scope-conditional validation
-    - Scope conditional fields render based on `form.watch('scopeType')`
+    - `members.api.ts` exports `MembersQuery` consuming Plan 05's identity.graphql `members` query
+    - `EntityCombobox.tsx` &gt;= 60 lines, uses Popover + Command shadcn primitives (no placeholder text — concrete component)
+    - `CommissionRuleForm.tsx` &gt;= 200 lines, contains `superRefine` for scope-conditional validation
+    - `CommissionRuleForm.tsx` contains FOUR concrete conditional blocks (member_service, service, category, product) — each renders a real component, NOT a `{/* X combobox */}` comment placeholder. Verify via grep: `grep -c "EntityCombobox\|<Select" CommissionRuleForm.tsx` &gt;= 5
+    - `CommissionRuleForm.tsx` calls `useQuery(MembersQuery)`, `useQuery(ServicesQuery)`, `useQuery(CategoriesQuery)`, `useQuery(ProductsQuery)`
+    - `onScopeChange` clears memberId/serviceId/categoryId/productId on scope switch (verify with grep `setValue.*undefined`)
     - `ComissoesPage.tsx` replaces placeholder; shows resolved target labels (one of 5 scope shapes)
-    - Conflict error renders inline Alert with `variant="destructive"` (or "warning" if implemented)
-    - 6 commission-rule-form tests pass
+    - Conflict error renders inline Alert with `variant="destructive"`
+    - 10 commission-rule-form tests pass
     - i18n key `catalog.comissao.scope.member_service.label` returns "Profissional + Serviço"
   </acceptance_criteria>
   <done>
     - Comissões page operational with full scope-first form flow
+    - All four conditional pickers are concrete components, not placeholder stubs
+    - Member picker fed by Plan 05's `members` query (cross-plan key link satisfied)
     - Conflict and validation errors surface to user inline
-    - Tests prove conditional rendering and error handling
+    - Tests prove conditional rendering, scope reset, error handling
   </done>
 </task>
 
@@ -997,16 +1314,19 @@ Other columns: Tipo (kind), Valor (formatted as R$ X,XX or X% based on kind), ac
 - /catalogo/pacotes shows packages list with delta indicator on "Preço do pacote" column
 - /catalogo/produtos shows StockBadge on low-stock rows
 - Sidebar "Produtos" item shows TriangleAlert icon when lowStockCount > 0
-- /catalogo/comissoes lets user create rules across all 5 scope types
+- /catalogo/comissoes lets user create rules across all 5 scope types using concrete pickers
 - Conflicting commission scope returns COMMISSION_SCOPE_CONFLICT inline error
+- shadcn textarea primitive committed at apps/frontend/src/components/ui/textarea.tsx
 </verification>
 
 <success_criteria>
 - `pnpm --filter @sgs/frontend typecheck` exits 0
-- All component tests pass: pacote-price-summary (3), produto-form (5), commission-rule-form (6)
-- Manual smoke covers: create package with 3 services and own price; create product with min stock and adjust to trigger low-stock badge; create commission rule for service with percentage 20%
+- All component tests pass: pacote-price-summary (3), produto-form (5), commission-rule-form (10)
+- Manual smoke covers: create package with 3 services and own price; create product with min stock and adjust to trigger low-stock badge; create commission rule for service with percentage 20% (Profissional+Serviço scope, picking member and service via comboboxes)
 </success_criteria>
 
 <output>
-After completion, create `.planning/phases/02-core-domain/02-frontend-pacotes-produtos-comissoes-SUMMARY.md` documenting the lowStockCount polling cadence (60s), AdjustStockDialog interaction, and the commission scope conditional field map.
+After completion, create `.planning/phases/02-core-domain/02-frontend-pacotes-produtos-comissoes-SUMMARY.md` documenting the lowStockCount polling cadence (60s), AdjustStockDialog cache.evict strategy (avoids hardcoded refetchQueries variables), the EntityCombobox reusable pattern, and the commission scope conditional field map (which query feeds each picker).
 </output>
+</content>
+</invoke>

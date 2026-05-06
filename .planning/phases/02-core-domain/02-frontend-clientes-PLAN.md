@@ -289,16 +289,39 @@ export function ClienteEditPage() {
 }
 ```
 
-**H. Update `apps/frontend/src/router.tsx`** — add `/clientes/novo` BEFORE `/clientes/:id` to prevent React Router from matching `:id='novo'`:
+**H. Update `apps/frontend/src/router.tsx`** — add `/clientes/novo` BEFORE `/clientes/:id` to prevent React Router from matching `:id='novo'`.
+
+> **CRITICAL: INSERT only — DO NOT rewrite the file.** Open the existing `router.tsx`, locate the existing entry `{ path: '/clientes', element: <ClientesPage /> },` inside the `<ProtectedRoute><AppShell /></ProtectedRoute>` children array (added by Plan 02), and INSERT the new route entry on the line immediately after it. The other Phase 1 routes (`/login`, `/signup`, `/verificar-email/*`, `/convite/:token`, `/recuperar-senha`, `*`) and Phase 2 routes (`/dashboard`, `/catalogo/*`, `/clientes/:id`, `/clientes/:id/editar`) MUST remain present and unchanged. Use targeted Edit (single-hunk insertion), not Write (full-file rewrite).
 
 ```tsx
+// Existing routes inside the <ProtectedRoute><AppShell /></ProtectedRoute> children array
+// (these are ALREADY present from Plan 02 — do NOT recreate them):
 { path: '/clientes',                 element: <ClientesPage /> },
+// ↓ INSERT THIS NEW LINE only:
 { path: '/clientes/novo',            element: <ClienteNovoPage /> },
+// ↓ Existing routes continue unchanged below:
 { path: '/clientes/:id',             element: <ClienteDetailPage /> },
 { path: '/clientes/:id/editar',      element: <ClienteEditPage /> },
 ```
 
-Add the import: `import { ClienteNovoPage } from '@/pages/ClienteNovoPage';`
+Add the import: `import { ClienteNovoPage } from '@/pages/ClienteNovoPage';` — INSERT into the existing import block at the top of the file, alongside the other page imports. Do NOT remove or reorder existing imports.
+
+**Verification after the edit (run from repo root):**
+```bash
+# Phase 1 routes must still be present (count must be exactly 1 each)
+grep -c "path: '/login'"             apps/frontend/src/router.tsx
+grep -c "path: '/signup'"            apps/frontend/src/router.tsx
+grep -c "path: '/verificar-email'"   apps/frontend/src/router.tsx
+grep -c "path: '/convite/"           apps/frontend/src/router.tsx
+grep -c "path: '/recuperar-senha'"   apps/frontend/src/router.tsx
+# Phase 2 routes from Plan 02 must still be present
+grep -c "path: '/dashboard'"         apps/frontend/src/router.tsx
+grep -c "/catalogo/categorias"       apps/frontend/src/router.tsx
+grep -c "/catalogo/comissoes"        apps/frontend/src/router.tsx
+# New route added by THIS plan
+grep -c "/clientes/novo"             apps/frontend/src/router.tsx  # → 1
+```
+If any Phase 1 or Plan 02 route count is 0, the file was accidentally rewritten — `git restore apps/frontend/src/router.tsx` and retry using the Edit tool with a targeted single-hunk insertion.
 
 **I. Append to `pt-BR.json`:**
 
@@ -373,6 +396,7 @@ Also add to `pages.clientes`: `"newTitle": "Novo cliente"`, `"editTitle": "Edita
     - `ClientForm.tsx` &gt;= 150 lines, contains `useLazyQuery(ClientsByFieldQuery, ...)` and conditional render `{duplicates.length > 0 && <CpfDuplicateAlert ... />}`
     - CPF input has `aria-label="CPF"`, `inputMode="numeric"`, `autoComplete="off"`
     - `router.tsx` has `/clientes/novo` route ordered BEFORE `/clientes/:id` (verify via grep line numbers)
+    - `router.tsx` is INSERTED-into, not REWRITTEN: all Phase 1 routes (`/login`, `/signup`, `/verificar-email`, `/convite/`, `/recuperar-senha`) AND Plan 02 routes (`/dashboard`, `/catalogo/categorias`, `/catalogo/servicos`, `/catalogo/pacotes`, `/catalogo/produtos`, `/catalogo/comissoes`, `/clientes/:id`, `/clientes/:id/editar`) are still present and unchanged after this task (verify with the grep checklist in Step H)
     - `pages.clientes.newTitle` and `pages.clientes.editTitle` keys exist in pt-BR.json
     - All form/alert tests pass
     - Submit with invalid CPF blocked client-side BEFORE network call (test 3 asserts query mock not called)
