@@ -1,7 +1,8 @@
 ---
 phase: 2
 slug: core-domain
-status: draft
+status: approved
+reviewed_at: 2026-05-06T00:00:00Z
 shadcn_initialized: true
 preset: none
 created: 2026-05-04
