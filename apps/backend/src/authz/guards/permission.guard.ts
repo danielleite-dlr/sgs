@@ -11,6 +11,7 @@ import { REQUIRED_PERMISSIONS_KEY } from '../decorators/require-permission.decor
 import { REQUIRED_ROLES_KEY } from '../decorators/require-role.decorator';
 import type { Permission } from '../permissions.catalog';
 import type { TenantContext } from '../decorators/current-tenant.decorator';
+import type { JwtAccessPayload } from '../../auth/types';
 
 /**
  * PermissionGuard — resolves required permissions from resolver metadata and
@@ -45,8 +46,36 @@ export class PermissionGuard implements CanActivate {
     if (required.length === 0 && requiredRoles.length === 0) return true;
 
     const gql = GqlExecutionContext.create(ctx);
-    const gqlCtx = gql.getContext() as { tenant?: TenantContext };
-    const tenant = gqlCtx.tenant;
+    const gqlCtx = gql.getContext() as { tenant?: TenantContext; req?: { user?: JwtAccessPayload; headers?: Record<string, string> } };
+    let tenant = gqlCtx.tenant;
+
+    // Fallback: resolve tenant from JWT directly (interceptors run AFTER guards in NestJS,
+    // so the TenantContextInterceptor may not have run yet when this guard fires).
+    if (!tenant) {
+      const user = gqlCtx.req?.user;
+      if (user && user.memberships?.length) {
+        const headerOrgId = gqlCtx.req?.headers?.['x-organization-id'];
+        let active = user.memberships[0];
+        if (headerOrgId) {
+          const matched = user.memberships.find(
+            (m) => m.organizationId === headerOrgId,
+          );
+          if (!matched) {
+            throw new ForbiddenException(
+              'FORBIDDEN: requested organization not in user memberships',
+            );
+          }
+          active = matched;
+        }
+        tenant = {
+          organizationId: active.organizationId,
+          memberId: active.memberId,
+          roleName: active.roleName,
+        };
+        // Persist for downstream resolvers (@CurrentTenant decorator)
+        gqlCtx.tenant = tenant;
+      }
+    }
 
     if (!tenant) {
       throw new ForbiddenException('FORBIDDEN: no active tenant context');
