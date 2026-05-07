@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-frontend-clientes-PLAN.md
-last_updated: "2026-05-07T13:59:48.863Z"
+stopped_at: Completed 02-core-domain/02-frontend-catalog-categorias-servicos-PLAN.md — Categorias + Serviços CRUD screens with PricingVariantsEditor, ConfirmSoftDeleteDialog, ReorderControls
+last_updated: "2026-05-07T14:02:21.210Z"
 last_activity: 2026-05-07
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 15
-  completed_plans: 14
+  completed_plans: 15
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 02 (core-domain) — EXECUTING
-Plan: 7 of 8
+Plan: 8 of 8
 Status: Ready to execute
 Last activity: 2026-05-07
 
@@ -63,6 +63,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 02-core-domain P04 | 6 | 3 tasks | 10 files |
 | Phase 02-core-domain P03 | 55 | 3 tasks | 14 files |
 | Phase 02-core-domain P08 | 45 | 3 tasks | 15 files |
+| Phase 02-core-domain P06 | 75 | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -115,6 +116,8 @@ Recent decisions affecting current work:
 - [Phase 02-core-domain]: CPF optional; duplicate alert warns but doesn't block save (D-22)
 - [Phase 02-core-domain]: ClientHistoryTab shows disabled filters (not hidden) per D-23 — Phase 3 will activate
 - [Phase 02-core-domain]: /clientes/novo ordered before /clientes/:id in router to prevent React Router collision
+- [Phase 02-core-domain]: Plan 06: gql tagged templates used in catalog API (not codegen client-preset) — consistent with auth.api.ts established pattern, codegen deferred to CI plan
+- [Phase 02-core-domain]: Plan 06: ConfirmSoftDeleteDialog accepts ReactNode trigger with e.preventDefault on onSelect to prevent DropdownMenu closing before AlertDialog opens
 
 ### Pending Todos
 
@@ -128,6 +131,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-07T13:59:48.854Z
-Stopped at: Completed 02-frontend-clientes-PLAN.md
+Last session: 2026-05-07T14:02:21.201Z
+Stopped at: Completed 02-core-domain/02-frontend-catalog-categorias-servicos-PLAN.md — Categorias + Serviços CRUD screens with PricingVariantsEditor, ConfirmSoftDeleteDialog, ReorderControls
 Resume file: None
