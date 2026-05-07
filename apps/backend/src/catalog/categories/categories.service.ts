@@ -211,17 +211,15 @@ export class CategoriesService {
         return { category: cur, errors: [] as UserError[] };
       }
 
-      // Swap displayOrder values atomically
-      await tx.$transaction([
-        tx.category.update({
-          where: { id: cur.id },
-          data: { displayOrder: sibling.displayOrder },
-        }),
-        tx.category.update({
-          where: { id: sibling.id },
-          data: { displayOrder: cur.displayOrder },
-        }),
-      ]);
+      // Swap displayOrder values (already inside outer transaction via runWithTenant)
+      await tx.category.update({
+        where: { id: cur.id },
+        data: { displayOrder: sibling.displayOrder },
+      });
+      await tx.category.update({
+        where: { id: sibling.id },
+        data: { displayOrder: cur.displayOrder },
+      });
 
       const updated = await tx.category.findUnique({ where: { id: cur.id } });
       return { category: updated, errors: [] as UserError[] };
