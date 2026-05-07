@@ -67,3 +67,11 @@ export const MOCK_COMMISSIONS: MockCommission[] = [
   { id: 'c7', professional: 'Bruno Lima',   period: 'Abril 2026', totalEarned: 'R$ 980,00',   status: 'pago',     comandas: 18 },
   { id: 'c8', professional: 'Carla Reis',   period: 'Abril 2026', totalEarned: 'R$ 850,00',   status: 'pago',     comandas: 25 },
 ];
+
+/**
+ * Unique list of professionals derived from MOCK_COMMISSIONS,
+ * used by the ComissoesCalculadasPage filter dropdown.
+ */
+export const MOCK_PROFESSIONALS: string[] = Array.from(
+  new Set(MOCK_COMMISSIONS.map((c) => c.professional)),
+).sort();
