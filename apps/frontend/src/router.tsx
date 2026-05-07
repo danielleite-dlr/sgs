@@ -6,22 +6,43 @@ import { VerifyEmailSuccessPage } from '@/features/auth/pages/VerifyEmailSuccess
 import { InvitationPage } from '@/features/auth/pages/InvitationPage';
 import { NotFoundPage } from '@/features/auth/pages/NotFoundPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { AppShell } from '@/components/layout/AppShell';
 import { DashboardPlaceholder } from '@/pages/DashboardPlaceholder';
+import { CategoriasPage } from '@/pages/CategoriasPage';
+import { ServicosPage } from '@/pages/ServicosPage';
+import { PacotesPage } from '@/pages/PacotesPage';
+import { ProdutosPage } from '@/pages/ProdutosPage';
+import { ComissoesPage } from '@/pages/ComissoesPage';
+import { ClientesPage } from '@/pages/ClientesPage';
+import { ClienteDetailPage } from '@/pages/ClienteDetailPage';
+import { ClienteEditPage } from '@/pages/ClienteEditPage';
 
 /**
  * Application route table.
  *
  * Auth pages implemented in Phase 1 Plan 06 (frontend-auth-pages).
+ * AppShell + Phase 2 routes implemented in Phase 2 Plan 02 (frontend-appshell).
  *
- * Route structure matches UI-SPEC §"Navigation":
- *   /login                    — Login screen
- *   /signup                   — Signup 2-step wizard
- *   /verificar-email          — Email verification pending
- *   /verificar-email/sucesso  — Email verified success
- *   /convite/:token           — Member invitation acceptance
- *   /recuperar-senha          — Password recovery (deferred — shows NotFoundPage)
- *   /dashboard                — Protected dashboard placeholder
- *   *                         — 404 NotFound
+ * Route structure:
+ *   Public routes (no AppShell):
+ *     /login                    — Login screen
+ *     /signup                   — Signup 2-step wizard
+ *     /verificar-email          — Email verification pending
+ *     /verificar-email/sucesso  — Email verified success
+ *     /convite/:token           — Member invitation acceptance
+ *     /recuperar-senha          — Password recovery (deferred — shows NotFoundPage)
+ *     *                         — 404 NotFound
+ *
+ *   Protected routes (inside AppShell, require auth):
+ *     /dashboard                — Dashboard placeholder
+ *     /catalogo/categorias      — Categorias list (Wave 3)
+ *     /catalogo/servicos        — Serviços list (Wave 3)
+ *     /catalogo/pacotes         — Pacotes list (Wave 3)
+ *     /catalogo/produtos        — Produtos list (Wave 3)
+ *     /catalogo/comissoes       — Comissões list (Wave 3)
+ *     /clientes                 — Clientes list (Wave 3)
+ *     /clientes/:id             — Cliente detail (Wave 3)
+ *     /clientes/:id/editar      — Cliente edit (Wave 3)
  */
 export const router = createBrowserRouter([
   {
@@ -54,12 +75,23 @@ export const router = createBrowserRouter([
     element: <NotFoundPage />,
   },
   {
-    path: '/dashboard',
+    // Authenticated layout group — ProtectedRoute + AppShell wraps all children
     element: (
       <ProtectedRoute>
-        <DashboardPlaceholder />
+        <AppShell />
       </ProtectedRoute>
     ),
+    children: [
+      { path: '/dashboard',             element: <DashboardPlaceholder /> },
+      { path: '/catalogo/categorias',   element: <CategoriasPage /> },
+      { path: '/catalogo/servicos',     element: <ServicosPage /> },
+      { path: '/catalogo/pacotes',      element: <PacotesPage /> },
+      { path: '/catalogo/produtos',     element: <ProdutosPage /> },
+      { path: '/catalogo/comissoes',    element: <ComissoesPage /> },
+      { path: '/clientes',              element: <ClientesPage /> },
+      { path: '/clientes/:id',          element: <ClienteDetailPage /> },
+      { path: '/clientes/:id/editar',   element: <ClienteEditPage /> },
+    ],
   },
   {
     path: '*',
