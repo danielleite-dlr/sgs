@@ -1,0 +1,51 @@
+# ===== Commission Rules =====
+# References: Member (identity.graphql), Service/Category/Product (catalog.graphql + products.graphql)
+# SoftDeleteInput already defined in catalog.graphql
+
+extend type Query {
+  commissionRules: [CommissionRule!]!
+  commissionRule(id: UUID!): CommissionRule
+}
+
+extend type Mutation {
+  createCommissionRule(input: CreateCommissionRuleInput!): CommissionRulePayload!
+  updateCommissionRule(input: UpdateCommissionRuleInput!): CommissionRulePayload!
+  softDeleteCommissionRule(input: SoftDeleteInput!): CommissionRulePayload!
+}
+
+type CommissionRule {
+  id: UUID!
+  scopeType: CommissionScopeType!
+  kind: CommissionKind!
+  value: String!
+  member: Member
+  service: Service
+  category: Category
+  product: Product
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum CommissionScopeType { member_service service category product default }
+enum CommissionKind { fixed percentage }
+
+input CreateCommissionRuleInput {
+  scopeType: CommissionScopeType!
+  kind: CommissionKind!
+  value: String!
+  memberId: UUID
+  serviceId: UUID
+  categoryId: UUID
+  productId: UUID
+}
+
+input UpdateCommissionRuleInput {
+  id: UUID!
+  kind: CommissionKind
+  value: String
+}
+
+type CommissionRulePayload {
+  rule: CommissionRule
+  errors: [UserError!]!
+}

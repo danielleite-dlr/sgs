@@ -1,12 +1,26 @@
+extend type Query {
+  members: [Member!]!
+  pendingInvitations: [PendingInvitation!]!
+}
+
 extend type Mutation {
   inviteMember(input: InviteMemberInput!): InviteMemberPayload!
   acceptInvitation(input: AcceptInvitationInput!): AuthPayload!
   revokeInvitation(invitationId: UUID!): RevokeInvitationPayload!
 }
 
-extend type Query {
-  pendingInvitations: [PendingInvitation!]!
+# ===== Members (added Phase 2 — needed by commissions.graphql cross-SDL reference) =====
+
+type Member {
+  id: UUID!
+  displayName: String!
+  email: String!
+  roleName: String!
+  seniorityTier: SeniorityTier
+  createdAt: DateTime!
 }
+
+# SeniorityTier enum is defined in catalog.graphql (shared with ServicePricingVariant)
 
 input InviteMemberInput {
   email: Email!

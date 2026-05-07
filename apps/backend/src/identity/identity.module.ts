@@ -2,9 +2,11 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { InvitationService } from './invitation.service';
 import { InvitationResolver } from './invitation.resolver';
+import { MembersService } from './members.service';
+import { MembersResolver } from './members.resolver';
 
 /**
- * IdentityModule — member invitation lifecycle.
+ * IdentityModule — member invitation lifecycle + members query.
  *
  * Depends on AuthModule for:
  *  - AuthService.issueSession (issue tokens after accept)
@@ -19,7 +21,7 @@ import { InvitationResolver } from './invitation.resolver';
  */
 @Module({
   imports: [AuthModule],
-  providers: [InvitationService, InvitationResolver],
-  exports: [InvitationService],
+  providers: [InvitationService, InvitationResolver, MembersService, MembersResolver],
+  exports: [InvitationService, MembersService],
 })
 export class IdentityModule {}
