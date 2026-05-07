@@ -12,6 +12,7 @@ RUN pnpm install --no-frozen-lockfile
 FROM base AS development
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN pnpm prisma generate
 EXPOSE 3000
 CMD ["pnpm", "dev"]
 
