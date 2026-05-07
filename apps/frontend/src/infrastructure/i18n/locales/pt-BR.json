@@ -98,12 +98,31 @@
   },
   "dashboard": {
     "title": "Painel",
-    "welcome": "Bem-vindo, {{name}}!",
+    "welcome": "Olá, {{name}}!",
     "todaySummary": "Resumo de hoje",
     "appointments": "Agendamentos",
     "clients": "Clientes",
     "revenue": "Receita",
-    "noAppointments": "Nenhum agendamento para hoje"
+    "noAppointments": "Nenhum agendamento para hoje",
+    "kpis": {
+      "appointmentsToday": "Agendamentos hoje",
+      "revenueToday": "Receita do dia",
+      "openComandas": "Comandas abertas",
+      "lowStock": "Estoque baixo",
+      "birthdaysMonth": "Aniversariantes do mês",
+      "commissionsPending": "Comissões a pagar",
+      "contractsExpiring": "Contratos vencendo (7d)",
+      "whatsappToday": "Mensagens WhatsApp"
+    },
+    "forecast": {
+      "title": "Previsão financeira — próximos 30 dias",
+      "subtitle": "Baseado em histórico + agendamentos confirmados",
+      "legendHistorico": "Histórico",
+      "legendProjetado": "Projetado"
+    },
+    "activity": {
+      "title": "Últimas atividades"
+    }
   },
   "appointments": {
     "title": "Agendamentos",
@@ -337,19 +356,159 @@
   },
   "bridal": {
     "title": "Noivas",
+    "mockupBadge": "Mockup — Phase 4 (em breve)",
     "groups": {
       "title": "Grupos de Noivas",
-      "new": "Novo grupo"
+      "new": "Novo grupo",
+      "filterAll": "Todos",
+      "columns": {
+        "bride": "Noiva principal",
+        "companions": "Acompanhantes",
+        "eventDate": "Data do evento",
+        "totalValue": "Valor total",
+        "status": "Status",
+        "actions": "Ações"
+      },
+      "status": {
+        "planning": "Em planejamento",
+        "confirmed": "Confirmado",
+        "completed": "Concluído"
+      },
+      "empty": {
+        "heading": "Nenhum grupo de noivas ainda",
+        "body": "Crie grupos para organizar o atendimento da noiva e suas acompanhantes em um único evento.",
+        "cta": "Novo grupo"
+      },
+      "comingSoon": {
+        "title": "Funcionalidade em breve",
+        "body": "A criação de grupos de noivas estará disponível na Phase 4.",
+        "cta": "Criar grupo (em breve)"
+      }
     },
     "contracts": {
       "title": "Contratos",
-      "new": "Novo contrato"
+      "new": "Novo contrato",
+      "filterAll": "Todos",
+      "columns": {
+        "client": "Cliente / Noiva",
+        "totalValue": "Valor total",
+        "installments": "Parcelas",
+        "nextDue": "Próximo vencimento",
+        "status": "Status",
+        "actions": "Ações"
+      },
+      "status": {
+        "current": "Em dia",
+        "overdue": "Atrasado",
+        "settled": "Quitado"
+      },
+      "empty": {
+        "heading": "Nenhum contrato ainda",
+        "body": "Contratos de evento vinculam grupos de noivas a valores, parcelas e políticas de cancelamento.",
+        "cta": "Novo contrato"
+      },
+      "comingSoon": {
+        "title": "Funcionalidade em breve",
+        "body": "A criação de contratos estará disponível na Phase 4.",
+        "cta": "Criar contrato (em breve)"
+      }
+    },
+    "contractDetail": {
+      "tabs": {
+        "installments": "Parcelas",
+        "cancellation": "Cancelamento",
+        "ai": "Sugestão IA"
+      },
+      "summary": {
+        "totalValue": "Valor total",
+        "installments": "Parcelas",
+        "received": "Recebido",
+        "nextDue": "Próximo vencimento"
+      },
+      "installments": {
+        "paid": "Pagas",
+        "received": "Recebido",
+        "pending": "Pendente",
+        "markPaid": "Marcar como pago",
+        "unmark": "Desmarcar",
+        "status": {
+          "paid": "Pago",
+          "pending": "Pendente",
+          "overdue": "Atrasado"
+        }
+      },
+      "cancellation": {
+        "policyTitle": "Política de cancelamento",
+        "policyNote": "Esta política é definida no momento da criação do contrato e não pode ser alterada após a assinatura.",
+        "simulationTitle": "Simulação — estado atual",
+        "mockNote": "Dados de exemplo — valores reais serão calculados automaticamente na Phase 4."
+      },
+      "ai": {
+        "title": "Sugestão de alocação — Claude AI",
+        "generate": "Gerar nova sugestão",
+        "generating": "Gerando…",
+        "analyzing": "Analisando serviços, durações e disponibilidade dos profissionais…",
+        "justificationTitle": "Justificativa da IA",
+        "mockNote": "Sugestão gerada por Claude (Anthropic) com base nos dados do grupo — mockup da Phase 4."
+      }
     }
   },
   "communication": {
     "campaigns": {
       "title": "Campanhas",
-      "new": "Nova campanha"
+      "new": "Nova campanha",
+      "table": {
+        "name": "Nome",
+        "type": "Tipo",
+        "segment": "Segmento",
+        "lastRun": "Última execução",
+        "nextRun": "Próximo envio",
+        "status": "Status",
+        "actions": "Ações"
+      },
+      "types": {
+        "aniversario": "Aniversário",
+        "inativos": "Inativos",
+        "sazonal": "Sazonal",
+        "personalizada": "Personalizada"
+      },
+      "statusValues": {
+        "ativa": "Ativa",
+        "pausada": "Pausada",
+        "rascunho": "Rascunho"
+      },
+      "wizard": {
+        "step1Title": "Nova campanha — Passo 1 de 3",
+        "step2Title": "Nova campanha — Passo 2 de 3",
+        "step3Title": "Nova campanha — Passo 3 de 3",
+        "nameLabel": "Nome da campanha",
+        "namePlaceholder": "Ex.: Parabéns, aniversariante!",
+        "typeLabel": "Tipo de campanha",
+        "segmentLabel": "Segmento de clientes",
+        "segmentPlaceholder": "Selecione o segmento…",
+        "messageLabel": "Template de mensagem",
+        "segments": {
+          "aniversariantes": "Aniversariantes do mês",
+          "inativos90": "Clientes inativos (> 90 dias)",
+          "inativos60": "Clientes inativos (> 60 dias)",
+          "todos": "Todos os clientes ativos",
+          "personalizado": "Personalizado…"
+        },
+        "back": "Voltar",
+        "next": "Próximo",
+        "cancel": "Cancelar",
+        "saveDraft": "Salvar como rascunho"
+      },
+      "actions": {
+        "edit": "Editar",
+        "pause": "Pausar",
+        "activate": "Ativar"
+      },
+      "empty": {
+        "heading": "Nenhuma campanha ainda",
+        "body": "Crie campanhas de comunicação segmentadas para seus clientes.",
+        "cta": "Nova campanha"
+      }
     }
   },
   "catalog": {
