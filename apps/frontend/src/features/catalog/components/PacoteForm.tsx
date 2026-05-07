@@ -21,13 +21,20 @@ import { ServicesQuery } from '../api/servicos.api';
 import { CreatePackageMutation, UpdatePackageMutation, PackagesQuery } from '../api/pacotes.api';
 import { PackagePriceSummary } from './PackagePriceSummary';
 import { PackageServicesPicker } from './PackageServicesPicker';
+import { maskCurrency, unmaskCurrency, formatCurrencyDisplay } from '../utils/currency-mask';
 
 const schema = z.object({
   name: z.string().min(2, 'Digite um nome válido.'),
   price: z
     .string()
-    .regex(/^\d+(\.\d{1,2})?$/, 'Informe um preço válido.')
-    .refine((v) => parseFloat(v) >= 0, 'O preço deve ser maior ou igual a zero.'),
+    .min(1, 'Informe o preço.')
+    .refine(
+      (v) => {
+        const n = Number(unmaskCurrency(v));
+        return !Number.isNaN(n) && n >= 0;
+      },
+      { message: 'Preço inválido.' },
+    ),
   services: z
     .array(
       z.object({
@@ -66,7 +73,9 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: initial ?? { name: '', price: '0.00', services: [] },
+    defaultValues: initial
+      ? { ...initial, price: formatCurrencyDisplay(initial.price) }
+      : { name: '', price: '', services: [] },
   });
 
   // Live computation of individual sum from selected services × quantity
@@ -87,7 +96,7 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
     try {
       const payload = {
         name: values.name,
-        price: values.price,
+        price: unmaskCurrency(values.price),
         services: values.services,
       };
       const res = isEdit && initial
@@ -161,7 +170,12 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
             <FormItem>
               <FormLabel>{t('catalog.pacote.form.priceLabel')} *</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="R$ 0,00" inputMode="decimal" />
+                <Input
+                  {...field}
+                  placeholder="0,00"
+                  inputMode="numeric"
+                  onChange={(e) => field.onChange(maskCurrency(e.target.value))}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -171,7 +185,7 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
         {/* Live price comparison summary */}
         <PackagePriceSummary
           individualSum={individualSum}
-          packagePrice={form.watch('price') || '0'}
+          packagePrice={unmaskCurrency(form.watch('price') || '') || '0'}
         />
 
         <DialogFooter>

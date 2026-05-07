@@ -28,19 +28,27 @@ import {
   ProductsQuery,
 } from '../api/produtos.api';
 import type { ProductData, ProductUnit } from '../api/produtos.api';
+import { maskCurrency, unmaskCurrency, formatCurrencyDisplay } from '../utils/currency-mask';
 
 // SKU: letters, numbers, hyphens and underscores — no spaces
 const SKU_REGEX = /^[A-Za-z0-9_-]+$/;
 
+const priceSchema = z
+  .string()
+  .min(1, 'Informe o preço.')
+  .refine(
+    (v) => {
+      const n = Number(unmaskCurrency(v));
+      return !Number.isNaN(n) && n >= 0;
+    },
+    { message: 'Preço inválido.' },
+  );
+
 const schema = z.object({
   name: z.string().min(2, 'Digite um nome válido.'),
   sku: z.string().min(1, 'Este campo é obrigatório.').regex(SKU_REGEX, 'SKU não pode conter espaços.'),
-  costPrice: z
-    .string()
-    .regex(/^\d+(\.\d{1,2})?$/, 'Informe um preço válido.'),
-  salePrice: z
-    .string()
-    .regex(/^\d+(\.\d{1,2})?$/, 'Informe um preço válido.'),
+  costPrice: priceSchema,
+  salePrice: priceSchema,
   stockQuantity: z.coerce.number().int().min(0, 'Estoque não pode ser negativo.'),
   minStockLevel: z.coerce.number().int().min(0, 'Mínimo não pode ser negativo.'),
   unit: z.enum(['un', 'ml', 'g']),
@@ -74,8 +82,8 @@ export function ProdutoForm({ initial, onClose }: ProdutoFormProps) {
       ? {
           name: initial.name,
           sku: initial.sku,
-          costPrice: initial.costPrice,
-          salePrice: initial.salePrice,
+          costPrice: formatCurrencyDisplay(initial.costPrice),
+          salePrice: formatCurrencyDisplay(initial.salePrice),
           stockQuantity: initial.stockQuantity,
           minStockLevel: initial.minStockLevel,
           unit: initial.unit as 'un' | 'ml' | 'g',
@@ -83,8 +91,8 @@ export function ProdutoForm({ initial, onClose }: ProdutoFormProps) {
       : {
           name: '',
           sku: '',
-          costPrice: '0.00',
-          salePrice: '0.00',
+          costPrice: '',
+          salePrice: '',
           stockQuantity: 0,
           minStockLevel: 0,
           unit: 'un',
@@ -104,8 +112,8 @@ export function ProdutoForm({ initial, onClose }: ProdutoFormProps) {
               id: initial.id,
               name: updateFields.name,
               sku: updateFields.sku,
-              costPrice: updateFields.costPrice,
-              salePrice: updateFields.salePrice,
+              costPrice: unmaskCurrency(updateFields.costPrice),
+              salePrice: unmaskCurrency(updateFields.salePrice),
               minStockLevel: updateFields.minStockLevel,
               unit: updateFields.unit as ProductUnit,
             },
@@ -117,8 +125,8 @@ export function ProdutoForm({ initial, onClose }: ProdutoFormProps) {
             input: {
               name: values.name,
               sku: values.sku,
-              costPrice: values.costPrice,
-              salePrice: values.salePrice,
+              costPrice: unmaskCurrency(values.costPrice),
+              salePrice: unmaskCurrency(values.salePrice),
               stockQuantity: values.stockQuantity,
               minStockLevel: values.minStockLevel,
               unit: values.unit as ProductUnit,
@@ -198,7 +206,12 @@ export function ProdutoForm({ initial, onClose }: ProdutoFormProps) {
               <FormItem>
                 <FormLabel>{t('catalog.produto.form.costPriceLabel')}</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="R$ 0,00" inputMode="decimal" />
+                  <Input
+                    {...field}
+                    placeholder="0,00"
+                    inputMode="numeric"
+                    onChange={(e) => field.onChange(maskCurrency(e.target.value))}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -211,7 +224,12 @@ export function ProdutoForm({ initial, onClose }: ProdutoFormProps) {
               <FormItem>
                 <FormLabel>{t('catalog.produto.form.salePriceLabel')} *</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="R$ 0,00" inputMode="decimal" />
+                  <Input
+                    {...field}
+                    placeholder="0,00"
+                    inputMode="numeric"
+                    onChange={(e) => field.onChange(maskCurrency(e.target.value))}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

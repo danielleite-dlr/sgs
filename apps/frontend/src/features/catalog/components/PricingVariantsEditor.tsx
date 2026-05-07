@@ -1,6 +1,7 @@
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2 } from 'lucide-react';
+import { maskCurrency } from '../utils/currency-mask';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -39,7 +40,7 @@ export function PricingVariantsEditor({ name = 'pricingVariants' }: { name?: str
           variant="ghost"
           size="sm"
           onClick={() =>
-            append({ name: '', durationMinutes: 60, seniorityTier: null, price: '0.00' })
+            append({ name: '', durationMinutes: 60, seniorityTier: null, price: '' })
           }
         >
           <Plus className="mr-1 h-4 w-4" />
@@ -130,7 +131,12 @@ export function PricingVariantsEditor({ name = 'pricingVariants' }: { name?: str
                     {t('catalog.pricingVariants.fields.price')}
                   </FormLabel>
                   <FormControl>
-                    <Input {...f} placeholder="R$ 0,00" inputMode="decimal" />
+                    <Input
+                      {...f}
+                      placeholder="0,00"
+                      inputMode="numeric"
+                      onChange={(e) => f.onChange(maskCurrency(e.target.value))}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

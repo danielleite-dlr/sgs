@@ -32,8 +32,21 @@ import {
 } from '../api/servicos.api';
 import type { CreateServiceResult, UpdateServiceResult } from '../api/servicos.api';
 import { PricingVariantsEditor } from './PricingVariantsEditor';
+import { maskCurrency, unmaskCurrency, formatCurrencyDisplay } from '../utils/currency-mask';
 
 // ---- Zod schema ----
+
+// Accepts BR display ("1.500,00") or US ("1500.00"); validation ensures it can be parsed to a positive number
+const priceSchema = z
+  .string()
+  .min(1, 'Informe o preço.')
+  .refine(
+    (v) => {
+      const n = Number(unmaskCurrency(v));
+      return !Number.isNaN(n) && n >= 0;
+    },
+    { message: 'Preço inválido.' },
+  );
 
 const variantSchema = z.object({
   name: z.string().min(1, 'Nome obrigatório.'),
@@ -42,17 +55,13 @@ const variantSchema = z.object({
     .union([z.literal('junior'), z.literal('pleno'), z.literal('senior'), z.null()])
     .nullable()
     .optional(),
-  price: z
-    .string()
-    .regex(/^\d+(\.\d{1,2})?$/, 'Formato inválido (ex.: 50.00)'),
+  price: priceSchema,
 });
 
 const schema = z.object({
   name: z.string().min(2, 'Digite um nome válido.'),
   categoryId: z.string().min(1, 'Selecione uma categoria.'),
-  basePrice: z
-    .string()
-    .regex(/^\d+(\.\d{1,2})?$/, 'Formato inválido (ex.: 50.00)'),
+  basePrice: priceSchema,
   defaultDurationMinutes: z.coerce.number().int().positive('Duração inválida.'),
   pricingVariants: z.array(variantSchema).default([]),
 });
@@ -105,19 +114,19 @@ export function ServicoForm({
       ? {
           name: initial.name,
           categoryId: initial.categoryId,
-          basePrice: initial.basePrice,
+          basePrice: formatCurrencyDisplay(initial.basePrice),
           defaultDurationMinutes: initial.defaultDurationMinutes,
           pricingVariants: initial.pricingVariants.map((v) => ({
             name: v.name,
             durationMinutes: v.durationMinutes,
             seniorityTier: (v.seniorityTier as 'junior' | 'pleno' | 'senior' | null) ?? null,
-            price: v.price,
+            price: formatCurrencyDisplay(v.price),
           })),
         }
       : {
           name: '',
           categoryId: '',
-          basePrice: '0.00',
+          basePrice: '',
           defaultDurationMinutes: 60,
           pricingVariants: [],
         },
@@ -138,13 +147,13 @@ export function ServicoForm({
       const payload = {
         name: values.name,
         categoryId: values.categoryId,
-        basePrice: values.basePrice,
+        basePrice: unmaskCurrency(values.basePrice),
         defaultDurationMinutes: values.defaultDurationMinutes,
         pricingVariants: values.pricingVariants.map((v) => ({
           name: v.name,
           durationMinutes: v.durationMinutes,
           seniorityTier: v.seniorityTier ?? null,
-          price: v.price,
+          price: unmaskCurrency(v.price),
         })),
       };
 
@@ -250,9 +259,10 @@ export function ServicoForm({
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="R$ 0,00"
-                      inputMode="decimal"
+                      placeholder="0,00"
+                      inputMode="numeric"
                       aria-label="Preço base em reais"
+                      onChange={(e) => field.onChange(maskCurrency(e.target.value))}
                     />
                   </FormControl>
                   <FormMessage />
