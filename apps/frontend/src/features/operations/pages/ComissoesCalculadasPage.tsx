@@ -109,9 +109,9 @@ export function ComissoesCalculadasPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="Todos">Todos</SelectItem>
-              {MOCK_PROFESSIONALS.map((p) => (
-                <SelectItem key={p.id} value={p.name}>
-                  {p.name}
+              {MOCK_PROFESSIONALS.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -11,22 +11,18 @@ vi.mock('@/features/auth/hooks/useAuth', () => ({
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
 import { SidebarNav } from '../SidebarNav';
 
-describe('SidebarNav', () => {
-  it('renders all 7 nav labels in pt-BR', () => {
+describe('SidebarNav (Trinks hierarchy)', () => {
+  it('renders top-level menu groups', () => {
     useAuthStore.setState({ roleName: 'Ana' } as any);
     render(
       <MemoryRouter>
         <SidebarNav />
       </MemoryRouter>,
     );
-    expect(screen.getByText('Painel')).toBeInTheDocument();
-    expect(screen.getByText('Catálogo')).toBeInTheDocument();
-    expect(screen.getByText('Categorias')).toBeInTheDocument();
-    expect(screen.getByText('Serviços')).toBeInTheDocument();
-    expect(screen.getByText('Pacotes')).toBeInTheDocument();
-    expect(screen.getByText('Produtos')).toBeInTheDocument();
-    expect(screen.getByText('Comissões')).toBeInTheDocument();
-    expect(screen.getByText('Clientes')).toBeInTheDocument();
+    expect(screen.getByText('Início')).toBeInTheDocument();
+    expect(screen.getByText('Agenda')).toBeInTheDocument();
+    expect(screen.getByText('Meu Estabelecimento')).toBeInTheDocument();
+    expect(screen.getByText('Financeiro')).toBeInTheDocument();
   });
 
   it('shows low-stock warning icon when count > 0', () => {
@@ -36,6 +32,7 @@ describe('SidebarNav', () => {
         <SidebarNav lowStockCount={3} />
       </MemoryRouter>,
     );
-    expect(screen.getByLabelText(/3 produto/)).toBeInTheDocument();
+    // Multiple icons (one in section header, one in sub-item) — at least one
+    expect(screen.getAllByLabelText(/3 produto/).length).toBeGreaterThan(0);
   });
 });

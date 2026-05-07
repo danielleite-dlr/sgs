@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation } from '@apollo/client';
-import { Folder, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Folder, MoreHorizontal, Pencil, Trash2, Search } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { FilterBar } from '@/components/layout/FilterBar';
 import { DataTable } from '@/components/ui/data-table';
 import { EntityAvatar } from '@/components/ui/entity-avatar';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -84,6 +86,8 @@ export function CategoriasPage() {
   });
 
   const [dialog, setDialog] = useState<DialogState | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [onlyActive, setOnlyActive] = useState(true);
 
   useEffect(() => {
     document.title = t('pages.categorias.tab');
@@ -144,8 +148,14 @@ export function CategoriasPage() {
       });
     }
 
-    return items;
-  }, [data]);
+    // Apply search filter (mockup)
+    const q = searchTerm.trim().toLowerCase();
+    const filtered = q
+      ? items.filter((it) => it.name.toLowerCase().includes(q))
+      : items;
+
+    return filtered;
+  }, [data, searchTerm]);
 
   async function handleReorder(cat: FlatCategory, dir: 'UP' | 'DOWN') {
     const res = await reorder({ variables: { input: { id: cat.id, direction: dir } } });
@@ -179,6 +189,70 @@ export function CategoriasPage() {
           </Button>
         }
       />
+
+      <FilterBar
+        basicFilters={
+          <div className="flex flex-wrap items-center gap-md">
+            <div className="relative w-full sm:w-[280px]">
+              <Search className="absolute left-sm top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar categoria…"
+                className="pl-9 h-9 text-sm"
+              />
+            </div>
+            <label className="flex items-center gap-xs text-sm text-neutral-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={onlyActive}
+                onChange={(e) => setOnlyActive(e.target.checked)}
+                className="rounded border-neutral-300"
+              />
+              Apenas Ativos
+            </label>
+          </div>
+        }
+        advancedFilters={
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
+            <label className="flex flex-col gap-xs">
+              <span className="text-xs font-semibold text-neutral-600">Origem</span>
+              <select className="rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white">
+                <option>Todas</option>
+                <option>Cadastro manual</option>
+                <option>Importação</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-xs">
+              <span className="text-xs font-semibold text-neutral-600">Tipo</span>
+              <select className="rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white">
+                <option>Todos</option>
+                <option>Apenas raízes</option>
+                <option>Apenas subcategorias</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-xs">
+              <span className="text-xs font-semibold text-neutral-600">Cadastrada entre</span>
+              <input
+                type="text"
+                placeholder="dd/mm/aaaa — dd/mm/aaaa"
+                className="rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white"
+              />
+            </label>
+          </div>
+        }
+        onClear={() => {
+          setSearchTerm('');
+          setOnlyActive(true);
+        }}
+        onExport={() => {
+          /* mockup */
+        }}
+      />
+
+      <p className="text-xs text-neutral-500 mt-md mb-sm">
+        {flat.length} {flat.length === 1 ? 'registro' : 'registros'}
+      </p>
 
       <DataTable<FlatCategory>
         rowKey={(r) => r.id}
