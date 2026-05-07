@@ -230,5 +230,114 @@
     "produtos":   { "tab": "Produtos — SGS",     "h1": "Produtos",    "newCta": "Novo produto" },
     "comissoes":  { "tab": "Comissões — SGS",   "h1": "Comissões",   "newCta": "Nova regra" },
     "clientes":   { "tab": "Clientes — SGS",    "h1": "Clientes",    "newCta": "Novo cliente" }
+  },
+  "catalog": {
+    "softDelete": {
+      "title": "Desativar {{name}}?",
+      "body": "{{name}} ficará inativo e não aparecerá em novos agendamentos. O histórico e os relatórios serão preservados.",
+      "cancel": "Cancelar",
+      "confirm": "Desativar",
+      "client": {
+        "title": "Desativar {{name}}?",
+        "body": "{{name}} ficará inativo. Agendamentos e histórico existentes serão preservados.",
+        "confirm": "Desativar cliente"
+      },
+      "toastDeleted": "{{name}} desativado.",
+      "toastUndo": "Desfazer",
+      "toastRestored": "{{name}} reativado."
+    },
+    "reorder": {
+      "up": "Mover {{name}} para cima",
+      "down": "Mover {{name}} para baixo"
+    },
+    "seniority": {
+      "none": "Nenhum",
+      "junior": "Júnior",
+      "pleno": "Pleno",
+      "senior": "Sênior"
+    },
+    "pricingVariants": {
+      "title": "Variantes de preço",
+      "add": "Adicionar variante",
+      "remove": "Remover variante {{name}}",
+      "emptyHint": "O preço base será aplicado quando não há variantes.",
+      "fields": {
+        "name": "Nome da variante",
+        "namePlaceholder": "Ex.: Júnior 30min, Sênior 60min",
+        "duration": "Duração",
+        "seniority": "Senioridade",
+        "price": "Preço"
+      }
+    },
+    "categoria": {
+      "form": {
+        "nameLabel": "Nome da categoria",
+        "namePlaceholder": "Ex.: Cabelo, Estética, Noivas",
+        "parentLabel": "Categoria principal",
+        "parentPlaceholder": "Selecione ou deixe em branco para categoria raiz",
+        "submitCreate": "Salvar",
+        "submitEdit": "Salvar alterações",
+        "submitting": "Salvando…",
+        "cancel": "Cancelar"
+      },
+      "table": {
+        "name": "Nome",
+        "parent": "Categoria principal",
+        "actions": "Ações"
+      },
+      "empty": {
+        "heading": "Nenhuma categoria ainda",
+        "body": "Organize seus serviços criando categorias.",
+        "cta": "Nova categoria"
+      },
+      "errors": {
+        "depth": "Uma subcategoria não pode ter subcategorias.",
+        "hasChildren": "Remova as subcategorias antes.",
+        "hasServices": "Mova ou desative os serviços desta categoria primeiro.",
+        "generic": "Não foi possível salvar. Tente novamente."
+      }
+    },
+    "servico": {
+      "form": {
+        "nameLabel": "Nome do serviço",
+        "namePlaceholder": "Ex.: Corte feminino, Hidratação",
+        "categoryLabel": "Categoria",
+        "categoryPlaceholder": "Selecione uma categoria",
+        "basePriceLabel": "Preço base",
+        "basePricePlaceholder": "R$ 0,00",
+        "durationLabel": "Duração padrão",
+        "durationPlaceholder": "Ex.: 60",
+        "durationSuffix": "min"
+      },
+      "table": {
+        "name": "Nome",
+        "category": "Categoria",
+        "basePrice": "Preço base",
+        "duration": "Duração",
+        "variants": "Variantes",
+        "actions": "Ações"
+      },
+      "empty": {
+        "heading": "Nenhum serviço ainda",
+        "body": "Adicione os serviços que seu salão oferece.",
+        "cta": "Novo serviço"
+      },
+      "errors": {
+        "categoryNotFound": "Categoria não encontrada.",
+        "inPackage": "Remova este serviço dos pacotes antes de desativar.",
+        "generic": "Não foi possível salvar. Tente novamente."
+      }
+    },
+    "validation": {
+      "required": "Este campo é obrigatório.",
+      "nameTooShort": "Digite um nome válido.",
+      "priceInvalid": "O preço deve ser maior que zero.",
+      "durationInvalid": "A duração deve ser maior que zero."
+    },
+    "toasts": {
+      "categoryCreated": "{{name}} criada com sucesso.",
+      "serviceCreated": "{{name}} criado com sucesso.",
+      "savedChanges": "Alterações salvas."
+    }
   }
 }
