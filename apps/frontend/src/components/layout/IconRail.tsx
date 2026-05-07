@@ -81,7 +81,12 @@ export function IconRail({ lowStockCount = 0 }: IconRailProps) {
           expanded ? 'w-60' : 'w-16',
         )}
       >
-        <ul className={cn('flex-1 overflow-y-auto py-md space-y-px', expanded ? 'px-sm' : 'px-2 items-center flex flex-col')}>
+        <ul
+          className={cn(
+            'flex-1 overflow-y-auto',
+            expanded ? 'py-sm space-y-0' : 'py-md space-y-px px-2 items-center flex flex-col',
+          )}
+        >
           {MENU.map((item) => (
             <RailItem
               key={item.id}
@@ -371,18 +376,22 @@ function ExpandedItem({
   const isTop = level === 0;
 
   const baseClasses =
-    'flex items-center gap-sm rounded-md py-sm pr-md transition-colors w-full text-left';
+    'flex items-center gap-sm py-sm pr-md transition-colors w-full text-left';
 
-  // Differentiate by depth:
-  //   level 0 → bold-ish white, full size text
-  //   level 1+ → smaller, more transparent, no icon column
   const sizeClasses = isTop ? 'text-sm' : 'text-[13px]';
-  const idleText = isTop ? 'text-white/90' : 'text-white/65';
-  const hoverText = 'hover:text-white';
-  const hoverBg = isTop ? 'hover:bg-white/10' : 'hover:bg-white/5';
-  const activeClasses = isTop
-    ? 'bg-white/15 text-white font-semibold'
-    : 'bg-white/10 text-white font-medium';
+
+  // Top-level idle: white text on primary-700.
+  // Sub-item idle: white/85 text on primary-900 panel.
+  const idleClasses = isTop
+    ? 'text-white/95 hover:bg-white/10'
+    : 'text-white/85 hover:bg-white/5';
+
+  // Top-level "selected as card": SOLID white bg, primary text/icon.
+  const topActiveClasses =
+    'bg-white text-primary-500 font-semibold shadow-sm hover:bg-white';
+
+  // Sub-item active (inside primary-900 panel): brighter highlight.
+  const subActiveClasses = 'bg-white/15 text-white font-semibold';
 
   if (!hasChildren && item.to) {
     return (
@@ -394,13 +403,17 @@ function ExpandedItem({
             cn(
               baseClasses,
               sizeClasses,
-              isActive ? activeClasses : cn(idleText, hoverText, hoverBg),
+              isActive
+                ? isTop
+                  ? topActiveClasses
+                  : subActiveClasses
+                : idleClasses,
             )
           }
           style={{ paddingLeft: padding }}
         >
           {Icon ? (
-            <Icon className={cn('shrink-0', isTop ? 'h-4 w-4' : 'h-3.5 w-3.5 opacity-70')} />
+            <Icon className={cn('shrink-0', isTop ? 'h-4 w-4' : 'h-3.5 w-3.5 opacity-80')} />
           ) : (
             <span className={cn(isTop ? 'w-4' : 'w-3.5')} />
           )}
@@ -423,16 +436,14 @@ function ExpandedItem({
           className={cn(
             baseClasses,
             sizeClasses,
-            isTop ? 'font-medium' : '',
-            open && isTop && 'bg-white/10',
-            idleText,
-            hoverText,
-            hoverBg,
+            isTop && 'font-medium',
+            // Open top-level group → "selected card" (solid white bg, primary text)
+            open && isTop ? topActiveClasses : idleClasses,
           )}
           style={{ paddingLeft: padding }}
         >
           {Icon ? (
-            <Icon className={cn('shrink-0', isTop ? 'h-4 w-4' : 'h-3.5 w-3.5 opacity-70')} />
+            <Icon className={cn('shrink-0', isTop ? 'h-4 w-4' : 'h-3.5 w-3.5 opacity-80')} />
           ) : (
             <span className={cn(isTop ? 'w-4' : 'w-3.5')} />
           )}
@@ -443,13 +454,18 @@ function ExpandedItem({
           <ChevronRight
             className={cn(
               'h-4 w-4 transition-transform shrink-0',
-              isTop ? 'text-white/70' : 'text-white/50',
+              open && isTop ? 'text-primary-500' : isTop ? 'text-white/70' : 'text-white/50',
               open && 'rotate-90',
             )}
           />
         </button>
         {open && (
-          <ul className="space-y-px mt-px">
+          <ul
+            className={cn(
+              // Solid darker panel for sub-items at top-level only
+              isTop && 'bg-primary-900',
+            )}
+          >
             {item.children!.map((c) => (
               <ExpandedItem
                 key={c.id}
