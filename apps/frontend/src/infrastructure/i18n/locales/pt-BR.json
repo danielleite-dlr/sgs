@@ -202,12 +202,33 @@
   },
   "navigation": {
     "dashboard": "Painel",
+    "catalog": "Catálogo",
+    "categorias": "Categorias",
+    "servicos": "Serviços",
+    "pacotes": "Pacotes",
+    "produtos": "Produtos",
+    "comissoes": "Comissões",
+    "clientes": "Clientes",
     "appointments": "Agendamentos",
-    "clients": "Clientes",
     "services": "Serviços",
     "professionals": "Profissionais",
     "financial": "Financeiro",
     "settings": "Configurações",
-    "logout": "Sair"
+    "logout": "Sair",
+    "primaryNavLabel": "Navegação principal",
+    "lowStockTooltip": "{{count}} produto(s) com estoque baixo"
+  },
+  "appShell": {
+    "mobileMenuLabel": "Abrir menu",
+    "notificationsTooltip": "Notificações (em breve)"
+  },
+  "pages": {
+    "dashboard":  { "tab": "Painel — SGS",      "h1": "Painel" },
+    "categorias": { "tab": "Categorias — SGS",  "h1": "Categorias",  "newCta": "Nova categoria" },
+    "servicos":   { "tab": "Serviços — SGS",    "h1": "Serviços",    "newCta": "Novo serviço" },
+    "pacotes":    { "tab": "Pacotes — SGS",      "h1": "Pacotes",     "newCta": "Novo pacote" },
+    "produtos":   { "tab": "Produtos — SGS",     "h1": "Produtos",    "newCta": "Novo produto" },
+    "comissoes":  { "tab": "Comissões — SGS",   "h1": "Comissões",   "newCta": "Nova regra" },
+    "clientes":   { "tab": "Clientes — SGS",    "h1": "Clientes",    "newCta": "Novo cliente" }
   }
 }
