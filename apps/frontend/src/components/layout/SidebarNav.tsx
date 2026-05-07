@@ -13,6 +13,13 @@ import {
   TriangleAlert,
   Settings,
   LogOut,
+  CalendarDays,
+  Receipt,
+  DollarSign,
+  BadgeDollarSign,
+  Heart,
+  FileText,
+  Megaphone,
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
@@ -43,6 +50,9 @@ export function SidebarNav({ lowStockCount = 0, onNavigate }: SidebarNavProps) {
   const roleName = useAuthStore((s) => s.roleName);
   const { logout } = useAuth();
   const [catalogOpen, setCatalogOpen] = useState(true);
+  const [operacoesOpen, setOperacoesOpen] = useState(false);
+  const [eventosOpen, setEventosOpen] = useState(false);
+  const [comunicacaoOpen, setComunicacaoOpen] = useState(false);
 
   const displayName = roleName ?? '—';
 
@@ -143,6 +153,105 @@ export function SidebarNav({ lowStockCount = 0, onNavigate }: SidebarNavProps) {
               </CollapsibleContent>
             </Collapsible>
           </li>
+          {/* Operações — Phase 3 */}
+          <li>
+            <Collapsible open={operacoesOpen} onOpenChange={setOperacoesOpen}>
+              <CollapsibleTrigger
+                className={cn(baseItem, inactiveItem, 'w-full')}
+                aria-expanded={operacoesOpen}
+              >
+                <CalendarDays className="h-4 w-4 shrink-0" />
+                <span className="flex-1 text-left">{t('navigation.operations', 'Operações')}</span>
+                <ChevronDown
+                  className={cn(
+                    'h-4 w-4 transition-transform shrink-0',
+                    operacoesOpen ? '' : '-rotate-90',
+                  )}
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pl-md space-y-xs">
+                {link(
+                  '/agenda',
+                  <CalendarDays className="h-4 w-4 shrink-0" />,
+                  t('navigation.agenda', 'Agenda'),
+                )}
+                {link(
+                  '/comanda/demo',
+                  <Receipt className="h-4 w-4 shrink-0" />,
+                  t('navigation.comanda', 'Comanda'),
+                )}
+                {link(
+                  '/financeiro',
+                  <DollarSign className="h-4 w-4 shrink-0" />,
+                  t('navigation.financeiro', 'Financeiro'),
+                )}
+                {link(
+                  '/financeiro/comissoes',
+                  <BadgeDollarSign className="h-4 w-4 shrink-0" />,
+                  t('navigation.comissoesCalculadas', 'Comissões'),
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+          </li>
+
+          {/* Eventos — Phase 4 */}
+          <li>
+            <Collapsible open={eventosOpen} onOpenChange={setEventosOpen}>
+              <CollapsibleTrigger
+                className={cn(baseItem, inactiveItem, 'w-full')}
+                aria-expanded={eventosOpen}
+              >
+                <Heart className="h-4 w-4 shrink-0" />
+                <span className="flex-1 text-left">{t('navigation.events', 'Eventos')}</span>
+                <ChevronDown
+                  className={cn(
+                    'h-4 w-4 transition-transform shrink-0',
+                    eventosOpen ? '' : '-rotate-90',
+                  )}
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pl-md space-y-xs">
+                {link(
+                  '/noivas',
+                  <Heart className="h-4 w-4 shrink-0" />,
+                  t('navigation.noivas', 'Noivas'),
+                )}
+                {link(
+                  '/contratos',
+                  <FileText className="h-4 w-4 shrink-0" />,
+                  t('navigation.contratos', 'Contratos'),
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+          </li>
+
+          {/* Comunicação — Phase 5 */}
+          <li>
+            <Collapsible open={comunicacaoOpen} onOpenChange={setComunicacaoOpen}>
+              <CollapsibleTrigger
+                className={cn(baseItem, inactiveItem, 'w-full')}
+                aria-expanded={comunicacaoOpen}
+              >
+                <Megaphone className="h-4 w-4 shrink-0" />
+                <span className="flex-1 text-left">{t('navigation.communication', 'Comunicação')}</span>
+                <ChevronDown
+                  className={cn(
+                    'h-4 w-4 transition-transform shrink-0',
+                    comunicacaoOpen ? '' : '-rotate-90',
+                  )}
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pl-md space-y-xs">
+                {link(
+                  '/campanhas',
+                  <Megaphone className="h-4 w-4 shrink-0" />,
+                  t('navigation.campanhas', 'Campanhas'),
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+          </li>
+
+          {/* Clientes */}
           <li>
             {link(
               '/clientes',

@@ -17,12 +17,24 @@ import { ClientesPage } from '@/pages/ClientesPage';
 import { ClienteDetailPage } from '@/pages/ClienteDetailPage';
 import { ClienteEditPage } from '@/pages/ClienteEditPage';
 import { ClienteNovoPage } from '@/pages/ClienteNovoPage';
+// Phase 3 — Operations mockups
+import { SchedulePage } from '@/features/operations/pages/SchedulePage';
+import { ComandaPage } from '@/features/operations/pages/ComandaPage';
+import { FinanceiroPage } from '@/features/operations/pages/FinanceiroPage';
+import { ComissoesCalculadasPage } from '@/features/operations/pages/ComissoesCalculadasPage';
+// Phase 4 — Bridal / Contracts placeholder stubs (Agent 2 will replace file contents)
+import { BridalGroupsPlaceholder } from '@/features/bridal/pages/BridalGroupsPlaceholder';
+import { ContractsPlaceholder } from '@/features/bridal/pages/ContractsPlaceholder';
+import { ContractDetailPlaceholder } from '@/features/bridal/pages/ContractDetailPlaceholder';
+// Phase 5 — Communication placeholder stubs (Agent 3 will replace file contents)
+import { CampaignsPlaceholder } from '@/features/communication/pages/CampaignsPlaceholder';
 
 /**
  * Application route table.
  *
  * Auth pages implemented in Phase 1 Plan 06 (frontend-auth-pages).
  * AppShell + Phase 2 routes implemented in Phase 2 Plan 02 (frontend-appshell).
+ * Phase 3 mockups + Phase 4/5 stub routes added here (mockups plan).
  *
  * Route structure:
  *   Public routes (no AppShell):
@@ -35,15 +47,31 @@ import { ClienteNovoPage } from '@/pages/ClienteNovoPage';
  *     *                         — 404 NotFound
  *
  *   Protected routes (inside AppShell, require auth):
+ *     Phase 1+2 (live):
  *     /dashboard                — Dashboard placeholder
- *     /catalogo/categorias      — Categorias list (Wave 3)
- *     /catalogo/servicos        — Serviços list (Wave 3)
- *     /catalogo/pacotes         — Pacotes list (Wave 3)
- *     /catalogo/produtos        — Produtos list (Wave 3)
- *     /catalogo/comissoes       — Comissões list (Wave 3)
- *     /clientes                 — Clientes list (Wave 3)
- *     /clientes/:id             — Cliente detail (Wave 3)
- *     /clientes/:id/editar      — Cliente edit (Wave 3)
+ *     /catalogo/categorias      — Categorias list
+ *     /catalogo/servicos        — Serviços list
+ *     /catalogo/pacotes         — Pacotes list
+ *     /catalogo/produtos        — Produtos list
+ *     /catalogo/comissoes       — Comissões list
+ *     /clientes                 — Clientes list
+ *     /clientes/novo            — Novo cliente form
+ *     /clientes/:id             — Cliente detail
+ *     /clientes/:id/editar      — Cliente edit
+ *
+ *     Phase 3 (mockups — no backend wired):
+ *     /agenda                   — SchedulePage (calendar week view, mock data)
+ *     /comanda/:id              — ComandaPage (POS / receipt, mock data)
+ *     /financeiro               — FinanceiroPage (dashboard + charts, mock data)
+ *     /financeiro/comissoes     — ComissoesCalculadasPage (table, mock data)
+ *
+ *     Phase 4 (stubs — Agent 2 will replace file contents):
+ *     /noivas                   — BridalGroupsPlaceholder
+ *     /contratos                — ContractsPlaceholder
+ *     /contratos/:id            — ContractDetailPlaceholder
+ *
+ *     Phase 5 (stubs — Agent 3 will replace file contents):
+ *     /campanhas                — CampaignsPlaceholder
  */
 export const router = createBrowserRouter([
   {
@@ -93,6 +121,17 @@ export const router = createBrowserRouter([
       { path: '/clientes/novo',         element: <ClienteNovoPage /> },
       { path: '/clientes/:id',          element: <ClienteDetailPage /> },
       { path: '/clientes/:id/editar',   element: <ClienteEditPage /> },
+      // Phase 3 — Operations mockups
+      { path: '/agenda',                element: <SchedulePage /> },
+      { path: '/comanda/:id',           element: <ComandaPage /> },
+      { path: '/financeiro',            element: <FinanceiroPage /> },
+      { path: '/financeiro/comissoes',  element: <ComissoesCalculadasPage /> },
+      // Phase 4 — Bridal / Contracts stubs (Agent 2 replaces contents)
+      { path: '/noivas',                element: <BridalGroupsPlaceholder /> },
+      { path: '/contratos',             element: <ContractsPlaceholder /> },
+      { path: '/contratos/:id',         element: <ContractDetailPlaceholder /> },
+      // Phase 5 — Communication stubs (Agent 3 replaces contents)
+      { path: '/campanhas',             element: <CampaignsPlaceholder /> },
     ],
   },
   {
