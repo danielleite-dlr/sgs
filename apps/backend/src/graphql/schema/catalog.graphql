@@ -1,0 +1,184 @@
+# ===== Categories =====
+
+extend type Query {
+  categories: [Category!]!
+  category(id: UUID!): Category
+}
+
+extend type Mutation {
+  createCategory(input: CreateCategoryInput!): CategoryPayload!
+  updateCategory(input: UpdateCategoryInput!): CategoryPayload!
+  reorderCategory(input: ReorderCategoryInput!): CategoryPayload!
+  softDeleteCategory(input: SoftDeleteInput!): CategoryPayload!
+}
+
+type Category {
+  id: UUID!
+  name: String!
+  parentId: UUID
+  parent: Category
+  children: [Category!]!
+  displayOrder: Int!
+  coverImageUrl: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input CreateCategoryInput {
+  name: String!
+  parentId: UUID
+}
+
+input UpdateCategoryInput {
+  id: UUID!
+  name: String
+  parentId: UUID
+  displayOrder: Int
+}
+
+input ReorderCategoryInput {
+  id: UUID!
+  direction: ReorderDirection!
+}
+
+enum ReorderDirection {
+  UP
+  DOWN
+}
+
+input SoftDeleteInput {
+  id: UUID!
+}
+
+type CategoryPayload {
+  category: Category
+  errors: [UserError!]!
+}
+
+# ===== Services =====
+
+extend type Query {
+  services(categoryId: UUID): [Service!]!
+  service(id: UUID!): Service
+}
+
+extend type Mutation {
+  createService(input: CreateServiceInput!): ServicePayload!
+  updateService(input: UpdateServiceInput!): ServicePayload!
+  softDeleteService(input: SoftDeleteInput!): ServicePayload!
+}
+
+type Service {
+  id: UUID!
+  name: String!
+  categoryId: UUID!
+  category: Category
+  basePrice: String!
+  defaultDurationMinutes: Int!
+  displayOrder: Int!
+  pricingVariants: [ServicePricingVariant!]!
+  coverImageUrl: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ServicePricingVariant {
+  id: UUID!
+  name: String!
+  durationMinutes: Int!
+  seniorityTier: SeniorityTier
+  price: String!
+  displayOrder: Int!
+}
+
+enum SeniorityTier {
+  junior
+  pleno
+  senior
+}
+
+input PricingVariantInput {
+  name: String!
+  durationMinutes: Int!
+  seniorityTier: SeniorityTier
+  price: String!
+}
+
+input CreateServiceInput {
+  name: String!
+  categoryId: UUID!
+  basePrice: String!
+  defaultDurationMinutes: Int!
+  pricingVariants: [PricingVariantInput!]
+}
+
+input UpdateServiceInput {
+  id: UUID!
+  name: String
+  categoryId: UUID
+  basePrice: String
+  defaultDurationMinutes: Int
+  pricingVariants: [PricingVariantInput!]
+}
+
+type ServicePayload {
+  service: Service
+  errors: [UserError!]!
+}
+
+# ===== Packages =====
+
+extend type Query {
+  packages: [Package!]!
+  package(id: UUID!): Package
+}
+
+extend type Mutation {
+  createPackage(input: CreatePackageInput!): PackagePayload!
+  updatePackage(input: UpdatePackageInput!): PackagePayload!
+  softDeletePackage(input: SoftDeleteInput!): PackagePayload!
+}
+
+type Package {
+  id: UUID!
+  name: String!
+  price: String!
+  individualSum: String!
+  validForDays: Int
+  services: [PackageServiceItem!]!
+  coverImageUrl: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type PackageServiceItem {
+  serviceId: UUID!
+  service: Service!
+  quantity: Int!
+  displayOrder: Int!
+}
+
+input PackageServiceInput {
+  serviceId: UUID!
+  quantity: Int
+}
+
+input CreatePackageInput {
+  name: String!
+  price: String!
+  validForDays: Int
+  services: [PackageServiceInput!]!
+}
+
+input UpdatePackageInput {
+  id: UUID!
+  name: String
+  price: String
+  validForDays: Int
+  services: [PackageServiceInput!]
+}
+
+type PackagePayload {
+  package: Package
+  errors: [UserError!]!
+}

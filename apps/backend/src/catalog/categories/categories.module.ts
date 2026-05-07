@@ -1,14 +1,16 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../../database/database.module';
 import { AuthzModule } from '../../authz/authz.module';
+import { CategoriesService } from './categories.service';
+import { CategoriesResolver } from './categories.resolver';
 
 /**
  * CategoriesModule — hierarchical service categories (CAT-01).
- * Wave 2 plan adds: CategoryService, CategoryResolver, CategoryDto.
+ * Exports CategoriesService so ServicesModule can validate categoryId references.
  */
 @Module({
   imports: [DatabaseModule, AuthzModule],
-  providers: [],
-  exports: [],
+  providers: [CategoriesService, CategoriesResolver],
+  exports: [CategoriesService],
 })
 export class CategoriesModule {}
