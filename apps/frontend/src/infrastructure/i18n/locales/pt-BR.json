@@ -383,6 +383,138 @@
       "categoryCreated": "{{name}} criada com sucesso.",
       "serviceCreated": "{{name}} criado com sucesso.",
       "savedChanges": "Alterações salvas."
+    },
+    "combobox": {
+      "searchPlaceholder": "Buscar…",
+      "empty": "Nenhum resultado."
+    },
+    "pacote": {
+      "summary": {
+        "individual": "Soma individual",
+        "package": "Preço do pacote"
+      },
+      "delta": {
+        "above": "({{v}} acima do total individual)",
+        "discount": "({{v}} de desconto)"
+      },
+      "form": {
+        "nameLabel": "Nome do pacote",
+        "namePlaceholder": "Ex.: Pacote Noiva Completo",
+        "servicesLabel": "Serviços incluídos",
+        "priceLabel": "Preço do pacote"
+      },
+      "picker": {
+        "add": "Adicionar serviço",
+        "empty": "Adicione ao menos um serviço.",
+        "remove": "Remover {{name}}",
+        "quantityLabel": "Quantidade de {{name}}",
+        "searchPlaceholder": "Buscar serviço…",
+        "noResults": "Nenhum serviço encontrado."
+      },
+      "table": {
+        "name": "Nome",
+        "individual": "Soma individual",
+        "package": "Preço do pacote",
+        "items": "Serviços",
+        "actions": "Ações"
+      },
+      "empty": {
+        "heading": "Nenhum pacote ainda",
+        "body": "Crie pacotes combinando serviços com desconto.",
+        "cta": "Novo pacote"
+      }
+    },
+    "produto": {
+      "form": {
+        "nameLabel": "Nome do produto",
+        "namePlaceholder": "Ex.: Shampoo Hidratação Intensa",
+        "skuLabel": "SKU",
+        "skuPlaceholder": "Ex.: SHM-001",
+        "costPriceLabel": "Preço de custo",
+        "salePriceLabel": "Preço de venda",
+        "stockLabel": "Estoque atual",
+        "minStockLabel": "Estoque mínimo",
+        "unitLabel": "Unidade",
+        "unitOptions": { "un": "Unidade", "ml": "mL", "g": "g" },
+        "stockEditDisabledHint": "Use Ajustar estoque para alterar."
+      },
+      "table": {
+        "name": "Nome",
+        "sku": "SKU",
+        "salePrice": "Preço de venda",
+        "stock": "Estoque",
+        "minStock": "Mínimo",
+        "actions": "Ações"
+      },
+      "adjustStock": {
+        "title": "Ajustar estoque",
+        "currentLabel": "Estoque atual",
+        "deltaLabel": "Quantidade (use - para reduzir)",
+        "reasonLabel": "Motivo",
+        "reasonPlaceholder": "Ex.: Recebimento de pedido, Avaria",
+        "previewLabel": "Novo estoque",
+        "confirm": "Confirmar ajuste"
+      },
+      "toasts": {
+        "stockAdjusted": "Estoque atualizado."
+      },
+      "empty": {
+        "heading": "Nenhum produto ainda",
+        "body": "Cadastre os produtos que você usa ou vende.",
+        "cta": "Novo produto"
+      },
+      "errors": {
+        "skuTaken": "Este SKU já está em uso por outro produto.",
+        "stockNegative": "Estoque resultante seria negativo."
+      }
+    },
+    "comissao": {
+      "form": {
+        "scopeLabel": "Tipo de regra",
+        "kindLabel": "Tipo de comissão",
+        "valueFixedLabel": "Valor",
+        "valuePercentLabel": "Percentual",
+        "memberLabel": "Profissional",
+        "memberPlaceholder": "Selecione o profissional",
+        "memberSearchPlaceholder": "Buscar profissional…",
+        "memberEmpty": "Nenhum profissional encontrado.",
+        "serviceLabel": "Serviço",
+        "servicePlaceholder": "Selecione o serviço",
+        "serviceSearchPlaceholder": "Buscar serviço…",
+        "serviceEmpty": "Nenhum serviço encontrado.",
+        "categoryLabel": "Categoria",
+        "categoryPlaceholder": "Selecione a categoria",
+        "productLabel": "Produto",
+        "productPlaceholder": "Selecione o produto",
+        "productSearchPlaceholder": "Buscar produto…",
+        "productEmpty": "Nenhum produto encontrado."
+      },
+      "scope": {
+        "member_service": { "label": "Profissional + Serviço", "helper": "Regra específica para um profissional em um serviço." },
+        "service":        { "label": "Serviço",                "helper": "Aplica-se a qualquer profissional que realizar este serviço." },
+        "category":       { "label": "Categoria",              "helper": "Aplica-se a todos os serviços desta categoria." },
+        "product":        { "label": "Produto",                "helper": "Comissão sobre a venda deste produto." },
+        "default":        { "label": "Padrão da organização",  "helper": "Aplica-se a todas as vendas sem regra específica." }
+      },
+      "kind": {
+        "fixed": "Valor fixo (R$)",
+        "percentage": "Percentual (%)"
+      },
+      "table": {
+        "rule": "Regra",
+        "kind": "Tipo",
+        "value": "Valor",
+        "actions": "Ações"
+      },
+      "empty": {
+        "heading": "Nenhuma regra de comissão",
+        "body": "Configure como os profissionais são remunerados.",
+        "cta": "Nova regra"
+      },
+      "errors": {
+        "scopeConflict": "Já existe uma regra para este escopo. Edite a regra existente.",
+        "valueOutOfRange": "Percentual deve ser entre 0 e 100."
+      }
     }
   }
 }
