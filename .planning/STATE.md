@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-core-domain/02-frontend-appshell-PLAN.md — all 3 tasks complete. AppShell layout, 15 shadcn primitives, DataTable/EntityAvatar, 9 Phase 2 routes done.
-last_updated: "2026-05-07T13:08:03.024Z"
+stopped_at: "Completed 02-core-domain plan 05: backend-commissions-clients"
+last_updated: "2026-05-07T13:30:37.680Z"
 last_activity: 2026-05-07
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 15
-  completed_plans: 10
+  completed_plans: 11
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 02 (core-domain) — EXECUTING
-Plan: 3 of 8
+Plan: 4 of 8
 Status: Ready to execute
 Last activity: 2026-05-07
 
@@ -59,6 +59,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 01-foundation P07 | 45 | 2 tasks | 11 files |
 | Phase 02-core-domain P01 | 14 | 3 tasks | 17 files |
 | Phase 02-core-domain P02 | 120 | 3 tasks | 33 files |
+| Phase 02-core-domain P05 | 45 | 2 tasks | 19 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,9 @@ Recent decisions affecting current work:
 - [Phase 02-core-domain]: commission_rules.value uses DECIMAL(12,4) for extra precision on percentage rates
 - [Phase 02-core-domain]: AppShell uses Outlet pattern — layout route group with no path, ProtectedRoute wraps AppShell as element
 - [Phase 02-core-domain]: SidebarNav Catálogo uses Collapsible defaultOpen=true; all nav labels from i18n t() — zero hardcoded strings
+- [Phase 02-core-domain]: CPF stored as digits-only via normalizeCpf for consistent lookup regardless of input format
+- [Phase 02-core-domain]: Member type owned by identity.graphql as single SDL source-of-truth for cross-SDL cross-module reference
+- [Phase 02-core-domain]: clientHistory returns [] Phase 2 stub with Phase 3 aggregation slot reserved in ClientsService
 
 ### Pending Todos
 
@@ -114,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-07T13:08:03.017Z
-Stopped at: Completed 02-core-domain/02-frontend-appshell-PLAN.md — all 3 tasks complete. AppShell layout, 15 shadcn primitives, DataTable/EntityAvatar, 9 Phase 2 routes done.
+Last session: 2026-05-07T13:30:37.674Z
+Stopped at: Completed 02-core-domain plan 05: backend-commissions-clients
 Resume file: None
