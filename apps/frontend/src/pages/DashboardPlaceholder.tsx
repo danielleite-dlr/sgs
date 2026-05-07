@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useAuthStore } from '@/infrastructure/stores/auth.store';
 import {
   ChevronLeft,
   ChevronRight,
@@ -7,14 +6,11 @@ import {
   Globe,
   MessageCircle,
   Package,
+  PackageOpen,
   Sparkles,
-  ChevronRight as ChevronRightIcon,
-  Check,
-  CircleDot,
   ArrowRight,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -34,36 +30,37 @@ const DISCOVERY_CARDS: DiscoveryCard[] = [
     id: 'app-pro',
     icon: Smartphone,
     title: 'App profissional',
-    description: 'Sua equipe acessa a agenda direto do celular.',
+    description: 'Acompanhe os atendimentos e comissões direto do celular',
     color: '#5D54C7',
   },
   {
     id: 'agendamento-online',
     icon: Globe,
     title: 'Agendamento online',
-    description: 'Clientes marcam horários direto pelo seu site.',
+    description: 'Receba agendamentos pelo site, redes sociais ou Google Reserve',
     color: '#1D9E75',
   },
   {
     id: 'whatsapp',
     icon: MessageCircle,
-    title: 'WhatsApp automático',
-    description: 'Lembretes e confirmações sem você levantar um dedo.',
+    title: 'Whatsapp automático',
+    description: 'Automatize confirmações, lembretes e pedidos de avaliação',
     color: '#25D366',
   },
   {
     id: 'pacotes',
     icon: Package,
     title: 'Pacotes',
-    description: 'Combine serviços com desconto e fidelize clientes.',
+    description: 'Crie pacotes de serviços pra manter clientes sempre voltando',
     to: '/catalogo/pacotes',
     color: '#EF9F27',
   },
   {
-    id: 'fidelidade',
-    icon: Sparkles,
-    title: 'Programa de fidelidade',
-    description: 'Recompense clientes recorrentes automaticamente.',
+    id: 'estoque',
+    icon: PackageOpen,
+    title: 'Estoque',
+    description: 'Controle o que entra e sai e mantenha seus produtos em dia',
+    to: '/catalogo/produtos',
     color: '#D85A30',
   },
 ];
@@ -75,71 +72,115 @@ interface ExpenseLegend {
 }
 
 const EXPENSE_LEGEND: ExpenseLegend[] = [
-  { label: 'Fixas',    value: 'R$ 4.200,00', color: '#5D54C7' },
-  { label: 'Variáveis', value: 'R$ 2.150,00', color: '#1D9E75' },
-  { label: 'Pessoal',  value: 'R$ 5.690,00', color: '#EF9F27' },
-  { label: 'Impostos', value: 'R$ 1.350,00', color: '#D85A30' },
-  { label: 'Outras',   value: 'R$ 380,00',   color: '#888780' },
+  { label: 'Fixas',    value: 'R$ 0,00', color: '#EF9F27' },
+  { label: 'Variáveis', value: 'R$ 0,00', color: '#888780' },
+  { label: 'Pessoal',  value: 'R$ 0,00', color: '#D85A30' },
+  { label: 'Impostos', value: 'R$ 0,00', color: '#5D54C7' },
+  { label: 'Outros',   value: 'R$ 0,00', color: '#2C2C2A' },
 ];
 
 interface OnboardingStep {
   id: string;
   label: string;
   to: string;
-  done: boolean;
 }
 
 const ONBOARDING_STEPS: OnboardingStep[] = [
-  { id: 's1', label: 'Cadastrar primeiro cliente', to: '/clientes/novo',          done: true  },
-  { id: 's2', label: 'Criar primeiro agendamento',  to: '/agenda',                 done: true  },
-  { id: 's3', label: 'Cadastrar serviços',           to: '/catalogo/servicos',     done: true  },
-  { id: 's4', label: 'Registrar horários da equipe', to: '/profissionais',         done: false },
-  { id: 's5', label: 'Cadastrar logotipo',           to: '/configuracoes',         done: false },
-  { id: 's6', label: 'Cadastrar fotos do salão',    to: '/configuracoes/fotos',    done: false },
+  { id: 's1', label: 'Cadastrar cliente',    to: '/clientes/novo' },
+  { id: 's2', label: 'Criar agendamento',    to: '/agenda' },
+  { id: 's3', label: 'Cadastrar serviço',    to: '/catalogo/servicos' },
+  { id: 's4', label: 'Registrar horários',   to: '/profissionais' },
+  { id: 's5', label: 'Cadastrar logotipo',   to: '/configuracoes' },
+  { id: 's6', label: 'Cadastrar fotos',      to: '/configuracoes/fotos' },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDateLong(date: Date): string {
-  return date.toLocaleDateString('pt-BR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  const weekday = date.toLocaleDateString('pt-BR', { weekday: 'long' });
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+  const year = date.getFullYear();
+  // Capitalize first letter of weekday and month
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  return `${cap(weekday)}, ${day} de ${cap(month)} ${year}`;
+}
+
+function shortRange(): string {
+  // "01/05 até 07/05"
+  const today = new Date();
+  const start = new Date(today.getFullYear(), today.getMonth(), 1);
+  const fmt = (d: Date) =>
+    `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+  return `${fmt(start)} até ${fmt(today)}`;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function DiscoveryCarousel() {
+  const [idx, setIdx] = useState(0);
+  const visibleCount = 5;
+  const maxIdx = Math.max(0, DISCOVERY_CARDS.length - visibleCount);
+
   return (
     <section aria-label="Descubra recursos">
-      <div className="flex overflow-x-auto gap-md pb-sm snap-x snap-mandatory -mx-md px-md scrollbar-thin">
-        {DISCOVERY_CARDS.map((card) => {
+      <div className="flex overflow-x-auto gap-md pb-sm scrollbar-thin">
+        {DISCOVERY_CARDS.slice(idx, idx + visibleCount).map((card) => {
           const Icon = card.icon;
           const inner = (
-            <div
-              className="snap-start shrink-0 w-[260px] rounded-lg border border-neutral-200 bg-white p-md hover:border-primary-300 transition-colors h-full"
-            >
+            <div className="flex flex-col rounded-lg border border-neutral-200 bg-white p-md hover:border-primary-300 transition-colors h-full min-h-[180px]">
               <div
-                className="h-10 w-10 rounded-md flex items-center justify-center mb-sm"
+                className="h-10 w-10 rounded-full flex items-center justify-center mb-md"
                 style={{ backgroundColor: card.color + '15' }}
               >
                 <Icon className="h-5 w-5" style={{ color: card.color }} />
               </div>
               <h3 className="text-sm font-semibold text-neutral-800 mb-xs">{card.title}</h3>
-              <p className="text-xs text-neutral-500 leading-snug">{card.description}</p>
+              <p className="text-xs text-neutral-500 leading-relaxed flex-1">{card.description}</p>
+              <div className="mt-md">
+                <span className="text-xs font-semibold text-primary-500 inline-flex items-center gap-xs">
+                  Acessar <ArrowRight className="h-3 w-3" />
+                </span>
+              </div>
             </div>
           );
-          return card.to ? (
-            <Link key={card.id} to={card.to} className="block">
-              {inner}
-            </Link>
-          ) : (
-            <div key={card.id}>{inner}</div>
+          return (
+            <div key={card.id} className="snap-start shrink-0 w-[220px]">
+              {card.to ? (
+                <Link to={card.to} className="block h-full">
+                  {inner}
+                </Link>
+              ) : (
+                inner
+              )}
+            </div>
           );
         })}
       </div>
+      {DISCOVERY_CARDS.length > visibleCount && (
+        <div className="flex justify-end gap-xs mt-sm">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setIdx((v) => Math.max(0, v - 1))}
+            disabled={idx === 0}
+            aria-label="Anterior"
+            className="h-8 w-8"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setIdx((v) => Math.min(maxIdx, v + 1))}
+            disabled={idx >= maxIdx}
+            aria-label="Próximo"
+            className="h-8 w-8"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </section>
   );
 }
@@ -148,43 +189,52 @@ function PlanBanner() {
   return (
     <section
       aria-label="Status do plano"
-      className="rounded-lg bg-gradient-to-r from-primary-500 to-primary-700 p-md lg:p-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-md text-white"
+      className="rounded-lg bg-white border border-neutral-200 p-md lg:p-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-md"
     >
-      <div className="flex items-start gap-sm min-w-0">
-        <div className="h-10 w-10 rounded-md bg-white/20 flex items-center justify-center shrink-0">
-          <Sparkles className="h-5 w-5" />
+      <div className="flex items-start gap-md min-w-0">
+        {/* Decorative dots */}
+        <div className="flex shrink-0 items-center -space-x-1.5">
+          <span className="h-6 w-6 rounded-full bg-warning-500" />
+          <span className="h-6 w-6 rounded-full bg-error-500" />
+          <span className="h-6 w-6 rounded-full bg-neutral-200" />
         </div>
         <div className="min-w-0">
-          <h3 className="text-base font-semibold mb-xs">
-            Seu teste grátis termina em <strong>12 dias</strong>
+          <h3 className="text-base font-bold text-neutral-800">
+            Seu teste grátis termina em 5 dias
           </h3>
-          <p className="text-sm text-white/85">
-            Mais de <strong>2.500 salões</strong> já assinaram o SGS para gerenciar seu negócio.
+          <p className="text-sm text-neutral-500 mt-xs">
+            Junte-se a mais de <strong className="font-bold text-neutral-800">10.000</strong>{' '}
+            empreendedores que já organizam seus negócios com o SGS
           </p>
         </div>
       </div>
       <Button
         size="sm"
-        className="bg-white text-primary-700 hover:bg-white/90 shrink-0 font-semibold"
+        className="bg-success-500 hover:bg-success-700 text-white shrink-0 font-semibold"
         asChild
       >
-        <Link to="/configuracoes/plano">Assine agora</Link>
+        <Link to="/configuracoes/plano">Assinar agora</Link>
       </Button>
     </section>
   );
+}
+
+interface SummaryMetric {
+  label: string;
+  value: string;
 }
 
 interface SummaryCardProps {
   title: string;
   period: string;
   to: string;
-  metrics: Array<{ label: string; value: string }>;
+  metrics: SummaryMetric[];
 }
 
 function SummaryCard({ title, period, to, metrics }: SummaryCardProps) {
   return (
-    <Card className="hover:border-primary-300 transition-colors">
-      <CardHeader className="pb-sm flex flex-row items-start justify-between gap-sm">
+    <article className="rounded-lg border border-neutral-200 bg-white p-md flex flex-col gap-md">
+      <header className="flex items-start justify-between gap-sm">
         <div>
           <h3 className="text-sm font-semibold text-neutral-800">{title}</h3>
           <p className="text-xs text-neutral-500 mt-xs">{period}</p>
@@ -192,215 +242,232 @@ function SummaryCard({ title, period, to, metrics }: SummaryCardProps) {
         <Link
           to={to}
           aria-label={`Ver detalhes de ${title}`}
-          className="h-8 w-8 rounded-md flex items-center justify-center text-neutral-500 hover:bg-primary-50 hover:text-primary-500 transition-colors shrink-0"
+          className="h-8 w-8 rounded-md border border-neutral-200 flex items-center justify-center text-neutral-500 hover:bg-primary-50 hover:text-primary-500 hover:border-primary-300 transition-colors shrink-0"
         >
-          <ChevronRightIcon className="h-5 w-5" />
+          <ArrowRight className="h-4 w-4" />
         </Link>
-      </CardHeader>
-      <CardContent>
-        <ul className="space-y-sm">
-          {metrics.map((m) => (
-            <li key={m.label} className="flex items-baseline justify-between gap-sm">
-              <span className="text-sm text-neutral-600">{m.label}</span>
-              <strong className="text-base font-semibold text-neutral-800">{m.value}</strong>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
+      </header>
+      <div className={cn('grid gap-sm', metrics.length === 2 ? 'grid-cols-2' : 'grid-cols-3')}>
+        {metrics.map((m) => (
+          <div
+            key={m.label}
+            className="rounded-md bg-neutral-50 px-sm py-md flex flex-col items-center text-center"
+          >
+            <span className="text-xs text-neutral-500 mb-xs">{m.label}</span>
+            <strong className="text-base font-bold text-neutral-800">{m.value}</strong>
+          </div>
+        ))}
+      </div>
+    </article>
   );
 }
 
 function ExpensesCard() {
-  const total = 'R$ 13.770,00';
   return (
-    <Card>
-      <CardHeader className="pb-sm">
-        <h3 className="text-sm font-semibold text-neutral-800">Principais despesas</h3>
-        <p className="text-xs text-neutral-500 mt-xs">Mai/2026 — Total {total}</p>
-      </CardHeader>
-      <CardContent>
-        <ul className="space-y-sm">
-          {EXPENSE_LEGEND.map((row) => (
-            <li key={row.label} className="flex items-center justify-between gap-sm">
-              <div className="flex items-center gap-sm min-w-0">
-                <span
-                  className="h-2.5 w-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: row.color }}
-                />
-                <span className="text-sm text-neutral-700 truncate">{row.label}</span>
-              </div>
-              <strong className="text-sm font-semibold text-neutral-800">{row.value}</strong>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
-  );
-}
-
-function PromotionalCard() {
-  return (
-    <Card className="bg-gradient-to-br from-success-50 to-white border-success-200">
-      <CardContent className="p-md flex flex-col sm:flex-row items-start sm:items-center gap-md">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-base font-semibold text-neutral-800 mb-xs">
-            Clube de Assinaturas
-          </h3>
-          <p className="text-sm text-neutral-600 mb-sm">
-            Crie planos mensais para seus clientes mais fiéis e tenha receita recorrente.
-          </p>
-          <Button size="sm" variant="outline" className="border-success-500 text-success-600 hover:bg-success-50" asChild>
-            <Link to="/clube-assinaturas">
-              Saber mais <ArrowRight className="h-4 w-4 ml-xs" />
-            </Link>
-          </Button>
-        </div>
-        <div className="hidden sm:block h-20 w-20 rounded-full bg-success-100 flex items-center justify-center shrink-0">
-          <Sparkles className="h-8 w-8 text-success-600" />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function OnboardingStepper() {
-  const [stepIdx, setStepIdx] = useState(0);
-  const visible = ONBOARDING_STEPS.slice(stepIdx, stepIdx + 3);
-  const canPrev = stepIdx > 0;
-  const canNext = stepIdx + 3 < ONBOARDING_STEPS.length;
-  const completedCount = ONBOARDING_STEPS.filter((s) => s.done).length;
-
-  return (
-    <Card>
-      <CardHeader className="pb-sm flex flex-row items-center justify-between">
+    <article className="rounded-lg border border-neutral-200 bg-white p-md flex flex-col gap-md">
+      <header className="flex items-start justify-between gap-sm">
         <div>
-          <h3 className="text-sm font-semibold text-neutral-800">Comece pelo básico</h3>
-          <p className="text-xs text-neutral-500 mt-xs">
-            {completedCount} de {ONBOARDING_STEPS.length} passos concluídos
-          </p>
+          <h3 className="text-sm font-semibold text-neutral-800">Principais despesas</h3>
+          <p className="text-xs text-neutral-500 mt-xs">{shortRange()}</p>
         </div>
+        <Link
+          to="/financeiro"
+          aria-label="Ver detalhes de despesas"
+          className="h-8 w-8 rounded-md border border-neutral-200 flex items-center justify-center text-neutral-500 hover:bg-primary-50 hover:text-primary-500 hover:border-primary-300 transition-colors shrink-0"
+        >
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </header>
+      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-md gap-y-sm">
+        {EXPENSE_LEGEND.map((row) => (
+          <li key={row.label} className="flex items-center justify-between gap-sm">
+            <div className="flex items-center gap-sm min-w-0">
+              <span
+                className="h-2 w-2 rounded-full shrink-0"
+                style={{ backgroundColor: row.color }}
+              />
+              <span className="text-sm text-neutral-700 truncate">{row.label}</span>
+            </div>
+            <strong className="text-sm font-semibold text-neutral-800">{row.value}</strong>
+          </li>
+        ))}
+      </ul>
+    </article>
+  );
+}
+
+function ClubeAssinaturas() {
+  return (
+    <article className="rounded-lg border border-neutral-200 bg-white p-md flex flex-col sm:flex-row items-start gap-md">
+      <div className="flex-1 min-w-0">
+        <h3 className="text-sm font-semibold text-neutral-800 mb-xs">Clube de assinaturas</h3>
+        <p className="text-xs text-neutral-500 leading-relaxed mb-md">
+          Aumente o faturamento e mantenha seus clientes por perto com assinaturas de serviços e
+          produtos.
+        </p>
+        <Button
+          size="sm"
+          className="bg-success-500 hover:bg-success-700 text-white font-semibold"
+          asChild
+        >
+          <Link to="/clube-assinaturas">Adicionar ao plano</Link>
+        </Button>
+      </div>
+      <div className="hidden sm:flex h-32 w-40 rounded-md bg-gradient-to-br from-warning-50 to-neutral-100 items-center justify-center shrink-0">
+        <Sparkles className="h-12 w-12 text-warning-500" />
+      </div>
+    </article>
+  );
+}
+
+function PrimeirosPassos() {
+  const [idx, setIdx] = useState(0);
+  const visible = 3;
+  const maxIdx = Math.max(0, ONBOARDING_STEPS.length - visible);
+  const slice = ONBOARDING_STEPS.slice(idx, idx + visible);
+
+  return (
+    <article className="rounded-lg border border-neutral-200 bg-white p-md">
+      <header className="flex items-center justify-between mb-md">
+        <h3 className="text-sm font-semibold text-neutral-800">Primeiros passos</h3>
         <div className="flex items-center gap-xs">
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
-            disabled={!canPrev}
-            onClick={() => setStepIdx((v) => Math.max(0, v - 1))}
+            onClick={() => setIdx((v) => Math.max(0, v - 1))}
+            disabled={idx === 0}
             aria-label="Passos anteriores"
+            className="h-8 w-8"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
-            disabled={!canNext}
-            onClick={() => setStepIdx((v) => Math.min(ONBOARDING_STEPS.length - 3, v + 1))}
+            onClick={() => setIdx((v) => Math.min(maxIdx, v + 1))}
+            disabled={idx >= maxIdx}
             aria-label="Próximos passos"
+            className="h-8 w-8"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-      </CardHeader>
-      <CardContent>
-        <ul className="grid grid-cols-1 md:grid-cols-3 gap-sm">
-          {visible.map((step, i) => {
-            const stepNum = stepIdx + i + 1;
-            return (
-              <li key={step.id}>
-                <Link
-                  to={step.to}
-                  className={cn(
-                    'block rounded-md border p-md hover:border-primary-300 transition-colors',
-                    step.done
-                      ? 'bg-success-50 border-success-200'
-                      : 'bg-white border-neutral-200',
-                  )}
-                >
-                  <div className="flex items-center gap-sm mb-xs">
-                    {step.done ? (
-                      <span className="h-6 w-6 rounded-full bg-success-500 text-white flex items-center justify-center shrink-0">
-                        <Check className="h-3.5 w-3.5" />
-                      </span>
-                    ) : (
-                      <span className="h-6 w-6 rounded-full border-2 border-primary-500 text-primary-500 flex items-center justify-center text-xs font-semibold shrink-0">
-                        {stepNum}
-                      </span>
-                    )}
-                    {step.done && (
-                      <CircleDot className="h-3 w-3 text-success-500" />
-                    )}
-                  </div>
-                  <p className="text-sm text-neutral-800 leading-snug">{step.label}</p>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </CardContent>
-    </Card>
+      </header>
+      <ul className="space-y-sm">
+        {slice.map((step, i) => {
+          const stepNum = idx + i + 1;
+          return (
+            <li key={step.id}>
+              <Link
+                to={step.to}
+                className="flex items-center gap-md rounded-md border border-neutral-200 bg-white px-md py-sm hover:border-primary-300 hover:bg-primary-50/30 transition-colors"
+              >
+                <span className="text-base font-bold text-neutral-800 shrink-0 w-5">
+                  {stepNum}
+                </span>
+                <span className="text-sm text-neutral-700 flex-1">{step.label}</span>
+                <ArrowRight className="h-4 w-4 text-neutral-400 shrink-0" />
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </article>
+  );
+}
+
+function HomeFooter() {
+  return (
+    <footer className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-md pt-lg pb-md text-xs text-neutral-500 border-t border-neutral-200 mt-lg">
+      <nav className="flex flex-wrap items-center gap-x-md gap-y-xs" aria-label="Links institucionais">
+        <a className="hover:text-primary-500 transition-colors" href="#">Meu site</a>
+        <span className="text-neutral-300">|</span>
+        <a className="hover:text-primary-500 transition-colors" href="#">SGS Ajuda</a>
+        <span className="text-neutral-300">|</span>
+        <a className="hover:text-primary-500 transition-colors" href="#">Blog</a>
+        <span className="text-neutral-300">|</span>
+        <a className="hover:text-primary-500 transition-colors" href="#">Fale conosco</a>
+        <span className="text-neutral-300">|</span>
+        <a className="hover:text-primary-500 transition-colors" href="#">Contato</a>
+      </nav>
+      <div className="flex items-center gap-sm">
+        {[
+          { label: 'Facebook', icon: 'F' },
+          { label: 'Instagram', icon: 'IG' },
+          { label: 'YouTube', icon: 'YT' },
+        ].map((s) => (
+          <span
+            key={s.label}
+            aria-label={s.label}
+            className="h-7 w-7 rounded-full border border-neutral-300 flex items-center justify-center text-[10px] text-neutral-500 hover:border-primary-300 hover:text-primary-500 transition-colors"
+          >
+            {s.icon}
+          </span>
+        ))}
+      </div>
+    </footer>
   );
 }
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export function DashboardPlaceholder() {
-  const roleName = useAuthStore((s) => s.roleName);
-  const displayName = roleName ? roleName.charAt(0).toUpperCase() + roleName.slice(1) : 'Estabelecimento';
   const today = new Date();
 
   return (
     <div className="flex flex-col gap-lg max-w-6xl">
       {/* Cabeçalho contextual */}
       <header>
-        <h1 className="text-2xl font-semibold text-neutral-800">Studio Beleza</h1>
-        <p className="text-sm text-neutral-500 mt-xs capitalize">{formatDateLong(today)}</p>
+        <h1 className="text-2xl font-bold text-neutral-800">Studio Beleza LTDA</h1>
+        <p className="text-sm text-neutral-500 mt-xs">{formatDateLong(today)}</p>
       </header>
 
-      {/* Carrossel de descoberta */}
+      {/* Carrossel descoberta */}
       <DiscoveryCarousel />
 
-      {/* Banner de plano */}
+      {/* Banner plano */}
       <PlanBanner />
 
-      {/* Resumo do mês — grid 2 cols */}
+      {/* Resumo do mês */}
       <section aria-label="Resumo do mês">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
+        <h2 className="text-base font-semibold text-neutral-800 mb-md">Resumo do mês</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-md">
           <SummaryCard
             title="Resumo da agenda"
-            period="Maio 2026"
+            period={shortRange()}
             to="/agenda"
             metrics={[
-              { label: 'Agendamentos no mês', value: '143' },
-              { label: 'Comandas fechadas',  value: '127' },
-              { label: 'Taxa de comparecimento', value: '92%' },
+              { label: 'Agendamentos',  value: '0' },
+              { label: 'Contas fechadas', value: '0' },
             ]}
           />
           <SummaryCard
             title="Resumo financeiro"
-            period="Maio 2026"
+            period={shortRange()}
             to="/financeiro"
             metrics={[
-              { label: 'Receita',         value: 'R$ 28.450,00' },
-              { label: 'Despesas',        value: 'R$ 13.770,00' },
-              { label: 'Resultado',       value: 'R$ 14.680,00' },
+              { label: 'Receita',   value: 'R$ 0,00' },
+              { label: 'Despesas',  value: 'R$ 0,00' },
+              { label: 'Resultado', value: 'R$ 0,00' },
             ]}
           />
         </div>
       </section>
 
-      {/* Promocional + Despesas */}
+      {/* Clube + Despesas */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-md">
-        <PromotionalCard />
+        <ClubeAssinaturas />
         <ExpensesCard />
       </section>
 
-      {/* Stepper "Comece pelo básico" */}
-      <OnboardingStepper />
+      {/* Comece pelo básico */}
+      <section aria-label="Comece pelo básico">
+        <h2 className="text-base font-semibold text-neutral-800 mb-md">Comece pelo básico</h2>
+        <PrimeirosPassos />
+      </section>
 
-      {/* Olá, {displayName} */}
-      <p className="text-xs text-neutral-400 text-center pt-md">
-        Olá, {displayName} — bom trabalho hoje! ✨
-      </p>
+      {/* Footer */}
+      <HomeFooter />
     </div>
   );
 }
