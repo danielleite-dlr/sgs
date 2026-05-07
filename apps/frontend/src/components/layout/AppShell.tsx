@@ -2,13 +2,30 @@ import { Outlet } from 'react-router-dom';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Menu, Bell } from 'lucide-react';
+import { useQuery } from '@apollo/client';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { SidebarNav } from './SidebarNav';
+import { LowStockCountQuery } from '@/features/catalog/api/produtos.api';
 
-export function AppShell({ lowStockCount = 0 }: { lowStockCount?: number }) {
+/**
+ * AppShell — authenticated layout with sidebar and main content area.
+ *
+ * Fetches lowStockCount from GraphQL every 60 seconds (pollInterval) and passes
+ * the count to SidebarNav which renders the TriangleAlert warning icon on "Produtos".
+ * Uses errorPolicy: 'ignore' so a backend failure on this non-critical query never
+ * breaks the layout render.
+ */
+export function AppShell() {
   const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Poll every 60 seconds for low stock count — non-blocking, ignore errors
+  const { data: lowStockData } = useQuery(LowStockCountQuery, {
+    pollInterval: 60_000,
+    errorPolicy: 'ignore',
+  });
+  const lowStockCount = lowStockData?.lowStockCount ?? 0;
 
   return (
     <div className="flex min-h-screen flex-col bg-background lg:flex-row">

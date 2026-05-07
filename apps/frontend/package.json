@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
-    "codegen": "graphql-codegen --config codegen.ts"
+    "codegen": "graphql-codegen --config codegen.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@apollo/client": "^3.13.4",
