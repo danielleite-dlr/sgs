@@ -140,6 +140,51 @@
       "email": "E-mail",
       "birthdate": "Data de nascimento",
       "notes": "Observações"
+    },
+    "form": {
+      "fullName": "Nome completo",
+      "fullNamePlaceholder": "Maria da Silva",
+      "phone": "Telefone",
+      "phonePlaceholder": "(11) 99999-9999",
+      "email": "E-mail",
+      "emailPlaceholder": "maria@email.com",
+      "cpf": "CPF",
+      "cpfPlaceholder": "000.000.000-00",
+      "birthDate": "Data de nascimento",
+      "address": "Endereço",
+      "addressPlaceholder": "Rua, número, bairro, cidade",
+      "notes": "Observações",
+      "notesPlaceholder": "Preferências, alergias, observações gerais…"
+    },
+    "duplicate": {
+      "title": "CPF já cadastrado",
+      "body": "Este CPF já está associado a outro(s) cliente(s). Verifique antes de criar um novo.",
+      "useExisting": "Usar este cliente",
+      "continueNote": "Ou continue para criar um novo cliente mesmo assim."
+    },
+    "validation": {
+      "contactRequired": "Informe pelo menos um telefone ou e-mail.",
+      "cpfInvalid": "CPF inválido. Verifique os números.",
+      "phoneInvalid": "Informe um telefone válido. Ex.: (11) 99999-9999",
+      "emailInvalid": "Informe um e-mail válido."
+    },
+    "tabs": { "data": "Dados", "history": "Histórico" },
+    "history": {
+      "filters": { "period": "Período", "professional": "Profissional", "kind": "Tipo" },
+      "filtersDisabledTooltip": "Histórico disponível após o primeiro atendimento",
+      "empty": {
+        "heading": "Sem histórico ainda",
+        "body": "Quando você atender este cliente, o histórico aparecerá aqui automaticamente."
+      }
+    },
+    "list": {
+      "search": "Buscar cliente…",
+      "table": { "name": "Nome", "phone": "Telefone", "email": "E-mail", "cpf": "CPF", "actions": "Ações" }
+    },
+    "empty": {
+      "heading": "Nenhum cliente ainda",
+      "body": "Adicione os clientes do seu salão.",
+      "cta": "Novo cliente"
     }
   },
   "services": {
@@ -229,7 +274,7 @@
     "pacotes":    { "tab": "Pacotes — SGS",      "h1": "Pacotes",     "newCta": "Novo pacote" },
     "produtos":   { "tab": "Produtos — SGS",     "h1": "Produtos",    "newCta": "Novo produto" },
     "comissoes":  { "tab": "Comissões — SGS",   "h1": "Comissões",   "newCta": "Nova regra" },
-    "clientes":   { "tab": "Clientes — SGS",    "h1": "Clientes",    "newCta": "Novo cliente" }
+    "clientes":   { "tab": "Clientes — SGS",    "h1": "Clientes",    "newCta": "Novo cliente",  "newTitle": "Novo cliente", "editTitle": "Editar cliente" }
   },
   "catalog": {
     "softDelete": {

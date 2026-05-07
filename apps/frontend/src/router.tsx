@@ -16,6 +16,7 @@ import { ComissoesPage } from '@/pages/ComissoesPage';
 import { ClientesPage } from '@/pages/ClientesPage';
 import { ClienteDetailPage } from '@/pages/ClienteDetailPage';
 import { ClienteEditPage } from '@/pages/ClienteEditPage';
+import { ClienteNovoPage } from '@/pages/ClienteNovoPage';
 
 /**
  * Application route table.
@@ -89,6 +90,7 @@ export const router = createBrowserRouter([
       { path: '/catalogo/produtos',     element: <ProdutosPage /> },
       { path: '/catalogo/comissoes',    element: <ComissoesPage /> },
       { path: '/clientes',              element: <ClientesPage /> },
+      { path: '/clientes/novo',         element: <ClienteNovoPage /> },
       { path: '/clientes/:id',          element: <ClienteDetailPage /> },
       { path: '/clientes/:id/editar',   element: <ClienteEditPage /> },
     ],
