@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-core-domain/02-backend-catalog-services-PLAN.md — categories, services, packages CRUD with RLS, permission gates, and 21 integration tests
-last_updated: "2026-05-07T13:39:50.421Z"
+stopped_at: Completed 02-frontend-clientes-PLAN.md
+last_updated: "2026-05-07T13:59:48.863Z"
 last_activity: 2026-05-07
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 15
-  completed_plans: 13
+  completed_plans: 14
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 02 (core-domain) — EXECUTING
-Plan: 6 of 8
+Plan: 7 of 8
 Status: Ready to execute
 Last activity: 2026-05-07
 
@@ -62,6 +62,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 02-core-domain P05 | 45 | 2 tasks | 19 files |
 | Phase 02-core-domain P04 | 6 | 3 tasks | 10 files |
 | Phase 02-core-domain P03 | 55 | 3 tasks | 14 files |
+| Phase 02-core-domain P08 | 45 | 3 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -111,6 +112,9 @@ Recent decisions affecting current work:
 - [Phase 02-core-domain]: stock_low notification is org-wide (memberId=null) — any member with NOTIFICATION_READ sees it; member-specific notifications reserved for future
 - [Phase 02-core-domain]: integer-cents arithmetic for individualSum computation in packages (avoids IEEE-754 float issues)
 - [Phase 02-core-domain]: categories.softDelete blocks on both active children AND active services — prevents orphaned service category references
+- [Phase 02-core-domain]: CPF optional; duplicate alert warns but doesn't block save (D-22)
+- [Phase 02-core-domain]: ClientHistoryTab shows disabled filters (not hidden) per D-23 — Phase 3 will activate
+- [Phase 02-core-domain]: /clientes/novo ordered before /clientes/:id in router to prevent React Router collision
 
 ### Pending Todos
 
@@ -124,6 +128,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-07T13:39:50.412Z
-Stopped at: Completed 02-core-domain/02-backend-catalog-services-PLAN.md — categories, services, packages CRUD with RLS, permission gates, and 21 integration tests
+Last session: 2026-05-07T13:59:48.854Z
+Stopped at: Completed 02-frontend-clientes-PLAN.md
 Resume file: None
