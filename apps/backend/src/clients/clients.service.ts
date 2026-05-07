@@ -3,7 +3,7 @@ import { TenantContextService } from '../database/tenant-context.service';
 import { validateCpf, normalizeCpf } from './cpf.util';
 import { CreateClientInput, UpdateClientInput } from './dto/client.input';
 
-interface UserError {
+export interface UserError {
   code: string;
   message: string;
   field?: string | null;

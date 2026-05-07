@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { TenantContextService } from '../../database/tenant-context.service';
 
-interface UserError {
+export interface UserError {
   code: string;
   message: string;
   field?: string | null;

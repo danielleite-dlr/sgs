@@ -6,7 +6,7 @@ import {
   UpdateCommissionRuleInput,
 } from './dto/commission.input';
 
-interface UserError {
+export interface UserError {
   code: string;
   message: string;
   field?: string | null;

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { TenantContextService } from '../../database/tenant-context.service';
 import { CreatePackageInput, UpdatePackageInput } from './dto/package.input';
 
-interface UserError {
+export interface UserError {
   code: string;
   message: string;
   field?: string | null;
