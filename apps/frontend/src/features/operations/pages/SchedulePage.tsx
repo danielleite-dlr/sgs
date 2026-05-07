@@ -11,6 +11,9 @@ import {
   Clock,
   HelpCircle,
   X,
+  PanelLeftClose,
+  PanelLeftOpen,
+  AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -651,8 +654,13 @@ export function SchedulePage() {
   const [showFolga, setShowFolga] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalSeed, setModalSeed] = useState<{ hour: number; minute: number; profId?: string } | undefined>();
+
+  // Working hours: 9h–19h (expediente). 8h slot and 19h+ slots are "fora-expediente".
+  const WORK_START_HOUR = 9;
+  const WORK_END_HOUR = 19;
 
   const visibleProfs = useMemo(
     () => MOCK_PROFESSIONALS.filter((p) => visibleProfIds.has(p.id)),
@@ -719,68 +727,86 @@ export function SchedulePage() {
     />
   );
 
-  return (
-    <div className="flex flex-col gap-md">
-      {/* TOP BAR — avatares + data + ações */}
-      <div className="flex flex-col gap-sm">
-        {/* Linha 1 — Profissionais (avatares + olho) */}
-        <div className="flex items-center gap-sm overflow-x-auto pb-xs">
-          {MOCK_PROFESSIONALS.map((pro) => {
-            const visible = visibleProfIds.has(pro.id);
-            return (
-              <button
-                key={pro.id}
-                type="button"
-                onClick={() => toggleProf(pro.id)}
-                className={cn(
-                  'flex flex-col items-center gap-xs shrink-0 transition-opacity',
-                  !visible && 'opacity-40',
-                )}
-                aria-label={`${pro.name} — ${visible ? 'visível' : 'oculto'}`}
-              >
-                <div className="relative">
-                  <div
-                    className="h-12 w-12 rounded-full flex items-center justify-center text-white font-semibold text-sm"
-                    style={{ backgroundColor: pro.color }}
-                  >
-                    {pro.initials}
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-white border border-neutral-200 flex items-center justify-center">
-                    {visible ? (
-                      <Eye className="h-3 w-3 text-neutral-600" />
-                    ) : (
-                      <EyeOff className="h-3 w-3 text-neutral-400" />
-                    )}
-                  </div>
-                </div>
-                <span className="text-[11px] text-neutral-700 max-w-[64px] truncate">
-                  {pro.name.split(' ')[0]}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+  // Now-line: hour/min as fraction of 8h-21h day → top offset
+  const now = new Date();
+  const nowMinutesFromStart = (now.getHours() - 8) * 60 + now.getMinutes();
+  const isToday = selectedDate.toDateString() === new Date().toDateString();
+  const nowLineTop = (nowMinutesFromStart / 30) * slotHeight;
 
-        {/* Linha 2 — Navegador data + +Agendar + filtros + busca */}
-        <div className="flex flex-wrap items-center gap-sm">
+  // Fora-expediente bands: pixel ranges within the grid
+  const beforeWorkHeight = (WORK_START_HOUR - 8) * 2 * slotHeight;
+  const afterWorkTop = (WORK_END_HOUR - 8) * 2 * slotHeight;
+  const afterWorkHeight = (21 - WORK_END_HOUR) * 2 * slotHeight;
+
+  return (
+    <div className="flex h-[calc(100vh-7rem)] lg:h-[calc(100vh-5rem)] -mx-md lg:-mx-lg -my-md lg:-my-lg">
+      {/* Sidebar Agenda — colapsável */}
+      {!sidebarCollapsed && (
+        <aside className="hidden lg:flex w-[280px] shrink-0 border-r border-neutral-200 bg-white overflow-y-auto p-md flex-col">
+          {filterPanel}
+        </aside>
+      )}
+
+      {/* Toggle botão entre sidebar e grid */}
+      <button
+        type="button"
+        onClick={() => setSidebarCollapsed((v) => !v)}
+        aria-label={sidebarCollapsed ? 'Mostrar filtros' : 'Ocultar filtros'}
+        className="hidden lg:flex h-8 w-6 self-start mt-md -ml-3 z-20 items-center justify-center rounded-r-md border border-l-0 border-neutral-200 bg-white text-primary-500 hover:bg-primary-50 shadow-sm"
+      >
+        {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+      </button>
+
+      {/* Mobile filtros drawer */}
+      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <SheetContent side="right" className="w-[320px] p-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="text-left">Filtros</SheetTitle>
+          </SheetHeader>
+          <div className="mt-md">{filterPanel}</div>
+        </SheetContent>
+      </Sheet>
+
+      {/* MAIN — top bar + grid */}
+      <div className="flex-1 flex flex-col min-w-0 bg-neutral-50/30">
+        {/* TOP BAR */}
+        <div className="flex items-center gap-sm px-md py-sm border-b border-neutral-200 bg-white shrink-0 flex-wrap">
+          {/* Date navigator */}
           <div className="flex items-center gap-xs">
-            <Button variant="ghost" size="icon" onClick={() => shiftDay(-1)} aria-label="Dia anterior">
+            <Button variant="ghost" size="icon" onClick={() => shiftDay(-1)} aria-label="Dia anterior" className="h-8 w-8">
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <button
               type="button"
-              className="text-sm font-semibold text-neutral-800 capitalize px-sm hover:bg-neutral-50 rounded-md py-xs"
+              className="flex flex-col items-center px-sm leading-tight hover:bg-neutral-50 rounded-md py-xs min-w-[120px]"
             >
-              {formatDateLong(selectedDate)}
+              <span className="text-sm font-bold text-neutral-800">
+                {selectedDate.getDate()} {selectedDate.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')} {selectedDate.getFullYear()}
+              </span>
+              <span className="text-[11px] text-neutral-500 capitalize">
+                {selectedDate.toLocaleDateString('pt-BR', { weekday: 'long' })}
+              </span>
             </button>
-            <Button variant="ghost" size="icon" onClick={() => shiftDay(1)} aria-label="Próximo dia">
+            <Button variant="ghost" size="icon" onClick={() => shiftDay(1)} aria-label="Próximo dia" className="h-8 w-8">
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
 
+          {/* Search */}
+          <div className="relative flex-1 min-w-[180px] max-w-[320px]">
+            <Search className="absolute left-sm top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar clientes agendados hoje"
+              className="pl-9 h-9 text-sm"
+            />
+          </div>
+
+          {/* +Agendar */}
           <Button
             size="sm"
-            className="gap-xs"
+            className="gap-xs bg-error-500 hover:bg-error-700 text-white"
             onClick={() => {
               setModalSeed(undefined);
               setModalOpen(true);
@@ -801,142 +827,218 @@ export function SchedulePage() {
             <SlidersHorizontal className="h-4 w-4" />
           </Button>
 
-          <div className="relative flex-1 min-w-[180px] max-w-[280px] ml-auto">
-            <Search className="absolute left-sm top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar clientes agendados…"
-              className="pl-9 h-9 text-sm"
-            />
+          {/* Cluster avatares + Pgto Indica — alinhado à direita */}
+          <div className="flex items-center gap-xs ml-auto">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Mostrar/ocultar profissionais"
+              className="h-8 w-8 text-neutral-500"
+              onClick={() => {
+                const allVisible = visibleProfIds.size === MOCK_PROFESSIONALS.length;
+                if (allVisible) {
+                  setVisibleProfIds(new Set([MOCK_PROFESSIONALS[0]?.id].filter(Boolean) as string[]));
+                } else {
+                  setVisibleProfIds(new Set(MOCK_PROFESSIONALS.map((p) => p.id)));
+                }
+              }}
+            >
+              {visibleProfIds.size === MOCK_PROFESSIONALS.length ? (
+                <Eye className="h-4 w-4" />
+              ) : (
+                <EyeOff className="h-4 w-4" />
+              )}
+            </Button>
+            <div className="flex items-center -space-x-2">
+              {MOCK_PROFESSIONALS.slice(0, 4).map((pro) => {
+                const visible = visibleProfIds.has(pro.id);
+                return (
+                  <button
+                    key={pro.id}
+                    type="button"
+                    onClick={() => toggleProf(pro.id)}
+                    title={pro.name}
+                    className={cn(
+                      'h-8 w-8 rounded-full ring-2 ring-white flex items-center justify-center text-white text-xs font-semibold transition-opacity',
+                      !visible && 'opacity-30',
+                    )}
+                    style={{ backgroundColor: pro.color }}
+                  >
+                    {pro.initials}
+                  </button>
+                );
+              })}
+              {MOCK_PROFESSIONALS.length > 4 && (
+                <span className="h-8 w-8 rounded-full ring-2 ring-white bg-neutral-200 text-neutral-600 text-xs font-semibold flex items-center justify-center">
+                  +{MOCK_PROFESSIONALS.length - 4}
+                </span>
+              )}
+            </div>
+            {/* Pgto Indica indicator */}
+            <div className="hidden sm:flex items-center gap-xs px-sm py-xs rounded-md bg-warning-50 border border-warning-200">
+              <AlertCircle className="h-3.5 w-3.5 text-warning-600" />
+              <span className="text-[11px] font-medium text-warning-700 leading-none">Pgto<br />Indica</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* BODY — sidebar + grid */}
-      <div className="flex gap-md">
-        {/* Sidebar desktop */}
-        <div className="hidden lg:block w-[280px] shrink-0">{filterPanel}</div>
-
-        {/* Mobile drawer */}
-        <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-          <SheetContent side="right" className="w-[320px] p-md overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle className="text-left">Filtros</SheetTitle>
-            </SheetHeader>
-            <div className="mt-md">{filterPanel}</div>
-          </SheetContent>
-        </Sheet>
-
-        {/* GRID */}
-        <div className="flex-1 min-w-0 border border-neutral-200 rounded-lg overflow-hidden bg-white">
-          {/* Header profs */}
-          <div
-            className="grid border-b border-neutral-200 bg-neutral-50 sticky top-0 z-10"
-            style={{
-              gridTemplateColumns: `64px repeat(${visibleProfs.length}, ${COL_WIDTHS[colSize]})`,
-            }}
-          >
-            <div className="p-sm border-r border-neutral-200" />
-            {visibleProfs.map((pro) => (
-              <div
-                key={pro.id}
-                className="p-sm border-r border-neutral-200 last:border-r-0 flex items-center gap-xs"
-              >
-                <div
-                  className="h-7 w-7 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0"
-                  style={{ backgroundColor: pro.color }}
-                >
-                  {pro.initials}
+        {/* GRID — single scroll container */}
+        <div className="flex-1 overflow-auto">
+          <div className="bg-white border border-neutral-200 m-md rounded-lg overflow-hidden">
+            {/* Header profs */}
+            <div
+              className="grid border-b border-neutral-200 bg-white sticky top-0 z-10"
+              style={{
+                gridTemplateColumns: `64px repeat(${Math.max(visibleProfs.length, 1)}, ${COL_WIDTHS[colSize]})`,
+              }}
+            >
+              <div className="p-sm border-r border-neutral-200" />
+              {visibleProfs.length === 0 ? (
+                <div className="p-md text-xs text-neutral-500">
+                  Nenhum profissional selecionado.
                 </div>
-                <span className="text-xs font-semibold uppercase tracking-wide text-neutral-700 truncate">
-                  {pro.name.split(' ')[0]}
-                </span>
-              </div>
-            ))}
-          </div>
+              ) : (
+                visibleProfs.map((pro) => (
+                  <div
+                    key={pro.id}
+                    className="px-sm py-md border-r border-neutral-200 last:border-r-0 flex items-center gap-sm"
+                  >
+                    <div
+                      className="h-8 w-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-500 shrink-0 overflow-hidden"
+                    >
+                      <div
+                        className="h-full w-full rounded-full flex items-center justify-center text-white text-xs font-semibold"
+                        style={{ backgroundColor: pro.color }}
+                      >
+                        {pro.initials}
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-neutral-700 truncate">
+                      {pro.name.split(' ')[0]}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
 
-          {/* Time + appts */}
-          <div className="overflow-y-auto" style={{ maxHeight: '70vh' }}>
+            {/* Time + appts */}
             <div
               className="grid relative"
               style={{
-                gridTemplateColumns: `64px repeat(${visibleProfs.length}, ${COL_WIDTHS[colSize]})`,
+                gridTemplateColumns: `64px repeat(${Math.max(visibleProfs.length, 1)}, ${COL_WIDTHS[colSize]})`,
               }}
             >
               {/* Time column */}
-              <div className="border-r border-neutral-200">
-                {TIME_SLOTS.map((slot) => (
+              <div className="border-r border-neutral-200 relative">
+                {TIME_SLOTS.map((slot, i) => (
                   <div
                     key={`${slot.hour}-${slot.minute}`}
-                    className="border-b border-neutral-100 flex items-start justify-end pr-sm pt-xs"
+                    className="border-b border-neutral-100 flex items-center justify-end pr-sm"
                     style={{ height: slotHeight }}
                   >
                     {slot.minute === 0 && (
-                      <span className="text-xs text-neutral-500 font-mono">{slot.label}</span>
+                      <span className="text-xs text-neutral-500 font-medium">
+                        {slot.hour}h
+                      </span>
                     )}
                   </div>
                 ))}
               </div>
 
               {/* Pro columns */}
-              {visibleProfs.map((pro) => (
+              {visibleProfs.length === 0 ? (
                 <div
-                  key={pro.id}
-                  className="border-r border-neutral-200 last:border-r-0 relative"
+                  className="border-r border-neutral-200 relative bg-neutral-50/40"
                   style={{ height: TIME_SLOTS.length * slotHeight }}
-                >
-                  {TIME_SLOTS.map((slot, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => openModalAt(slot.hour, slot.minute, pro.id)}
-                      className={cn(
-                        'absolute w-full border-b text-left',
-                        slot.minute === 0
-                          ? 'border-neutral-200'
-                          : 'border-neutral-100 border-dashed',
-                        'hover:bg-primary-50/30',
-                      )}
-                      style={{ top: i * slotHeight, height: slotHeight }}
-                      aria-label={`Cadastrar agendamento às ${slot.label} para ${pro.name}`}
-                    />
-                  ))}
+                />
+              ) : (
+                visibleProfs.map((pro) => (
+                  <div
+                    key={pro.id}
+                    className="border-r border-neutral-200 last:border-r-0 relative"
+                    style={{ height: TIME_SLOTS.length * slotHeight }}
+                  >
+                    {/* Fora-expediente bands */}
+                    {beforeWorkHeight > 0 && (
+                      <div
+                        className="absolute left-0 right-0 bg-info-50 pointer-events-none"
+                        style={{ top: 0, height: beforeWorkHeight, backgroundColor: '#DDE7F3' }}
+                        aria-label="Fora do expediente"
+                      />
+                    )}
+                    {afterWorkHeight > 0 && (
+                      <div
+                        className="absolute left-0 right-0 pointer-events-none"
+                        style={{ top: afterWorkTop, height: afterWorkHeight, backgroundColor: '#DDE7F3' }}
+                        aria-label="Fora do expediente"
+                      />
+                    )}
 
-                  <TooltipProvider delayDuration={200}>
-                    {dayAppointments
-                      .filter((a) => a.professionalId === pro.id)
-                      .map((appt) => (
-                        <Tooltip key={appt.id}>
-                          <TooltipTrigger asChild>
-                            <div
-                              className="absolute left-1 right-1 rounded-md px-xs py-xs cursor-pointer hover:brightness-95 transition-all overflow-hidden z-10"
-                              style={getAppointmentStyle(appt, slotHeight)}
-                            >
-                              <p className="text-xs font-semibold text-neutral-800 truncate leading-tight">
-                                {appt.clientName}
-                              </p>
-                              <p className="text-xs text-neutral-600 truncate leading-tight">
-                                {appt.service}
-                              </p>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <div className="text-sm space-y-xs">
-                              <p className="font-semibold">{appt.clientName}</p>
-                              <p className="text-neutral-600">{appt.service}</p>
-                              <p className="text-neutral-500 text-xs">
-                                {String(appt.startHour).padStart(2, '0')}:
-                                {String(appt.startMinute).padStart(2, '0')}
-                                {' '}— {appt.durationMinutes} min
-                              </p>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      ))}
-                  </TooltipProvider>
+                    {/* Slots clicáveis */}
+                    {TIME_SLOTS.map((slot, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => openModalAt(slot.hour, slot.minute, pro.id)}
+                        className={cn(
+                          'absolute w-full border-b text-left',
+                          slot.minute === 0
+                            ? 'border-neutral-200'
+                            : 'border-neutral-100 border-dashed',
+                          'hover:bg-primary-50/30',
+                        )}
+                        style={{ top: i * slotHeight, height: slotHeight }}
+                        aria-label={`Cadastrar agendamento às ${slot.label} para ${pro.name}`}
+                      />
+                    ))}
+
+                    {/* Agendamentos */}
+                    <TooltipProvider delayDuration={200}>
+                      {dayAppointments
+                        .filter((a) => a.professionalId === pro.id)
+                        .map((appt) => (
+                          <Tooltip key={appt.id}>
+                            <TooltipTrigger asChild>
+                              <div
+                                className="absolute left-1 right-1 rounded-md px-xs py-xs cursor-pointer hover:brightness-95 transition-all overflow-hidden z-10"
+                                style={getAppointmentStyle(appt, slotHeight)}
+                              >
+                                <p className="text-xs font-semibold text-neutral-800 truncate leading-tight">
+                                  {appt.clientName}
+                                </p>
+                                <p className="text-xs text-neutral-600 truncate leading-tight">
+                                  {appt.service}
+                                </p>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="text-sm space-y-xs">
+                                <p className="font-semibold">{appt.clientName}</p>
+                                <p className="text-neutral-600">{appt.service}</p>
+                                <p className="text-neutral-500 text-xs">
+                                  {String(appt.startHour).padStart(2, '0')}:
+                                  {String(appt.startMinute).padStart(2, '0')}
+                                  {' '}— {appt.durationMinutes} min
+                                </p>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        ))}
+                    </TooltipProvider>
+                  </div>
+                ))
+              )}
+
+              {/* Now-line — só hoje, dentro do expediente */}
+              {isToday && nowLineTop > 0 && nowLineTop < TIME_SLOTS.length * slotHeight && (
+                <div
+                  className="absolute left-0 right-0 z-20 pointer-events-none flex items-center"
+                  style={{ top: nowLineTop }}
+                >
+                  <span className="h-2 w-2 rounded-full bg-error-500 ml-[60px]" />
+                  <div className="flex-1 h-px bg-error-500" />
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

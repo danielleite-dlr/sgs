@@ -5,7 +5,7 @@ import { TopHeader } from './TopHeader';
 import { BottomNav } from './BottomNav';
 import { AppDrawer } from './AppDrawer';
 import { ChatBubble } from './ChatBubble';
-import { SidebarNav } from './SidebarNav';
+import { IconRail } from './IconRail';
 import { LowStockCountQuery } from '@/features/catalog/api/produtos.api';
 
 /**
@@ -13,24 +13,26 @@ import { LowStockCountQuery } from '@/features/catalog/api/produtos.api';
  *
  * Mobile (<lg):
  *   ┌─────────────────────┐
- *   │ TopHeader           │  logo + plano + busca
+ *   │ TopHeader           │
  *   ├─────────────────────┤
- *   │ Outlet              │  page content
+ *   │ Outlet              │
  *   │                     │
  *   ├─────────────────────┤
- *   │ BottomNav (4 itens) │  Início | Notif | Agenda | Menu
+ *   │ BottomNav (4 itens) │
  *   └─────────────────────┘
  *   AppDrawer overlays when "Menu" tapped.
  *
  * Desktop (>=lg):
- *   ┌──────────────────────────────────────┐
- *   │ TopHeader                            │
- *   ├──────────┬───────────────────────────┤
- *   │ Sidebar  │ Outlet                    │
- *   │ (260px)  │                           │
- *   │          │                           │
- *   └──────────┴───────────────────────────┘
- *   No bottom nav. ChatBubble persists.
+ *   ┌──────┬───────────────────────────────────────┐
+ *   │ Logo │ Search ─ Estab. ▼ ─ Assine ─ 🔔❓▶👤 │   ← TopHeader (h-14)
+ *   ├──────┼───────────────────────────────────────┤
+ *   │  🏠  │                                       │
+ *   │  📅  │  Outlet                               │
+ *   │  🏢  │                                       │
+ *   │  💲  │                                       │
+ *   │  ⚙   │                                       │
+ *   └──────┴───────────────────────────────────────┘
+ *   IconRail (64px) acts as primary nav.
  */
 export function AppShell() {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -47,13 +49,13 @@ export function AppShell() {
       <TopHeader />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Desktop sidebar */}
-        <aside className="hidden lg:block shrink-0 sticky top-14 self-start h-[calc(100vh-3.5rem)]">
-          <SidebarNav lowStockCount={lowStockCount} />
+        {/* Desktop icon rail */}
+        <aside className="hidden lg:block sticky top-14 self-start h-[calc(100vh-3.5rem)] shrink-0">
+          <IconRail lowStockCount={lowStockCount} />
         </aside>
 
-        {/* Main content area */}
-        <main className="flex-1 overflow-y-auto px-md py-md lg:px-xl lg:py-lg pb-20 lg:pb-lg">
+        {/* Main content */}
+        <main className="flex-1 overflow-y-auto px-md py-md lg:px-lg lg:py-lg pb-20 lg:pb-lg min-w-0">
           <Outlet />
         </main>
       </div>
