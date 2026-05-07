@@ -32,6 +32,12 @@ import { ServicesQuery } from '../api/servicos.api';
 import { CategoriesQuery } from '../api/categorias.api';
 import { ProductsQuery } from '../api/produtos.api';
 import { EntityCombobox } from './EntityCombobox';
+import {
+  maskCurrency,
+  unmaskCurrency,
+  maskPercentage,
+  unmaskPercentage,
+} from '../utils/currency-mask';
 
 // ---- Schema ----------------------------------------------------------------
 
@@ -46,7 +52,17 @@ const schema = z
     categoryId: z.string().uuid().optional(),
     productId: z.string().uuid().optional(),
     kind: z.enum(KINDS),
-    value: z.string().regex(/^\d+(\.\d{1,4})?$/, 'Informe um valor numérico válido.'),
+    value: z
+      .string()
+      .min(1, 'Informe o valor.')
+      .refine(
+        (v) => {
+          // Accept both BR ("20,00") and US ("20.00") format
+          const n = Number(v.replace(/[.\s%]/g, '').replace(',', '.'));
+          return !Number.isNaN(n) && n > 0;
+        },
+        { message: 'Informe um valor maior que zero.' },
+      ),
   })
   .superRefine((d, ctx) => {
     if (d.scopeType === 'member_service') {
@@ -151,9 +167,9 @@ export function CommissionRuleForm({ onClose, prefilledScope }: CommissionRuleFo
           categoryId: prefilledScope.categoryId,
           productId: prefilledScope.productId,
           kind: 'percentage',
-          value: '0',
+          value: '',
         }
-      : { scopeType: 'default', kind: 'percentage', value: '0' },
+      : { scopeType: 'default', kind: 'percentage', value: '' },
   });
 
   const scopeType = form.watch('scopeType');
@@ -176,7 +192,7 @@ export function CommissionRuleForm({ onClose, prefilledScope }: CommissionRuleFo
     const input: Record<string, unknown> = {
       scopeType: values.scopeType,
       kind: values.kind,
-      value: values.value,
+      value: values.kind === 'fixed' ? unmaskCurrency(values.value) : unmaskPercentage(values.value),
     };
 
     if (values.scopeType === 'member_service') {
@@ -414,7 +430,11 @@ export function CommissionRuleForm({ onClose, prefilledScope }: CommissionRuleFo
               <FormLabel>{t('catalog.comissao.form.kindLabel')}</FormLabel>
               <RadioGroup
                 value={field.value}
-                onValueChange={field.onChange}
+                onValueChange={(next) => {
+                  field.onChange(next);
+                  // Reset value when switching kind: R$ amount and % use different scales
+                  form.setValue('value', '');
+                }}
                 className="flex gap-4"
               >
                 <div className="flex items-center gap-2">
@@ -443,8 +463,15 @@ export function CommissionRuleForm({ onClose, prefilledScope }: CommissionRuleFo
               <FormControl>
                 <Input
                   {...field}
-                  placeholder={kind === 'fixed' ? 'R$ 0,00' : '0%'}
-                  inputMode="decimal"
+                  placeholder={kind === 'fixed' ? '0,00' : '0,00'}
+                  inputMode="numeric"
+                  onChange={(e) => {
+                    const masked =
+                      kind === 'fixed'
+                        ? maskCurrency(e.target.value)
+                        : maskPercentage(e.target.value);
+                    field.onChange(masked);
+                  }}
                 />
               </FormControl>
               <FormMessage />

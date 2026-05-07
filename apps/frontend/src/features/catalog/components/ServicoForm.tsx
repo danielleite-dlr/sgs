@@ -103,8 +103,13 @@ export function ServicoForm({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
+  const [justCreated, setJustCreated] = useState<{ id: string; name: string } | null>(null);
   const isEdit = Boolean(initial);
   const [commissionDialogOpen, setCommissionDialogOpen] = useState(false);
+
+  // Effective service for commission shortcut (existing OR just-saved)
+  const targetService = initial ?? justCreated;
+  const showCommissionSection = Boolean(targetService);
 
   const { data: catData } = useQuery<CategoriesQueryResult>(CategoriesQuery);
 
@@ -188,7 +193,13 @@ export function ServicoForm({
           });
           return;
         }
+        const created = res.data?.createService.service;
         toast.success(t('catalog.toasts.serviceCreated', { name: values.name }));
+        if (created) {
+          // Stay on the form so user can configure commission in the same step
+          setJustCreated({ id: created.id, name: created.name });
+          return;
+        }
       }
       onClose();
     } catch {
@@ -309,15 +320,19 @@ export function ServicoForm({
           {/* Pricing variants dynamic editor */}
           <PricingVariantsEditor name="pricingVariants" />
 
-          {/* Commission shortcut — only available for already-saved services */}
-          {isEdit && initial && (
+          {/* Commission shortcut — appears for existing services OR right after creation */}
+          {showCommissionSection && targetService && (
             <>
               <Separator />
               <div className="flex items-center justify-between rounded-md border border-neutral-200 bg-neutral-50 p-3">
                 <div>
-                  <p className="text-sm font-semibold">Comissão deste serviço</p>
+                  <p className="text-sm font-semibold">
+                    {justCreated ? 'Configurar comissão deste serviço' : 'Comissão deste serviço'}
+                  </p>
                   <p className="text-sm text-neutral-500">
-                    Configure regras em /catalogo/comissoes ou crie uma agora.
+                    {justCreated
+                      ? 'Serviço criado. Adicione uma regra de comissão agora ou clique em Concluir.'
+                      : 'Crie uma regra de comissão para este serviço.'}
                   </p>
                 </div>
                 <Button
@@ -333,30 +348,38 @@ export function ServicoForm({
           )}
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              {t('catalog.categoria.form.cancel')}
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading
-                ? t('catalog.categoria.form.submitting')
-                : isEdit
-                  ? t('catalog.categoria.form.submitEdit')
-                  : t('catalog.categoria.form.submitCreate')}
-            </Button>
+            {justCreated ? (
+              <Button type="button" onClick={onClose}>
+                Concluir
+              </Button>
+            ) : (
+              <>
+                <Button type="button" variant="outline" onClick={onClose}>
+                  {t('catalog.categoria.form.cancel')}
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading
+                    ? t('catalog.categoria.form.submitting')
+                    : isEdit
+                      ? t('catalog.categoria.form.submitEdit')
+                      : t('catalog.categoria.form.submitCreate')}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </form>
       </Form>
 
       {/* Commission rule shortcut dialog (rendered outside the form) */}
-      {isEdit && initial && (
+      {showCommissionSection && targetService && (
         <Dialog open={commissionDialogOpen} onOpenChange={setCommissionDialogOpen}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Nova regra de comissão — {initial.name}</DialogTitle>
+              <DialogTitle>Nova regra de comissão — {targetService.name}</DialogTitle>
             </DialogHeader>
             <CommissionRuleForm
               onClose={() => setCommissionDialogOpen(false)}
-              prefilledScope={{ scopeType: 'service', serviceId: initial.id }}
+              prefilledScope={{ scopeType: 'service', serviceId: targetService.id }}
             />
           </DialogContent>
         </Dialog>

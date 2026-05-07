@@ -85,6 +85,11 @@ export function ProdutoForm({ initial, onClose }: ProdutoFormProps) {
 
   const isEdit = !!initial;
   const [commissionDialogOpen, setCommissionDialogOpen] = useState(false);
+  const [justCreated, setJustCreated] = useState<{ id: string; name: string } | null>(null);
+
+  // Effective product for commission shortcut (existing OR just-saved)
+  const targetProduct = initial ?? justCreated;
+  const showCommissionSection = Boolean(targetProduct);
   const isLoading = creating || updating;
 
   const form = useForm<FormValues>({
@@ -165,6 +170,15 @@ export function ProdutoForm({ initial, onClose }: ProdutoFormProps) {
       }
 
       toast.success(isEdit ? 'Alterações salvas.' : `${values.name} criado com sucesso.`);
+      if (!isEdit) {
+        // Stay on the form so user can configure commission in the same step
+        const created = (res.data as { createProduct?: { product?: { id: string; name: string } } })
+          ?.createProduct?.product;
+        if (created) {
+          setJustCreated({ id: created.id, name: created.name });
+          return;
+        }
+      }
       onClose();
     } catch {
       toast.error('Não foi possível salvar. Tente novamente.');
@@ -323,15 +337,19 @@ export function ProdutoForm({ initial, onClose }: ProdutoFormProps) {
           />
         </div>
 
-        {/* Commission shortcut — only available for already-saved products */}
-        {isEdit && initial && (
+        {/* Commission shortcut — appears for existing products OR right after creation */}
+        {showCommissionSection && targetProduct && (
           <>
             <Separator />
             <div className="flex items-center justify-between rounded-md border border-neutral-200 bg-neutral-50 p-3">
               <div>
-                <p className="text-sm font-semibold">Comissão sobre venda</p>
+                <p className="text-sm font-semibold">
+                  {justCreated ? 'Configurar comissão deste produto' : 'Comissão sobre venda'}
+                </p>
                 <p className="text-sm text-neutral-500">
-                  Configure regras em /catalogo/comissoes ou crie uma agora.
+                  {justCreated
+                    ? 'Produto criado. Adicione uma regra de comissão agora ou clique em Concluir.'
+                    : 'Crie uma regra de comissão para este produto.'}
                 </p>
               </div>
               <Button
@@ -347,29 +365,37 @@ export function ProdutoForm({ initial, onClose }: ProdutoFormProps) {
         )}
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>
-            {t('catalog.categoria.form.cancel', 'Cancelar')}
-          </Button>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading
-              ? t('catalog.categoria.form.submitting', 'Salvando…')
-              : isEdit
-                ? t('catalog.categoria.form.submitEdit', 'Salvar alterações')
-                : t('catalog.categoria.form.submitCreate', 'Salvar')}
-          </Button>
+          {justCreated ? (
+            <Button type="button" onClick={onClose}>
+              Concluir
+            </Button>
+          ) : (
+            <>
+              <Button type="button" variant="outline" onClick={onClose}>
+                {t('catalog.categoria.form.cancel', 'Cancelar')}
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading
+                  ? t('catalog.categoria.form.submitting', 'Salvando…')
+                  : isEdit
+                    ? t('catalog.categoria.form.submitEdit', 'Salvar alterações')
+                    : t('catalog.categoria.form.submitCreate', 'Salvar')}
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </form>
 
       {/* Commission rule shortcut dialog (rendered outside the form) */}
-      {isEdit && initial && (
+      {showCommissionSection && targetProduct && (
         <Dialog open={commissionDialogOpen} onOpenChange={setCommissionDialogOpen}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Nova regra de comissão — {initial.name}</DialogTitle>
+              <DialogTitle>Nova regra de comissão — {targetProduct.name}</DialogTitle>
             </DialogHeader>
             <CommissionRuleForm
               onClose={() => setCommissionDialogOpen(false)}
-              prefilledScope={{ scopeType: 'product', productId: initial.id }}
+              prefilledScope={{ scopeType: 'product', productId: targetProduct.id }}
             />
           </DialogContent>
         </Dialog>

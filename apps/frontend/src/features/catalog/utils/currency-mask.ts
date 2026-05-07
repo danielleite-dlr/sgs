@@ -52,3 +52,34 @@ export function formatCurrencyDisplay(value: string): string {
   if (Number.isNaN(num)) return value;
   return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+
+/**
+ * Format digits as BR percentage (0-100, last 2 digits = decimals).
+ * Caps at 100,00 since percentages above 100 are non-sensical for commissions.
+ *   "" -> ""
+ *   "5" -> "0,05"
+ *   "2000" -> "20,00"
+ *   "10000" -> "100,00"
+ *   "999999" -> "100,00" (capped)
+ */
+export function maskPercentage(input: string): string {
+  const digits = input.replace(/\D/g, '');
+  if (!digits) return '';
+  const padded = digits.padStart(3, '0');
+  const cents = padded.slice(-2);
+  const reais = padded.slice(0, -2).replace(/^0+(?=\d)/, '') || '0';
+  // Cap at 100,00
+  if (Number(`${reais}.${cents}`) > 100) return '100,00';
+  return `${reais},${cents}`;
+}
+
+/**
+ * Convert masked BR percentage ("20,00") to backend format ("20.00").
+ */
+export function unmaskPercentage(input: string): string {
+  if (!input) return '';
+  const normalized = input.replace(/%/g, '').replace(/\s/g, '').replace(',', '.');
+  const num = Number(normalized);
+  if (Number.isNaN(num)) return input;
+  return num.toFixed(2);
+}
