@@ -380,18 +380,12 @@ function ExpandedItem({
 
   const sizeClasses = isTop ? 'text-sm' : 'text-[13px]';
 
-  // Top-level idle: white text on primary-700.
-  // Sub-item idle: white/85 text on primary-900 panel.
-  const idleClasses = isTop
-    ? 'text-white/95 hover:bg-white/10'
-    : 'text-white/85 hover:bg-white/5';
-
-  // Top-level "selected as card": SOLID white bg, primary text/icon.
-  const topActiveClasses =
-    'bg-white text-primary-500 font-semibold shadow-sm hover:bg-white';
-
-  // Sub-item active (inside primary-900 panel): brighter highlight.
-  const subActiveClasses = 'bg-white/15 text-white font-semibold';
+  // Top-level: white text on primary-700, hover swaps to white card.
+  // Sub-item: white/85 text on primary-900 panel, subtle hover.
+  // The "selected card" white treatment is HOVER-only (not for open/active).
+  const topClasses =
+    'text-white/95 hover:bg-white hover:text-primary-500 hover:font-semibold hover:shadow-sm';
+  const subClasses = 'text-white/85 hover:bg-white/5';
 
   if (!hasChildren && item.to) {
     return (
@@ -399,17 +393,7 @@ function ExpandedItem({
         <NavLink
           to={item.to}
           end
-          className={({ isActive }) =>
-            cn(
-              baseClasses,
-              sizeClasses,
-              isActive
-                ? isTop
-                  ? topActiveClasses
-                  : subActiveClasses
-                : idleClasses,
-            )
-          }
+          className={cn(baseClasses, sizeClasses, isTop ? topClasses : subClasses)}
           style={{ paddingLeft: padding }}
         >
           {Icon ? (
@@ -436,9 +420,7 @@ function ExpandedItem({
           className={cn(
             baseClasses,
             sizeClasses,
-            isTop && 'font-medium',
-            // Open top-level group → "selected card" (solid white bg, primary text)
-            open && isTop ? topActiveClasses : idleClasses,
+            isTop ? cn('font-medium', topClasses) : subClasses,
           )}
           style={{ paddingLeft: padding }}
         >
@@ -454,7 +436,7 @@ function ExpandedItem({
           <ChevronRight
             className={cn(
               'h-4 w-4 transition-transform shrink-0',
-              open && isTop ? 'text-primary-500' : isTop ? 'text-white/70' : 'text-white/50',
+              isTop ? 'text-white/70' : 'text-white/50',
               open && 'rotate-90',
             )}
           />
