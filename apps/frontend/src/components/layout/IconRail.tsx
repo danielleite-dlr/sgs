@@ -83,7 +83,7 @@ export function IconRail({ lowStockCount = 0 }: IconRailProps) {
       >
         <ul
           className={cn(
-            'flex-1 overflow-y-auto',
+            'overflow-y-auto',
             expanded ? 'py-sm space-y-0' : 'py-md space-y-px px-2 items-center flex flex-col',
           )}
         >
@@ -97,30 +97,35 @@ export function IconRail({ lowStockCount = 0 }: IconRailProps) {
               onToggleGroup={toggleGroup}
             />
           ))}
-        </ul>
 
-        {/* Collapse / expand toggle */}
-        <div className={cn('p-sm border-t border-white/10', expanded ? '' : 'flex justify-center')}>
-          <button
-            type="button"
-            onClick={toggle}
-            aria-label={expanded ? 'Recolher menu' : 'Expandir menu'}
-            aria-expanded={expanded}
-            className={cn(
-              'flex items-center gap-sm rounded-md text-white/80 hover:text-white hover:bg-white/10 transition-colors text-sm',
-              expanded ? 'w-full px-sm py-sm' : 'h-10 w-10 justify-center',
-            )}
-          >
-            {expanded ? (
-              <>
+          {/* Collapse/expand toggle — sits directly below the last menu item */}
+          {expanded ? (
+            <li className="mt-sm">
+              <button
+                type="button"
+                onClick={toggle}
+                aria-label="Recolher menu"
+                aria-expanded
+                className="flex items-center gap-sm w-full px-sm py-sm rounded-md text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              >
                 <ChevronLeft className="h-4 w-4 shrink-0" />
-                <span>Recolher</span>
-              </>
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-          </button>
-        </div>
+                <span>Recolher menu</span>
+              </button>
+            </li>
+          ) : (
+            <li className="mt-sm">
+              <button
+                type="button"
+                onClick={toggle}
+                aria-label="Expandir menu"
+                aria-expanded={false}
+                className="flex h-10 w-10 items-center justify-center rounded-md text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </li>
+          )}
+        </ul>
       </nav>
     </TooltipProvider>
   );

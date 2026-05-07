@@ -3,6 +3,9 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronsLeft,
+  ChevronsRight,
   Plus,
   SlidersHorizontal,
   Search,
@@ -11,8 +14,7 @@ import {
   Clock,
   HelpCircle,
   X,
-  PanelLeftClose,
-  PanelLeftOpen,
+  Users,
   AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,13 +43,13 @@ import { cn } from '@/lib/utils';
 // ─── Types & constants ────────────────────────────────────────────────────────
 
 const APPT_STATUSES = [
-  { id: 'absent',     label: 'Ausência de profissional',           color: '#888780' },
-  { id: 'awaiting',   label: 'Aguardando confirmação',             color: '#EF9F27' },
-  { id: 'confirmed',  label: 'Confirmado',                          color: '#5D54C7' },
-  { id: 'no_show',    label: 'Cliente não compareceu',              color: '#D85A30' },
-  { id: 'in_progress',label: 'Em atendimento',                     color: '#1D9E75' },
-  { id: 'completed',  label: 'Finalizado',                          color: '#3C3489' },
-  { id: 'cancelled',  label: 'Cancelado',                           color: '#999592' },
+  { id: 'absent',     label: 'Ausência de profissional',            color: '#D9D9D9', textOnColor: '#5C5C5C' },
+  { id: 'awaiting',   label: 'Aguardando Confirmação do Estabelecimento', color: '#EF9F27', textOnColor: '#FFFFFF' },
+  { id: 'confirmed',  label: 'Confirmado',                          color: '#1D9E75', textOnColor: '#FFFFFF' },
+  { id: 'no_show',    label: 'Cliente não compareceu',              color: '#3F3F3F', textOnColor: '#FFFFFF' },
+  { id: 'in_progress',label: 'Em atendimento',                     color: '#28A89F', textOnColor: '#FFFFFF' },
+  { id: 'completed',  label: 'Finalizado',                          color: '#5D54C7', textOnColor: '#FFFFFF' },
+  { id: 'cancelled',  label: 'Cancelado',                           color: '#FBE4E4', textOnColor: '#A03A3A' },
 ] as const;
 
 type DensitySize = 'PP' | 'P' | 'M' | 'G';
@@ -184,20 +186,37 @@ function FilterPanel(props: FilterPanelProps) {
       {/* Calendar */}
       <InlineCalendar selected={props.selectedDate} onSelect={props.onSelectDate} />
 
-      {/* Profissionais — chips */}
-      <section>
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-sm">
-          Profissionais
-        </h3>
+      {/* Ações rápidas — Buscar e Agendar / Seleção de Profissionais */}
+      <div className="flex flex-col gap-xs">
+        <button
+          type="button"
+          className="flex items-center gap-sm px-sm py-xs rounded-md border border-error-500/40 text-sm text-neutral-700 hover:bg-error-50/50 transition-colors text-left"
+        >
+          <span className="h-6 w-6 rounded-md bg-success-500 text-white flex items-center justify-center shrink-0">
+            <CalendarDays className="h-3.5 w-3.5" />
+          </span>
+          <span className="flex-1">Buscar e Agendar</span>
+        </button>
+        <button
+          type="button"
+          className="flex items-center gap-sm px-sm py-xs rounded-md border border-error-500/40 text-sm text-neutral-700 hover:bg-error-50/50 transition-colors text-left"
+        >
+          <span className="h-6 w-6 rounded-md bg-error-500 text-white flex items-center justify-center shrink-0">
+            <Users className="h-3.5 w-3.5" />
+          </span>
+          <span className="flex-1">Seleção de Profissionais</span>
+        </button>
+      </div>
+
+      {/* Nome do profissional — chips */}
+      <CollapsibleSection title="Nome do profissional">
         <div className="flex flex-wrap gap-xs">
           <button
             type="button"
             onClick={() => {
               if (props.visibleProfIds.size === props.professionals.length) {
-                // hide all
                 props.professionals.forEach((p) => props.onToggleProf(p.id));
               } else {
-                // show all
                 props.professionals.forEach((p) => {
                   if (!props.visibleProfIds.has(p.id)) props.onToggleProf(p.id);
                 });
@@ -206,7 +225,7 @@ function FilterPanel(props: FilterPanelProps) {
             className={cn(
               'px-sm py-xs rounded-full text-xs border transition-colors',
               props.visibleProfIds.size === props.professionals.length
-                ? 'bg-primary-500 text-white border-primary-500'
+                ? 'bg-neutral-800 text-white border-neutral-800'
                 : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50',
             )}
           >
@@ -220,7 +239,7 @@ function FilterPanel(props: FilterPanelProps) {
                 type="button"
                 onClick={() => props.onToggleProf(pro.id)}
                 className={cn(
-                  'px-sm py-xs rounded-full text-xs border transition-colors flex items-center gap-xs',
+                  'h-7 w-7 rounded-full text-xs font-semibold border transition-colors flex items-center justify-center',
                   visible
                     ? 'text-white border-transparent'
                     : 'bg-white text-neutral-500 border-neutral-300 hover:bg-neutral-50',
@@ -233,13 +252,10 @@ function FilterPanel(props: FilterPanelProps) {
             );
           })}
         </div>
-      </section>
+      </CollapsibleSection>
 
-      {/* Status do Agendamento — chips coloridos */}
-      <section>
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-sm">
-          Status do agendamento
-        </h3>
+      {/* Status do Agendamento — pílulas coloridas full-width */}
+      <CollapsibleSection title="Status do Agendamento">
         <div className="flex flex-col gap-xs">
           {APPT_STATUSES.map((s) => {
             const active = props.activeStatuses.has(s.id);
@@ -249,55 +265,50 @@ function FilterPanel(props: FilterPanelProps) {
                 type="button"
                 onClick={() => props.onToggleStatus(s.id)}
                 className={cn(
-                  'flex items-center gap-sm px-sm py-xs rounded-md text-xs border transition-colors text-left',
-                  active
-                    ? 'border-primary-300 bg-primary-50 text-neutral-800 font-medium'
-                    : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50',
+                  'rounded-full px-sm py-xs text-[11px] font-medium text-center transition-opacity border',
+                  active ? 'opacity-100 border-transparent' : 'opacity-50 border-neutral-200 bg-white text-neutral-600',
                 )}
+                style={
+                  active
+                    ? { backgroundColor: s.color, color: s.textOnColor }
+                    : undefined
+                }
               >
-                <span
-                  className="h-2.5 w-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: s.color }}
-                />
-                <span className="flex-1 truncate">{s.label}</span>
+                {s.label}
               </button>
             );
           })}
         </div>
-      </section>
+      </CollapsibleSection>
 
       {/* Fechamento de Conta */}
-      <section>
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-sm">
-          Fechamento de conta
-        </h3>
+      <CollapsibleSection title="Fechamento de Conta">
         <div className="flex gap-xs">
-          {(['all', 'open', 'closed'] as const).map((opt) => (
+          {(['open', 'closed'] as const).map((opt) => (
             <button
               key={opt}
               type="button"
-              onClick={() => props.onChangeClosing(opt)}
+              onClick={() =>
+                props.onChangeClosing(props.closingFilter === opt ? 'all' : opt)
+              }
               className={cn(
                 'px-md py-xs rounded-full text-xs border transition-colors',
                 props.closingFilter === opt
-                  ? 'bg-primary-500 text-white border-primary-500'
+                  ? 'bg-neutral-800 text-white border-neutral-800'
                   : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50',
               )}
             >
-              {opt === 'all' ? 'Todas' : opt === 'open' ? 'Aberta' : 'Fechada'}
+              {opt === 'open' ? 'Aberta' : 'Fechada'}
             </button>
           ))}
         </div>
-      </section>
+      </CollapsibleSection>
 
       {/* Tamanho da agenda */}
-      <section>
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-sm">
-          Tamanho da agenda
-        </h3>
+      <CollapsibleSection title="Tamanho da agenda">
         <div className="space-y-sm">
           <div>
-            <Label className="text-xs text-neutral-600">Linha</Label>
+            <Label className="text-xs text-neutral-600">Linha:</Label>
             <RadioGroup
               value={props.rowSize}
               onValueChange={(v) => props.onChangeRow(v as DensitySize)}
@@ -312,7 +323,7 @@ function FilterPanel(props: FilterPanelProps) {
             </RadioGroup>
           </div>
           <div>
-            <Label className="text-xs text-neutral-600">Coluna</Label>
+            <Label className="text-xs text-neutral-600">Coluna:</Label>
             <RadioGroup
               value={props.colSize}
               onValueChange={(v) => props.onChangeCol(v as DensitySize)}
@@ -327,13 +338,11 @@ function FilterPanel(props: FilterPanelProps) {
             </RadioGroup>
           </div>
         </div>
-      </section>
+      </CollapsibleSection>
 
       {/* Mostrar folga */}
-      <section>
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-sm">
-          Exibição da agenda
-        </h3>
+      <CollapsibleSection title="Exibição da agenda">
+        <Label className="text-xs text-neutral-600 mb-xs block">Mostrar folga:</Label>
         <RadioGroup
           value={props.showFolga ? 'yes' : 'no'}
           onValueChange={(v) => props.onChangeShowFolga(v === 'yes')}
@@ -341,15 +350,43 @@ function FilterPanel(props: FilterPanelProps) {
         >
           <label className="flex items-center gap-xs cursor-pointer">
             <RadioGroupItem value="yes" id="folga-yes" />
-            <span className="text-xs text-neutral-700">Mostrar folga</span>
+            <span className="text-xs text-neutral-700">Sim</span>
           </label>
           <label className="flex items-center gap-xs cursor-pointer">
             <RadioGroupItem value="no" id="folga-no" />
-            <span className="text-xs text-neutral-700">Ocultar</span>
+            <span className="text-xs text-neutral-700">Não</span>
           </label>
         </RadioGroup>
-      </section>
+      </CollapsibleSection>
     </aside>
+  );
+}
+
+function CollapsibleSection({
+  title,
+  defaultOpen = true,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section className="border-b border-neutral-200 pb-md">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex items-center justify-between w-full text-sm font-semibold text-neutral-800 mb-sm"
+      >
+        <span>{title}</span>
+        <ChevronDown
+          className={cn('h-4 w-4 text-neutral-500 transition-transform', !open && '-rotate-90')}
+        />
+      </button>
+      {open && children}
+    </section>
   );
 }
 
@@ -754,7 +791,7 @@ export function SchedulePage() {
         aria-label={sidebarCollapsed ? 'Mostrar filtros' : 'Ocultar filtros'}
         className="hidden lg:flex h-8 w-6 self-start mt-md -ml-3 z-20 items-center justify-center rounded-r-md border border-l-0 border-neutral-200 bg-white text-primary-500 hover:bg-primary-50 shadow-sm"
       >
-        {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+        {sidebarCollapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
       </button>
 
       {/* Mobile filtros drawer */}
@@ -1042,6 +1079,36 @@ export function SchedulePage() {
             </div>
           </div>
         </div>
+
+        {/* Footer institucional (estilo Trinks) */}
+        <footer className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-md px-md py-md border-t border-neutral-200 bg-white text-xs text-neutral-500">
+          <nav className="flex flex-wrap items-center gap-x-md gap-y-xs" aria-label="Links institucionais">
+            <a className="hover:text-primary-500 transition-colors" href="#">Meu site</a>
+            <span className="text-neutral-300">|</span>
+            <a className="hover:text-primary-500 transition-colors" href="#">SGS Ajuda</a>
+            <span className="text-neutral-300">|</span>
+            <a className="hover:text-primary-500 transition-colors" href="#">Blog</a>
+            <span className="text-neutral-300">|</span>
+            <a className="hover:text-primary-500 transition-colors" href="#">Fale conosco</a>
+            <span className="text-neutral-300">|</span>
+            <a className="hover:text-primary-500 transition-colors" href="#">Contato</a>
+          </nav>
+          <div className="flex items-center gap-sm">
+            {[
+              { label: 'Facebook', icon: 'F' },
+              { label: 'Instagram', icon: 'IG' },
+              { label: 'YouTube', icon: 'YT' },
+            ].map((s) => (
+              <span
+                key={s.label}
+                aria-label={s.label}
+                className="h-7 w-7 rounded-full border border-neutral-300 flex items-center justify-center text-[10px] text-neutral-500 hover:border-primary-300 hover:text-primary-500 transition-colors"
+              >
+                {s.icon}
+              </span>
+            ))}
+          </div>
+        </footer>
       </div>
 
       <AppointmentModal
