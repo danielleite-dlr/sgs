@@ -261,7 +261,17 @@
     "settings": "Configurações",
     "logout": "Sair",
     "primaryNavLabel": "Navegação principal",
-    "lowStockTooltip": "{{count}} produto(s) com estoque baixo"
+    "lowStockTooltip": "{{count}} produto(s) com estoque baixo",
+    "operations": "Operações",
+    "agenda": "Agenda",
+    "comanda": "Comanda",
+    "financeiro": "Financeiro",
+    "comissoesCalculadas": "Comissões",
+    "events": "Eventos",
+    "noivas": "Noivas",
+    "contratos": "Contratos",
+    "communication": "Comunicação",
+    "campanhas": "Campanhas"
   },
   "appShell": {
     "mobileMenuLabel": "Abrir menu",
@@ -275,6 +285,72 @@
     "produtos":   { "tab": "Produtos — SGS",     "h1": "Produtos",    "newCta": "Novo produto" },
     "comissoes":  { "tab": "Comissões — SGS",   "h1": "Comissões",   "newCta": "Nova regra" },
     "clientes":   { "tab": "Clientes — SGS",    "h1": "Clientes",    "newCta": "Novo cliente",  "newTitle": "Novo cliente", "editTitle": "Editar cliente" }
+  },
+  "operations": {
+    "schedule": {
+      "title": "Agenda",
+      "newAppointment": "Novo agendamento",
+      "today": "Hoje",
+      "weekView": "Semana",
+      "dayView": "Dia",
+      "noAppointments": "Nenhum agendamento para este dia"
+    },
+    "pos": {
+      "title": "Comanda",
+      "newComanda": "Nova comanda",
+      "addService": "Adicionar serviço",
+      "addProduct": "Adicionar produto",
+      "receive": "Receber pagamento",
+      "subtotal": "Subtotal",
+      "discount": "Desconto",
+      "total": "Total",
+      "paymentMethod": "Método de pagamento",
+      "status": {
+        "open": "Em atendimento",
+        "closed": "Fechada"
+      }
+    },
+    "financial": {
+      "title": "Financeiro",
+      "revenueByDay": "Receita por dia",
+      "paymentBreakdown": "Métodos de pagamento",
+      "kpis": {
+        "monthRevenue": "Receita do mês",
+        "closedComandas": "Comandas fechadas",
+        "avgTicket": "Ticket médio",
+        "commissionPaid": "Comissão paga"
+      }
+    },
+    "commissions": {
+      "title": "Comissões calculadas",
+      "professional": "Profissional",
+      "period": "Período",
+      "comandas": "Comandas",
+      "totalEarned": "Total ganho",
+      "status": "Status",
+      "markAsPaid": "Marcar como pago",
+      "statusValues": {
+        "pendente": "Pendente",
+        "pago": "Pago"
+      }
+    }
+  },
+  "bridal": {
+    "title": "Noivas",
+    "groups": {
+      "title": "Grupos de Noivas",
+      "new": "Novo grupo"
+    },
+    "contracts": {
+      "title": "Contratos",
+      "new": "Novo contrato"
+    }
+  },
+  "communication": {
+    "campaigns": {
+      "title": "Campanhas",
+      "new": "Nova campanha"
+    }
   },
   "catalog": {
     "softDelete": {
