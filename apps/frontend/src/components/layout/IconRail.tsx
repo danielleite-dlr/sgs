@@ -64,6 +64,13 @@ export function IconRail({ lowStockCount = 0 }: IconRailProps) {
     });
   }
 
+  // Accordion: only one top-level group open at a time when expanded.
+  const [openGroupId, setOpenGroupId] = useState<string | null>(null);
+
+  function toggleGroup(id: string) {
+    setOpenGroupId((curr) => (curr === id ? null : id));
+  }
+
   return (
     <TooltipProvider delayDuration={300}>
       <nav
@@ -81,6 +88,8 @@ export function IconRail({ lowStockCount = 0 }: IconRailProps) {
               item={item}
               expanded={expanded}
               lowStockCount={lowStockCount}
+              openGroupId={openGroupId}
+              onToggleGroup={toggleGroup}
             />
           ))}
         </ul>
@@ -116,10 +125,14 @@ function RailItem({
   item,
   expanded,
   lowStockCount,
+  openGroupId,
+  onToggleGroup,
 }: {
   item: MenuItem;
   expanded: boolean;
   lowStockCount: number;
+  openGroupId: string | null;
+  onToggleGroup: (id: string) => void;
 }) {
   const Icon = item.icon;
   const hasChildren = (item.children?.length ?? 0) > 0;
@@ -127,7 +140,13 @@ function RailItem({
 
   if (expanded) {
     return (
-      <ExpandedItem item={item} lowStockCount={lowStockCount} level={0} />
+      <ExpandedItem
+        item={item}
+        lowStockCount={lowStockCount}
+        level={0}
+        openGroupId={openGroupId}
+        onToggleGroup={onToggleGroup}
+      />
     );
   }
 
@@ -320,18 +339,50 @@ function ExpandedItem({
   item,
   lowStockCount,
   level,
+  openGroupId,
+  onToggleGroup,
 }: {
   item: MenuItem;
   lowStockCount: number;
   level: number;
+  openGroupId: string | null;
+  onToggleGroup: (id: string) => void;
 }) {
-  const [open, setOpen] = useState(level === 0 && Boolean(item.children?.length));
+  // Top-level groups: controlled accordion (only one open at a time).
+  // Nested groups: local state (allow multiple open within the chosen branch).
+  const [localOpen, setLocalOpen] = useState(false);
+  const isTopLevel = level === 0;
+  const open = isTopLevel ? openGroupId === item.id : localOpen;
+
+  function setOpen(next: boolean) {
+    if (isTopLevel) {
+      // Only call toggle when we'd actually change state
+      if (next !== (openGroupId === item.id)) {
+        onToggleGroup(item.id);
+      }
+    } else {
+      setLocalOpen(next);
+    }
+  }
+
   const Icon = item.icon;
   const hasChildren = (item.children?.length ?? 0) > 0;
   const padding = 8 + level * 16;
+  const isTop = level === 0;
 
   const baseClasses =
-    'flex items-center gap-sm rounded-md py-sm pr-md text-sm transition-colors w-full text-left';
+    'flex items-center gap-sm rounded-md py-sm pr-md transition-colors w-full text-left';
+
+  // Differentiate by depth:
+  //   level 0 → bold-ish white, full size text
+  //   level 1+ → smaller, more transparent, no icon column
+  const sizeClasses = isTop ? 'text-sm' : 'text-[13px]';
+  const idleText = isTop ? 'text-white/90' : 'text-white/65';
+  const hoverText = 'hover:text-white';
+  const hoverBg = isTop ? 'hover:bg-white/10' : 'hover:bg-white/5';
+  const activeClasses = isTop
+    ? 'bg-white/15 text-white font-semibold'
+    : 'bg-white/10 text-white font-medium';
 
   if (!hasChildren && item.to) {
     return (
@@ -342,14 +393,17 @@ function ExpandedItem({
           className={({ isActive }) =>
             cn(
               baseClasses,
-              isActive
-                ? 'bg-white/15 text-white font-semibold'
-                : 'text-white/80 hover:bg-white/10 hover:text-white',
+              sizeClasses,
+              isActive ? activeClasses : cn(idleText, hoverText, hoverBg),
             )
           }
           style={{ paddingLeft: padding }}
         >
-          {Icon ? <Icon className="h-4 w-4 shrink-0" /> : <span className="w-4" />}
+          {Icon ? (
+            <Icon className={cn('shrink-0', isTop ? 'h-4 w-4' : 'h-3.5 w-3.5 opacity-70')} />
+          ) : (
+            <span className={cn(isTop ? 'w-4' : 'w-3.5')} />
+          )}
           <span className="flex-1 truncate">{item.label}</span>
           {item.badge === 'lowStock' && lowStockCount > 0 && (
             <TriangleAlert className="h-4 w-4 text-warning-500 shrink-0" />
@@ -364,28 +418,52 @@ function ExpandedItem({
       <li>
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setOpen(!open)}
           aria-expanded={open}
-          className={cn(baseClasses, 'text-white/90 hover:bg-white/10 font-medium')}
+          className={cn(
+            baseClasses,
+            sizeClasses,
+            isTop ? 'font-medium' : '',
+            open && isTop && 'bg-white/10',
+            idleText,
+            hoverText,
+            hoverBg,
+          )}
           style={{ paddingLeft: padding }}
         >
-          {Icon ? <Icon className="h-4 w-4 shrink-0" /> : <span className="w-4" />}
+          {Icon ? (
+            <Icon className={cn('shrink-0', isTop ? 'h-4 w-4' : 'h-3.5 w-3.5 opacity-70')} />
+          ) : (
+            <span className={cn(isTop ? 'w-4' : 'w-3.5')} />
+          )}
           <span className="flex-1 truncate">{item.label}</span>
           {item.badge === 'lowStock' && lowStockCount > 0 && (
             <TriangleAlert className="h-4 w-4 text-warning-500 shrink-0" />
           )}
           <ChevronRight
-            className={cn('h-4 w-4 text-white/60 transition-transform', open && 'rotate-90')}
+            className={cn(
+              'h-4 w-4 transition-transform shrink-0',
+              isTop ? 'text-white/70' : 'text-white/50',
+              open && 'rotate-90',
+            )}
           />
         </button>
         {open && (
-          <ul className="space-y-px mt-px">
+          <ul
+            className={cn(
+              'space-y-px',
+              // Sub-list panel: darker background + left rail to set children apart
+              isTop && 'bg-black/15 rounded-md mt-xs py-xs border-l-2 border-white/20 ml-sm',
+            )}
+          >
             {item.children!.map((c) => (
               <ExpandedItem
                 key={c.id}
                 item={c}
                 lowStockCount={lowStockCount}
                 level={level + 1}
+                openGroupId={openGroupId}
+                onToggleGroup={onToggleGroup}
               />
             ))}
           </ul>
