@@ -1,14 +1,13 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { DatabaseModule } from '../../database/database.module';
 import { AuthzModule } from '../../authz/authz.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { ProductsService } from './products.service';
+import { ProductsResolver } from './products.resolver';
 
-/**
- * ProductsModule — retail/consumable products with stock tracking (CAT-03).
- * Wave 2 plan adds: ProductService, ProductResolver, ProductDto, StockMovementDto.
- */
 @Module({
-  imports: [DatabaseModule, AuthzModule],
-  providers: [],
-  exports: [],
+  imports: [DatabaseModule, AuthzModule, forwardRef(() => NotificationsModule)],
+  providers: [ProductsService, ProductsResolver],
+  exports: [ProductsService],
 })
 export class ProductsModule {}

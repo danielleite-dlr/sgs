@@ -1,0 +1,112 @@
+# ===== Products =====
+
+extend type Query {
+  products(lowStockOnly: Boolean): [Product!]!
+  product(id: UUID!): Product
+  lowStockCount: Int!
+  productStockMovements(productId: UUID!): [StockMovement!]!
+}
+
+extend type Mutation {
+  createProduct(input: CreateProductInput!): ProductPayload!
+  updateProduct(input: UpdateProductInput!): ProductPayload!
+  adjustStock(input: AdjustStockInput!): ProductPayload!
+  softDeleteProduct(input: SoftDeleteProductInput!): ProductPayload!
+}
+
+type Product {
+  id: UUID!
+  name: String!
+  sku: String!
+  costPrice: String!
+  salePrice: String!
+  stockQuantity: Int!
+  minStockLevel: Int!
+  unit: ProductUnit!
+  isLowStock: Boolean!
+  coverImageUrl: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum ProductUnit {
+  un
+  ml
+  g
+}
+
+type StockMovement {
+  id: UUID!
+  productId: UUID!
+  delta: Int!
+  type: StockMovementType!
+  reason: String
+  performedBy: UUID
+  createdAt: DateTime!
+}
+
+enum StockMovementType {
+  initial
+  manual_adjustment
+  sale
+  return
+}
+
+input CreateProductInput {
+  name: String!
+  sku: String!
+  costPrice: String!
+  salePrice: String!
+  stockQuantity: Int!
+  minStockLevel: Int!
+  unit: ProductUnit!
+}
+
+input UpdateProductInput {
+  id: UUID!
+  name: String
+  sku: String
+  costPrice: String
+  salePrice: String
+  minStockLevel: Int
+  unit: ProductUnit
+}
+
+input AdjustStockInput {
+  productId: UUID!
+  delta: Int!
+  reason: String!
+}
+
+input SoftDeleteProductInput {
+  id: UUID!
+}
+
+type ProductPayload {
+  product: Product
+  errors: [UserError!]!
+}
+
+# ===== Notifications =====
+
+extend type Query {
+  notifications(unreadOnly: Boolean): [Notification!]!
+}
+
+extend type Mutation {
+  markNotificationRead(input: MarkReadInput!): Notification!
+}
+
+type Notification {
+  id: UUID!
+  kind: String!
+  payload: JSON!
+  readAt: DateTime
+  createdAt: DateTime!
+}
+
+input MarkReadInput {
+  id: UUID!
+}
+
+scalar JSON
