@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 02-core-domain plan 05: backend-commissions-clients"
-last_updated: "2026-05-07T13:30:37.680Z"
+stopped_at: Completed 02-core-domain/02-backend-products-stock-PLAN.md — Products CRUD, adjustStock with pessimistic lock, low-stock notifications, 15 integration tests
+last_updated: "2026-05-07T13:37:17.293Z"
 last_activity: 2026-05-07
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 15
-  completed_plans: 11
+  completed_plans: 12
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 02 (core-domain) — EXECUTING
-Plan: 4 of 8
+Plan: 5 of 8
 Status: Ready to execute
 Last activity: 2026-05-07
 
@@ -60,6 +60,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 02-core-domain P01 | 14 | 3 tasks | 17 files |
 | Phase 02-core-domain P02 | 120 | 3 tasks | 33 files |
 | Phase 02-core-domain P05 | 45 | 2 tasks | 19 files |
+| Phase 02-core-domain P04 | 6 | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,8 @@ Recent decisions affecting current work:
 - [Phase 02-core-domain]: CPF stored as digits-only via normalizeCpf for consistent lookup regardless of input format
 - [Phase 02-core-domain]: Member type owned by identity.graphql as single SDL source-of-truth for cross-SDL cross-module reference
 - [Phase 02-core-domain]: clientHistory returns [] Phase 2 stub with Phase 3 aggregation slot reserved in ClientsService
+- [Phase 02-core-domain]: adjustStock creates notifications inline within same Prisma tx rather than via NotificationsService — ensures atomicity between stock update and notification creation
+- [Phase 02-core-domain]: stock_low notification is org-wide (memberId=null) — any member with NOTIFICATION_READ sees it; member-specific notifications reserved for future
 
 ### Pending Todos
 
@@ -118,6 +121,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-07T13:30:37.674Z
-Stopped at: Completed 02-core-domain plan 05: backend-commissions-clients
+Last session: 2026-05-07T13:37:17.282Z
+Stopped at: Completed 02-core-domain/02-backend-products-stock-PLAN.md — Products CRUD, adjustStock with pessimistic lock, low-stock notifications, 15 integration tests
 Resume file: None
