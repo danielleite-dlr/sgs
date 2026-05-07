@@ -1,0 +1,78 @@
+# ===== Clients =====
+
+extend type Query {
+  clients(search: String, limit: Int, offset: Int): ClientConnection!
+  client(id: UUID!): Client
+  clientsByField(cpf: String, phone: String, email: String, excludeId: UUID): [Client!]!
+  clientHistory(clientId: UUID!, filters: ClientHistoryFilters): [ClientHistoryItem!]!
+}
+
+extend type Mutation {
+  createClient(input: CreateClientInput!): ClientPayload!
+  updateClient(input: UpdateClientInput!): ClientPayload!
+  softDeleteClient(input: SoftDeleteInput!): ClientPayload!
+  restoreClient(input: SoftDeleteInput!): ClientPayload!
+}
+
+type Client {
+  id: UUID!
+  fullName: String!
+  phone: String
+  email: String
+  cpf: String
+  birthDate: DateTime
+  address: String
+  notes: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ClientConnection {
+  rows: [Client!]!
+  totalCount: Int!
+}
+
+input ClientHistoryFilters {
+  fromDate: DateTime
+  toDate: DateTime
+  professionalId: UUID
+  kind: ClientHistoryKind
+}
+
+enum ClientHistoryKind { all appointment product comanda }
+
+# Phase 2 stub — Phase 3 fills in real fields when comandas/appointments land
+type ClientHistoryItem {
+  id: UUID!
+  occurredAt: DateTime!
+  kind: String!
+  description: String!
+  amount: String
+  professionalName: String
+}
+
+input CreateClientInput {
+  fullName: String!
+  phone: String
+  email: String
+  cpf: String
+  birthDate: DateTime
+  address: String
+  notes: String
+}
+
+input UpdateClientInput {
+  id: UUID!
+  fullName: String
+  phone: String
+  email: String
+  cpf: String
+  birthDate: DateTime
+  address: String
+  notes: String
+}
+
+type ClientPayload {
+  client: Client
+  errors: [UserError!]!
+}
