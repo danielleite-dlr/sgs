@@ -76,11 +76,11 @@ Plans:
 4. Proprietário consegue configurar regra de comissão de 20% para um serviço específico e ver a regra aplicada ao profissional correto
 5. Atendente consegue criar perfil de cliente com CPF e visualizar o histórico completo de visitas e consumo daquele cliente
 
-**Plans:** 1/8 plans executed
+**Plans:** 2/8 plans executed
 
 Plans:
 - [x] 02-database-schema-PLAN.md — Phase 2 Prisma migration (10 tables + RLS), permissions catalog, empty bounded-context modules
-- [ ] 02-frontend-appshell-PLAN.md — AppShell + SidebarNav + PageHeader + DataTable + 15 shadcn primitives + 9 routes
+- [x] 02-frontend-appshell-PLAN.md — AppShell + SidebarNav + PageHeader + DataTable + 15 shadcn primitives + 9 routes
 - [ ] 02-backend-catalog-services-PLAN.md — Categories, Services (with pricing variants), Packages CRUD via GraphQL
 - [ ] 02-backend-products-stock-PLAN.md — Products CRUD + adjustStock with movements audit + low-stock notifications
 - [ ] 02-backend-commissions-clients-PLAN.md — CommissionRule scope-first CRUD + Clients with CPF + history stub
@@ -182,7 +182,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 7/7 | Complete   | 2026-05-06 |
-| 2. Core Domain | 1/8 | In Progress|  |
+| 2. Core Domain | 2/8 | In Progress|  |
 | 3. Core Operations | 0/? | Not started | - |
 | 4. Bridal & Contracts | 0/? | Not started | - |
 | 5. Communication & Launch | 0/? | Not started | - |
