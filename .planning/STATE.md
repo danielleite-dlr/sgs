@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 02-core-domain/02-frontend-catalog-categorias-servicos-PLAN.md — Categorias + Serviços CRUD screens with PricingVariantsEditor, ConfirmSoftDeleteDialog, ReorderControls
-last_updated: "2026-05-07T14:02:21.210Z"
+status: verifying
+stopped_at: Completed 02-core-domain 02-07 (02-frontend-pacotes-produtos-comissoes-PLAN.md)
+last_updated: "2026-05-07T14:08:41.019Z"
 last_activity: 2026-05-07
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 15
-  completed_plans: 15
+  completed_plans: 16
   percent: 100
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 
 Phase: 02 (core-domain) — EXECUTING
 Plan: 8 of 8
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-05-07
 
 Progress: [██████████] 100% (Phase 1 of 5)
@@ -64,6 +64,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 02-core-domain P03 | 55 | 3 tasks | 14 files |
 | Phase 02-core-domain P08 | 45 | 3 tasks | 15 files |
 | Phase 02-core-domain P06 | 75 | 3 tasks | 11 files |
+| Phase 02-core-domain P07 | 23 | 3 tasks | 22 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,9 @@ Recent decisions affecting current work:
 - [Phase 02-core-domain]: /clientes/novo ordered before /clientes/:id in router to prevent React Router collision
 - [Phase 02-core-domain]: Plan 06: gql tagged templates used in catalog API (not codegen client-preset) — consistent with auth.api.ts established pattern, codegen deferred to CI plan
 - [Phase 02-core-domain]: Plan 06: ConfirmSoftDeleteDialog accepts ReactNode trigger with e.preventDefault on onSelect to prevent DropdownMenu closing before AlertDialog opens
+- [Phase 02-core-domain]: AdjustStockDialog uses cache.evict pattern (not hardcoded refetchQueries variables) to avoid variable-mismatch with ProdutosPage's lowStockOnly state
+- [Phase 02-core-domain]: AppShell self-fetches lowStockCount with pollInterval 60s — removed prop-based approach since router passes AppShell with no props
+- [Phase 02-core-domain]: EntityCombobox is generic Popover+Command single-select reused across member/service/product pickers in CommissionRuleForm
 
 ### Pending Todos
 
@@ -131,6 +135,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-07T14:02:21.201Z
-Stopped at: Completed 02-core-domain/02-frontend-catalog-categorias-servicos-PLAN.md — Categorias + Serviços CRUD screens with PricingVariantsEditor, ConfirmSoftDeleteDialog, ReorderControls
+Last session: 2026-05-07T14:08:41.012Z
+Stopped at: Completed 02-core-domain 02-07 (02-frontend-pacotes-produtos-comissoes-PLAN.md)
 Resume file: None
