@@ -449,13 +449,7 @@ function ExpandedItem({
           />
         </button>
         {open && (
-          <ul
-            className={cn(
-              'space-y-px',
-              // Sub-list panel: darker background + left rail to set children apart
-              isTop && 'bg-black/15 rounded-md mt-xs py-xs border-l-2 border-white/20 ml-sm',
-            )}
-          >
+          <ul className="space-y-px mt-px">
             {item.children!.map((c) => (
               <ExpandedItem
                 key={c.id}
