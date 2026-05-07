@@ -1,18 +1,10 @@
 import { Global, Module } from '@nestjs/common';
 import { ResendAdapter } from './resend.adapter';
 import { EmailService } from './email.service';
+import { EMAIL_ADAPTER } from './email.tokens';
 
-/**
- * EMAIL_ADAPTER is an injection token that decouples EmailService from the
- * concrete adapter. In production, it resolves to ResendAdapter. In tests,
- * override it with TestEmailAdapter for in-memory email capture:
- *
- *   moduleRef = await Test.createTestingModule({ imports: [AppModule] })
- *     .overrideProvider(EMAIL_ADAPTER)
- *     .useClass(TestEmailAdapter)
- *     .compile();
- */
-export const EMAIL_ADAPTER = Symbol('EMAIL_ADAPTER');
+// Re-export for backwards compatibility (other modules import it from here)
+export { EMAIL_ADAPTER };
 
 /**
  * EmailModule — global provider for transactional email services.

@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { EMAIL_ADAPTER } from './email.module';
+import { EMAIL_ADAPTER } from './email.tokens';
 import type { EmailAdapter } from './resend.adapter';
 import type { Env } from '../config/env.schema';
 
