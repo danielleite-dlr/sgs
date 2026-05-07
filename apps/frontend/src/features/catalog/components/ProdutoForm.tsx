@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
+import { Percent } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -20,8 +22,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { DialogFooter } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
+import { CommissionRuleForm } from './CommissionRuleForm';
 import {
   CreateProductMutation,
   UpdateProductMutation,
@@ -74,6 +84,7 @@ export function ProdutoForm({ initial, onClose }: ProdutoFormProps) {
   });
 
   const isEdit = !!initial;
+  const [commissionDialogOpen, setCommissionDialogOpen] = useState(false);
   const isLoading = creating || updating;
 
   const form = useForm<FormValues>({
@@ -312,6 +323,29 @@ export function ProdutoForm({ initial, onClose }: ProdutoFormProps) {
           />
         </div>
 
+        {/* Commission shortcut — only available for already-saved products */}
+        {isEdit && initial && (
+          <>
+            <Separator />
+            <div className="flex items-center justify-between rounded-md border border-neutral-200 bg-neutral-50 p-3">
+              <div>
+                <p className="text-sm font-semibold">Comissão sobre venda</p>
+                <p className="text-sm text-neutral-500">
+                  Configure regras em /catalogo/comissoes ou crie uma agora.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCommissionDialogOpen(true)}
+              >
+                <Percent className="mr-2 h-4 w-4" />
+                Configurar comissão
+              </Button>
+            </div>
+          </>
+        )}
+
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
             {t('catalog.categoria.form.cancel', 'Cancelar')}
@@ -325,6 +359,21 @@ export function ProdutoForm({ initial, onClose }: ProdutoFormProps) {
           </Button>
         </DialogFooter>
       </form>
+
+      {/* Commission rule shortcut dialog (rendered outside the form) */}
+      {isEdit && initial && (
+        <Dialog open={commissionDialogOpen} onOpenChange={setCommissionDialogOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Nova regra de comissão — {initial.name}</DialogTitle>
+            </DialogHeader>
+            <CommissionRuleForm
+              onClose={() => setCommissionDialogOpen(false)}
+              prefilledScope={{ scopeType: 'product', productId: initial.id }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </Form>
   );
 }

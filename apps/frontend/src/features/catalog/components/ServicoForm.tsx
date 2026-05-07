@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from '@apollo/client';
+import { Percent } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -20,7 +22,13 @@ import {
   FormControl,
   FormMessage,
 } from '@/components/ui/form';
-import { DialogFooter } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { CategoriesQuery } from '../api/categorias.api';
@@ -33,6 +41,7 @@ import {
 import type { CreateServiceResult, UpdateServiceResult } from '../api/servicos.api';
 import { PricingVariantsEditor } from './PricingVariantsEditor';
 import { maskCurrency, unmaskCurrency, formatCurrencyDisplay } from '../utils/currency-mask';
+import { CommissionRuleForm } from './CommissionRuleForm';
 
 // ---- Zod schema ----
 
@@ -95,6 +104,7 @@ export function ServicoForm({
 }) {
   const { t } = useTranslation();
   const isEdit = Boolean(initial);
+  const [commissionDialogOpen, setCommissionDialogOpen] = useState(false);
 
   const { data: catData } = useQuery<CategoriesQueryResult>(CategoriesQuery);
 
@@ -299,6 +309,29 @@ export function ServicoForm({
           {/* Pricing variants dynamic editor */}
           <PricingVariantsEditor name="pricingVariants" />
 
+          {/* Commission shortcut — only available for already-saved services */}
+          {isEdit && initial && (
+            <>
+              <Separator />
+              <div className="flex items-center justify-between rounded-md border border-neutral-200 bg-neutral-50 p-3">
+                <div>
+                  <p className="text-sm font-semibold">Comissão deste serviço</p>
+                  <p className="text-sm text-neutral-500">
+                    Configure regras em /catalogo/comissoes ou crie uma agora.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setCommissionDialogOpen(true)}
+                >
+                  <Percent className="mr-2 h-4 w-4" />
+                  Configurar comissão
+                </Button>
+              </div>
+            </>
+          )}
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               {t('catalog.categoria.form.cancel')}
@@ -313,6 +346,21 @@ export function ServicoForm({
           </DialogFooter>
         </form>
       </Form>
+
+      {/* Commission rule shortcut dialog (rendered outside the form) */}
+      {isEdit && initial && (
+        <Dialog open={commissionDialogOpen} onOpenChange={setCommissionDialogOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Nova regra de comissão — {initial.name}</DialogTitle>
+            </DialogHeader>
+            <CommissionRuleForm
+              onClose={() => setCommissionDialogOpen(false)}
+              prefilledScope={{ scopeType: 'service', serviceId: initial.id }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </FormProvider>
   );
 }

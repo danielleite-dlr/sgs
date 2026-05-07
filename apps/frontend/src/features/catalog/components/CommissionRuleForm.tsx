@@ -89,9 +89,17 @@ type FormValues = z.infer<typeof schema>;
 
 export interface CommissionRuleFormProps {
   onClose: () => void;
+  /** Pre-fill scope when opened from a service/product context (e.g., shortcut button on ServicoForm). */
+  prefilledScope?: {
+    scopeType: 'service' | 'product' | 'category' | 'member_service';
+    serviceId?: string;
+    productId?: string;
+    categoryId?: string;
+    memberId?: string;
+  };
 }
 
-export function CommissionRuleForm({ onClose }: CommissionRuleFormProps) {
+export function CommissionRuleForm({ onClose, prefilledScope }: CommissionRuleFormProps) {
   const { t } = useTranslation();
   const [createRule, { loading }] = useMutation(CreateCommissionRuleMutation, {
     refetchQueries: [{ query: CommissionRulesQuery }],
@@ -135,7 +143,17 @@ export function CommissionRuleForm({ onClose }: CommissionRuleFormProps) {
   // ---- Form setup ----
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { scopeType: 'default', kind: 'percentage', value: '0' },
+    defaultValues: prefilledScope
+      ? {
+          scopeType: prefilledScope.scopeType,
+          memberId: prefilledScope.memberId,
+          serviceId: prefilledScope.serviceId,
+          categoryId: prefilledScope.categoryId,
+          productId: prefilledScope.productId,
+          kind: 'percentage',
+          value: '0',
+        }
+      : { scopeType: 'default', kind: 'percentage', value: '0' },
   });
 
   const scopeType = form.watch('scopeType');
