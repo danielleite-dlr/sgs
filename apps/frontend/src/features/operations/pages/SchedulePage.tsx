@@ -178,6 +178,8 @@ interface FilterPanelProps {
   onChangeCol: (v: DensitySize) => void;
   showFolga: boolean;
   onChangeShowFolga: (v: boolean) => void;
+  onOpenBuscarAgendar: () => void;
+  onOpenSelecaoProf: () => void;
 }
 
 function FilterPanel(props: FilterPanelProps) {
@@ -190,18 +192,20 @@ function FilterPanel(props: FilterPanelProps) {
       <div className="flex flex-col gap-xs">
         <button
           type="button"
-          className="flex items-center gap-sm px-sm py-xs rounded-md border border-error-500/40 text-sm text-neutral-700 hover:bg-error-50/50 transition-colors text-left"
+          onClick={props.onOpenBuscarAgendar}
+          className="flex items-center gap-sm px-sm py-xs rounded-md border border-primary-200 text-sm text-neutral-700 hover:bg-primary-50 transition-colors text-left"
         >
-          <span className="h-6 w-6 rounded-md bg-success-500 text-white flex items-center justify-center shrink-0">
+          <span className="h-6 w-6 rounded-md bg-primary-500 text-white flex items-center justify-center shrink-0">
             <CalendarDays className="h-3.5 w-3.5" />
           </span>
           <span className="flex-1">Buscar e Agendar</span>
         </button>
         <button
           type="button"
-          className="flex items-center gap-sm px-sm py-xs rounded-md border border-error-500/40 text-sm text-neutral-700 hover:bg-error-50/50 transition-colors text-left"
+          onClick={props.onOpenSelecaoProf}
+          className="flex items-center gap-sm px-sm py-xs rounded-md border border-primary-200 text-sm text-neutral-700 hover:bg-primary-50 transition-colors text-left"
         >
-          <span className="h-6 w-6 rounded-md bg-error-500 text-white flex items-center justify-center shrink-0">
+          <span className="h-6 w-6 rounded-md bg-primary-700 text-white flex items-center justify-center shrink-0">
             <Users className="h-3.5 w-3.5" />
           </span>
           <span className="flex-1">Seleção de Profissionais</span>
@@ -387,6 +391,240 @@ function CollapsibleSection({
       </button>
       {open && children}
     </section>
+  );
+}
+
+// ─── Buscar e Agendar Modal ───────────────────────────────────────────────────
+
+function BuscarAgendarModal({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const today = new Date();
+  const todayStr = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+  const [client, setClient] = useState('');
+  const [date, setDate] = useState(todayStr);
+  const dayOfWeek = today.toLocaleDateString('pt-BR', { weekday: 'long' });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[720px] p-0">
+        <header className="flex items-center justify-between px-md py-sm border-b border-neutral-200 bg-neutral-50">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-neutral-800">
+            Buscar e Agendar
+          </h2>
+          <div className="flex items-center gap-sm">
+            <span className="text-xs font-semibold text-primary-700 uppercase">
+              Hoje — {dayOfWeek}
+            </span>
+            <div className="relative">
+              <CalendarDays className="absolute left-sm top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+              <Input
+                value={date}
+                onChange={(e) => setDate(maskDateBR(e.target.value))}
+                placeholder="dd/mm/aaaa"
+                inputMode="numeric"
+                maxLength={10}
+                className="pl-9 h-8 w-[120px] text-sm"
+              />
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenChange(false)}
+              aria-label="Fechar"
+              className="h-8 w-8"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </header>
+
+        <div className="px-md py-md space-y-md">
+          {/* Cliente */}
+          <div>
+            <Label className="text-xs font-semibold text-neutral-700">Cliente:</Label>
+            <div className="flex gap-xs mt-xs">
+              <div className="flex-1 relative">
+                <Search className="absolute left-sm top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                <Input
+                  value={client}
+                  onChange={(e) => setClient(e.target.value)}
+                  placeholder="Buscar cliente…"
+                  className="pl-9"
+                />
+              </div>
+              <Button variant="outline" size="icon" aria-label="Novo cliente">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Serviço + Profissional */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
+            <div>
+              <Label className="text-xs font-semibold text-neutral-700">Serviço:</Label>
+              <select className="mt-xs w-full rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white h-9">
+                <option value="">Selecione…</option>
+                <option>Corte feminino</option>
+                <option>Hidratação</option>
+                <option>Manicure</option>
+                <option>Coloração</option>
+              </select>
+            </div>
+            <div>
+              <Label className="text-xs font-semibold text-neutral-700">Profissional:</Label>
+              <select className="mt-xs w-full rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white h-9">
+                <option value="">Selecione…</option>
+                {MOCK_PROFESSIONALS.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Pesquisar Horários */}
+          <div>
+            <Button className="gap-xs">
+              <Search className="h-4 w-4" />
+              Pesquisar Horários
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Seleção de Profissionais Modal ───────────────────────────────────────────
+
+function SelecaoProfissionaisModal({
+  open,
+  onOpenChange,
+  visibleProfIds,
+  onChangeVisible,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  visibleProfIds: Set<string>;
+  onChangeVisible: (next: Set<string>) => void;
+}) {
+  const [localVisible, setLocalVisible] = useState<Set<string>>(new Set(visibleProfIds));
+  const [categoriasAll, setCategoriasAll] = useState(true);
+  const [cabelo, setCabelo] = useState(true);
+
+  const allChecked = localVisible.size === MOCK_PROFESSIONALS.length;
+
+  function toggleProf(id: string) {
+    const next = new Set(localVisible);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setLocalVisible(next);
+  }
+
+  function toggleAll() {
+    if (allChecked) setLocalVisible(new Set());
+    else setLocalVisible(new Set(MOCK_PROFESSIONALS.map((p) => p.id)));
+  }
+
+  function handleSelect() {
+    onChangeVisible(localVisible);
+    onOpenChange(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[640px] p-0">
+        <header className="flex items-center justify-between px-md py-sm border-b border-neutral-200 bg-neutral-50">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-neutral-800">
+            Selecione os profissionais que você deseja visualizar na sua agenda
+          </h2>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onOpenChange(false)}
+            aria-label="Fechar"
+            className="h-8 w-8"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </header>
+
+        <div className="px-md py-md space-y-md">
+          {/* Categoria de Serviço */}
+          <section className="rounded-md border border-neutral-200 overflow-hidden">
+            <header className="bg-primary-700 text-white px-md py-xs flex items-center gap-xs">
+              <ChevronRight className="h-3 w-3" />
+              <h3 className="text-sm font-semibold">Categoria de Serviço</h3>
+            </header>
+            <div className="p-md grid grid-cols-2 gap-sm">
+              <label className="flex items-center gap-xs text-sm text-neutral-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={categoriasAll}
+                  onChange={(e) => {
+                    setCategoriasAll(e.target.checked);
+                    setCabelo(e.target.checked);
+                  }}
+                  className="rounded border-neutral-300"
+                />
+                Todas as Categorias
+              </label>
+              <label className="flex items-center gap-xs text-sm text-neutral-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cabelo}
+                  onChange={(e) => setCabelo(e.target.checked)}
+                  className="rounded border-neutral-300"
+                />
+                Cabelo
+              </label>
+            </div>
+          </section>
+
+          {/* Profissionais */}
+          <section className="rounded-md border border-neutral-200 overflow-hidden">
+            <header className="bg-primary-700 text-white px-md py-xs">
+              <h3 className="text-sm font-semibold">Profissionais</h3>
+            </header>
+            <div className="p-md grid grid-cols-1 sm:grid-cols-2 gap-sm">
+              <label className="flex items-center gap-xs text-sm text-neutral-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={allChecked}
+                  onChange={toggleAll}
+                  className="rounded border-neutral-300"
+                />
+                Todos os Profissionais
+              </label>
+              {MOCK_PROFESSIONALS.map((p) => (
+                <label
+                  key={p.id}
+                  className="flex items-center gap-xs text-sm text-neutral-700 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={localVisible.has(p.id)}
+                    onChange={() => toggleProf(p.id)}
+                    className="rounded border-neutral-300"
+                  />
+                  {p.name}
+                </label>
+              ))}
+            </div>
+          </section>
+
+          <div className="flex items-center justify-between gap-md">
+            <p className="text-xs text-error-500">
+              * em vermelho profissionais de folga no dia da agenda
+            </p>
+            <Button onClick={handleSelect}>Selecionar</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -694,6 +932,8 @@ export function SchedulePage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalSeed, setModalSeed] = useState<{ hour: number; minute: number; profId?: string } | undefined>();
+  const [buscarAgendarOpen, setBuscarAgendarOpen] = useState(false);
+  const [selecaoProfOpen, setSelecaoProfOpen] = useState(false);
 
   // Working hours: 9h–19h (expediente). 8h slot and 19h+ slots are "fora-expediente".
   const WORK_START_HOUR = 9;
@@ -761,6 +1001,8 @@ export function SchedulePage() {
       onChangeCol={setColSize}
       showFolga={showFolga}
       onChangeShowFolga={setShowFolga}
+      onOpenBuscarAgendar={() => setBuscarAgendarOpen(true)}
+      onOpenSelecaoProf={() => setSelecaoProfOpen(true)}
     />
   );
 
@@ -1115,6 +1357,18 @@ export function SchedulePage() {
         open={modalOpen}
         onOpenChange={setModalOpen}
         initialTime={modalSeed}
+      />
+
+      <BuscarAgendarModal
+        open={buscarAgendarOpen}
+        onOpenChange={setBuscarAgendarOpen}
+      />
+
+      <SelecaoProfissionaisModal
+        open={selecaoProfOpen}
+        onOpenChange={setSelecaoProfOpen}
+        visibleProfIds={visibleProfIds}
+        onChangeVisible={setVisibleProfIds}
       />
     </div>
   );
