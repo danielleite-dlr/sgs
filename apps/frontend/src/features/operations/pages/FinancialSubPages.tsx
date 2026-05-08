@@ -3,6 +3,7 @@ import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PageHeader } from '@/components/layout/PageHeader';
 import {
   FinancialReportLayout,
   ReportEmptyState,
@@ -80,13 +81,13 @@ export function FinanceiroCaixaPage() {
     >
       {/* Resumo de Movimentação table */}
       <section>
-        <h2 className="text-sm font-semibold text-primary-500 mb-sm">
+        <h2 className="text-sm font-semibold text-neutral-800 mb-sm">
           Resumo de Movimentação de Entradas e Saídas
         </h2>
         <div className="overflow-x-auto rounded-md border border-neutral-200">
           <table className="w-full text-xs">
             <thead>
-              <tr className="bg-error-500 text-white text-center">
+              <tr className="bg-primary-700 text-white text-center">
                 <th className="px-sm py-sm font-semibold border-r border-white/20" rowSpan={2}>
                   Data
                 </th>
@@ -97,7 +98,7 @@ export function FinanceiroCaixaPage() {
                   Em outras formas de pagamento
                 </th>
               </tr>
-              <tr className="bg-error-500/90 text-white text-center">
+              <tr className="bg-primary-700/90 text-white text-center">
                 {[
                   'Abertura do caixa',
                   'Recebido',
@@ -146,11 +147,12 @@ export function PagamentoProfissionaisPage() {
   const [tab, setTab] = useState<string>('lancamento');
 
   return (
+    <>
+      <PageHeader
+        title="Pagamento de profissionais"
+        breadcrumbs={[{ label: 'Financeiro' }, { label: 'Pagamento de profissionais' }]}
+      />
     <div className="flex flex-col gap-md max-w-7xl">
-      <header className="border-b border-neutral-200 pb-sm">
-        <h1 className="text-base font-semibold text-neutral-700">Pagamento de profissionais</h1>
-      </header>
-
       <ReportTabs
         tabs={PAGAMENTO_TABS.map((t) => ({
           id: t.id,
@@ -176,6 +178,7 @@ export function PagamentoProfissionaisPage() {
         />
       )}
     </div>
+    </>
   );
 }
 
@@ -183,13 +186,13 @@ function PagamentoLancamentoTab() {
   return (
     <div className="flex flex-col gap-md">
       <div className="flex flex-wrap gap-xs">
-        <span className="rounded-md border border-error-500/40 bg-white px-sm py-xs text-xs text-error-500 font-medium">
+        <span className="rounded-md border border-primary-200 bg-primary-50 px-sm py-xs text-xs text-primary-700 font-medium">
           Ordenado por: Profissional
         </span>
-        <span className="rounded-md border border-error-500/40 bg-white px-sm py-xs text-xs text-error-500 font-medium">
+        <span className="rounded-md border border-primary-200 bg-primary-50 px-sm py-xs text-xs text-primary-700 font-medium">
           01/05/2026 - 31/05/2026
         </span>
-        <span className="rounded-md border border-error-500/40 bg-white px-sm py-xs text-xs text-error-500 font-medium">
+        <span className="rounded-md border border-primary-200 bg-primary-50 px-sm py-xs text-xs text-primary-700 font-medium">
           Profissionais: Todos
         </span>
       </div>
@@ -216,10 +219,10 @@ function PagamentoLancamentoTab() {
       </div>
 
       <div className="flex justify-end gap-xs">
-        <Button variant="outline" size="sm" className="border-error-500 text-error-500">
+        <Button variant="outline" size="sm" className="">
           Resumo do profissional <ChevronDown className="h-3 w-3 ml-xs" />
         </Button>
-        <Button size="sm" className="bg-error-500 hover:bg-error-700 text-white">
+        <Button size="sm" className="">
           Lançar pagamento
         </Button>
       </div>
@@ -357,7 +360,7 @@ function PagamentoConfigTab() {
 
       {/* Sticky right rail */}
       <aside className="sticky top-[5rem] self-start space-y-xs rounded-md border border-neutral-200 bg-white p-md text-sm">
-        <p className="text-error-500 font-semibold border-b border-neutral-200 pb-xs mb-sm">
+        <p className="text-primary-700 font-semibold border-b border-neutral-200 pb-xs mb-sm">
           Definição da nomenclatura
         </p>
         {[
@@ -368,12 +371,12 @@ function PagamentoConfigTab() {
           'Abatimentos adicionais',
           'Resumo do profissional',
         ].map((label) => (
-          <a key={label} href="#" className="block text-neutral-600 hover:text-primary-500">
+          <a key={label} href="#" className="block text-neutral-600 hover:text-primary-700">
             {label}
           </a>
         ))}
-        <Button className="bg-error-500 hover:bg-error-700 text-white w-full mt-md">Salvar</Button>
-        <Button variant="outline" className="border-error-500 text-error-500 w-full">
+        <Button className="w-full mt-md">Salvar</Button>
+        <Button variant="outline" className="w-full">
           Recalcular comissões
         </Button>
       </aside>
@@ -430,11 +433,12 @@ export function DespesasPage() {
   const [tab, setTab] = useState<'lancamento' | 'tipos'>('lancamento');
 
   return (
+    <>
+      <PageHeader
+        title="Despesas / Contas a Pagar"
+        breadcrumbs={[{ label: 'Financeiro' }, { label: 'Despesas / Contas a Pagar' }]}
+      />
     <div className="flex flex-col gap-md max-w-7xl">
-      <header className="border-b border-neutral-200 pb-sm">
-        <h1 className="text-base font-semibold text-neutral-700">Despesas/Contas a Pagar</h1>
-      </header>
-
       <ReportTabs
         tabs={[
           { id: 'lancamento', label: 'Lançamento de despesas', active: tab === 'lancamento', onClick: () => setTab('lancamento') },
@@ -456,13 +460,13 @@ export function DespesasPage() {
             <Input className="h-9 w-[120px] text-sm" placeholder="dd/mm/aaaa" />
           </div>
           <div className="flex items-center gap-xs ml-auto">
-            <Button size="sm" className="bg-error-500 hover:bg-error-700 text-white">
+            <Button size="sm" className="">
               Pesquisar
             </Button>
             <Button size="sm" variant="ghost" className="text-neutral-500">
               Limpar
             </Button>
-            <Button size="sm" variant="outline" className="border-error-500 text-error-500">
+            <Button size="sm" variant="outline" className="">
               Mais filtros <ChevronDown className="h-3 w-3 ml-xs" />
             </Button>
           </div>
@@ -471,20 +475,19 @@ export function DespesasPage() {
 
       <div className="flex items-center justify-between">
         <div className="flex gap-xs">
-          <Button size="sm" className="bg-error-500 hover:bg-error-700 text-white">
-            + Incluir despesa
-          </Button>
-          <Button size="sm" className="bg-error-500 hover:bg-error-700 text-white">
+          <Button size="sm">+ Incluir despesa</Button>
+          <Button size="sm" className="">
             Renovar
           </Button>
         </div>
-        <Button size="sm" variant="outline" className="border-error-500 text-error-500">
+        <Button size="sm" variant="outline" className="">
           Exportar
         </Button>
       </div>
 
       <ReportEmptyState />
     </div>
+    </>
   );
 }
 
@@ -549,16 +552,16 @@ export function CreditoClientePage() {
       showExport={false}
     >
       <div className="flex items-center justify-between mb-sm">
-        <Button size="sm" className="bg-error-500 hover:bg-error-700 text-white">
+        <Button size="sm" className="">
           Incluir Crédito
         </Button>
-        <Button size="sm" variant="outline" className="border-error-500 text-error-500">
+        <Button size="sm" variant="outline" className="">
           Exportar
         </Button>
       </div>
       <div className="rounded-md border border-neutral-200 overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-warning-500 text-white">
+          <thead className="bg-primary-700 text-white">
             <tr>
               <th className="px-md py-sm text-center font-semibold">Cliente</th>
               <th className="px-md py-sm text-center font-semibold">Histórico</th>
@@ -593,10 +596,12 @@ const MOTIVOS_DESCONTO = [
 
 export function MotivosDescontoPage() {
   return (
+    <>
+      <PageHeader
+        title="Motivos de Desconto"
+        breadcrumbs={[{ label: 'Financeiro' }, { label: 'Motivos de Desconto' }]}
+      />
     <div className="flex flex-col gap-md max-w-7xl">
-      <header className="border-b border-neutral-200 pb-sm">
-        <h1 className="text-base font-semibold text-primary-500">Motivos de Desconto</h1>
-      </header>
 
       <section className="rounded-md border border-neutral-200 bg-neutral-50 p-md">
         <div className="flex flex-wrap items-end gap-md">
@@ -609,7 +614,7 @@ export function MotivosDescontoPage() {
             <span className="text-sm text-neutral-700">Apenas motivos ativos</span>
           </label>
           <div className="flex items-center gap-xs ml-auto">
-            <Button size="sm" className="bg-error-500 hover:bg-error-700 text-white">
+            <Button size="sm" className="">
               Pesquisar
             </Button>
             <Button size="sm" variant="ghost" className="text-neutral-500">
@@ -620,13 +625,13 @@ export function MotivosDescontoPage() {
       </section>
 
       <div>
-        <Button size="sm" className="bg-error-500 hover:bg-error-700 text-white mb-sm">
+        <Button size="sm" className="mb-sm">
           + Incluir Motivo
         </Button>
 
         <div className="rounded-md border border-neutral-200 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-warning-500 text-white text-xs">
+            <thead className="bg-primary-700 text-white text-xs">
               <tr>
                 <th className="px-md py-sm text-left font-semibold">Descrição</th>
                 <th className="px-md py-sm text-center font-semibold w-[180px]">Desconto reflete no rateio?</th>
@@ -641,8 +646,8 @@ export function MotivosDescontoPage() {
                   <td className="px-md py-sm text-center">{m.refletir}</td>
                   <td className="px-md py-sm text-center">{m.status}</td>
                   <td className="px-md py-sm text-right space-x-xs">
-                    <button className="text-warning-500" aria-label="Editar">✎</button>
-                    <button className="text-error-500" aria-label="Remover">✕</button>
+                    <button className="text-neutral-500 hover:text-primary-700" aria-label="Editar">✎</button>
+                    <button className="text-destructive" aria-label="Remover">✕</button>
                   </td>
                 </tr>
               ))}
@@ -653,11 +658,12 @@ export function MotivosDescontoPage() {
           </div>
         </div>
 
-        <p className="text-xs text-error-500 mt-sm">
+        <p className="text-xs text-neutral-500 mt-sm">
           * Motivo de Desconto padrão do sistema. Não pode ter o nome alterado e nem ser desativado!
         </p>
       </div>
     </div>
+    </>
   );
 }
 

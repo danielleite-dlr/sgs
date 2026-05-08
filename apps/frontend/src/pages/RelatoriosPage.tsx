@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DollarSign } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 interface ReportCard {
   id: string;
@@ -47,41 +48,45 @@ export function RelatoriosPage() {
   const [category, setCategory] = useState('Financeiro');
 
   return (
-    <div className="flex flex-col gap-md max-w-7xl">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-md">
-        <h1 className="text-base font-semibold text-neutral-700 shrink-0 sm:w-[200px]">
-          Relatórios<br />Principais
-        </h1>
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="h-9 rounded-md border border-neutral-200 bg-white px-sm text-sm flex-1 max-w-2xl"
-        >
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-      </div>
+    <>
+      <PageHeader
+        title="Relatórios Principais"
+        breadcrumbs={[{ label: 'Relatórios' }, { label: 'Principais' }]}
+      />
+      <div className="flex flex-col gap-md max-w-7xl">
+        <label className="flex items-center gap-md">
+          <span className="text-sm font-semibold text-neutral-700 shrink-0">Categoria</span>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="h-9 rounded-md border border-neutral-200 bg-white px-sm text-sm flex-1 max-w-2xl"
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </label>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
-        {FINANCEIRO_REPORTS.map((r) => (
-          <ReportCardItem key={r.id} report={r} />
-        ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
+          {FINANCEIRO_REPORTS.map((r) => (
+            <ReportCardItem key={r.id} report={r} />
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
 function ReportCardItem({ report }: { report: ReportCard }) {
   const inner = (
     <article className="rounded-md border border-neutral-200 bg-white p-md hover:border-primary-300 transition-colors h-full flex gap-sm">
-      <div className="h-9 w-9 rounded-full bg-warning-50 flex items-center justify-center shrink-0">
-        <DollarSign className="h-5 w-5 text-warning-500" />
+      <div className="h-9 w-9 rounded-full bg-primary-50 flex items-center justify-center shrink-0">
+        <DollarSign className="h-5 w-5 text-primary-500" />
       </div>
       <div className="min-w-0">
-        <h3 className="text-sm font-semibold text-primary-500 mb-xs">{report.title}</h3>
+        <h3 className="text-sm font-semibold text-neutral-800 mb-xs">{report.title}</h3>
         {report.description && (
-          <p className="text-xs text-neutral-600 leading-relaxed">{report.description}</p>
+          <p className="text-xs text-neutral-500 leading-relaxed">{report.description}</p>
         )}
       </div>
     </article>

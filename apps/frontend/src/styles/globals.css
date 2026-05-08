@@ -4,11 +4,11 @@
 
 @layer base {
   :root {
-    /* Colors — exact hex from UI-SPEC */
-    --color-primary-50:  #EEEDFE;
-    --color-primary-500: #5D54C7;
-    --color-primary-700: #3C3489;
-    --color-primary-900: #26215C;
+    /* Colors — primary brand: deep violet #570080 */
+    --color-primary-50:  #F5E6FB;
+    --color-primary-500: #570080;
+    --color-primary-700: #3D005A;
+    --color-primary-900: #2B003F;
 
     --color-success-500: #1D9E75;
     --color-warning-500: #EF9F27;

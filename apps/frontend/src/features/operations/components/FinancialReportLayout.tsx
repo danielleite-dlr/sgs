@@ -55,9 +55,9 @@ export function FinancialReportLayout({
     <div className="flex flex-col gap-md max-w-7xl">
       <header className="border-b border-neutral-200 pb-sm flex items-center justify-between gap-md">
         <div>
-          <h1 className="text-base font-semibold text-primary-500">{title}</h1>
+          <h1 className="text-xl font-semibold text-neutral-800">{title}</h1>
           {description && (
-            <p className="text-xs text-primary-500 mt-xs">{description}</p>
+            <p className="text-sm text-neutral-500 mt-xs">{description}</p>
           )}
         </div>
         {topRight}
@@ -73,31 +73,17 @@ export function FinancialReportLayout({
           <div className="flex-1 min-w-0">{filters}</div>
           <div className="flex items-center gap-xs shrink-0 self-end">
             {onPrimaryAction && (
-              <Button
-                size="sm"
-                onClick={onPrimaryAction}
-                className="bg-error-500 hover:bg-error-700 text-white font-semibold"
-              >
+              <Button size="sm" onClick={onPrimaryAction}>
                 {primaryActionLabel}
               </Button>
             )}
             {showExport && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={onExport}
-                className="border-error-500 text-error-500 hover:bg-error-50"
-              >
+              <Button size="sm" variant="outline" onClick={onExport}>
                 Exportar
               </Button>
             )}
             {onClear && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={onClear}
-                className="text-neutral-500"
-              >
+              <Button size="sm" variant="ghost" onClick={onClear}>
                 Limpar
               </Button>
             )}
@@ -145,10 +131,10 @@ export function ReportTabs({
           role="tab"
           aria-selected={t.active}
           onClick={t.onClick}
-          className={`text-sm py-sm transition-colors whitespace-nowrap ${
+          className={`text-sm py-sm transition-colors whitespace-nowrap border-b-2 ${
             t.active
-              ? 'text-primary-500 font-semibold border-b-2 border-primary-500 -mb-px'
-              : 'text-neutral-600 hover:text-neutral-800'
+              ? 'text-primary-700 font-semibold border-primary-500 -mb-px'
+              : 'text-neutral-600 border-transparent hover:text-neutral-800'
           }`}
         >
           {t.label}

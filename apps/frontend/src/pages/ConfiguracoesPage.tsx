@@ -15,6 +15,7 @@ import {
   ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 interface ConfigItem {
   id: string;
@@ -72,9 +73,15 @@ function ConfigCard({ title, items }: { title: string; items: ConfigItem[] }) {
 
 export function ConfiguracoesPage() {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-md max-w-5xl">
-      <ConfigCard title="Configurações do sistema" items={SISTEMA} />
-      <ConfigCard title="Configurações de adicionais" items={ADICIONAIS} />
-    </div>
+    <>
+      <PageHeader
+        title="Configurações"
+        breadcrumbs={[{ label: 'Configurações' }]}
+      />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-md max-w-5xl">
+        <ConfigCard title="Configurações do sistema" items={SISTEMA} />
+        <ConfigCard title="Configurações de adicionais" items={ADICIONAIS} />
+      </div>
+    </>
   );
 }
