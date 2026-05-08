@@ -89,42 +89,54 @@ export function TopHeader() {
             </Link>
           </div>
 
-          {/* Decorative actions */}
+          {/* Header actions */}
           <div className="flex items-center gap-xs px-md border-l border-neutral-200">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" disabled aria-label="Notificações">
+                <button
+                  type="button"
+                  aria-label="Notificações"
+                  className="relative h-9 w-9 rounded-full flex items-center justify-center text-neutral-600 hover:bg-neutral-50 hover:text-primary-700 transition-colors focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2"
+                >
                   <Bell className="h-5 w-5" />
-                </Button>
+                </button>
               </TooltipTrigger>
-              <TooltipContent>Notificações (em breve)</TooltipContent>
+              <TooltipContent>Notificações</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" disabled aria-label="Ajuda">
+                <button
+                  type="button"
+                  aria-label="Ajuda"
+                  className="h-9 w-9 rounded-full flex items-center justify-center text-neutral-600 hover:bg-neutral-50 hover:text-primary-700 transition-colors focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2"
+                >
                   <HelpCircle className="h-5 w-5" />
-                </Button>
+                </button>
               </TooltipTrigger>
               <TooltipContent>Ajuda</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" disabled aria-label="Tutoriais">
+                <button
+                  type="button"
+                  aria-label="Tutoriais"
+                  className="h-9 w-9 rounded-full flex items-center justify-center text-neutral-600 hover:bg-neutral-50 hover:text-primary-700 transition-colors focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2"
+                >
                   <PlayCircle className="h-5 w-5" />
-                </Button>
+                </button>
               </TooltipTrigger>
               <TooltipContent>Tutoriais</TooltipContent>
             </Tooltip>
 
             {/* Avatar / user menu */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="h-8 w-8 rounded-full bg-primary-50 text-primary-700 font-semibold flex items-center justify-center hover:ring-2 hover:ring-primary-500/20 transition-all">
+              <DropdownMenuTrigger className="h-8 w-8 rounded-full bg-primary-500 text-white font-semibold flex items-center justify-center hover:ring-2 hover:ring-primary-500/30 transition-all ml-xs">
                 {initial}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem disabled>Perfil</DropdownMenuItem>
                 <DropdownMenuItem disabled>Área pessoal</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => logout()} className="text-error-500">
+                <DropdownMenuItem onSelect={() => logout()} className="text-destructive">
                   Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>

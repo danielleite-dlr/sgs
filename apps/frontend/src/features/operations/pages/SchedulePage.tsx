@@ -16,6 +16,10 @@ import {
   X,
   Users,
   AlertCircle,
+  Facebook,
+  Instagram,
+  Youtube,
+  Linkedin,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -1337,17 +1341,19 @@ export function SchedulePage() {
           </nav>
           <div className="flex items-center gap-sm">
             {[
-              { label: 'Facebook', icon: 'F' },
-              { label: 'Instagram', icon: 'IG' },
-              { label: 'YouTube', icon: 'YT' },
-            ].map((s) => (
-              <span
-                key={s.label}
-                aria-label={s.label}
-                className="h-7 w-7 rounded-full border border-neutral-300 flex items-center justify-center text-[10px] text-neutral-500 hover:border-primary-300 hover:text-primary-500 transition-colors"
+              { label: 'Facebook',  Icon: Facebook,  href: '#' },
+              { label: 'Instagram', Icon: Instagram, href: '#' },
+              { label: 'YouTube',   Icon: Youtube,   href: '#' },
+              { label: 'LinkedIn',  Icon: Linkedin,  href: '#' },
+            ].map(({ label, Icon, href }) => (
+              <a
+                key={label}
+                href={href}
+                aria-label={label}
+                className="h-8 w-8 rounded-full flex items-center justify-center text-neutral-500 hover:bg-primary-50 hover:text-primary-700 transition-colors"
               >
-                {s.icon}
-              </span>
+                <Icon className="h-4 w-4" />
+              </a>
             ))}
           </div>
         </footer>
