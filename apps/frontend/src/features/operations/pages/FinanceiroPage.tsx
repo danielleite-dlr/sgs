@@ -1,173 +1,87 @@
-import { useTranslation } from 'react-i18next';
-import {
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  DollarSign,
-  ReceiptText,
-  Ticket,
-  BadgeDollarSign,
-  Construction,
-} from 'lucide-react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from 'recharts';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PageHeader } from '@/components/layout/PageHeader';
+import { useState } from 'react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  MOCK_KPIS,
-  MOCK_REVENUE_BY_DAY,
-  MOCK_PAYMENT_BREAKDOWN,
-  type KpiCard,
-} from '../mocks/financeiro.mock';
-import { cn } from '@/lib/utils';
-import { Link } from 'react-router-dom';
 
-const KPI_ICONS = [DollarSign, ReceiptText, Ticket, BadgeDollarSign];
-
-function TrendIcon({ trend }: { trend: KpiCard['trend'] }) {
-  if (trend === 'up')      return <TrendingUp className="h-4 w-4 text-success-600" />;
-  if (trend === 'down')    return <TrendingDown className="h-4 w-4 text-error-500" />;
-  return <Minus className="h-4 w-4 text-neutral-400" />;
+interface PeriodChip {
+  label: string;
 }
 
+/**
+ * Controle de entrada e saída — Trinks-style /financeiro page.
+ *
+ * Layout (1:1 with Trinks reference):
+ *   ┌────────────────────────────────────────────────────────────┐
+ *   │ Controle de entrada e saída                                │
+ *   │  ──────────────────────────                                │
+ *   │ ┌──────────────────┐                ┌────────────────────┐ │
+ *   │ │ Período: chip    │                │ Lançamentos        │ │
+ *   │ │                  │                │ Nenhum lançamento… │ │
+ *   │ │      Resultado   │                │                    │ │
+ *   │ │      R$ 0,00     │                │                    │ │
+ *   │ │                  │                │                    │ │
+ *   │ │  [Receita ↑]     │                │                    │ │
+ *   │ │  [Despesa ↓]     │                │                    │ │
+ *   │ │                  │                │                    │ │
+ *   │ │  [Lançar receita][Lançar despesa] │                    │ │
+ *   │ └──────────────────┘                └────────────────────┘ │
+ *   └────────────────────────────────────────────────────────────┘
+ */
 export function FinanceiroPage() {
-  const { t } = useTranslation();
+  const [period] = useState<PeriodChip>({ label: 'Período: 01/05/2026 - 31/05/2026' });
 
   return (
-    <div className="flex flex-col gap-lg">
-      <div className="flex items-center gap-sm">
-        <Badge
-          variant="outline"
-          className="gap-xs border-warning-500 text-warning-600 bg-warning-50 text-xs"
-        >
-          <Construction className="h-3 w-3" />
-          Mockup — Phase 3 (em breve)
-        </Badge>
-      </div>
+    <div className="flex flex-col gap-md max-w-7xl">
+      <header className="border-b border-neutral-200 pb-sm">
+        <h1 className="text-base font-semibold text-neutral-700">Controle de entrada e saída</h1>
+      </header>
 
-      <PageHeader
-        title={t('operations.financial.title', 'Financeiro')}
-        cta={
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/financeiro/comissoes">Ver comissões</Link>
-          </Button>
-        }
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-lg">
+        {/* Coluna esquerda — resumo + ações */}
+        <div className="flex flex-col items-center gap-md py-md">
+          <span className="rounded-md border border-error-500/40 bg-white px-md py-xs text-sm text-error-500 font-medium">
+            {period.label}
+          </span>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 gap-md sm:grid-cols-2 xl:grid-cols-4">
-        {MOCK_KPIS.map((kpi, i) => {
-          const Icon = KPI_ICONS[i];
-          return (
-            <Card key={kpi.label}>
-              <CardHeader className="pb-sm flex flex-row items-center justify-between">
-                <CardTitle className="text-sm font-medium text-neutral-500">{kpi.label}</CardTitle>
-                <div className="h-8 w-8 rounded-md bg-primary-50 flex items-center justify-center">
-                  <Icon className="h-4 w-4 text-primary-500" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-semibold text-neutral-800">{kpi.value}</p>
-                {kpi.sub && <p className="text-xs text-neutral-500 mt-xs">{kpi.sub}</p>}
-                {kpi.trendPct && (
-                  <div className="flex items-center gap-xs mt-sm">
-                    <TrendIcon trend={kpi.trend} />
-                    <span
-                      className={cn(
-                        'text-xs font-medium',
-                        kpi.trend === 'up' ? 'text-success-600' : kpi.trend === 'down' ? 'text-error-500' : 'text-neutral-500',
-                      )}
-                    >
-                      {kpi.trendPct}
-                    </span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+          <div className="text-center mt-md">
+            <p className="text-sm text-neutral-500 mb-xs">Resultado</p>
+            <p className="text-3xl font-bold text-neutral-800">R$ 0,00</p>
+          </div>
 
-      {/* Charts row */}
-      <div className="grid grid-cols-1 gap-md lg:grid-cols-3">
-        {/* Bar chart — receita por dia */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-sm">
-            <CardTitle className="text-sm font-semibold text-neutral-700">
-              Receita por dia — última semana
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={MOCK_REVENUE_BY_DAY} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E3DC" vertical={false} />
-                <XAxis
-                  dataKey="day"
-                  tick={{ fontSize: 12, fill: '#888780' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 12, fill: '#888780' }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) => `R$${(v / 100).toFixed(0)}`}
-                />
-                <RechartsTooltip
-                  formatter={(value: number) =>
-                    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value / 100)
-                  }
-                  contentStyle={{ fontSize: 13, borderRadius: 6, border: '1px solid #E5E3DC' }}
-                />
-                <Bar dataKey="receita" fill="#5D54C7" radius={[4, 4, 0, 0]} maxBarSize={48} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          <div className="grid grid-cols-2 gap-md w-full max-w-md mt-md">
+            <article className="rounded-md border border-neutral-200 bg-white p-sm flex items-center justify-between">
+              <div>
+                <p className="text-xs text-neutral-500 mb-xs">Receita</p>
+                <p className="text-sm font-bold text-neutral-800">R$ 0,00</p>
+              </div>
+              <TrendingUp className="h-5 w-5 text-success-500 shrink-0" />
+            </article>
+            <article className="rounded-md border border-neutral-200 bg-white p-sm flex items-center justify-between">
+              <div>
+                <p className="text-xs text-neutral-500 mb-xs">Despesa</p>
+                <p className="text-sm font-bold text-neutral-800">R$ 0,00</p>
+              </div>
+              <TrendingDown className="h-5 w-5 text-error-500 shrink-0" />
+            </article>
+          </div>
 
-        {/* Pie chart — métodos de pagamento */}
-        <Card>
-          <CardHeader className="pb-sm">
-            <CardTitle className="text-sm font-semibold text-neutral-700">
-              Métodos de pagamento
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={260}>
-              <PieChart>
-                <Pie
-                  data={MOCK_PAYMENT_BREAKDOWN}
-                  cx="50%"
-                  cy="45%"
-                  outerRadius={80}
-                  dataKey="value"
-                  label={({ name, value }) => `${value}%`}
-                  labelLine={false}
-                >
-                  {MOCK_PAYMENT_BREAKDOWN.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Legend
-                  formatter={(value) => <span style={{ fontSize: 12, color: '#888780' }}>{value}</span>}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          <div className="grid grid-cols-2 gap-md w-full max-w-md mt-sm">
+            <Button className="bg-success-500 hover:bg-success-700 text-white font-semibold gap-xs">
+              Lançar receita <TrendingUp className="h-4 w-4" />
+            </Button>
+            <Button className="bg-error-500 hover:bg-error-700 text-white font-semibold gap-xs">
+              Lançar despesa <TrendingDown className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Coluna direita — Lançamentos */}
+        <aside>
+          <h2 className="text-sm font-semibold text-neutral-800 mb-sm">Lançamentos</h2>
+          <p className="text-xs text-primary-500 leading-relaxed">
+            Nenhum lançamento foi encontrado no período selecionado. Selecione "Lançar despesa" ou
+            "Lançar receita" para adicionar um novo registro.
+          </p>
+        </aside>
       </div>
     </div>
   );

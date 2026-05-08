@@ -28,6 +28,21 @@ import { ContractsPlaceholder } from '@/features/bridal/pages/ContractsPlacehold
 import { ContractDetailPlaceholder } from '@/features/bridal/pages/ContractDetailPlaceholder';
 // Phase 5 — Communication placeholder stubs (Agent 3 will replace file contents)
 import { CampaignsPlaceholder } from '@/features/communication/pages/CampaignsPlaceholder';
+// Trinks-style financial sub-pages (mockups)
+import {
+  FinanceiroCaixaPage,
+  PagamentoProfissionaisPage,
+  FluxoFinanceiroPage,
+  DespesasPage,
+  ClientesDebitoPage,
+  CreditoClientePage,
+  MotivosDescontoPage,
+  ContasFinanceirasPage,
+  ExportacaoLancamentosPage,
+  LancamentoAntecipacaoPage,
+} from '@/features/operations/pages/FinancialSubPages';
+import { ConfiguracoesPage } from '@/pages/ConfiguracoesPage';
+import { RelatoriosPage } from '@/pages/RelatoriosPage';
 
 /**
  * Application route table.
@@ -124,8 +139,23 @@ export const router = createBrowserRouter([
       // Phase 3 — Operations mockups
       { path: '/agenda',                element: <SchedulePage /> },
       { path: '/comanda/:id',           element: <ComandaPage /> },
-      { path: '/financeiro',            element: <FinanceiroPage /> },
-      { path: '/financeiro/comissoes',  element: <ComissoesCalculadasPage /> },
+      { path: '/financeiro',                       element: <FinanceiroPage /> },
+      { path: '/financeiro/comissoes',             element: <ComissoesCalculadasPage /> },
+      { path: '/financeiro/caixa',                 element: <FinanceiroCaixaPage /> },
+      { path: '/financeiro/pagamento-profissionais', element: <PagamentoProfissionaisPage /> },
+      { path: '/financeiro/fluxo',                 element: <FluxoFinanceiroPage /> },
+      { path: '/financeiro/despesas',              element: <DespesasPage /> },
+      { path: '/financeiro/clientes-debito',       element: <ClientesDebitoPage /> },
+      { path: '/financeiro/credito-cliente',       element: <CreditoClientePage /> },
+      { path: '/financeiro/contas',                element: <ContasFinanceirasPage /> },
+      { path: '/financeiro/exportacao',            element: <ExportacaoLancamentosPage /> },
+      { path: '/financeiro/antecipacao',           element: <LancamentoAntecipacaoPage /> },
+      { path: '/financeiro/motivos-desconto',      element: <MotivosDescontoPage /> },
+      // Configurações & Relatórios
+      { path: '/configuracoes',                    element: <ConfiguracoesPage /> },
+      { path: '/configuracoes/sistema',            element: <ConfiguracoesPage /> },
+      { path: '/configuracoes/adicionais',         element: <ConfiguracoesPage /> },
+      { path: '/relatorios',                       element: <RelatoriosPage /> },
       // Phase 4 — Bridal / Contracts stubs (Agent 2 replaces contents)
       { path: '/noivas',                element: <BridalGroupsPlaceholder /> },
       { path: '/contratos',             element: <ContractsPlaceholder /> },
