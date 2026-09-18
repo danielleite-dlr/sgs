@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../database/prisma.service';
+import { isUuid } from '../database/tenant-context.service';
 import { PasswordService } from './password.service';
 import { AuthError, JwtAccessPayload } from './types';
 import type { Env } from '../config/env.schema';
@@ -150,15 +151,23 @@ export class TokenService {
     // No-op if not found — logout should be idempotent
   }
 
+  /**
+   * Mesma situação do AuthService: o refresh roda sem tenant context, então um
+   * findMany em members volta vazio por causa do RLS. Ver a função
+   * auth_user_memberships (migration 20260918220000).
+   */
   private async loadMemberships(userId: string) {
-    const members = await this.prisma.member.findMany({
-      where: { userId, deletedAt: null, status: 'active' },
-      include: { role: { select: { name: true } } },
-    });
-    return members.map((m) => ({
-      memberId: m.id,
-      organizationId: m.organizationId,
-      roleName: m.role.name,
+    if (!isUuid(userId)) {
+      throw new Error(`loadMemberships: invalid userId "${userId}"`);
+    }
+    const rows = await this.prisma.$queryRaw<
+      { member_id: string; organization_id: string; role_name: string }[]
+    >`SELECT * FROM auth_user_memberships(${userId}::uuid)`;
+
+    return rows.map((r) => ({
+      memberId: r.member_id,
+      organizationId: r.organization_id,
+      roleName: r.role_name,
     }));
   }
 

@@ -344,19 +344,33 @@ export class AuthService {
     };
   }
 
+  /**
+   * Memberships do usuário no login, quando ainda não existe tenant context.
+   *
+   * Um findMany comum aqui devolve zero linhas: members e organizations rodam
+   * sob FORCE RLS com tenant_isolation contra app.current_organization, e é
+   * justamente a organização que se está tentando descobrir. A função
+   * auth_user_memberships (SECURITY DEFINER, criada na migration
+   * 20260918220000) faz essa leitura restrita a um único user_id.
+   */
   private async loadMemberships(userId: string): Promise<MembershipDto[]> {
-    const members = await this.prisma.member.findMany({
-      where: { userId, deletedAt: null, status: 'active' },
-      include: {
-        role: { select: { name: true } },
-        organization: { select: { id: true, tradeName: true } },
-      },
-    });
-    return members.map((m) => ({
-      memberId: m.id,
-      organizationId: m.organization.id,
-      organizationName: m.organization.tradeName,
-      roleName: m.role.name,
+    if (!isUuid(userId)) {
+      throw new Error(`loadMemberships: invalid userId "${userId}"`);
+    }
+    const rows = await this.prisma.$queryRaw<
+      {
+        member_id: string;
+        organization_id: string;
+        organization_name: string;
+        role_name: string;
+      }[]
+    >`SELECT * FROM auth_user_memberships(${userId}::uuid)`;
+
+    return rows.map((r) => ({
+      memberId: r.member_id,
+      organizationId: r.organization_id,
+      organizationName: r.organization_name,
+      roleName: r.role_name,
     }));
   }
 
