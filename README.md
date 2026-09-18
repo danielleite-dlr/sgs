@@ -23,6 +23,26 @@ Open:
 
 Sign up at http://localhost:5173/signup → check `docker compose logs backend | grep email-fallback` for the verification link → verify → log in.
 
+## Staging (validação online)
+
+Ambiente de validação rodando na VPS, em **https://sgs.jessicaseixasmakeup.com.br** (protegido por basic auth).
+Diferente do dev: imagens no stage `production` (Nest compilado, build estático do Vite servido por nginx),
+portas publicadas só em `127.0.0.1` e nginx do host como única porta de entrada, com TLS do Let's Encrypt.
+
+```bash
+# Na VPS, em /root/sgs
+make stg-update     # git pull + build + migrations + up   (deploy do dia a dia)
+make stg-deploy     # o mesmo, sem o git pull
+make stg-logs       # acompanhar
+make stg-ps         # status
+```
+
+Arquivos: `docker-compose.staging.yml`, `.env.staging` (não versionado — modelo em `.env.staging.example`),
+`infra/nginx/sgs-staging.conf`, `scripts/deploy-staging.sh`.
+
+Para validar um cadastro sem chave do Resend configurada, o link de verificação sai no log:
+`make stg-logs-backend | grep email-fallback`.
+
 ## Architecture
 
 | Layer | Tech |

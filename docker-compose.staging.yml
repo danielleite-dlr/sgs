@@ -1,0 +1,186 @@
+# ─── SGS — Staging (VPS) ──────────────────────────────────────────────────────
+# Ambiente de validação em sgs.jessicaseixasmakeup.com.br
+#
+# Diferenças em relação ao docker-compose.yml (dev):
+#   - targets `production`: Nest compilado (node dist/main) e build estático do
+#     Vite servido por nginx, em vez dos dev servers com watch.
+#   - todas as portas publicadas em 127.0.0.1: o nginx do host é a única porta
+#     de entrada. Nada da stack fica exposto na internet.
+#   - secrets vêm de .env.staging (não versionado).
+#   - serviço `migrate` (profile `tools`) roda `prisma migrate deploy` a partir
+#     do stage `build`, que é o único que tem o CLI do Prisma e prisma/schema.
+#
+# Uso:  make stg-deploy   |   docker compose -f docker-compose.staging.yml ...
+# ──────────────────────────────────────────────────────────────────────────────
+name: sgs-staging
+
+services:
+  # ─── PostgreSQL 16 ───────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: sgs_stg_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      SGS_APP_PASSWORD: ${SGS_APP_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init-staging:/docker-entrypoint-initdb.d:ro
+    # Sem porta publicada: acesso só pela rede interna do compose.
+    # Para inspecionar do host: docker compose -f docker-compose.staging.yml exec postgres psql -U $POSTGRES_USER $POSTGRES_DB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - sgs_stg
+
+  # ─── PgBouncer (transaction-mode) ────────────────────────────────────────────
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: sgs_stg_pgbouncer
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 20
+      MIN_POOL_SIZE: 5
+      RESERVE_POOL_SIZE: 5
+      SERVER_RESET_QUERY: DISCARD ALL
+      IGNORE_STARTUP_PARAMETERS: extra_float_digits
+      AUTH_TYPE: trust
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sgs_stg
+
+  # ─── Valkey 8 ────────────────────────────────────────────────────────────────
+  valkey:
+    image: valkey/valkey:8-alpine
+    container_name: sgs_stg_valkey
+    restart: unless-stopped
+    command: valkey-server --appendonly yes --appendfsync everysec
+    volumes:
+      - valkey_data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - sgs_stg
+
+  # ─── Meilisearch v1.7 ────────────────────────────────────────────────────────
+  meilisearch:
+    image: getmeili/meilisearch:v1.7
+    container_name: sgs_stg_meilisearch
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_KEY}
+      MEILI_ENV: production
+      MEILI_LOG_LEVEL: ${MEILI_LOG_LEVEL:-INFO}
+    volumes:
+      - meilisearch_data:/meili_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - sgs_stg
+
+  # ─── Backend (NestJS compilado) ──────────────────────────────────────────────
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: sgs_stg_backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # Runtime usa sgs_app (RLS ativa), igual ao dev. PgBouncer sobe junto mas
+      # ainda não está no caminho do app — ver nota em .env.staging.example.
+      DATABASE_URL: postgres://sgs_app:${SGS_APP_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      DIRECT_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://valkey:6379
+      MEILISEARCH_URL: http://meilisearch:7700
+      MEILISEARCH_KEY: ${MEILISEARCH_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-30d}
+      FRONTEND_URL: ${FRONTEND_URL}
+      EMAIL_FROM: ${EMAIL_FROM}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+    ports:
+      - "127.0.0.1:${STG_BACKEND_PORT:-3010}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    networks:
+      - sgs_stg
+
+  # ─── Frontend (build Vite servido por nginx) ─────────────────────────────────
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+      target: production
+      # Sem VITE_API_URL de propósito: o Apollo cai no fallback same-origin
+      # ('/graphql', ver apps/frontend/src/infrastructure/apollo/client.ts) e o
+      # nginx do host faz o roteamento. Assim o build não carrega URL fixa e
+      # não existe CORS entre front e back.
+    container_name: sgs_stg_frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${STG_FRONTEND_PORT:-8090}:80"
+    depends_on:
+      - backend
+    networks:
+      - sgs_stg
+
+  # ─── Migrations (one-off) ────────────────────────────────────────────────────
+  # docker compose -f docker-compose.staging.yml --profile tools run --rm migrate
+  migrate:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+      target: build
+    container_name: sgs_stg_migrate
+    profiles: ["tools"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      DIRECT_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    command: ["pnpm", "prisma", "migrate", "deploy"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sgs_stg
+
+volumes:
+  postgres_data:
+    driver: local
+  valkey_data:
+    driver: local
+  meilisearch_data:
+    driver: local
+
+networks:
+  sgs_stg:
+    driver: bridge

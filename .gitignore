@@ -57,3 +57,7 @@ apps/backend/**/*.d.ts
 # Claude Code worktrees and settings
 .claude/worktrees/
 .claude/settings.local.json
+
+# Staging (VPS) — segredos reais, nunca versionar
+.env.staging
+.env.staging.htpasswd

@@ -12,7 +12,8 @@
 #   3. make up
 # ──────────────────────────────────────────────────────────────────────────────
 
-.PHONY: all help install up down dev logs ps clean reset prisma-migrate prisma-generate prisma-studio
+.PHONY: all help install up down dev logs ps clean reset prisma-migrate prisma-generate prisma-studio \
+        stg-deploy stg-update stg-up stg-down stg-ps stg-logs stg-logs-backend stg-migrate stg-seed stg-psql
 
 # Default target
 all: help
@@ -101,3 +102,38 @@ test-cov: ## Run backend tests with coverage report
 build: ## Build all apps for production
 	pnpm --filter @sgs/backend build
 	pnpm --filter @sgs/frontend build
+
+# ─── Staging (VPS: sgs.jessicaseixasmakeup.com.br) ────────────────────────────
+# Rodam na VPS, contra docker-compose.staging.yml + .env.staging.
+
+STG := docker compose -f docker-compose.staging.yml --env-file .env.staging
+
+stg-deploy: ## Deploy completo do staging (build + migrations + up)
+	./scripts/deploy-staging.sh
+
+stg-update: ## git pull + deploy completo do staging
+	./scripts/deploy-staging.sh --pull
+
+stg-up: ## Sobe os serviços do staging sem reconstruir
+	$(STG) up -d
+
+stg-down: ## Para o staging (preserva os volumes)
+	$(STG) down
+
+stg-ps: ## Status dos serviços do staging
+	$(STG) ps
+
+stg-logs: ## Stream dos logs do staging (Ctrl+C para sair)
+	$(STG) logs -f
+
+stg-logs-backend: ## Stream dos logs do backend de staging
+	$(STG) logs -f backend
+
+stg-migrate: ## Aplica migrations pendentes no banco de staging
+	$(STG) --profile tools run --rm migrate
+
+stg-seed: ## Roda o seed no banco de staging
+	$(STG) --profile tools run --rm migrate pnpm db:seed
+
+stg-psql: ## Abre um psql no banco de staging
+	$(STG) exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB'
