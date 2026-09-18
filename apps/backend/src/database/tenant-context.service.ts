@@ -64,7 +64,7 @@ export class TenantContextService {
  * Validates that a string matches the standard UUID v4/v7 format.
  * Used to prevent SQL injection in the SET LOCAL statement.
  */
-function isUuid(s: string): boolean {
+export function isUuid(s: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
     s,
   );
