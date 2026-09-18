@@ -43,6 +43,18 @@ export class AuthResolver {
     return this.auth.refresh(input.refreshToken);
   }
 
+  @Mutation('changePassword')
+  changePassword(
+    @CurrentUser() user: JwtAccessPayload,
+    @Args('input') input: { currentPassword: string; newPassword: string },
+  ) {
+    return this.auth.changePassword(
+      user.sub,
+      input.currentPassword,
+      input.newPassword,
+    );
+  }
+
   @Public()
   @Mutation('logout')
   logout(@Args('input') input: { refreshToken: string }) {

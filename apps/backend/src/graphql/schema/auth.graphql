@@ -8,6 +8,18 @@ extend type Mutation {
   login(input: LoginInput!): AuthPayload!
   refreshSession(input: RefreshInput!): AuthPayload!
   logout(input: RefreshInput!): LogoutPayload!
+  "Troca a própria senha. Encerra a obrigação de trocar no primeiro acesso."
+  changePassword(input: ChangePasswordInput!): ChangePasswordPayload!
+}
+
+input ChangePasswordInput {
+  currentPassword: String!
+  newPassword: String!
+}
+
+type ChangePasswordPayload {
+  success: Boolean!
+  errors: [UserError!]!
 }
 
 input VerifyEmailInput {
@@ -33,6 +45,14 @@ type AuthSession {
   fullName: String!
   "Papel de plataforma: cadastra e acompanha os clientes."
   isPlatformAdmin: Boolean!
+  "Master: concede e revoga acesso dos outros admins."
+  isPlatformMaster: Boolean!
+  "Pode entrar no salão de um cliente."
+  canAccessClientOrgs: Boolean!
+  "Senha temporária: precisa trocar antes de usar o sistema."
+  mustChangePassword: Boolean!
+  "Sessão aberta pelo seletor, dentro da organização de um cliente."
+  impersonating: Boolean!
   memberships: [Membership!]!
 }
 
@@ -41,6 +61,8 @@ type Membership {
   organizationId: UUID!
   organizationName: String!
   roleName: String!
+  "active ou suspended."
+  organizationStatus: String!
 }
 
 type AuthPayload {

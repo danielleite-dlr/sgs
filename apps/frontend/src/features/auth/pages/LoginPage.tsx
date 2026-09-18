@@ -66,6 +66,11 @@ export function LoginPage() {
       }
       const ok = applyAuthPayload(payload);
       if (ok) {
+        // Senha temporária vem antes de tudo: sem trocar, nada de sistema.
+        if (payload.session?.mustChangePassword) {
+          navigate('/trocar-senha', { replace: true });
+          return;
+        }
         // Platform admin não tem organização: o lugar dele é o painel de
         // clientes, não o dashboard de salão.
         navigate(payload.session?.isPlatformAdmin ? '/admin' : '/dashboard', {

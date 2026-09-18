@@ -1,11 +1,23 @@
 extend type Query {
   "Clientes da plataforma. Exclusivo do platform admin."
   adminClients: [AdminClient!]!
+  "Usuários com acesso de plataforma. Exclusivo do master."
+  adminPlatformUsers: [PlatformUser!]!
 }
 
 extend type Mutation {
   "Cadastra um cliente: organização + usuário dono + membership ADMIN."
-  adminCreateClient(input: AdminCreateClientInput!): AdminCreateClientPayload!
+  adminCreateClient(input: AdminCreateClientInput!): AdminClientPayload!
+  "Edita os dados cadastrais do cliente."
+  adminUpdateClient(input: AdminUpdateClientInput!): AdminClientPayload!
+  "Suspende ou reativa o acesso do cliente."
+  adminSetClientStatus(input: AdminSetClientStatusInput!): AdminClientPayload!
+  "Gera nova senha temporária para o responsável e revoga as sessões dele."
+  adminResetClientPassword(input: AdminClientRefInput!): AdminClientPayload!
+  "Abre uma sessão dentro do salão do cliente. Exige permissão de acesso."
+  adminSwitchToClient(input: AdminClientRefInput!): AuthPayload!
+  "Concede ou revoga acesso de plataforma. Exclusivo do master."
+  adminSetPlatformAccess(input: AdminSetPlatformAccessInput!): PlatformUsersPayload!
 }
 
 input AdminCreateClientInput {
@@ -14,9 +26,35 @@ input AdminCreateClientInput {
   "Nome do responsável, que vira o usuário ADMIN do salão."
   ownerName: String!
   ownerEmail: Email!
-  "Senha inicial, repassada ao cliente por fora. Mínimo de 8 caracteres."
-  password: String!
   segment: String
+}
+
+input AdminUpdateClientInput {
+  organizationId: UUID!
+  tradeName: String
+  legalName: String
+  email: Email
+  phone: String
+  segment: String
+  ownerName: String
+}
+
+input AdminSetClientStatusInput {
+  organizationId: UUID!
+  "active ou suspended."
+  status: String!
+}
+
+input AdminClientRefInput {
+  organizationId: UUID!
+}
+
+input AdminSetPlatformAccessInput {
+  userId: UUID!
+  "Acesso ao painel de plataforma."
+  isPlatformAdmin: Boolean!
+  "Permissão de entrar no salão de um cliente."
+  canAccessClientOrgs: Boolean!
 }
 
 type AdminClient {
@@ -24,6 +62,7 @@ type AdminClient {
   tradeName: String!
   legalName: String!
   email: Email!
+  phone: String
   subdomain: String!
   segment: String!
   status: String!
@@ -32,10 +71,28 @@ type AdminClient {
   ownerName: String
   ownerEmail: Email
   ownerLastLoginAt: DateTime
+  "Responsável ainda não trocou a senha temporária."
+  ownerMustChangePassword: Boolean!
   memberCount: Int!
 }
 
-type AdminCreateClientPayload {
+type AdminClientPayload {
   client: AdminClient
+  "Senha gerada. Só vem na criação e no reset, e não é recuperável depois."
+  temporaryPassword: String
+  errors: [UserError!]!
+}
+
+type PlatformUser {
+  userId: UUID!
+  fullName: String!
+  email: Email!
+  isPlatformMaster: Boolean!
+  canAccessClientOrgs: Boolean!
+  lastLoginAt: DateTime
+}
+
+type PlatformUsersPayload {
+  users: [PlatformUser!]!
   errors: [UserError!]!
 }

@@ -10,12 +10,19 @@ export interface AuthSession {
   organizationId: string | null;
   roleName: string | null;
   isPlatformAdmin: boolean;
+  isPlatformMaster: boolean;
+  canAccessClientOrgs: boolean;
+  mustChangePassword: boolean;
+  /** Sessão aberta pelo seletor, dentro do salão de um cliente. */
+  impersonating: boolean;
+  organizationName: string | null;
   permissions: string[];
 }
 
 interface AuthActions {
   setSession: (s: AuthSession) => void;
   updateAccessToken: (accessToken: string) => void;
+  setMustChangePassword: (mustChangePassword: boolean) => void;
   clearSession: () => void;
 }
 
@@ -29,6 +36,11 @@ const initialState: AuthSession = {
   organizationId: null,
   roleName: null,
   isPlatformAdmin: false,
+  isPlatformMaster: false,
+  canAccessClientOrgs: false,
+  mustChangePassword: false,
+  impersonating: false,
+  organizationName: null,
   permissions: [],
 };
 
@@ -40,6 +52,9 @@ export const useAuthStore = create<AuthStore>()(
       setSession: (s: AuthSession) => set(s),
 
       updateAccessToken: (accessToken: string) => set({ accessToken }),
+
+      setMustChangePassword: (mustChangePassword: boolean) =>
+        set({ mustChangePassword }),
 
       clearSession: () => set(initialState),
     }),
@@ -55,16 +70,27 @@ export const useAuthStore = create<AuthStore>()(
         organizationId: s.organizationId,
         roleName: s.roleName,
         isPlatformAdmin: s.isPlatformAdmin,
+        isPlatformMaster: s.isPlatformMaster,
+        canAccessClientOrgs: s.canAccessClientOrgs,
+        mustChangePassword: s.mustChangePassword,
+        impersonating: s.impersonating,
+        organizationName: s.organizationName,
         permissions: s.permissions,
       }),
     },
   ),
 );
 
+export function selectMustChangePassword(
+  s: ReturnType<typeof useAuthStore.getState>,
+): boolean {
+  return !!s.accessToken && !!s.mustChangePassword;
+}
+
 export function selectIsPlatformAdmin(
   s: ReturnType<typeof useAuthStore.getState>,
 ): boolean {
-  return !!s.accessToken && !!s.isPlatformAdmin;
+  return !!s.accessToken && !!s.isPlatformAdmin && !s.impersonating;
 }
 
 export function selectIsAuthenticated(

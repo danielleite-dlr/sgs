@@ -11,11 +11,16 @@ const LOGIN = gql`
         email
         fullName
         isPlatformAdmin
+        isPlatformMaster
+        canAccessClientOrgs
+        mustChangePassword
+        impersonating
         memberships {
           memberId
           organizationId
           organizationName
           roleName
+          organizationStatus
         }
       }
       errors {
@@ -62,11 +67,16 @@ const REFRESH = gql`
         email
         fullName
         isPlatformAdmin
+        isPlatformMaster
+        canAccessClientOrgs
+        mustChangePassword
+        impersonating
         memberships {
           memberId
           organizationId
           organizationName
           roleName
+          organizationStatus
         }
       }
       errors {
@@ -95,11 +105,16 @@ const ACCEPT = gql`
         email
         fullName
         isPlatformAdmin
+        isPlatformMaster
+        canAccessClientOrgs
+        mustChangePassword
+        impersonating
         memberships {
           memberId
           organizationId
           organizationName
           roleName
+          organizationStatus
         }
       }
       errors {
@@ -117,15 +132,41 @@ const ME = gql`
       email
       fullName
       isPlatformAdmin
+      isPlatformMaster
+      canAccessClientOrgs
+      mustChangePassword
+      impersonating
       memberships {
         memberId
         organizationId
         organizationName
         roleName
+        organizationStatus
       }
     }
   }
 `;
+
+const CHANGE_PASSWORD = gql`
+  mutation ChangePassword($input: ChangePasswordInput!) {
+    changePassword(input: $input) {
+      success
+      errors {
+        code
+        message
+        field
+      }
+    }
+  }
+`;
+
+export const useChangePasswordMutation = () =>
+  useMutation<{
+    changePassword: {
+      success: boolean;
+      errors: { code: string; message: string; field?: string | null }[];
+    };
+  }>(CHANGE_PASSWORD);
 
 export const useLoginMutation = () =>
   useMutation<{ login: AuthPayload }>(LOGIN);

@@ -6,6 +6,9 @@ import { InvitationPage } from '@/features/auth/pages/InvitationPage';
 import { NotFoundPage } from '@/features/auth/pages/NotFoundPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { PlatformAdminRoute } from '@/components/PlatformAdminRoute';
+import { RequirePasswordChange } from '@/components/RequirePasswordChange';
+import { ImpersonationBanner } from '@/components/ImpersonationBanner';
+import { ChangePasswordPage } from '@/features/auth/pages/ChangePasswordPage';
 import { AdminClientsPage } from '@/features/admin/pages/AdminClientsPage';
 import { AppShell } from '@/components/layout/AppShell';
 import { DashboardPlaceholder } from '@/pages/DashboardPlaceholder';
@@ -111,8 +114,19 @@ export const router = createBrowserRouter([
     path: '/admin',
     element: (
       <PlatformAdminRoute>
-        <AdminClientsPage />
+        <RequirePasswordChange>
+          <AdminClientsPage />
+        </RequirePasswordChange>
       </PlatformAdminRoute>
+    ),
+  },
+  {
+    // Senha temporária: o usuário fica preso aqui até definir a dele.
+    path: '/trocar-senha',
+    element: (
+      <ProtectedRoute>
+        <ChangePasswordPage />
+      </ProtectedRoute>
     ),
   },
   {
@@ -128,7 +142,12 @@ export const router = createBrowserRouter([
     // Authenticated layout group — ProtectedRoute + AppShell wraps all children
     element: (
       <ProtectedRoute>
-        <AppShell />
+        <RequirePasswordChange>
+          <>
+            <ImpersonationBanner />
+            <AppShell />
+          </>
+        </RequirePasswordChange>
       </ProtectedRoute>
     ),
     children: [

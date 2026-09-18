@@ -47,6 +47,22 @@ export class TenantContextInterceptor implements NestInterceptor {
         active = matched;
       }
 
+      // Cliente suspenso não opera. O status vem do token, então isto pega a
+      // sessão aberta depois da suspensão; a de antes morre quando o access
+      // token vence, já que a suspensão revoga os refresh tokens do salão.
+      // O admin de plataforma escapa: o seletor existe para entrar e resolver.
+      if (
+        active.organizationStatus &&
+        active.organizationStatus !== 'active' &&
+        !user.isPlatformAdmin
+      ) {
+        const e = new Error('ORGANIZATION_SUSPENDED: acesso suspenso');
+        (e as Error & { extensions?: Record<string, string> }).extensions = {
+          code: 'FORBIDDEN',
+        };
+        throw e;
+      }
+
       gql.getContext().tenant = {
         organizationId: active.organizationId,
         memberId: active.memberId,

@@ -1,5 +1,5 @@
 /**
- * create-platform-admin — cria ou promove um platform admin.
+ * create-platform-admin — cria ou promove o platform master.
  *
  * O platform admin é quem cadastra e acompanha os clientes. Como o cadastro
  * público foi removido, o primeiro admin precisa nascer por fora da API — daí
@@ -10,8 +10,8 @@
  *
  * Ou, no host:  make stg-create-admin EMAIL=... SENHA=... NOME="..."
  *
- * Idempotente: se o e-mail já existir, promove o usuário a platform admin e
- * atualiza a senha.
+ * Idempotente: se o e-mail já existir, promove o usuário a master e atualiza a
+ * senha. Os demais admins são criados pelo próprio painel, pelo master.
  */
 import { PrismaClient } from '@prisma/client';
 import * as argon2 from 'argon2';
@@ -53,6 +53,11 @@ async function main(): Promise<void> {
         data: {
           passwordHash,
           isPlatformAdmin: true,
+          // O script é o caminho de bootstrap: quem nasce por aqui é master.
+          isPlatformMaster: true,
+          canAccessClientOrgs: true,
+          // Senha digitada por quem rodou o script; não é temporária.
+          mustChangePassword: false,
           emailVerifiedAt: existing.emailVerifiedAt ?? new Date(),
           ...(fullName ? { fullName } : {}),
         },
@@ -67,6 +72,8 @@ async function main(): Promise<void> {
         passwordHash,
         fullName: fullName || emailLower,
         isPlatformAdmin: true,
+        isPlatformMaster: true,
+        canAccessClientOrgs: true,
         emailVerifiedAt: new Date(),
       },
     });

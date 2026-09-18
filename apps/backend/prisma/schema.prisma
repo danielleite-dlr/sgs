@@ -56,6 +56,12 @@ model User {
   // Papel de plataforma: cadastra e acompanha os clientes. Não é membership —
   // um platform admin não pertence a organização nenhuma.
   isPlatformAdmin Boolean   @default(false) @map("is_platform_admin")
+  // Master: concede e revoga acesso dos outros admins e sempre pode entrar num salão.
+  isPlatformMaster Boolean  @default(false) @map("is_platform_master")
+  // Permissão de entrar no salão de um cliente. Sem ela, o admin só vê a lista.
+  canAccessClientOrgs Boolean @default(false) @map("can_access_client_orgs")
+  // Senha temporária gerada pelo admin: troca obrigatória no primeiro acesso.
+  mustChangePassword Boolean @default(false) @map("must_change_password")
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 

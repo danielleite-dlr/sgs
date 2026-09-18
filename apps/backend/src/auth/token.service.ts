@@ -120,12 +120,21 @@ export class TokenService {
     const memberships = await this.loadMemberships(found.userId);
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: found.userId },
-      select: { id: true, email: true, isPlatformAdmin: true },
+      select: {
+        id: true,
+        email: true,
+        isPlatformAdmin: true,
+        isPlatformMaster: true,
+        canAccessClientOrgs: true,
+      },
     });
     const accessToken = await this.issueAccessToken({
       sub: user.id,
       email: user.email,
       isPlatformAdmin: user.isPlatformAdmin,
+      isPlatformMaster: user.isPlatformMaster,
+      canAccessClientOrgs:
+        user.canAccessClientOrgs || user.isPlatformMaster,
       memberships,
     });
 
@@ -162,13 +171,19 @@ export class TokenService {
       throw new Error(`loadMemberships: invalid userId "${userId}"`);
     }
     const rows = await this.prisma.$queryRaw<
-      { member_id: string; organization_id: string; role_name: string }[]
+      {
+        member_id: string;
+        organization_id: string;
+        role_name: string;
+        organization_status: string;
+      }[]
     >`SELECT * FROM auth_user_memberships(${userId}::uuid)`;
 
     return rows.map((r) => ({
       memberId: r.member_id,
       organizationId: r.organization_id,
       roleName: r.role_name,
+      organizationStatus: r.organization_status,
     }));
   }
 

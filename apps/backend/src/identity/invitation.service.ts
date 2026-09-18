@@ -199,6 +199,11 @@ export class InvitationService {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
     });
-    return this.auth.issueSession(user.id, user.email, user.fullName);
+    return this.auth.issueSession(user.id, user.email, user.fullName, {
+      isPlatformAdmin: user.isPlatformAdmin,
+      isPlatformMaster: user.isPlatformMaster,
+      canAccessClientOrgs: user.canAccessClientOrgs || user.isPlatformMaster,
+      mustChangePassword: user.mustChangePassword,
+    });
   }
 }

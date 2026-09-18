@@ -1,12 +1,27 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Building2, Loader2, LogOut, Plus } from 'lucide-react';
+import {
+  Ban,
+  Building2,
+  Copy,
+  KeyRound,
+  Loader2,
+  LogIn,
+  LogOut,
+  MoreHorizontal,
+  Pencil,
+  Play,
+  Plus,
+  ShieldCheck,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Dialog,
@@ -14,6 +29,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -23,19 +44,34 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useAuthStore } from '@/infrastructure/stores/auth.store';
 import {
   useAdminClientsQuery,
   useAdminCreateClientMutation,
+  useAdminUpdateClientMutation,
+  useAdminSetClientStatusMutation,
+  useAdminResetClientPasswordMutation,
+  useAdminSwitchToClientMutation,
 } from '../api/admin.api';
+import type { AdminClient } from '../api/admin.api';
+import { PlatformAccessDialog } from '../components/PlatformAccessDialog';
 
-const schema = z.object({
+const createSchema = z.object({
   salonName: z.string().min(2, 'Informe o nome do salão.'),
   ownerName: z.string().min(2, 'Informe o nome do responsável.'),
   ownerEmail: z.string().email('E-mail inválido.'),
-  password: z.string().min(8, 'A senha deve ter pelo menos 8 caracteres.'),
 });
 
-type FormValues = z.infer<typeof schema>;
+const editSchema = z.object({
+  tradeName: z.string().min(2, 'Informe o nome do salão.'),
+  legalName: z.string().min(2, 'Informe a razão social.'),
+  email: z.string().email('E-mail inválido.'),
+  phone: z.string().optional(),
+  ownerName: z.string().min(2, 'Informe o nome do responsável.'),
+});
+
+type CreateValues = z.infer<typeof createSchema>;
+type EditValues = z.infer<typeof editSchema>;
 
 function formatDate(value: string | null): string {
   if (!value) return '—';
@@ -52,24 +88,37 @@ function formatDate(value: string | null): string {
  * AdminClientsPage — painel de plataforma.
  *
  * Fica fora do AppShell de propósito: o platform admin não pertence a
- * organização nenhuma, então a navegação do salão (agenda, catálogo, caixa)
- * não faz sentido aqui.
+ * organização nenhuma, então a navegação do salão não faz sentido aqui.
  */
 export function AdminClientsPage() {
+  const navigate = useNavigate();
   const { data, loading, error } = useAdminClientsQuery();
   const [createClient, { loading: creating }] = useAdminCreateClientMutation();
-  const { logout } = useAuth();
+  const [updateClient, { loading: updating }] = useAdminUpdateClientMutation();
+  const [setStatus] = useAdminSetClientStatusMutation();
+  const [resetPassword] = useAdminResetClientPasswordMutation();
+  const [switchToClient] = useAdminSwitchToClientMutation();
+  const { logout, applyAuthPayload } = useAuth();
 
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const isMaster = useAuthStore((s) => s.isPlatformMaster);
+  const canAccessClientOrgs = useAuthStore((s) => s.canAccessClientOrgs);
+
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editing, setEditing] = useState<AdminClient | null>(null);
+  const [accessOpen, setAccessOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [credentials, setCredentials] = useState<{
+    salon: string;
+    email: string;
+    password: string;
+  } | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+  const createForm = useForm<CreateValues>({
+    resolver: zodResolver(createSchema),
+    mode: 'onBlur',
+  });
+  const editForm = useForm<EditValues>({
+    resolver: zodResolver(editSchema),
     mode: 'onBlur',
   });
 
@@ -77,33 +126,126 @@ export function AdminClientsPage() {
     document.title = 'Clientes — Admin SGS';
   }, []);
 
-  function openDialog() {
+  function openCreate() {
     setFormError(null);
-    reset({ salonName: '', ownerName: '', ownerEmail: '', password: '' });
-    setDialogOpen(true);
+    createForm.reset({ salonName: '', ownerName: '', ownerEmail: '' });
+    setCreateOpen(true);
   }
 
-  async function onSubmit(values: FormValues) {
+  function openEdit(client: AdminClient) {
+    setFormError(null);
+    editForm.reset({
+      tradeName: client.tradeName,
+      legalName: client.legalName,
+      email: client.email,
+      phone: client.phone ?? '',
+      ownerName: client.ownerName ?? '',
+    });
+    setEditing(client);
+  }
+
+  async function onCreate(values: CreateValues) {
     setFormError(null);
     try {
       const res = await createClient({ variables: { input: values } });
       const payload = res.data?.adminCreateClient;
-
-      if (!payload) {
-        setFormError('Não foi possível cadastrar. Tente de novo.');
+      if (!payload || payload.errors.length > 0) {
+        setFormError(payload?.errors[0]?.message ?? 'Não foi possível cadastrar.');
         return;
       }
-      if (payload.errors.length > 0) {
-        setFormError(payload.errors[0].message);
-        return;
-      }
-
-      setDialogOpen(false);
-      toast.success(
-        `${payload.client?.tradeName} cadastrado. Passe o e-mail e a senha para o cliente.`,
-      );
+      setCreateOpen(false);
+      setCredentials({
+        salon: payload.client?.tradeName ?? values.salonName,
+        email: payload.client?.ownerEmail ?? values.ownerEmail,
+        password: payload.temporaryPassword ?? '',
+      });
     } catch {
-      setFormError('Não foi possível cadastrar. Tente de novo.');
+      setFormError('Não foi possível cadastrar.');
+    }
+  }
+
+  async function onEdit(values: EditValues) {
+    if (!editing) return;
+    setFormError(null);
+    try {
+      const res = await updateClient({
+        variables: {
+          input: {
+            organizationId: editing.organizationId,
+            tradeName: values.tradeName,
+            legalName: values.legalName,
+            email: values.email,
+            phone: values.phone ? values.phone : null,
+            ownerName: values.ownerName,
+          },
+        },
+      });
+      const payload = res.data?.adminUpdateClient;
+      if (!payload || payload.errors.length > 0) {
+        setFormError(payload?.errors[0]?.message ?? 'Não foi possível salvar.');
+        return;
+      }
+      setEditing(null);
+      toast.success('Cliente atualizado.');
+    } catch {
+      setFormError('Não foi possível salvar.');
+    }
+  }
+
+  async function onToggleStatus(client: AdminClient) {
+    const next = client.status === 'active' ? 'suspended' : 'active';
+    const res = await setStatus({
+      variables: { input: { organizationId: client.organizationId, status: next } },
+    });
+    const payload = res.data?.adminSetClientStatus;
+    if (payload?.errors.length) {
+      toast.error(payload.errors[0].message);
+      return;
+    }
+    toast.success(
+      next === 'suspended'
+        ? `${client.tradeName} suspenso. O salão perdeu o acesso.`
+        : `${client.tradeName} reativado.`,
+    );
+  }
+
+  async function onResetPassword(client: AdminClient) {
+    const res = await resetPassword({
+      variables: { input: { organizationId: client.organizationId } },
+    });
+    const payload = res.data?.adminResetClientPassword;
+    if (!payload || payload.errors.length > 0) {
+      toast.error(payload?.errors[0]?.message ?? 'Não foi possível resetar.');
+      return;
+    }
+    setCredentials({
+      salon: client.tradeName,
+      email: client.ownerEmail ?? '',
+      password: payload.temporaryPassword ?? '',
+    });
+  }
+
+  async function onEnterSalon(client: AdminClient) {
+    const res = await switchToClient({
+      variables: { input: { organizationId: client.organizationId } },
+    });
+    const payload = res.data?.adminSwitchToClient;
+    if (!payload?.accessToken) {
+      toast.error(payload?.errors[0]?.message ?? 'Não foi possível entrar.');
+      return;
+    }
+    applyAuthPayload(payload);
+    navigate('/dashboard', { replace: true });
+  }
+
+  async function copyCredentials() {
+    if (!credentials) return;
+    const text = `SGS — ${credentials.salon}\nAcesso: ${window.location.origin}/login\nE-mail: ${credentials.email}\nSenha: ${credentials.password}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Copiado.');
+    } catch {
+      toast.error('Não consegui copiar. Selecione e copie manualmente.');
     }
   }
 
@@ -119,10 +261,18 @@ export function AdminClientsPage() {
               Cadastro e acompanhamento dos clientes
             </p>
           </div>
-          <Button variant="ghost" onClick={() => void logout()}>
-            <LogOut size={16} className="mr-2" aria-hidden="true" />
-            Sair
-          </Button>
+          <div className="flex items-center gap-2">
+            {isMaster && (
+              <Button variant="ghost" onClick={() => setAccessOpen(true)}>
+                <ShieldCheck size={16} className="mr-2" aria-hidden="true" />
+                Acessos
+              </Button>
+            )}
+            <Button variant="ghost" onClick={() => void logout()}>
+              <LogOut size={16} className="mr-2" aria-hidden="true" />
+              Sair
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -131,7 +281,7 @@ export function AdminClientsPage() {
           <h2 className="text-base font-semibold text-neutral-800">
             Clientes {clients.length > 0 && `(${clients.length})`}
           </h2>
-          <Button onClick={openDialog}>
+          <Button onClick={openCreate}>
             <Plus size={16} className="mr-2" aria-hidden="true" />
             Novo cliente
           </Button>
@@ -157,10 +307,10 @@ export function AdminClientsPage() {
               Nenhum cliente cadastrado
             </h3>
             <p className="max-w-md text-sm text-neutral-500">
-              Cadastre o primeiro salão. Você define a senha inicial e repassa ao
+              Cadastre o primeiro salão. O sistema gera a senha e você repassa ao
               responsável.
             </p>
-            <Button onClick={openDialog}>
+            <Button onClick={openCreate}>
               <Plus size={16} className="mr-2" aria-hidden="true" />
               Novo cliente
             </Button>
@@ -172,9 +322,10 @@ export function AdminClientsPage() {
                 <TableRow>
                   <TableHead>Salão</TableHead>
                   <TableHead>Responsável</TableHead>
+                  <TableHead>Situação</TableHead>
                   <TableHead>Equipe</TableHead>
-                  <TableHead>Cadastro</TableHead>
                   <TableHead>Último acesso</TableHead>
+                  <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -185,7 +336,7 @@ export function AdminClientsPage() {
                         {c.tradeName}
                       </span>
                       <span className="block text-xs text-neutral-500">
-                        {c.subdomain}
+                        {c.email}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -194,9 +345,62 @@ export function AdminClientsPage() {
                         {c.ownerEmail ?? '—'}
                       </span>
                     </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col items-start gap-1">
+                        {c.status === 'active' ? (
+                          <Badge variant="secondary">Ativo</Badge>
+                        ) : (
+                          <Badge variant="destructive">Suspenso</Badge>
+                        )}
+                        {c.ownerMustChangePassword && (
+                          <span className="text-xs text-neutral-500">
+                            senha temporária
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>{c.memberCount}</TableCell>
-                    <TableCell>{formatDate(c.createdAt)}</TableCell>
                     <TableCell>{formatDate(c.ownerLastLoginAt)}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" aria-label="Ações">
+                            <MoreHorizontal size={16} aria-hidden="true" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEdit(c)}>
+                            <Pencil size={14} className="mr-2" aria-hidden="true" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => void onResetPassword(c)}
+                          >
+                            <KeyRound size={14} className="mr-2" aria-hidden="true" />
+                            Resetar senha
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => void onToggleStatus(c)}>
+                            {c.status === 'active' ? (
+                              <>
+                                <Ban size={14} className="mr-2" aria-hidden="true" />
+                                Suspender
+                              </>
+                            ) : (
+                              <>
+                                <Play size={14} className="mr-2" aria-hidden="true" />
+                                Reativar
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          {canAccessClientOrgs && (
+                            <DropdownMenuItem onClick={() => void onEnterSalon(c)}>
+                              <LogIn size={14} className="mr-2" aria-hidden="true" />
+                              Entrar no salão
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -205,59 +409,62 @@ export function AdminClientsPage() {
         )}
       </main>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      {/* Cadastro */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Novo cliente</DialogTitle>
           </DialogHeader>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          <form
+            onSubmit={createForm.handleSubmit(onCreate)}
+            className="space-y-4"
+            noValidate
+          >
             {formError && (
               <Alert variant="destructive">
                 <AlertDescription>{formError}</AlertDescription>
               </Alert>
             )}
-
             <div className="space-y-1">
               <Label htmlFor="salonName">Nome do salão</Label>
-              <Input id="salonName" {...register('salonName')} />
-              {errors.salonName && (
-                <p className="text-sm text-red-600">{errors.salonName.message}</p>
+              <Input id="salonName" {...createForm.register('salonName')} />
+              {createForm.formState.errors.salonName && (
+                <p className="text-sm text-red-600">
+                  {createForm.formState.errors.salonName.message}
+                </p>
               )}
             </div>
-
             <div className="space-y-1">
               <Label htmlFor="ownerName">Responsável</Label>
-              <Input id="ownerName" {...register('ownerName')} />
-              {errors.ownerName && (
-                <p className="text-sm text-red-600">{errors.ownerName.message}</p>
+              <Input id="ownerName" {...createForm.register('ownerName')} />
+              {createForm.formState.errors.ownerName && (
+                <p className="text-sm text-red-600">
+                  {createForm.formState.errors.ownerName.message}
+                </p>
               )}
             </div>
-
             <div className="space-y-1">
               <Label htmlFor="ownerEmail">E-mail de acesso</Label>
-              <Input id="ownerEmail" type="email" {...register('ownerEmail')} />
-              {errors.ownerEmail && (
-                <p className="text-sm text-red-600">{errors.ownerEmail.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="password">Senha inicial</Label>
-              <Input id="password" type="text" {...register('password')} />
-              {errors.password && (
-                <p className="text-sm text-red-600">{errors.password.message}</p>
+              <Input
+                id="ownerEmail"
+                type="email"
+                {...createForm.register('ownerEmail')}
+              />
+              {createForm.formState.errors.ownerEmail && (
+                <p className="text-sm text-red-600">
+                  {createForm.formState.errors.ownerEmail.message}
+                </p>
               )}
               <p className="text-xs text-neutral-500">
-                Não há disparo de e-mail: anote a senha e repasse ao responsável.
+                A senha é gerada pelo sistema e aparece na próxima tela. Ela só
+                aparece uma vez.
               </p>
             </div>
-
             <div className="flex justify-end gap-2 pt-2">
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => setDialogOpen(false)}
+                onClick={() => setCreateOpen(false)}
               >
                 Cancelar
               </Button>
@@ -271,6 +478,121 @@ export function AdminClientsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Edição */}
+      <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar cliente</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={editForm.handleSubmit(onEdit)}
+            className="space-y-4"
+            noValidate
+          >
+            {formError && (
+              <Alert variant="destructive">
+                <AlertDescription>{formError}</AlertDescription>
+              </Alert>
+            )}
+            <div className="space-y-1">
+              <Label htmlFor="tradeName">Nome do salão</Label>
+              <Input id="tradeName" {...editForm.register('tradeName')} />
+              {editForm.formState.errors.tradeName && (
+                <p className="text-sm text-red-600">
+                  {editForm.formState.errors.tradeName.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="legalName">Razão social</Label>
+              <Input id="legalName" {...editForm.register('legalName')} />
+              {editForm.formState.errors.legalName && (
+                <p className="text-sm text-red-600">
+                  {editForm.formState.errors.legalName.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="editEmail">E-mail do salão</Label>
+              <Input id="editEmail" type="email" {...editForm.register('email')} />
+              {editForm.formState.errors.email && (
+                <p className="text-sm text-red-600">
+                  {editForm.formState.errors.email.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="phone">Telefone</Label>
+              <Input id="phone" {...editForm.register('phone')} />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="editOwnerName">Responsável</Label>
+              <Input id="editOwnerName" {...editForm.register('ownerName')} />
+              {editForm.formState.errors.ownerName && (
+                <p className="text-sm text-red-600">
+                  {editForm.formState.errors.ownerName.message}
+                </p>
+              )}
+              <p className="text-xs text-neutral-500">
+                O e-mail de acesso do responsável não muda por aqui.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="ghost" onClick={() => setEditing(null)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={updating}>
+                {updating && (
+                  <Loader2 size={16} className="mr-2 animate-spin" aria-hidden="true" />
+                )}
+                Salvar
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Senha gerada — aparece uma única vez */}
+      <Dialog
+        open={!!credentials}
+        onOpenChange={(open) => !open && setCredentials(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Senha de acesso</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Alert>
+              <AlertDescription>
+                Anote agora. Esta senha não é recuperável depois — se perder, gere
+                outra pelo menu do cliente.
+              </AlertDescription>
+            </Alert>
+            <div className="space-y-1 rounded-md border border-neutral-200 bg-neutral-50 p-4 text-sm">
+              <p className="font-medium text-neutral-800">{credentials?.salon}</p>
+              <p className="text-neutral-600">E-mail: {credentials?.email}</p>
+              <p className="font-mono text-base text-neutral-900">
+                {credentials?.password}
+              </p>
+            </div>
+            <p className="text-xs text-neutral-500">
+              No primeiro acesso o responsável é obrigado a trocar esta senha.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => void copyCredentials()}>
+                <Copy size={16} className="mr-2" aria-hidden="true" />
+                Copiar
+              </Button>
+              <Button onClick={() => setCredentials(null)}>Fechar</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {isMaster && (
+        <PlatformAccessDialog open={accessOpen} onOpenChange={setAccessOpen} />
+      )}
     </div>
   );
 }

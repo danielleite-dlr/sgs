@@ -113,17 +113,105 @@ export class AuthService {
       });
     }
 
+    const payload = await this.issueSession(user.id, user.email, user.fullName, {
+      isPlatformAdmin: user.isPlatformAdmin,
+      isPlatformMaster: user.isPlatformMaster,
+      canAccessClientOrgs: user.canAccessClientOrgs || user.isPlatformMaster,
+      mustChangePassword: user.mustChangePassword,
+    });
+
+    // Cliente suspenso não entra. Platform admin escapa da regra: ele não
+    // depende de membership e precisa acessar justamente para resolver.
+    const memberships = payload.session?.memberships ?? [];
+    if (
+      !user.isPlatformAdmin &&
+      memberships.length > 0 &&
+      memberships.every((m) => m.organizationStatus !== 'active')
+    ) {
+      return this.errorPayload({
+        code: 'ORGANIZATION_SUSPENDED',
+        message: 'Acesso suspenso. Fale com o suporte.',
+      });
+    }
+
     await this.prisma.user.update({
       where: { id: user.id },
       data: { lastLoginAt: new Date() },
     });
 
-    return this.issueSession(
-      user.id,
-      user.email,
-      user.fullName,
-      user.isPlatformAdmin,
-    );
+    return payload;
+  }
+
+  /**
+   * Troca de senha do próprio usuário. É o fim do ciclo da senha temporária
+   * gerada pelo admin: enquanto must_change_password estiver ligado, o
+   * frontend prende o usuário nessa tela.
+   *
+   * Exige a senha atual mesmo no primeiro acesso — o usuário acabou de
+   * digitá-la para entrar, e sem isso um token vazado trocaria a senha sozinho.
+   */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<{ success: boolean; errors: UserError[] }> {
+    if (newPassword.length < 8) {
+      return {
+        success: false,
+        errors: [
+          {
+            code: 'PASSWORD_TOO_SHORT',
+            message: 'A senha deve ter pelo menos 8 caracteres.',
+            field: 'newPassword',
+          },
+        ],
+      };
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return {
+        success: false,
+        errors: [{ code: 'NOT_FOUND', message: 'Usuário não encontrado.' }],
+      };
+    }
+
+    const ok = await this.password.verify(user.passwordHash, currentPassword);
+    if (!ok) {
+      return {
+        success: false,
+        errors: [
+          {
+            code: 'INVALID_CREDENTIALS',
+            message: 'Senha atual incorreta.',
+            field: 'currentPassword',
+          },
+        ],
+      };
+    }
+
+    if (await this.password.verify(user.passwordHash, newPassword)) {
+      return {
+        success: false,
+        errors: [
+          {
+            code: 'PASSWORD_TOO_SHORT',
+            message: 'A nova senha deve ser diferente da atual.',
+            field: 'newPassword',
+          },
+        ],
+      };
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash: await this.password.hash(newPassword),
+        mustChangePassword: false,
+      },
+    });
+
+    return { success: true, errors: [] };
   }
 
   async refresh(plaintextRefresh: string): Promise<AuthPayloadDto> {
@@ -138,6 +226,11 @@ export class AuthService {
         email: user.email,
         fullName: user.fullName,
         isPlatformAdmin: user.isPlatformAdmin,
+        isPlatformMaster: user.isPlatformMaster,
+        canAccessClientOrgs:
+          user.canAccessClientOrgs || user.isPlatformMaster,
+        mustChangePassword: user.mustChangePassword,
+        impersonating: false,
         memberships,
       };
       return {
@@ -168,6 +261,10 @@ export class AuthService {
       email: user.email,
       fullName: user.fullName,
       isPlatformAdmin: user.isPlatformAdmin,
+      isPlatformMaster: user.isPlatformMaster,
+      canAccessClientOrgs: user.canAccessClientOrgs || user.isPlatformMaster,
+      mustChangePassword: user.mustChangePassword,
+      impersonating: false,
       memberships,
     };
   }
@@ -176,24 +273,47 @@ export class AuthService {
     userId: string,
     email: string,
     fullName: string,
-    isPlatformAdmin = false,
+    platform: {
+      isPlatformAdmin?: boolean;
+      isPlatformMaster?: boolean;
+      canAccessClientOrgs?: boolean;
+      mustChangePassword?: boolean;
+    } = {},
   ): Promise<AuthPayloadDto> {
+    const isPlatformAdmin = platform.isPlatformAdmin ?? false;
+    const isPlatformMaster = platform.isPlatformMaster ?? false;
+    const canAccessClientOrgs = platform.canAccessClientOrgs ?? false;
+    const mustChangePassword = platform.mustChangePassword ?? false;
+
     const memberships = await this.loadMemberships(userId);
     const accessToken = await this.tokens.issueAccessToken({
       sub: userId,
       email,
       isPlatformAdmin,
+      isPlatformMaster,
+      canAccessClientOrgs,
       memberships: memberships.map((m) => ({
         memberId: m.memberId,
         organizationId: m.organizationId,
         roleName: m.roleName,
+        organizationStatus: m.organizationStatus,
       })),
     });
     const { plaintext: refreshToken } = await this.tokens.issueRefreshToken(userId);
     return {
       accessToken,
       refreshToken,
-      session: { userId, email, fullName, isPlatformAdmin, memberships },
+      session: {
+        userId,
+        email,
+        fullName,
+        isPlatformAdmin,
+        isPlatformMaster,
+        canAccessClientOrgs,
+        mustChangePassword,
+        impersonating: false,
+        memberships,
+      },
       errors: [],
     };
   }
@@ -217,6 +337,7 @@ export class AuthService {
         organization_id: string;
         organization_name: string;
         role_name: string;
+        organization_status: string;
       }[]
     >`SELECT * FROM auth_user_memberships(${userId}::uuid)`;
 
@@ -225,6 +346,7 @@ export class AuthService {
       organizationId: r.organization_id,
       organizationName: r.organization_name,
       roleName: r.role_name,
+      organizationStatus: r.organization_status,
     }));
   }
 

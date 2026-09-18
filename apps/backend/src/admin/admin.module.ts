@@ -7,8 +7,8 @@ import { AuthModule } from '../auth/auth.module';
 /**
  * AdminModule — painel de plataforma (cadastro e acompanhamento de clientes).
  *
- * Depende do AuthModule pelo PasswordService, que é quem gera o hash Argon2id
- * da senha inicial do cliente.
+ * Depende do AuthModule pelo PasswordService (hash Argon2id da senha gerada) e
+ * pelo TokenService (token da sessão dentro do salão do cliente).
  */
 @Module({
   imports: [AuthModule],

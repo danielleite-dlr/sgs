@@ -9,6 +9,7 @@ export interface MembershipDto {
   organizationId: string;
   organizationName: string;
   roleName: string;
+  organizationStatus: string;
 }
 
 export interface AuthSessionDto {
@@ -16,6 +17,11 @@ export interface AuthSessionDto {
   email: string;
   fullName: string;
   isPlatformAdmin: boolean;
+  isPlatformMaster: boolean;
+  canAccessClientOrgs: boolean;
+  mustChangePassword: boolean;
+  /** Sessão aberta pelo seletor de salão, dentro da organização de um cliente. */
+  impersonating: boolean;
   memberships: MembershipDto[];
 }
 

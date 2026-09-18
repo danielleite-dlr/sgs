@@ -13,18 +13,23 @@ export function useAuth() {
 
   const applyAuthPayload = useCallback(
     (payload: AuthPayload): boolean => {
-      if (!payload.accessToken || !payload.refreshToken || !payload.session) {
+      if (!payload.accessToken || !payload.session) {
         return false;
       }
       const m = payload.session.memberships[0];
       setSession({
         accessToken: payload.accessToken,
-        refreshToken: payload.refreshToken,
+        refreshToken: payload.refreshToken ?? null,
         userId: payload.session.userId,
         memberId: m?.memberId ?? null,
         organizationId: m?.organizationId ?? null,
         roleName: m?.roleName ?? null,
         isPlatformAdmin: payload.session.isPlatformAdmin ?? false,
+        isPlatformMaster: payload.session.isPlatformMaster ?? false,
+        canAccessClientOrgs: payload.session.canAccessClientOrgs ?? false,
+        mustChangePassword: payload.session.mustChangePassword ?? false,
+        impersonating: payload.session.impersonating ?? false,
+        organizationName: m?.organizationName ?? null,
         // permissions populated by /me query later or derived from memberships
         permissions: [],
       });
