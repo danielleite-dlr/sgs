@@ -123,6 +123,9 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
       EMAIL_FROM: ${EMAIL_FROM}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
+      # Sem Resend configurado, o link de verificação só sairia no log; a conta
+      # nasce verificada e o signup já devolve sessão. Nunca ligar em produção.
+      AUTH_SKIP_EMAIL_VERIFICATION: ${AUTH_SKIP_EMAIL_VERIFICATION:-false}
     ports:
       - "127.0.0.1:${STG_BACKEND_PORT:-3010}:3000"
     depends_on:

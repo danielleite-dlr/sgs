@@ -20,10 +20,18 @@ import type {
  * Decision D-10: Collects only fullName, email, password, salonName.
  * Decision D-11: Email verification mandatory before first login.
  * Decision D-12: Creator gets ADMIN role automatically (system role lookup).
+ *
+ * AUTH_SKIP_EMAIL_VERIFICATION=true suspende o D-11: a conta já nasce
+ * verificada e o signup devolve sessão. Existe para ambientes sem serviço de
+ * e-mail configurado (staging), onde o link de verificação só apareceria no
+ * log. Nunca ligar em produção.
  */
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+
+  private readonly skipEmailVerification =
+    process.env.AUTH_SKIP_EMAIL_VERIFICATION === 'true';
 
   constructor(
     private readonly prisma: PrismaService,
@@ -89,6 +97,8 @@ export class AuthService {
           email: emailLower,
           passwordHash: hash,
           fullName: input.fullName,
+          // Sem serviço de e-mail, a conta nasce verificada (ver flag acima).
+          emailVerifiedAt: this.skipEmailVerification ? new Date() : null,
         },
       });
       createdUserId = user.id;
@@ -146,6 +156,15 @@ export class AuthService {
         },
       });
     });
+
+    // Conta já verificada: não há token nem e-mail a emitir, e o signup entrega
+    // a sessão direto.
+    if (this.skipEmailVerification) {
+      this.logger.warn(
+        `signup: AUTH_SKIP_EMAIL_VERIFICATION ativo — user=${createdUserId} criado já verificado, sem e-mail de verificação`,
+      );
+      return this.issueSession(createdUserId, emailLower, input.fullName);
+    }
 
     // Issue verification token AFTER transaction commits (Phase 1 acceptable;
     // if this fails user can request resend. See plan notes for v2 hardening.)
@@ -240,7 +259,9 @@ export class AuthService {
       });
     }
 
-    if (!user.emailVerifiedAt) {
+    // Com a flag ligada, contas criadas antes dela (emailVerifiedAt nulo)
+    // também entram — senão ficariam presas sem e-mail para se verificar.
+    if (!user.emailVerifiedAt && !this.skipEmailVerification) {
       return this.errorPayload({
         code: 'ACCOUNT_UNVERIFIED',
         message: 'Verifique seu e-mail antes de entrar.',

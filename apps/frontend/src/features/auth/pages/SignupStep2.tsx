@@ -84,9 +84,15 @@ export function SignupStep2({ draft, onBack, onUpdate }: Props) {
         return;
       }
 
-      // On success — navigate to email verification page
-      // Attempt to apply session if returned (some flows may auto-verify)
       applyAuthPayload(payload);
+
+      // Ambientes sem verificação de e-mail devolvem a sessão no próprio
+      // signup: entra direto, sem passar pela tela de "verifique seu e-mail".
+      if (payload.accessToken) {
+        navigate('/', { replace: true });
+        return;
+      }
+
       navigate('/verificar-email', {
         state: { email: draft.email },
         replace: true,
