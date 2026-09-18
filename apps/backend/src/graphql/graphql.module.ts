@@ -1,3 +1,5 @@
+import { join } from 'node:path';
+
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -14,7 +16,10 @@ import { customScalars } from './scalars';
   imports: [
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      typePaths: ['./src/**/*.graphql'],
+      // Relativo ao código compilado (dist/), não ao cwd: a imagem de
+      // produção copia apenas dist/, sem src/. Os .graphql são copiados para
+      // dist/ via compilerOptions.assets no nest-cli.json.
+      typePaths: [join(__dirname, '..', '**', '*.graphql')],
       resolvers: { ...customScalars },
       playground: process.env.NODE_ENV !== 'production',
       introspection: process.env.NODE_ENV !== 'production',

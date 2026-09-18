@@ -143,12 +143,12 @@ export function CommissionRuleForm({ onClose, prefilledScope }: CommissionRuleFo
   }));
 
   // Flatten root categories + indented children for the Select component
-  const categoryFlatItems = (categoriesData?.categories ?? []).flatMap(
-    (root: { id: string; name: string; children?: Array<{ id: string; name: string }> }) => [
-      { id: root.id, name: root.name, isChild: false },
-      ...((root.children ?? []).map((c) => ({ id: c.id, name: c.name, isChild: true }))),
-    ],
-  );
+  const categoryFlatItems: Array<{ id: string; name: string; isChild: boolean }> = (
+    categoriesData?.categories ?? []
+  ).flatMap((root: { id: string; name: string; children?: Array<{ id: string; name: string }> }) => [
+    { id: root.id, name: root.name, isChild: false },
+    ...((root.children ?? []).map((c) => ({ id: c.id, name: c.name, isChild: true }))),
+  ]);
 
   const productItems = (productsData?.products ?? []).map((p: { id: string; name: string; sku: string }) => ({
     id: p.id,

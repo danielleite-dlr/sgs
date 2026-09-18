@@ -320,7 +320,7 @@ export function ClientForm({ initial }: ClientFormProps) {
                       onChange={(e) => field.onChange(formatCpf(e.target.value))}
                       onBlur={() => {
                         field.onBlur();
-                        void onCpfBlur(field.value);
+                        void onCpfBlur(field.value ?? '');
                       }}
                       placeholder={t('clients.form.cpfPlaceholder')}
                       aria-label="CPF"

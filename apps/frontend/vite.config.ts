@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
 
 // https://vitejs.dev/config/
+// A configuração do Vitest fica em vitest.config.ts (lido com precedência
+// por ele); manter o bloco `test` aqui exigiria o defineConfig de
+// 'vitest/config', que é tipado contra o vite@5 e quebra o `tsc -b`.
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -29,14 +32,5 @@ export default defineConfig({
     target: 'esnext',
     outDir: 'dist',
     sourcemap: true,
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/test-setup.ts'],
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-    },
-    css: false,
   },
 });

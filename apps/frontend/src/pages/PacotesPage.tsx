@@ -71,7 +71,7 @@ export function PacotesPage() {
       header: t('catalog.pacote.table.name', 'Nome'),
       cell: (row) => (
         <div className="flex items-center gap-2">
-          <EntityAvatar name={row.name} size={40} />
+          <EntityAvatar name={row.name} kind="package" />
           <span className="font-medium text-neutral-800">{row.name}</span>
         </div>
       ),

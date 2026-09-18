@@ -20,8 +20,11 @@ CMD ["pnpm", "dev"]
 FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN pnpm build
+# prisma generate ANTES do build: o tsc precisa dos tipos do client gerado
+# (delegates dos models, Prisma.PrismaClientKnownRequestError). Na ordem
+# inversa o build falha com ~15 erros de implicit any / propriedade ausente.
 RUN pnpm prisma generate
+RUN pnpm build
 
 # ─── Production ───────────────────────────────────────────────────────────────
 FROM node:22-alpine AS production
