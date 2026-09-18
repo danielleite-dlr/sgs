@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { isUuid } from '../database/tenant-context.service';
 import { PasswordService } from './password.service';
 import { TokenService } from './token.service';
 import { EmailVerificationService } from './email-verification.service';
@@ -100,8 +101,30 @@ export class AuthService {
         .slice(0, 50);
       const subdomain = `${baseSlug || 'salao'}-${Date.now().toString(36)}`;
 
+      // `organizations` and `members` run under FORCE ROW LEVEL SECURITY, and
+      // tenant_isolation checks the row against app.current_organization. At
+      // signup there is no tenant context yet and the org row does not exist,
+      // so letting the database default the id would always fail the WITH CHECK
+      // (Postgres 42501). Reserve the id first, set the context for the rest of
+      // the transaction, then insert with that explicit id.
+      const [reserved] = await tx.$queryRaw<{ id: string }[]>`
+        SELECT gen_uuid_v7()::text AS id
+      `;
+      const organizationId = reserved?.id ?? '';
+      if (!isUuid(organizationId)) {
+        throw new Error(
+          `signup: gen_uuid_v7() returned an invalid uuid "${organizationId}"`,
+        );
+      }
+      // SET LOCAL is transaction-scoped: reset on commit or rollback. Never use
+      // bare SET — it leaks across PgBouncer transaction-mode connections.
+      await tx.$executeRawUnsafe(
+        `SET LOCAL app.current_organization = '${organizationId}'`,
+      );
+
       const org = await tx.organization.create({
         data: {
+          id: organizationId,
           legalName: input.salonName,
           tradeName: input.salonName,
           documentType: 'CNPJ', // placeholder — collected in onboarding (D-10)
