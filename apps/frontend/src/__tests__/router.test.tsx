@@ -16,7 +16,6 @@ vi.mock('@/infrastructure/apollo/client', () => ({
 vi.mock('@/features/auth/api/auth.api', () => ({
   useLogoutMutation: () => [vi.fn()],
   useLoginMutation: () => [vi.fn()],
-  useSignupMutation: () => [vi.fn()],
   useResendVerificationEmailMutation: () => [vi.fn()],
   useVerifyEmailMutation: () => [vi.fn()],
   useAcceptInvitationMutation: () => [vi.fn()],

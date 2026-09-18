@@ -3,20 +3,11 @@ extend type Query {
 }
 
 extend type Mutation {
-  signup(input: SignupInput!): AuthPayload!
   verifyEmail(input: VerifyEmailInput!): VerifyEmailPayload!
   resendVerification(input: ResendVerificationInput!): ResendVerificationPayload!
   login(input: LoginInput!): AuthPayload!
   refreshSession(input: RefreshInput!): AuthPayload!
   logout(input: RefreshInput!): LogoutPayload!
-}
-
-input SignupInput {
-  fullName: String!
-  email: Email!
-  password: String!
-  salonName: String!
-  segment: String
 }
 
 input VerifyEmailInput {
@@ -40,6 +31,8 @@ type AuthSession {
   userId: UUID!
   email: Email!
   fullName: String!
+  "Papel de plataforma: cadastra e acompanha os clientes."
+  isPlatformAdmin: Boolean!
   memberships: [Membership!]!
 }
 

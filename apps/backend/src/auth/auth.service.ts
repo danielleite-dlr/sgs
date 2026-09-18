@@ -16,9 +16,10 @@ import type {
 /**
  * AuthService — implements all authentication mutations.
  *
- * Decision D-09: Signup creates User + Organization in one sequential flow.
- * Decision D-10: Collects only fullName, email, password, salonName.
  * Decision D-11: Email verification mandatory before first login.
+ *
+ * O cadastro público saiu daqui: quem cria organização, usuário dono e
+ * membership ADMIN é o AdminService, acionado pelo platform admin.
  * Decision D-12: Creator gets ADMIN role automatically (system role lookup).
  *
  * AUTH_SKIP_EMAIL_VERIFICATION=true suspende o D-11: a conta já nasce
@@ -40,162 +41,6 @@ export class AuthService {
     private readonly verify: EmailVerificationService,
     private readonly email: EmailService,
   ) {}
-
-  async signup(input: {
-    fullName: string;
-    email: string;
-    password: string;
-    salonName: string;
-    segment?: string;
-  }): Promise<AuthPayloadDto> {
-    const emailLower = input.email.toLowerCase();
-
-    // Pre-check: email already registered?
-    const existing = await this.prisma.user.findUnique({
-      where: { email: emailLower },
-    });
-    if (existing) {
-      return this.errorPayload({
-        code: 'EMAIL_TAKEN',
-        message: 'E-mail já cadastrado.',
-        field: 'email',
-      });
-    }
-
-    // Validate password length (class-validator handles this in resolver, but
-    // service enforces independently for direct callers)
-    if (input.password.length < 8) {
-      return this.errorPayload({
-        code: 'PASSWORD_TOO_SHORT',
-        message: 'A senha deve ter pelo menos 8 caracteres.',
-        field: 'password',
-      });
-    }
-
-    if (!input.salonName || input.salonName.trim().length < 2) {
-      return this.errorPayload({
-        code: 'NAME_TOO_SHORT',
-        message: 'O nome do salão deve ter pelo menos 2 caracteres.',
-        field: 'salonName',
-      });
-    }
-
-    const hash = await this.password.hash(input.password);
-
-    // Look up system ADMIN role (created by plan 01-02 seed)
-    const adminRole = await this.prisma.role.findFirstOrThrow({
-      where: { name: 'ADMIN', isSystem: true },
-    });
-
-    let createdUserId = '';
-    let verificationToken = '';
-
-    // Create User + Organization + Member atomically (D-09)
-    await this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          email: emailLower,
-          passwordHash: hash,
-          fullName: input.fullName,
-          // Sem serviço de e-mail, a conta nasce verificada (ver flag acima).
-          emailVerifiedAt: this.skipEmailVerification ? new Date() : null,
-        },
-      });
-      createdUserId = user.id;
-
-      // Generate a unique subdomain slug
-      const baseSlug = input.salonName
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '')
-        .slice(0, 50);
-      const subdomain = `${baseSlug || 'salao'}-${Date.now().toString(36)}`;
-
-      // `organizations` and `members` run under FORCE ROW LEVEL SECURITY, and
-      // tenant_isolation checks the row against app.current_organization. At
-      // signup there is no tenant context yet and the org row does not exist,
-      // so letting the database default the id would always fail the WITH CHECK
-      // (Postgres 42501). Reserve the id first, set the context for the rest of
-      // the transaction, then insert with that explicit id.
-      const [reserved] = await tx.$queryRaw<{ id: string }[]>`
-        SELECT gen_uuid_v7()::text AS id
-      `;
-      const organizationId = reserved?.id ?? '';
-      if (!isUuid(organizationId)) {
-        throw new Error(
-          `signup: gen_uuid_v7() returned an invalid uuid "${organizationId}"`,
-        );
-      }
-      // SET LOCAL is transaction-scoped: reset on commit or rollback. Never use
-      // bare SET — it leaks across PgBouncer transaction-mode connections.
-      await tx.$executeRawUnsafe(
-        `SET LOCAL app.current_organization = '${organizationId}'`,
-      );
-
-      const org = await tx.organization.create({
-        data: {
-          id: organizationId,
-          legalName: input.salonName,
-          tradeName: input.salonName,
-          documentType: 'CNPJ', // placeholder — collected in onboarding (D-10)
-          documentNumber: Date.now().toString().slice(-14), // unique 14-char placeholder; org admin fills CNPJ in onboarding
-          email: emailLower,
-          subdomain,
-          segment: input.segment ?? 'salon',
-        },
-      });
-
-      await tx.member.create({
-        data: {
-          organizationId: org.id,
-          userId: user.id,
-          roleId: adminRole.id,
-          displayName: input.fullName,
-          isProfessional: false,
-          status: 'active',
-        },
-      });
-    });
-
-    // Conta já verificada: não há token nem e-mail a emitir, e o signup entrega
-    // a sessão direto.
-    if (this.skipEmailVerification) {
-      this.logger.warn(
-        `signup: AUTH_SKIP_EMAIL_VERIFICATION ativo — user=${createdUserId} criado já verificado, sem e-mail de verificação`,
-      );
-      return this.issueSession(createdUserId, emailLower, input.fullName);
-    }
-
-    // Issue verification token AFTER transaction commits (Phase 1 acceptable;
-    // if this fails user can request resend. See plan notes for v2 hardening.)
-    try {
-      const { plaintext } = await this.verify.createToken(createdUserId);
-      verificationToken = plaintext;
-    } catch (e) {
-      this.logger.error(
-        `Verification token creation failed for user=${createdUserId}: ${(e as Error).message}`,
-      );
-    }
-
-    // Send verification email after commit (best-effort; user can resend)
-    if (verificationToken) {
-      try {
-        await this.email.sendVerification(
-          emailLower,
-          input.fullName,
-          verificationToken,
-        );
-      } catch (e) {
-        this.logger.error(
-          `Verification email send failed for user=${createdUserId}: ${(e as Error).message}`,
-        );
-        // Do NOT fail signup if email send fails — user can request resend
-      }
-    }
-
-    // Per D-11: no tokens returned until email verified
-    return { accessToken: null, refreshToken: null, session: null, errors: [] };
-  }
 
   async verifyEmail(
     token: string,
@@ -273,7 +118,12 @@ export class AuthService {
       data: { lastLoginAt: new Date() },
     });
 
-    return this.issueSession(user.id, user.email, user.fullName);
+    return this.issueSession(
+      user.id,
+      user.email,
+      user.fullName,
+      user.isPlatformAdmin,
+    );
   }
 
   async refresh(plaintextRefresh: string): Promise<AuthPayloadDto> {
@@ -287,6 +137,7 @@ export class AuthService {
         userId: user.id,
         email: user.email,
         fullName: user.fullName,
+        isPlatformAdmin: user.isPlatformAdmin,
         memberships,
       };
       return {
@@ -316,6 +167,7 @@ export class AuthService {
       userId: user.id,
       email: user.email,
       fullName: user.fullName,
+      isPlatformAdmin: user.isPlatformAdmin,
       memberships,
     };
   }
@@ -324,11 +176,13 @@ export class AuthService {
     userId: string,
     email: string,
     fullName: string,
+    isPlatformAdmin = false,
   ): Promise<AuthPayloadDto> {
     const memberships = await this.loadMemberships(userId);
     const accessToken = await this.tokens.issueAccessToken({
       sub: userId,
       email,
+      isPlatformAdmin,
       memberships: memberships.map((m) => ({
         memberId: m.memberId,
         organizationId: m.organizationId,
@@ -339,7 +193,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      session: { userId, email, fullName, memberships },
+      session: { userId, email, fullName, isPlatformAdmin, memberships },
       errors: [],
     };
   }

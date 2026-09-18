@@ -1,31 +1,6 @@
 import { gql, useMutation, useQuery } from '@apollo/client';
 import type { AuthPayload, AuthSession } from '../types';
 
-const SIGNUP = gql`
-  mutation Signup($input: SignupInput!) {
-    signup(input: $input) {
-      accessToken
-      refreshToken
-      session {
-        userId
-        email
-        fullName
-        memberships {
-          memberId
-          organizationId
-          organizationName
-          roleName
-        }
-      }
-      errors {
-        code
-        message
-        field
-      }
-    }
-  }
-`;
-
 const LOGIN = gql`
   mutation Login($input: LoginInput!) {
     login(input: $input) {
@@ -35,6 +10,7 @@ const LOGIN = gql`
         userId
         email
         fullName
+        isPlatformAdmin
         memberships {
           memberId
           organizationId
@@ -85,6 +61,7 @@ const REFRESH = gql`
         userId
         email
         fullName
+        isPlatformAdmin
         memberships {
           memberId
           organizationId
@@ -117,6 +94,7 @@ const ACCEPT = gql`
         userId
         email
         fullName
+        isPlatformAdmin
         memberships {
           memberId
           organizationId
@@ -138,6 +116,7 @@ const ME = gql`
       userId
       email
       fullName
+      isPlatformAdmin
       memberships {
         memberId
         organizationId
@@ -147,9 +126,6 @@ const ME = gql`
     }
   }
 `;
-
-export const useSignupMutation = () =>
-  useMutation<{ signup: AuthPayload }>(SIGNUP);
 
 export const useLoginMutation = () =>
   useMutation<{ login: AuthPayload }>(LOGIN);

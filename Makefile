@@ -13,7 +13,8 @@
 # ──────────────────────────────────────────────────────────────────────────────
 
 .PHONY: all help install up down dev logs ps clean reset prisma-migrate prisma-generate prisma-studio \
-        stg-deploy stg-update stg-up stg-down stg-ps stg-logs stg-logs-backend stg-migrate stg-seed stg-psql
+        stg-deploy stg-update stg-up stg-down stg-ps stg-logs stg-logs-backend stg-migrate stg-seed stg-psql \
+        stg-create-admin
 
 # Default target
 all: help
@@ -137,3 +138,8 @@ stg-seed: ## Roda o seed no banco de staging
 
 stg-psql: ## Abre um psql no banco de staging
 	$(STG) exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB'
+
+stg-create-admin: ## Cria/promove um platform admin (EMAIL=... SENHA=... NOME="...")
+	@test -n "$(EMAIL)" || (echo "uso: make stg-create-admin EMAIL=... SENHA=... NOME=\"...\""; exit 1)
+	@test -n "$(SENHA)" || (echo "uso: make stg-create-admin EMAIL=... SENHA=... NOME=\"...\""; exit 1)
+	$(STG) exec backend node dist/scripts/create-platform-admin.js "$(EMAIL)" "$(SENHA)" "$(NOME)"

@@ -30,6 +30,8 @@ export interface AuthSession {
   userId: string;
   email: string;
   fullName: string;
+  /** Papel de plataforma: cadastra e acompanha os clientes. */
+  isPlatformAdmin: boolean;
   memberships: Membership[];
 }
 

@@ -120,11 +120,12 @@ export class TokenService {
     const memberships = await this.loadMemberships(found.userId);
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: found.userId },
-      select: { id: true, email: true },
+      select: { id: true, email: true, isPlatformAdmin: true },
     });
     const accessToken = await this.issueAccessToken({
       sub: user.id,
       email: user.email,
+      isPlatformAdmin: user.isPlatformAdmin,
       memberships,
     });
 

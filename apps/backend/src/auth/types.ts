@@ -1,6 +1,9 @@
 export interface JwtAccessPayload {
   sub: string; // user.id
   email: string;
+  // Papel de plataforma. Viaja no token para o guard não bater no banco a cada
+  // request; como o access token dura 15m, uma revogação some em até 15m.
+  isPlatformAdmin?: boolean;
   memberships: Array<{
     memberId: string;
     organizationId: string;

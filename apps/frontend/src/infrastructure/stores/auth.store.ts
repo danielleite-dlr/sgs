@@ -9,6 +9,7 @@ export interface AuthSession {
   memberId: string | null;
   organizationId: string | null;
   roleName: string | null;
+  isPlatformAdmin: boolean;
   permissions: string[];
 }
 
@@ -27,6 +28,7 @@ const initialState: AuthSession = {
   memberId: null,
   organizationId: null,
   roleName: null,
+  isPlatformAdmin: false,
   permissions: [],
 };
 
@@ -52,11 +54,18 @@ export const useAuthStore = create<AuthStore>()(
         memberId: s.memberId,
         organizationId: s.organizationId,
         roleName: s.roleName,
+        isPlatformAdmin: s.isPlatformAdmin,
         permissions: s.permissions,
       }),
     },
   ),
 );
+
+export function selectIsPlatformAdmin(
+  s: ReturnType<typeof useAuthStore.getState>,
+): boolean {
+  return !!s.accessToken && !!s.isPlatformAdmin;
+}
 
 export function selectIsAuthenticated(
   s: ReturnType<typeof useAuthStore.getState>,

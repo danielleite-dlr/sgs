@@ -8,6 +8,7 @@ import { QueueModule } from './queue/queue.module';
 import { EmailModule } from './email/email.module';
 import { AuthModule } from './auth/auth.module';
 import { AuthzModule } from './authz/authz.module';
+import { AdminModule } from './admin/admin.module';
 import { IdentityModule } from './identity/identity.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { ClientsModule } from './clients/clients.module';
@@ -38,6 +39,7 @@ import configuration from './config/configuration';
     EmailModule,
     AuthModule,
     AuthzModule,
+    AdminModule,
     IdentityModule,
     CatalogModule,
     ClientsModule,

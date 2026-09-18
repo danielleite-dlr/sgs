@@ -1,0 +1,41 @@
+extend type Query {
+  "Clientes da plataforma. Exclusivo do platform admin."
+  adminClients: [AdminClient!]!
+}
+
+extend type Mutation {
+  "Cadastra um cliente: organização + usuário dono + membership ADMIN."
+  adminCreateClient(input: AdminCreateClientInput!): AdminCreateClientPayload!
+}
+
+input AdminCreateClientInput {
+  "Nome do salão, vira razão social e nome fantasia da organização."
+  salonName: String!
+  "Nome do responsável, que vira o usuário ADMIN do salão."
+  ownerName: String!
+  ownerEmail: Email!
+  "Senha inicial, repassada ao cliente por fora. Mínimo de 8 caracteres."
+  password: String!
+  segment: String
+}
+
+type AdminClient {
+  organizationId: UUID!
+  tradeName: String!
+  legalName: String!
+  email: Email!
+  subdomain: String!
+  segment: String!
+  status: String!
+  createdAt: DateTime!
+  ownerUserId: UUID
+  ownerName: String
+  ownerEmail: Email
+  ownerLastLoginAt: DateTime
+  memberCount: Int!
+}
+
+type AdminCreateClientPayload {
+  client: AdminClient
+  errors: [UserError!]!
+}

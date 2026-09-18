@@ -71,10 +71,10 @@ export function VerifyEmailPendingPage() {
 
           <div className="flex justify-center">
             <Link
-              to="/signup"
+              to="/login"
               className="text-label text-primary-500 hover:text-primary-700"
             >
-              {t('verifyEmail.wrongEmailLink')}
+              {t('verifyEmail.backToLogin')}
             </Link>
           </div>
         </div>

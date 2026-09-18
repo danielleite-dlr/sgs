@@ -13,7 +13,6 @@
     "passwordPlaceholder": "••••••••",
     "primaryCta": "Entrar",
     "loadingCta": "Entrando…",
-    "linkToSignup": "Não tem conta? Criar conta",
     "forgotPassword": "Esqueceu a senha?",
     "errors": {
       "wrongCredentials": "E-mail ou senha incorretos.",
@@ -65,7 +64,7 @@
     "loadingCta": "Reenviando…",
     "successAfterResend": "E-mail reenviado. Verifique sua caixa de entrada.",
     "rateLimitNote": "Aguarde {{seconds}} segundos para reenviar novamente.",
-    "wrongEmailLink": "E-mail errado? Voltar ao cadastro"
+    "backToLogin": "Voltar ao login"
   },
   "verifyEmailSuccess": {
     "pageTitle": "E-mail verificado — SGS",
@@ -187,9 +186,16 @@
       "phoneInvalid": "Informe um telefone válido. Ex.: (11) 99999-9999",
       "emailInvalid": "Informe um e-mail válido."
     },
-    "tabs": { "data": "Dados", "history": "Histórico" },
+    "tabs": {
+      "data": "Dados",
+      "history": "Histórico"
+    },
     "history": {
-      "filters": { "period": "Período", "professional": "Profissional", "kind": "Tipo" },
+      "filters": {
+        "period": "Período",
+        "professional": "Profissional",
+        "kind": "Tipo"
+      },
       "filtersDisabledTooltip": "Histórico disponível após o primeiro atendimento",
       "empty": {
         "heading": "Sem histórico ainda",
@@ -198,7 +204,13 @@
     },
     "list": {
       "search": "Buscar cliente…",
-      "table": { "name": "Nome", "phone": "Telefone", "email": "E-mail", "cpf": "CPF", "actions": "Ações" }
+      "table": {
+        "name": "Nome",
+        "phone": "Telefone",
+        "email": "E-mail",
+        "cpf": "CPF",
+        "actions": "Ações"
+      }
     },
     "empty": {
       "heading": "Nenhum cliente ainda",
@@ -297,13 +309,42 @@
     "notificationsTooltip": "Notificações (em breve)"
   },
   "pages": {
-    "dashboard":  { "tab": "Painel — SGS",      "h1": "Painel" },
-    "categorias": { "tab": "Categorias — SGS",  "h1": "Categorias",  "newCta": "Nova categoria" },
-    "servicos":   { "tab": "Serviços — SGS",    "h1": "Serviços",    "newCta": "Novo serviço" },
-    "pacotes":    { "tab": "Pacotes — SGS",      "h1": "Pacotes",     "newCta": "Novo pacote" },
-    "produtos":   { "tab": "Produtos — SGS",     "h1": "Produtos",    "newCta": "Novo produto" },
-    "comissoes":  { "tab": "Comissões — SGS",   "h1": "Comissões",   "newCta": "Nova regra" },
-    "clientes":   { "tab": "Clientes — SGS",    "h1": "Clientes",    "newCta": "Novo cliente",  "newTitle": "Novo cliente", "editTitle": "Editar cliente" }
+    "dashboard": {
+      "tab": "Painel — SGS",
+      "h1": "Painel"
+    },
+    "categorias": {
+      "tab": "Categorias — SGS",
+      "h1": "Categorias",
+      "newCta": "Nova categoria"
+    },
+    "servicos": {
+      "tab": "Serviços — SGS",
+      "h1": "Serviços",
+      "newCta": "Novo serviço"
+    },
+    "pacotes": {
+      "tab": "Pacotes — SGS",
+      "h1": "Pacotes",
+      "newCta": "Novo pacote"
+    },
+    "produtos": {
+      "tab": "Produtos — SGS",
+      "h1": "Produtos",
+      "newCta": "Novo produto"
+    },
+    "comissoes": {
+      "tab": "Comissões — SGS",
+      "h1": "Comissões",
+      "newCta": "Nova regra"
+    },
+    "clientes": {
+      "tab": "Clientes — SGS",
+      "h1": "Clientes",
+      "newCta": "Novo cliente",
+      "newTitle": "Novo cliente",
+      "editTitle": "Editar cliente"
+    }
   },
   "operations": {
     "schedule": {
@@ -670,7 +711,11 @@
         "stockLabel": "Estoque atual",
         "minStockLabel": "Estoque mínimo",
         "unitLabel": "Unidade",
-        "unitOptions": { "un": "Unidade", "ml": "mL", "g": "g" },
+        "unitOptions": {
+          "un": "Unidade",
+          "ml": "mL",
+          "g": "g"
+        },
         "stockEditDisabledHint": "Use Ajustar estoque para alterar."
       },
       "table": {
@@ -725,11 +770,26 @@
         "productEmpty": "Nenhum produto encontrado."
       },
       "scope": {
-        "member_service": { "label": "Profissional + Serviço", "helper": "Regra específica para um profissional em um serviço." },
-        "service":        { "label": "Serviço",                "helper": "Aplica-se a qualquer profissional que realizar este serviço." },
-        "category":       { "label": "Categoria",              "helper": "Aplica-se a todos os serviços desta categoria." },
-        "product":        { "label": "Produto",                "helper": "Comissão sobre a venda deste produto." },
-        "default":        { "label": "Padrão da organização",  "helper": "Aplica-se a todas as vendas sem regra específica." }
+        "member_service": {
+          "label": "Profissional + Serviço",
+          "helper": "Regra específica para um profissional em um serviço."
+        },
+        "service": {
+          "label": "Serviço",
+          "helper": "Aplica-se a qualquer profissional que realizar este serviço."
+        },
+        "category": {
+          "label": "Categoria",
+          "helper": "Aplica-se a todos os serviços desta categoria."
+        },
+        "product": {
+          "label": "Produto",
+          "helper": "Comissão sobre a venda deste produto."
+        },
+        "default": {
+          "label": "Padrão da organização",
+          "helper": "Aplica-se a todas as vendas sem regra específica."
+        }
       },
       "kind": {
         "fixed": "Valor fixo (R$)",

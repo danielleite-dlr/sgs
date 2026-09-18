@@ -66,7 +66,11 @@ export function LoginPage() {
       }
       const ok = applyAuthPayload(payload);
       if (ok) {
-        navigate('/dashboard', { replace: true });
+        // Platform admin não tem organização: o lugar dele é o painel de
+        // clientes, não o dashboard de salão.
+        navigate(payload.session?.isPlatformAdmin ? '/admin' : '/dashboard', {
+          replace: true,
+        });
       }
     } catch {
       setAuthError({ code: 'UNKNOWN', message: t('login.errors.serverGeneric') });
@@ -142,12 +146,6 @@ export function LoginPage() {
           </Button>
 
           <div className="flex flex-col items-center gap-xs">
-            <Link
-              to="/signup"
-              className="text-label text-primary-500 hover:text-primary-700"
-            >
-              {t('login.linkToSignup')}
-            </Link>
             {/* TODO: Password recovery deferred — links to /recuperar-senha which renders NotFoundPage */}
             <Link
               to="/recuperar-senha"

@@ -24,6 +24,7 @@ export function useAuth() {
         memberId: m?.memberId ?? null,
         organizationId: m?.organizationId ?? null,
         roleName: m?.roleName ?? null,
+        isPlatformAdmin: payload.session.isPlatformAdmin ?? false,
         // permissions populated by /me query later or derived from memberships
         permissions: [],
       });

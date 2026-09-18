@@ -15,6 +15,7 @@ export interface AuthSessionDto {
   userId: string;
   email: string;
   fullName: string;
+  isPlatformAdmin: boolean;
   memberships: MembershipDto[];
 }
 

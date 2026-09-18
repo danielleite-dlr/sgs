@@ -1,11 +1,12 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
-import { SignupPage } from '@/features/auth/pages/SignupPage';
 import { VerifyEmailPendingPage } from '@/features/auth/pages/VerifyEmailPendingPage';
 import { VerifyEmailSuccessPage } from '@/features/auth/pages/VerifyEmailSuccessPage';
 import { InvitationPage } from '@/features/auth/pages/InvitationPage';
 import { NotFoundPage } from '@/features/auth/pages/NotFoundPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { PlatformAdminRoute } from '@/components/PlatformAdminRoute';
+import { AdminClientsPage } from '@/features/admin/pages/AdminClientsPage';
 import { AppShell } from '@/components/layout/AppShell';
 import { DashboardPlaceholder } from '@/pages/DashboardPlaceholder';
 import { CategoriasPage } from '@/pages/CategoriasPage';
@@ -54,7 +55,6 @@ import { RelatoriosPage } from '@/pages/RelatoriosPage';
  * Route structure:
  *   Public routes (no AppShell):
  *     /login                    — Login screen
- *     /signup                   — Signup 2-step wizard
  *     /verificar-email          — Email verification pending
  *     /verificar-email/sucesso  — Email verified success
  *     /convite/:token           — Member invitation acceptance
@@ -98,16 +98,22 @@ export const router = createBrowserRouter([
     element: <LoginPage />,
   },
   {
-    path: '/signup',
-    element: <SignupPage />,
-  },
-  {
     path: '/verificar-email',
     element: <VerifyEmailPendingPage />,
   },
   {
     path: '/verificar-email/sucesso',
     element: <VerifyEmailSuccessPage />,
+  },
+  {
+    // Área de plataforma: cadastro e acompanhamento dos clientes. Fora do
+    // AppShell, porque um platform admin não pertence a organização nenhuma.
+    path: '/admin',
+    element: (
+      <PlatformAdminRoute>
+        <AdminClientsPage />
+      </PlatformAdminRoute>
+    ),
   },
   {
     path: '/convite/:token',

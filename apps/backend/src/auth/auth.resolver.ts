@@ -11,25 +11,13 @@ import type { JwtAccessPayload } from './types';
  *
  * All auth mutations are marked @Public() so they bypass JwtAuthGuard.
  * The `me` query requires a valid JWT (protected by JwtAuthGuard via APP_GUARD).
+ *
+ * Não existe signup aqui: o cadastro público foi removido e quem cria cliente é
+ * o platform admin, em AdminResolver.adminCreateClient.
  */
 @Resolver()
 export class AuthResolver {
   constructor(private readonly auth: AuthService) {}
-
-  @Public()
-  @Mutation('signup')
-  signup(
-    @Args('input')
-    input: {
-      fullName: string;
-      email: string;
-      password: string;
-      salonName: string;
-      segment?: string;
-    },
-  ) {
-    return this.auth.signup(input);
-  }
 
   @Public()
   @Mutation('verifyEmail')
