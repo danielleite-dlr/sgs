@@ -19,14 +19,27 @@ export interface AuthSession {
   permissions: string[];
 }
 
+interface PlatformStash {
+  /**
+   * Sessão de plataforma guardada enquanto o admin está dentro do salão de um
+   * cliente. Sem isso não há caminho de volta: o token do salão substitui o do
+   * admin e a única saída seria logar de novo.
+   */
+  platformSession: AuthSession | null;
+}
+
 interface AuthActions {
   setSession: (s: AuthSession) => void;
   updateAccessToken: (accessToken: string) => void;
   setMustChangePassword: (mustChangePassword: boolean) => void;
+  /** Guarda a sessão atual e entra no salão do cliente. */
+  enterImpersonation: (next: AuthSession) => void;
+  /** Devolve a sessão de plataforma guardada. Null se não houver. */
+  takePlatformStash: () => AuthSession | null;
   clearSession: () => void;
 }
 
-export type AuthStore = AuthSession & AuthActions;
+export type AuthStore = AuthSession & PlatformStash & AuthActions;
 
 const initialState: AuthSession = {
   accessToken: null,
@@ -44,10 +57,13 @@ const initialState: AuthSession = {
   permissions: [],
 };
 
+const initialStash: PlatformStash = { platformSession: null };
+
 export const useAuthStore = create<AuthStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...initialState,
+      ...initialStash,
 
       setSession: (s: AuthSession) => set(s),
 
@@ -56,7 +72,36 @@ export const useAuthStore = create<AuthStore>()(
       setMustChangePassword: (mustChangePassword: boolean) =>
         set({ mustChangePassword }),
 
-      clearSession: () => set(initialState),
+      enterImpersonation: (next: AuthSession) => {
+        const current = get();
+        set({
+          ...next,
+          platformSession: {
+            accessToken: current.accessToken,
+            refreshToken: current.refreshToken,
+            userId: current.userId,
+            memberId: current.memberId,
+            organizationId: current.organizationId,
+            roleName: current.roleName,
+            isPlatformAdmin: current.isPlatformAdmin,
+            isPlatformMaster: current.isPlatformMaster,
+            canAccessClientOrgs: current.canAccessClientOrgs,
+            mustChangePassword: current.mustChangePassword,
+            impersonating: false,
+            organizationName: current.organizationName,
+            permissions: current.permissions,
+          },
+        });
+      },
+
+      takePlatformStash: () => {
+        const stash = get().platformSession;
+        if (!stash) return null;
+        set({ ...stash, platformSession: null });
+        return stash;
+      },
+
+      clearSession: () => set({ ...initialState, ...initialStash }),
     }),
     {
       name: 'sgs-auth',
@@ -76,10 +121,17 @@ export const useAuthStore = create<AuthStore>()(
         impersonating: s.impersonating,
         organizationName: s.organizationName,
         permissions: s.permissions,
+        platformSession: s.platformSession,
       }),
     },
   ),
 );
+
+export function selectHasPlatformStash(
+  s: ReturnType<typeof useAuthStore.getState>,
+): boolean {
+  return !!s.platformSession?.accessToken;
+}
 
 export function selectMustChangePassword(
   s: ReturnType<typeof useAuthStore.getState>,

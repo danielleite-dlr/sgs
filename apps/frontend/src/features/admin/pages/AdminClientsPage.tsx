@@ -98,7 +98,7 @@ export function AdminClientsPage() {
   const [setStatus] = useAdminSetClientStatusMutation();
   const [resetPassword] = useAdminResetClientPasswordMutation();
   const [switchToClient] = useAdminSwitchToClientMutation();
-  const { logout, applyAuthPayload } = useAuth();
+  const { logout, enterClient } = useAuth();
 
   const isMaster = useAuthStore((s) => s.isPlatformMaster);
   const canAccessClientOrgs = useAuthStore((s) => s.canAccessClientOrgs);
@@ -234,7 +234,7 @@ export function AdminClientsPage() {
       toast.error(payload?.errors[0]?.message ?? 'Não foi possível entrar.');
       return;
     }
-    applyAuthPayload(payload);
+    enterClient(payload);
     navigate('/dashboard', { replace: true });
   }
 

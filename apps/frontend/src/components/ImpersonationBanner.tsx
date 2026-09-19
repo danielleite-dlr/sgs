@@ -1,20 +1,21 @@
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { LogOut } from 'lucide-react';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 /**
  * ImpersonationBanner — deixa explícito que o admin está dentro do salão de um
  * cliente, e dá o caminho de volta.
  *
  * Sem isso é fácil esquecer de onde se está e mexer em dado de cliente achando
- * que é o próprio. O retorno limpa o token do salão e manda para o login, que é
- * onde a sessão de plataforma se restabelece.
+ * que é o próprio. Sair devolve a sessão de plataforma guardada, sem passar
+ * pelo login de novo.
  */
 export function ImpersonationBanner() {
   const impersonating = useAuthStore((s) => s.impersonating);
   const organizationName = useAuthStore((s) => s.organizationName);
-  const clearSession = useAuthStore((s) => s.clearSession);
-  const navigate = useNavigate();
+  const { exitClient } = useAuth();
+  const [leaving, setLeaving] = useState(false);
 
   if (!impersonating) return null;
 
@@ -26,14 +27,15 @@ export function ImpersonationBanner() {
       </span>
       <button
         type="button"
-        className="inline-flex items-center gap-1 font-medium underline"
+        className="inline-flex items-center gap-1 font-medium underline disabled:opacity-60"
+        disabled={leaving}
         onClick={() => {
-          clearSession();
-          navigate('/login', { replace: true });
+          setLeaving(true);
+          void exitClient().finally(() => setLeaving(false));
         }}
       >
         <LogOut size={14} aria-hidden="true" />
-        Sair do salão
+        {leaving ? 'Voltando…' : 'Voltar ao painel'}
       </button>
     </div>
   );
