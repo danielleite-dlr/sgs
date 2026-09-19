@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from '@apollo/client';
-import { Percent } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -38,9 +38,22 @@ import {
   CreateServiceMutation,
   UpdateServiceMutation,
 } from '../api/servicos.api';
-import type { CreateServiceResult, UpdateServiceResult } from '../api/servicos.api';
+import {
+  CommissionRulesQuery,
+  SoftDeleteCommissionRuleMutation,
+  type CommissionRuleData,
+  type CommissionRulesQueryResult,
+} from '../api/comissoes.api';
+import type {
+  CreateServiceResult,
+  UpdateServiceResult,
+} from '../api/servicos.api';
 import { PricingVariantsEditor } from './PricingVariantsEditor';
-import { maskCurrency, unmaskCurrency, formatCurrencyDisplay } from '../utils/currency-mask';
+import {
+  maskCurrency,
+  unmaskCurrency,
+  formatCurrencyDisplay,
+} from '../utils/currency-mask';
 import { CommissionRuleForm } from './CommissionRuleForm';
 
 // ---- Zod schema ----
@@ -61,7 +74,12 @@ const variantSchema = z.object({
   name: z.string().min(1, 'Nome obrigatório.'),
   durationMinutes: z.coerce.number().int().positive('Duração inválida.'),
   seniorityTier: z
-    .union([z.literal('junior'), z.literal('pleno'), z.literal('senior'), z.null()])
+    .union([
+      z.literal('junior'),
+      z.literal('pleno'),
+      z.literal('senior'),
+      z.null(),
+    ])
     .nullable()
     .optional(),
   price: priceSchema,
@@ -103,15 +121,36 @@ export function ServicoForm({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const [justCreated, setJustCreated] = useState<{ id: string; name: string } | null>(null);
+  const [justCreated, setJustCreated] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const isEdit = Boolean(initial);
   const [commissionDialogOpen, setCommissionDialogOpen] = useState(false);
+  const [editingCommission, setEditingCommission] =
+    useState<CommissionRuleData | null>(null);
 
   // Effective service for commission shortcut (existing OR just-saved)
   const targetService = initial ?? justCreated;
   const showCommissionSection = Boolean(targetService);
 
   const { data: catData } = useQuery<CategoriesQueryResult>(CategoriesQuery);
+  const { data: commissionData } = useQuery<CommissionRulesQueryResult>(
+    CommissionRulesQuery,
+    {
+      skip: !targetService,
+    },
+  );
+  const [softDeleteCommission] = useMutation(SoftDeleteCommissionRuleMutation, {
+    refetchQueries: [{ query: CommissionRulesQuery }],
+  });
+  const professionalCommissions = (
+    commissionData?.commissionRules ?? []
+  ).filter(
+    (rule) =>
+      rule.scopeType === 'member_service' &&
+      rule.service?.id === targetService?.id,
+  );
 
   const [createSvc, { loading: creating }] = useMutation<CreateServiceResult>(
     CreateServiceMutation,
@@ -134,7 +173,8 @@ export function ServicoForm({
           pricingVariants: initial.pricingVariants.map((v) => ({
             name: v.name,
             durationMinutes: v.durationMinutes,
-            seniorityTier: (v.seniorityTier as 'junior' | 'pleno' | 'senior' | null) ?? null,
+            seniorityTier:
+              (v.seniorityTier as 'junior' | 'pleno' | 'senior' | null) ?? null,
             price: formatCurrencyDisplay(v.price),
           })),
         }
@@ -151,10 +191,10 @@ export function ServicoForm({
   // Flatten root + children for hierarchical category select display
   const allCategories = (catData?.categories ?? []).flatMap((root) => [
     { id: root.id, name: root.name },
-    ...((root.children ?? []).map((c) => ({
+    ...(root.children ?? []).map((c) => ({
       id: c.id,
       name: `${root.name} > ${c.name}`,
-    }))),
+    })),
   ]);
 
   async function onSubmit(values: FormValues) {
@@ -194,7 +234,9 @@ export function ServicoForm({
           return;
         }
         const created = res.data?.createService.service;
-        toast.success(t('catalog.toasts.serviceCreated', { name: values.name }));
+        toast.success(
+          t('catalog.toasts.serviceCreated', { name: values.name }),
+        );
         if (created) {
           // Stay on the form so user can configure commission in the same step
           setJustCreated({ id: created.id, name: created.name });
@@ -208,6 +250,30 @@ export function ServicoForm({
   }
 
   const isLoading = creating || updating;
+
+  async function removeCommission(rule: CommissionRuleData) {
+    try {
+      const result = await softDeleteCommission({
+        variables: { input: { id: rule.id } },
+      });
+      const errors = result.data?.softDeleteCommissionRule.errors ?? [];
+      if (errors.length) {
+        toast.error(errors[0].message);
+        return;
+      }
+      toast.success('Comissão específica removida.');
+    } catch {
+      toast.error('Não foi possível remover a comissão. Tente novamente.');
+    }
+  }
+
+  const formatCommission = (rule: CommissionRuleData) =>
+    rule.kind === 'percentage'
+      ? `${rule.value}%`
+      : new Intl.NumberFormat('pt-BR', {
+          style: 'currency',
+          currency: 'BRL',
+        }).format(Number(rule.value));
 
   return (
     <FormProvider {...form}>
@@ -249,7 +315,9 @@ export function ServicoForm({
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue
-                        placeholder={t('catalog.servico.form.categoryPlaceholder')}
+                        placeholder={t(
+                          'catalog.servico.form.categoryPlaceholder',
+                        )}
                       />
                     </SelectTrigger>
                   </FormControl>
@@ -283,7 +351,9 @@ export function ServicoForm({
                       placeholder="0,00"
                       inputMode="numeric"
                       aria-label="Preço base em reais"
-                      onChange={(e) => field.onChange(maskCurrency(e.target.value))}
+                      onChange={(e) =>
+                        field.onChange(maskCurrency(e.target.value))
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -304,7 +374,9 @@ export function ServicoForm({
                       type="number"
                       min={1}
                       {...field}
-                      placeholder={t('catalog.servico.form.durationPlaceholder')}
+                      placeholder={t(
+                        'catalog.servico.form.durationPlaceholder',
+                      )}
                       onChange={(e) => field.onChange(Number(e.target.value))}
                     />
                   </FormControl>
@@ -320,29 +392,79 @@ export function ServicoForm({
           {/* Pricing variants dynamic editor */}
           <PricingVariantsEditor name="pricingVariants" />
 
-          {/* Commission shortcut — appears for existing services OR right after creation */}
+          {/* Specific professional commissions — available after the service has an id. */}
           {showCommissionSection && targetService && (
             <>
               <Separator />
-              <div className="flex items-center justify-between rounded-md border border-neutral-200 bg-neutral-50 p-3">
-                <div>
-                  <p className="text-sm font-semibold">
-                    {justCreated ? 'Configurar comissão deste serviço' : 'Comissão deste serviço'}
-                  </p>
-                  <p className="text-sm text-neutral-500">
-                    {justCreated
-                      ? 'Serviço criado. Adicione uma regra de comissão agora ou clique em Concluir.'
-                      : 'Crie uma regra de comissão para este serviço.'}
-                  </p>
+              <div className="space-y-3 rounded-md border border-neutral-200 bg-neutral-50 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold">
+                      Comissões por profissional
+                    </p>
+                    <p className="text-sm text-neutral-500">
+                      Defina um valor ou percentual específico para cada
+                      profissional neste serviço.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setCommissionDialogOpen(true)}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Adicionar
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setCommissionDialogOpen(true)}
-                >
-                  <Percent className="mr-2 h-4 w-4" />
-                  Configurar comissão
-                </Button>
+                {professionalCommissions.length > 0 ? (
+                  <ul className="divide-y rounded border bg-white">
+                    {professionalCommissions.map((rule) => (
+                      <li
+                        key={rule.id}
+                        className="flex items-center justify-between gap-3 px-3 py-2"
+                      >
+                        <div>
+                          <p className="text-sm font-medium">
+                            {rule.member?.displayName ?? 'Profissional'}
+                          </p>
+                          <p className="text-xs text-neutral-500">
+                            {rule.kind === 'percentage'
+                              ? 'Percentual'
+                              : 'Valor fixo'}
+                            : {formatCommission(rule)}
+                          </p>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Editar comissão de ${rule.member?.displayName ?? 'profissional'}`}
+                            onClick={() => {
+                              setEditingCommission(rule);
+                              setCommissionDialogOpen(true);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Remover comissão de ${rule.member?.displayName ?? 'profissional'}`}
+                            onClick={() => void removeCommission(rule)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-neutral-500">
+                    Nenhuma comissão específica cadastrada.
+                  </p>
+                )}
               </div>
             </>
           )}
@@ -372,14 +494,30 @@ export function ServicoForm({
 
       {/* Commission rule shortcut dialog (rendered outside the form) */}
       {showCommissionSection && targetService && (
-        <Dialog open={commissionDialogOpen} onOpenChange={setCommissionDialogOpen}>
+        <Dialog
+          open={commissionDialogOpen}
+          onOpenChange={setCommissionDialogOpen}
+        >
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Nova regra de comissão — {targetService.name}</DialogTitle>
+              <DialogTitle>
+                {editingCommission
+                  ? 'Editar comissão'
+                  : 'Nova comissão por profissional'}{' '}
+                — {targetService.name}
+              </DialogTitle>
             </DialogHeader>
             <CommissionRuleForm
-              onClose={() => setCommissionDialogOpen(false)}
-              prefilledScope={{ scopeType: 'service', serviceId: targetService.id }}
+              onClose={() => {
+                setCommissionDialogOpen(false);
+                setEditingCommission(null);
+              }}
+              prefilledScope={{
+                scopeType: 'member_service',
+                serviceId: targetService.id,
+              }}
+              lockScope
+              initialRule={editingCommission ?? undefined}
             />
           </DialogContent>
         </Dialog>

@@ -47,8 +47,8 @@ describe('ServicoForm', () => {
 
     // Labels must match i18n catalog.servico.form keys
     expect(screen.getByText(/Nome do serviço/i)).toBeInTheDocument();
-    expect(screen.getByText(/Categoria/i)).toBeInTheDocument();
-    expect(screen.getByText(/Preço base/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Categoria/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Preço base/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Duração padrão/i)).toBeInTheDocument();
   });
 
@@ -75,7 +75,9 @@ describe('ServicoForm', () => {
 
     await waitFor(() => {
       // Nome da variante label appears once a row is added
-      expect(screen.getAllByText(/Nome da variante/i).length).toBeGreaterThanOrEqual(1);
+      expect(
+        screen.getAllByText(/Nome da variante/i).length,
+      ).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -91,7 +93,9 @@ describe('ServicoForm', () => {
     fireEvent.click(addBtn);
 
     await waitFor(() => {
-      expect(screen.getAllByText(/Nome da variante/i).length).toBeGreaterThanOrEqual(2);
+      expect(
+        screen.getAllByText(/Nome da variante/i).length,
+      ).toBeGreaterThanOrEqual(2);
     });
   });
 
@@ -107,11 +111,15 @@ describe('ServicoForm', () => {
     fireEvent.click(addBtn);
 
     await waitFor(() => {
-      expect(screen.getAllByText(/Nome da variante/i).length).toBeGreaterThanOrEqual(2);
+      expect(
+        screen.getAllByText(/Nome da variante/i).length,
+      ).toBeGreaterThanOrEqual(2);
     });
 
     // Click the first trash button
-    const trashBtns = screen.getAllByRole('button', { name: /Remover variante/i });
+    const trashBtns = screen.getAllByRole('button', {
+      name: /Remover variante/i,
+    });
     expect(trashBtns.length).toBeGreaterThanOrEqual(1);
     fireEvent.click(trashBtns[0]);
 
@@ -185,7 +193,7 @@ describe('ServicoForm', () => {
     fireEvent.change(screen.getByPlaceholderText(/Ex\.: Corte feminino/i), {
       target: { value: 'Corte feminino' },
     });
-    fireEvent.change(screen.getByPlaceholderText('R$ 0,00'), {
+    fireEvent.change(screen.getByPlaceholderText('0,00'), {
       target: { value: '80.00' },
     });
 
@@ -193,17 +201,18 @@ describe('ServicoForm', () => {
     fireEvent.click(screen.getByText('Adicionar variante'));
 
     await waitFor(() => {
-      expect(screen.getAllByText(/Nome da variante/i).length).toBeGreaterThanOrEqual(1);
+      expect(
+        screen.getAllByText(/Nome da variante/i).length,
+      ).toBeGreaterThanOrEqual(1);
     });
 
     // Fill variant fields (first variant name placeholder)
-    const namePlaceholders = screen.getAllByPlaceholderText(/Ex\.: Júnior 30min/i);
+    const namePlaceholders =
+      screen.getAllByPlaceholderText(/Ex\.: Júnior 30min/i);
     fireEvent.change(namePlaceholders[0], { target: { value: 'Júnior' } });
 
-    // Duration for variant
-    const durationInputs = screen.getAllByDisplayValue('');
     // Fill variant price
-    const priceInputs = screen.getAllByPlaceholderText('R$ 0,00');
+    const priceInputs = screen.getAllByPlaceholderText('0,00');
     if (priceInputs.length > 1) {
       fireEvent.change(priceInputs[priceInputs.length - 1], {
         target: { value: '50.00' },

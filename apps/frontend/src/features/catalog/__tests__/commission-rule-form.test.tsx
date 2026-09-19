@@ -16,7 +16,7 @@ const membersMock = {
   result: {
     data: {
       members: [
-        { id: 'mem-1', displayName: 'Ana Silva', email: 'ana@test.com', roleName: 'PROFESSIONAL', seniorityTier: 'senior' },
+        { id: 'mem-1', displayName: 'Ana Silva', email: 'ana@test.com', roleName: 'PROFESSIONAL', seniorityTier: 'senior', isProfessional: true },
       ],
     },
   },

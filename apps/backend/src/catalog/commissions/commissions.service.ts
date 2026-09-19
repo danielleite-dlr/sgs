@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { TenantContextService } from '../../database/tenant-context.service';
+import type { TenantPrismaClient } from '../../database/types';
 import {
   CreateCommissionRuleInput,
   UpdateCommissionRuleInput,
@@ -69,7 +70,8 @@ export class CommissionsService {
   async create(orgId: string, input: CreateCommissionRuleInput) {
     // Defense-in-depth: validate scope shape before hitting DB
     const shapeError = this.validateScopeShape(input);
-    if (shapeError) return errPayload(shapeError.code, shapeError.message, shapeError.field);
+    if (shapeError)
+      return errPayload(shapeError.code, shapeError.message, shapeError.field);
 
     // Range check for percentage values
     if (input.kind === 'percentage' && Number(input.value) > 100) {
@@ -81,6 +83,15 @@ export class CommissionsService {
     }
 
     return this.tenant.runWithTenant(orgId, async (tx) => {
+      const referenceError = await this.validateReferences(tx, input);
+      if (referenceError) {
+        return errPayload(
+          referenceError.code,
+          referenceError.message,
+          referenceError.field,
+        );
+      }
+
       try {
         const rule = await tx.commissionRule.create({
           data: {
@@ -193,6 +204,75 @@ export class CommissionsService {
   }
 
   /**
+   * Verifies every referenced entity is visible in the active tenant. In the
+   * member_service scope, the member must also be an active professional.
+   * Foreign keys alone cannot express these tenant/domain invariants.
+   */
+  private async validateReferences(
+    tx: TenantPrismaClient,
+    i: CreateCommissionRuleInput,
+  ): Promise<{ code: string; message: string; field: string } | null> {
+    if (i.memberId) {
+      const member = await tx.member.findFirst({
+        where: {
+          id: i.memberId,
+          deletedAt: null,
+          status: 'active',
+          isProfessional: true,
+        },
+      });
+      if (!member) {
+        return {
+          code: 'PROFESSIONAL_NOT_FOUND',
+          message: 'Profissional ativo não encontrado.',
+          field: 'memberId',
+        };
+      }
+    }
+
+    if (i.serviceId) {
+      const service = await tx.service.findFirst({
+        where: { id: i.serviceId, deletedAt: null },
+      });
+      if (!service) {
+        return {
+          code: 'SERVICE_NOT_FOUND',
+          message: 'Serviço não encontrado.',
+          field: 'serviceId',
+        };
+      }
+    }
+
+    if (i.categoryId) {
+      const category = await tx.category.findFirst({
+        where: { id: i.categoryId, deletedAt: null },
+      });
+      if (!category) {
+        return {
+          code: 'CATEGORY_NOT_FOUND',
+          message: 'Categoria não encontrada.',
+          field: 'categoryId',
+        };
+      }
+    }
+
+    if (i.productId) {
+      const product = await tx.product.findFirst({
+        where: { id: i.productId, deletedAt: null },
+      });
+      if (!product) {
+        return {
+          code: 'PRODUCT_NOT_FOUND',
+          message: 'Produto não encontrado.',
+          field: 'productId',
+        };
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Validates that the FK fields provided match the expected scope shape.
    * Returns an error descriptor if invalid, or null if valid.
    */
@@ -224,8 +304,7 @@ export class CommissionsService {
         if (!has.service || has.member || has.category || has.product) {
           return {
             code: 'SCOPE_INVALID',
-            message:
-              'Escopo "Serviço" requer apenas serviceId.',
+            message: 'Escopo "Serviço" requer apenas serviceId.',
             field: 'scopeType',
           };
         }
@@ -235,8 +314,7 @@ export class CommissionsService {
         if (!has.category || has.member || has.service || has.product) {
           return {
             code: 'SCOPE_INVALID',
-            message:
-              'Escopo "Categoria" requer apenas categoryId.',
+            message: 'Escopo "Categoria" requer apenas categoryId.',
             field: 'scopeType',
           };
         }
@@ -246,8 +324,7 @@ export class CommissionsService {
         if (!has.product || has.member || has.service || has.category) {
           return {
             code: 'SCOPE_INVALID',
-            message:
-              'Escopo "Produto" requer apenas productId.',
+            message: 'Escopo "Produto" requer apenas productId.',
             field: 'scopeType',
           };
         }

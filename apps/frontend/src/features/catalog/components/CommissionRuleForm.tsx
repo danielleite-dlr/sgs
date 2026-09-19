@@ -26,7 +26,12 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { CreateCommissionRuleMutation, CommissionRulesQuery } from '../api/comissoes.api';
+import {
+  CreateCommissionRuleMutation,
+  UpdateCommissionRuleMutation,
+  CommissionRulesQuery,
+  type CommissionRuleData,
+} from '../api/comissoes.api';
 import { MembersQuery } from '../api/members.api';
 import { ServicesQuery } from '../api/servicos.api';
 import { CategoriesQuery } from '../api/categorias.api';
@@ -41,7 +46,13 @@ import {
 
 // ---- Schema ----------------------------------------------------------------
 
-const SCOPES = ['member_service', 'service', 'category', 'product', 'default'] as const;
+const SCOPES = [
+  'member_service',
+  'service',
+  'category',
+  'product',
+  'default',
+] as const;
 const KINDS = ['fixed', 'percentage'] as const;
 
 const schema = z
@@ -105,7 +116,7 @@ type FormValues = z.infer<typeof schema>;
 
 export interface CommissionRuleFormProps {
   onClose: () => void;
-  /** Pre-fill scope when opened from a service/product context (e.g., shortcut button on ServicoForm). */
+  /** Pre-fill scope when opened from a catalog context. */
   prefilledScope?: {
     scopeType: 'service' | 'product' | 'category' | 'member_service';
     serviceId?: string;
@@ -113,63 +124,115 @@ export interface CommissionRuleFormProps {
     categoryId?: string;
     memberId?: string;
   };
+  /** Prevent changing the scope, for catalog-context shortcuts. */
+  lockScope?: boolean;
+  /** Existing rule: only its kind and value may be updated. */
+  initialRule?: CommissionRuleData;
 }
 
-export function CommissionRuleForm({ onClose, prefilledScope }: CommissionRuleFormProps) {
+export function CommissionRuleForm({
+  onClose,
+  prefilledScope,
+  lockScope = false,
+  initialRule,
+}: CommissionRuleFormProps) {
   const { t } = useTranslation();
-  const [createRule, { loading }] = useMutation(CreateCommissionRuleMutation, {
-    refetchQueries: [{ query: CommissionRulesQuery }],
-  });
+  const [createRule, { loading: creating }] = useMutation(
+    CreateCommissionRuleMutation,
+    {
+      refetchQueries: [{ query: CommissionRulesQuery }],
+    },
+  );
+  const [updateRule, { loading: updating }] = useMutation(
+    UpdateCommissionRuleMutation,
+    {
+      refetchQueries: [{ query: CommissionRulesQuery }],
+    },
+  );
+  const loading = creating || updating;
   const [conflictError, setConflictError] = useState<string | null>(null);
 
   // ---- Lazy-load each picker source (Apollo dedupes if already cached) ----
   const { data: membersData, loading: membersLoading } = useQuery(MembersQuery);
-  const { data: servicesData, loading: servicesLoading } = useQuery(ServicesQuery);
-  const { data: categoriesData, loading: categoriesLoading } = useQuery(CategoriesQuery);
-  const { data: productsData, loading: productsLoading } = useQuery(ProductsQuery, {
-    variables: { lowStockOnly: false },
-  });
+  const { data: servicesData, loading: servicesLoading } =
+    useQuery(ServicesQuery);
+  const { data: categoriesData, loading: categoriesLoading } =
+    useQuery(CategoriesQuery);
+  const { data: productsData, loading: productsLoading } = useQuery(
+    ProductsQuery,
+    {
+      variables: { lowStockOnly: false },
+    },
+  );
 
   // ---- Map query results to EntityCombobox items ----
-  const memberItems = (membersData?.members ?? []).map((m: { id: string; displayName: string; roleName: string }) => ({
-    id: m.id,
-    label: m.displayName,
-    sublabel: m.roleName,
-  }));
+  const memberItems = (membersData?.members ?? [])
+    .filter((m: { isProfessional: boolean }) => m.isProfessional)
+    .map((m: { id: string; displayName: string; roleName: string }) => ({
+      id: m.id,
+      label: m.displayName,
+      sublabel: m.roleName,
+    }));
 
-  const serviceItems = (servicesData?.services ?? []).map((s: { id: string; name: string }) => ({
-    id: s.id,
-    label: s.name,
-  }));
+  const serviceItems = (servicesData?.services ?? []).map(
+    (s: { id: string; name: string }) => ({
+      id: s.id,
+      label: s.name,
+    }),
+  );
 
   // Flatten root categories + indented children for the Select component
-  const categoryFlatItems: Array<{ id: string; name: string; isChild: boolean }> = (
-    categoriesData?.categories ?? []
-  ).flatMap((root: { id: string; name: string; children?: Array<{ id: string; name: string }> }) => [
-    { id: root.id, name: root.name, isChild: false },
-    ...((root.children ?? []).map((c) => ({ id: c.id, name: c.name, isChild: true }))),
-  ]);
+  const categoryFlatItems: Array<{
+    id: string;
+    name: string;
+    isChild: boolean;
+  }> = (categoriesData?.categories ?? []).flatMap(
+    (root: {
+      id: string;
+      name: string;
+      children?: Array<{ id: string; name: string }>;
+    }) => [
+      { id: root.id, name: root.name, isChild: false },
+      ...(root.children ?? []).map((c) => ({
+        id: c.id,
+        name: c.name,
+        isChild: true,
+      })),
+    ],
+  );
 
-  const productItems = (productsData?.products ?? []).map((p: { id: string; name: string; sku: string }) => ({
-    id: p.id,
-    label: p.name,
-    sublabel: p.sku,
-  }));
+  const productItems = (productsData?.products ?? []).map(
+    (p: { id: string; name: string; sku: string }) => ({
+      id: p.id,
+      label: p.name,
+      sublabel: p.sku,
+    }),
+  );
 
   // ---- Form setup ----
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: prefilledScope
+    defaultValues: initialRule
       ? {
-          scopeType: prefilledScope.scopeType,
-          memberId: prefilledScope.memberId,
-          serviceId: prefilledScope.serviceId,
-          categoryId: prefilledScope.categoryId,
-          productId: prefilledScope.productId,
-          kind: 'percentage',
-          value: '',
+          scopeType: initialRule.scopeType,
+          memberId: initialRule.member?.id,
+          serviceId: initialRule.service?.id,
+          categoryId: initialRule.category?.id,
+          productId: initialRule.product?.id,
+          kind: initialRule.kind,
+          value: initialRule.value,
         }
-      : { scopeType: 'default', kind: 'percentage', value: '' },
+      : prefilledScope
+        ? {
+            scopeType: prefilledScope.scopeType,
+            memberId: prefilledScope.memberId,
+            serviceId: prefilledScope.serviceId,
+            categoryId: prefilledScope.categoryId,
+            productId: prefilledScope.productId,
+            kind: 'percentage',
+            value: '',
+          }
+        : { scopeType: 'default', kind: 'percentage', value: '' },
   });
 
   const scopeType = form.watch('scopeType');
@@ -192,7 +255,10 @@ export function CommissionRuleForm({ onClose, prefilledScope }: CommissionRuleFo
     const input: Record<string, unknown> = {
       scopeType: values.scopeType,
       kind: values.kind,
-      value: values.kind === 'fixed' ? unmaskCurrency(values.value) : unmaskPercentage(values.value),
+      value:
+        values.kind === 'fixed'
+          ? unmaskCurrency(values.value)
+          : unmaskPercentage(values.value),
     };
 
     if (values.scopeType === 'member_service') {
@@ -207,10 +273,41 @@ export function CommissionRuleForm({ onClose, prefilledScope }: CommissionRuleFo
     }
 
     try {
-      const res = await createRule({ variables: { input } });
-      const errors =
-        (res.data as { createCommissionRule: { errors: Array<{ code: string; message: string; field?: string }> } })
-          ?.createCommissionRule?.errors ?? [];
+      const res = initialRule
+        ? await updateRule({
+            variables: {
+              input: {
+                id: initialRule.id,
+                kind: values.kind,
+                value: input.value,
+              },
+            },
+          })
+        : await createRule({ variables: { input } });
+      const payload = initialRule
+        ? (
+            res.data as {
+              updateCommissionRule: {
+                errors: Array<{
+                  code: string;
+                  message: string;
+                  field?: string;
+                }>;
+              };
+            }
+          )?.updateCommissionRule
+        : (
+            res.data as {
+              createCommissionRule: {
+                errors: Array<{
+                  code: string;
+                  message: string;
+                  field?: string;
+                }>;
+              };
+            }
+          )?.createCommissionRule;
+      const errors = payload?.errors ?? [];
 
       if (errors.length) {
         if (errors[0].code === 'COMMISSION_SCOPE_CONFLICT') {
@@ -224,14 +321,20 @@ export function CommissionRuleForm({ onClose, prefilledScope }: CommissionRuleFo
           return;
         }
         if (errors[0].field) {
-          form.setError(errors[0].field as keyof FormValues, { message: errors[0].message });
+          form.setError(errors[0].field as keyof FormValues, {
+            message: errors[0].message,
+          });
         } else {
           setConflictError(errors[0].message);
         }
         return;
       }
 
-      toast.success('Regra de comissão criada com sucesso.');
+      toast.success(
+        initialRule
+          ? 'Regra de comissão atualizada com sucesso.'
+          : 'Regra de comissão criada com sucesso.',
+      );
       onClose();
     } catch {
       toast.error('Não foi possível salvar. Tente novamente.');
@@ -243,35 +346,46 @@ export function CommissionRuleForm({ onClose, prefilledScope }: CommissionRuleFo
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         {/* === Scope radio group === */}
-        <FormField
-          control={form.control}
-          name="scopeType"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('catalog.comissao.form.scopeLabel')}</FormLabel>
-              <RadioGroup
-                value={field.value}
-                onValueChange={(v) => onScopeChange(v as FormValues['scopeType'])}
-                className="space-y-2"
-              >
-                {SCOPES.map((s) => (
-                  <div key={s} className="flex items-start gap-2">
-                    <RadioGroupItem value={s} id={`scope-${s}`} className="mt-0.5" />
-                    <div className="space-y-0.5">
-                      <Label htmlFor={`scope-${s}`} className="font-semibold cursor-pointer">
-                        {t(`catalog.comissao.scope.${s}.label`)}
-                      </Label>
-                      <p className="text-sm text-neutral-500">
-                        {t(`catalog.comissao.scope.${s}.helper`)}
-                      </p>
+        {!lockScope && !initialRule && (
+          <FormField
+            control={form.control}
+            name="scopeType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('catalog.comissao.form.scopeLabel')}</FormLabel>
+                <RadioGroup
+                  value={field.value}
+                  onValueChange={(v) =>
+                    onScopeChange(v as FormValues['scopeType'])
+                  }
+                  className="space-y-2"
+                >
+                  {SCOPES.map((s) => (
+                    <div key={s} className="flex items-start gap-2">
+                      <RadioGroupItem
+                        value={s}
+                        id={`scope-${s}`}
+                        className="mt-0.5"
+                      />
+                      <div className="space-y-0.5">
+                        <Label
+                          htmlFor={`scope-${s}`}
+                          className="font-semibold cursor-pointer"
+                        >
+                          {t(`catalog.comissao.scope.${s}.label`)}
+                        </Label>
+                        <p className="text-sm text-neutral-500">
+                          {t(`catalog.comissao.scope.${s}.helper`)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </RadioGroup>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                  ))}
+                </RadioGroup>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         {/* === Conditional pickers — CONCRETE, no placeholders === */}
 
@@ -283,71 +397,93 @@ export function CommissionRuleForm({ onClose, prefilledScope }: CommissionRuleFo
               name="memberId"
               render={({ field, fieldState }) => (
                 <FormItem>
-                  <FormLabel>{t('catalog.comissao.form.memberLabel')} *</FormLabel>
+                  <FormLabel>
+                    {t('catalog.comissao.form.memberLabel')} *
+                  </FormLabel>
                   <FormControl>
                     <EntityCombobox
                       items={memberItems}
                       value={field.value ?? null}
                       onChange={(id) => field.onChange(id ?? undefined)}
                       placeholder={t('catalog.comissao.form.memberPlaceholder')}
-                      searchPlaceholder={t('catalog.comissao.form.memberSearchPlaceholder')}
+                      searchPlaceholder={t(
+                        'catalog.comissao.form.memberSearchPlaceholder',
+                      )}
                       emptyText={t('catalog.comissao.form.memberEmpty')}
                       loading={membersLoading}
                     />
                   </FormControl>
                   {fieldState.error && (
-                    <p className="text-sm text-error-500">{fieldState.error.message}</p>
+                    <p className="text-sm text-error-500">
+                      {fieldState.error.message}
+                    </p>
                   )}
                 </FormItem>
               )}
             />
-            <Controller
-              control={form.control}
-              name="serviceId"
-              render={({ field, fieldState }) => (
-                <FormItem>
-                  <FormLabel>{t('catalog.comissao.form.serviceLabel')} *</FormLabel>
-                  <FormControl>
-                    <EntityCombobox
-                      items={serviceItems}
-                      value={field.value ?? null}
-                      onChange={(id) => field.onChange(id ?? undefined)}
-                      placeholder={t('catalog.comissao.form.servicePlaceholder')}
-                      searchPlaceholder={t('catalog.comissao.form.serviceSearchPlaceholder')}
-                      emptyText={t('catalog.comissao.form.serviceEmpty')}
-                      loading={servicesLoading}
-                    />
-                  </FormControl>
-                  {fieldState.error && (
-                    <p className="text-sm text-error-500">{fieldState.error.message}</p>
-                  )}
-                </FormItem>
-              )}
-            />
+            {!lockScope && !initialRule && (
+              <Controller
+                control={form.control}
+                name="serviceId"
+                render={({ field, fieldState }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t('catalog.comissao.form.serviceLabel')} *
+                    </FormLabel>
+                    <FormControl>
+                      <EntityCombobox
+                        items={serviceItems}
+                        value={field.value ?? null}
+                        onChange={(id) => field.onChange(id ?? undefined)}
+                        placeholder={t(
+                          'catalog.comissao.form.servicePlaceholder',
+                        )}
+                        searchPlaceholder={t(
+                          'catalog.comissao.form.serviceSearchPlaceholder',
+                        )}
+                        emptyText={t('catalog.comissao.form.serviceEmpty')}
+                        loading={servicesLoading}
+                      />
+                    </FormControl>
+                    {fieldState.error && (
+                      <p className="text-sm text-error-500">
+                        {fieldState.error.message}
+                      </p>
+                    )}
+                  </FormItem>
+                )}
+              />
+            )}
           </div>
         )}
 
         {/* service: One EntityCombobox fed by ServicesQuery */}
-        {scopeType === 'service' && (
+        {scopeType === 'service' && !lockScope && !initialRule && (
           <Controller
             control={form.control}
             name="serviceId"
             render={({ field, fieldState }) => (
               <FormItem>
-                <FormLabel>{t('catalog.comissao.form.serviceLabel')} *</FormLabel>
+                <FormLabel>
+                  {t('catalog.comissao.form.serviceLabel')} *
+                </FormLabel>
                 <FormControl>
                   <EntityCombobox
                     items={serviceItems}
                     value={field.value ?? null}
                     onChange={(id) => field.onChange(id ?? undefined)}
                     placeholder={t('catalog.comissao.form.servicePlaceholder')}
-                    searchPlaceholder={t('catalog.comissao.form.serviceSearchPlaceholder')}
+                    searchPlaceholder={t(
+                      'catalog.comissao.form.serviceSearchPlaceholder',
+                    )}
                     emptyText={t('catalog.comissao.form.serviceEmpty')}
                     loading={servicesLoading}
                   />
                 </FormControl>
                 {fieldState.error && (
-                  <p className="text-sm text-error-500">{fieldState.error.message}</p>
+                  <p className="text-sm text-error-500">
+                    {fieldState.error.message}
+                  </p>
                 )}
               </FormItem>
             )}
@@ -355,13 +491,15 @@ export function CommissionRuleForm({ onClose, prefilledScope }: CommissionRuleFo
         )}
 
         {/* category: shadcn Select with flat hierarchical list (root bold, children indented) */}
-        {scopeType === 'category' && (
+        {scopeType === 'category' && !lockScope && !initialRule && (
           <Controller
             control={form.control}
             name="categoryId"
             render={({ field, fieldState }) => (
               <FormItem>
-                <FormLabel>{t('catalog.comissao.form.categoryLabel')} *</FormLabel>
+                <FormLabel>
+                  {t('catalog.comissao.form.categoryLabel')} *
+                </FormLabel>
                 <FormControl>
                   <Select
                     value={field.value ?? ''}
@@ -370,13 +508,21 @@ export function CommissionRuleForm({ onClose, prefilledScope }: CommissionRuleFo
                   >
                     <SelectTrigger>
                       <SelectValue
-                        placeholder={t('catalog.comissao.form.categoryPlaceholder')}
+                        placeholder={t(
+                          'catalog.comissao.form.categoryPlaceholder',
+                        )}
                       />
                     </SelectTrigger>
                     <SelectContent>
                       {categoryFlatItems.map((c) => (
                         <SelectItem key={c.id} value={c.id}>
-                          <span className={c.isChild ? 'pl-4 text-neutral-500' : 'font-semibold'}>
+                          <span
+                            className={
+                              c.isChild
+                                ? 'pl-4 text-neutral-500'
+                                : 'font-semibold'
+                            }
+                          >
                             {c.isChild ? `↳ ${c.name}` : c.name}
                           </span>
                         </SelectItem>
@@ -385,7 +531,9 @@ export function CommissionRuleForm({ onClose, prefilledScope }: CommissionRuleFo
                   </Select>
                 </FormControl>
                 {fieldState.error && (
-                  <p className="text-sm text-error-500">{fieldState.error.message}</p>
+                  <p className="text-sm text-error-500">
+                    {fieldState.error.message}
+                  </p>
                 )}
               </FormItem>
             )}
@@ -393,26 +541,32 @@ export function CommissionRuleForm({ onClose, prefilledScope }: CommissionRuleFo
         )}
 
         {/* product: One EntityCombobox fed by ProductsQuery (SKU as sublabel) */}
-        {scopeType === 'product' && (
+        {scopeType === 'product' && !lockScope && !initialRule && (
           <Controller
             control={form.control}
             name="productId"
             render={({ field, fieldState }) => (
               <FormItem>
-                <FormLabel>{t('catalog.comissao.form.productLabel')} *</FormLabel>
+                <FormLabel>
+                  {t('catalog.comissao.form.productLabel')} *
+                </FormLabel>
                 <FormControl>
                   <EntityCombobox
                     items={productItems}
                     value={field.value ?? null}
                     onChange={(id) => field.onChange(id ?? undefined)}
                     placeholder={t('catalog.comissao.form.productPlaceholder')}
-                    searchPlaceholder={t('catalog.comissao.form.productSearchPlaceholder')}
+                    searchPlaceholder={t(
+                      'catalog.comissao.form.productSearchPlaceholder',
+                    )}
                     emptyText={t('catalog.comissao.form.productEmpty')}
                     loading={productsLoading}
                   />
                 </FormControl>
                 {fieldState.error && (
-                  <p className="text-sm text-error-500">{fieldState.error.message}</p>
+                  <p className="text-sm text-error-500">
+                    {fieldState.error.message}
+                  </p>
                 )}
               </FormItem>
             )}
@@ -439,11 +593,15 @@ export function CommissionRuleForm({ onClose, prefilledScope }: CommissionRuleFo
               >
                 <div className="flex items-center gap-2">
                   <RadioGroupItem value="fixed" id="kind-fixed" />
-                  <Label htmlFor="kind-fixed">{t('catalog.comissao.kind.fixed')}</Label>
+                  <Label htmlFor="kind-fixed">
+                    {t('catalog.comissao.kind.fixed')}
+                  </Label>
                 </div>
                 <div className="flex items-center gap-2">
                   <RadioGroupItem value="percentage" id="kind-percentage" />
-                  <Label htmlFor="kind-percentage">{t('catalog.comissao.kind.percentage')}</Label>
+                  <Label htmlFor="kind-percentage">
+                    {t('catalog.comissao.kind.percentage')}
+                  </Label>
                 </div>
               </RadioGroup>
             </FormItem>
