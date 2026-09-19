@@ -189,40 +189,6 @@ function DiscoveryCarousel() {
   );
 }
 
-function PlanBanner() {
-  return (
-    <section
-      aria-label="Status do plano"
-      className="rounded-lg bg-white border border-neutral-200 p-md lg:p-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-md"
-    >
-      <div className="flex items-start gap-md min-w-0">
-        {/* Decorative dots */}
-        <div className="flex shrink-0 items-center -space-x-1.5">
-          <span className="h-6 w-6 rounded-full bg-warning-500" />
-          <span className="h-6 w-6 rounded-full bg-error-500" />
-          <span className="h-6 w-6 rounded-full bg-neutral-200" />
-        </div>
-        <div className="min-w-0">
-          <h3 className="text-base font-bold text-neutral-800">
-            Seu teste grátis termina em 5 dias
-          </h3>
-          <p className="text-sm text-neutral-500 mt-xs">
-            Junte-se a mais de <strong className="font-bold text-neutral-800">10.000</strong>{' '}
-            empreendedores que já organizam seus negócios com o SGS
-          </p>
-        </div>
-      </div>
-      <Button
-        size="sm"
-        className="bg-success-500 hover:bg-success-700 text-white shrink-0 font-semibold"
-        asChild
-      >
-        <Link to="/configuracoes/plano">Assinar agora</Link>
-      </Button>
-    </section>
-  );
-}
-
 interface SummaryMetric {
   label: string;
   value: string;
@@ -430,9 +396,6 @@ export function DashboardPlaceholder() {
 
       {/* Carrossel descoberta */}
       <DiscoveryCarousel />
-
-      {/* Banner plano */}
-      <PlanBanner />
 
       {/* Resumo do mês */}
       <section aria-label="Resumo do mês">
