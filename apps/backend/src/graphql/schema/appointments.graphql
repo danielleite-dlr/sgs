@@ -1,0 +1,44 @@
+# ===== Appointments =====
+
+extend type Query {
+  "Agendamentos que sobrepõem o intervalo solicitado."
+  appointments(
+    startsAt: DateTime!
+    endsAt: DateTime!
+    professionalId: UUID
+  ): [Appointment!]!
+}
+
+extend type Mutation {
+  createAppointment(input: CreateAppointmentInput!): AppointmentPayload!
+}
+
+type Appointment {
+  id: UUID!
+  professionalId: UUID!
+  clientId: UUID!
+  serviceId: UUID!
+  startsAt: DateTime!
+  endsAt: DateTime!
+  status: String!
+  notes: String
+  professional: Member!
+  client: Client!
+  service: Service!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input CreateAppointmentInput {
+  professionalId: UUID!
+  clientId: UUID!
+  serviceId: UUID!
+  startsAt: DateTime!
+  endsAt: DateTime!
+  notes: String
+}
+
+type AppointmentPayload {
+  appointment: Appointment
+  errors: [UserError!]!
+}

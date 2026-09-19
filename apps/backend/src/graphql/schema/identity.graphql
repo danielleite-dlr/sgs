@@ -17,6 +17,7 @@ type Member {
   email: String!
   roleName: String!
   seniorityTier: SeniorityTier
+  isProfessional: Boolean!
   createdAt: DateTime!
 }
 

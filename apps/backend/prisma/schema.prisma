@@ -40,6 +40,7 @@ model Organization {
   stockMovements  StockMovement[]
   commissionRules CommissionRule[]
   clients         Client[]
+  appointments    Appointment[]
   notifications   Notification[]
 
   @@unique([documentNumber], name: "uq_organizations_document")
@@ -118,6 +119,7 @@ model Member {
   stockMovements  StockMovement[]
   notifications   Notification[]
   commissionRules CommissionRule[]
+  appointments    Appointment[]
 
   @@unique([organizationId, userId], name: "uq_members_org_user")
   @@index([organizationId, status], name: "ix_members_org_status")
@@ -242,6 +244,7 @@ model Service {
   pricingVariants ServicePricingVariant[]
   packages        PackageService[]
   commissionRules CommissionRule[]
+  appointments    Appointment[]
 
   @@index([organizationId, categoryId], name: "ix_services_org_category")
   @@map("services")
@@ -381,9 +384,35 @@ model Client {
   version        Int       @default(1)
 
   organization Organization @relation(fields: [organizationId], references: [id])
+  appointments Appointment[]
 
   @@index([organizationId, fullName], name: "ix_clients_org_name")
   @@map("clients")
+}
+
+// ===== Appointments =====
+
+model Appointment {
+  id             String   @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  professionalId String   @map("professional_id") @db.Uuid
+  clientId       String   @map("client_id") @db.Uuid
+  serviceId      String   @map("service_id") @db.Uuid
+  startsAt       DateTime @map("starts_at") @db.Timestamptz(6)
+  endsAt         DateTime @map("ends_at") @db.Timestamptz(6)
+  status         String   @default("scheduled") @db.VarChar(20)
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  professional Member       @relation(fields: [professionalId], references: [id])
+  client       Client       @relation(fields: [clientId], references: [id])
+  service      Service      @relation(fields: [serviceId], references: [id])
+
+  @@index([organizationId, startsAt], name: "ix_appointments_org_starts")
+  @@index([organizationId, professionalId, startsAt], name: "ix_appointments_org_professional_starts")
+  @@map("appointments")
 }
 
 // ===== Notifications =====

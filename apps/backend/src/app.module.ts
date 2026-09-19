@@ -12,6 +12,7 @@ import { AdminModule } from './admin/admin.module';
 import { IdentityModule } from './identity/identity.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { ClientsModule } from './clients/clients.module';
+import { AppointmentsModule } from './appointments/appointments.module';
 import { envSchema } from './config/env.schema';
 import configuration from './config/configuration';
 
@@ -43,6 +44,7 @@ import configuration from './config/configuration';
     IdentityModule,
     CatalogModule,
     ClientsModule,
+    AppointmentsModule,
     HealthModule,
   ],
 })

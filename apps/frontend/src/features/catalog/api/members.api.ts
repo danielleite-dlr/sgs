@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 /**
  * Fetches all members in the organization.
@@ -13,6 +13,7 @@ export const MembersQuery = gql`
       email
       roleName
       seniorityTier
+      isProfessional
     }
   }
 `;
@@ -25,6 +26,7 @@ export interface MemberData {
   email: string;
   roleName: string;
   seniorityTier?: string | null;
+  isProfessional: boolean;
 }
 
 export interface MembersQueryResult {
