@@ -1,5 +1,6 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { ClientsService } from './clients.service';
+import { CreateClientInput, UpdateClientInput } from './dto/client.input';
 import { RequirePermission } from '../authz/decorators/require-permission.decorator';
 import { CurrentTenant } from '../authz/decorators/current-tenant.decorator';
 import { PERMISSIONS } from '../authz/permissions.catalog';
@@ -55,7 +56,7 @@ export class ClientsResolver {
   @Query('clientHistory')
   async clientHistory(
     @Args('clientId') clientId: string,
-    @Args('filters') filters: any,
+    @Args('filters') filters: { fromDate?: Date; toDate?: Date; professionalId?: string; kind?: string } | undefined,
     @CurrentTenant() tenantCtx: TenantContext,
   ) {
     return this.clients.history(tenantCtx.organizationId, clientId, filters);
@@ -64,38 +65,19 @@ export class ClientsResolver {
   @RequirePermission(PERMISSIONS.CLIENT_WRITE)
   @Mutation('createClient')
   async createClient(
-    @Args('input')
-    input: {
-      fullName: string;
-      phone?: string;
-      email?: string;
-      cpf?: string;
-      birthDate?: string;
-      address?: string;
-      notes?: string;
-    },
+    @Args('input') input: CreateClientInput,
     @CurrentTenant() tenantCtx: TenantContext,
   ) {
-    return this.clients.create(tenantCtx.organizationId, input as any);
+    return this.clients.create(tenantCtx.organizationId, input);
   }
 
   @RequirePermission(PERMISSIONS.CLIENT_WRITE)
   @Mutation('updateClient')
   async updateClient(
-    @Args('input')
-    input: {
-      id: string;
-      fullName?: string;
-      phone?: string;
-      email?: string;
-      cpf?: string;
-      birthDate?: string;
-      address?: string;
-      notes?: string;
-    },
+    @Args('input') input: UpdateClientInput,
     @CurrentTenant() tenantCtx: TenantContext,
   ) {
-    return this.clients.update(tenantCtx.organizationId, input as any);
+    return this.clients.update(tenantCtx.organizationId, input);
   }
 
   @RequirePermission(PERMISSIONS.CLIENT_WRITE)

@@ -31,7 +31,10 @@ services:
     container_name: sgs_pgbouncer
     restart: unless-stopped
     environment:
-      DATABASE_URL: "postgres://${POSTGRES_USER:-sgs_migrator}:${POSTGRES_PASSWORD:-sgs_password}@postgres:5432/${POSTGRES_DB:-sgs_dev}"
+      # PgBouncer authenticates its fixed runtime role against PostgreSQL.
+      # Migrations use DIRECT_URL and must never traverse the pooler.
+      DATABASE_URL: "postgres://sgs_app:sgs_password@postgres:5432/${POSTGRES_DB:-sgs_dev}"
+      AUTH_TYPE: plain
       POOL_MODE: transaction
       MAX_CLIENT_CONN: 200
       DEFAULT_POOL_SIZE: 20
@@ -39,7 +42,6 @@ services:
       RESERVE_POOL_SIZE: 5
       SERVER_RESET_QUERY: DISCARD ALL
       IGNORE_STARTUP_PARAMETERS: extra_float_digits
-      AUTH_TYPE: trust
     ports:
       - "${PGBOUNCER_PORT:-5433}:5432"
     depends_on:

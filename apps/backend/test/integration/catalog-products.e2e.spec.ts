@@ -13,6 +13,9 @@ import { ProductsService } from '../../src/catalog/products/products.service';
  * Running: pnpm test:integration -- --testPathPattern catalog-products
  */
 
+type StockNotificationPayload = { productId: string; productName: string; currentStock: number; minStockLevel: number };
+const stockPayload = (payload: unknown) => payload as StockNotificationPayload;
+
 describe('Catalog — Products', () => {
   let orgAId: string;
   let orgBId: string;
@@ -243,12 +246,12 @@ describe('Catalog — Products', () => {
       where: { organizationId: orgAId, kind: 'stock_low', readAt: null },
     });
     const stockLowForProduct = notifications.filter(
-      (n) => (n.payload as any).productId === productId,
+      (n) => stockPayload(n.payload).productId === productId,
     );
     expect(stockLowForProduct).toHaveLength(1);
-    expect((stockLowForProduct[0].payload as any).productName).toBe('prod-test-Wax');
-    expect((stockLowForProduct[0].payload as any).currentStock).toBe(4);
-    expect((stockLowForProduct[0].payload as any).minStockLevel).toBe(5);
+    expect(stockPayload(stockLowForProduct[0].payload).productName).toBe('prod-test-Wax');
+    expect(stockPayload(stockLowForProduct[0].payload).currentStock).toBe(4);
+    expect(stockPayload(stockLowForProduct[0].payload).minStockLevel).toBe(5);
   });
 
   // -----------------------------------------------------------------------
@@ -291,7 +294,7 @@ describe('Catalog — Products', () => {
       where: { organizationId: orgAId, kind: 'stock_low', readAt: null },
     });
     const forProduct = notifications.filter(
-      (n) => (n.payload as any).productId === productId,
+      (n) => stockPayload(n.payload).productId === productId,
     );
     expect(forProduct).toHaveLength(1);
   });
@@ -331,7 +334,7 @@ describe('Catalog — Products', () => {
       },
     });
     const unreadBefore = beforeRecovery.filter(
-      (n) => (n.payload as any).productId === productId,
+      (n) => stockPayload(n.payload).productId === productId,
     );
     expect(unreadBefore).toHaveLength(1);
 
@@ -350,7 +353,7 @@ describe('Catalog — Products', () => {
       },
     });
     const forProduct = afterRecovery.filter(
-      (n) => (n.payload as any).productId === productId,
+      (n) => stockPayload(n.payload).productId === productId,
     );
     expect(forProduct).toHaveLength(1);
     expect(forProduct[0].readAt).not.toBeNull();

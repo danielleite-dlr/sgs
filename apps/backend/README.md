@@ -83,3 +83,19 @@ See `.env.example` at repo root. Required for integration tests:
 | `FRONTEND_URL` | Used to construct email verification/invitation links |
 | `EMAIL_FROM` | Sender address for transactional emails |
 | `RESEND_API_KEY` | Resend API key (optional — falls back to console log if unset) |
+
+### Integration tests in Compose
+
+Run the integration suite from the `backend` Compose service so both URLs use the
+internal network names configured by `docker-compose.yml`:
+
+```bash
+docker compose up -d postgres pgbouncer valkey meilisearch backend
+docker compose exec backend pnpm test:integration
+```
+
+Inside Compose, `DATABASE_URL` uses `sgs_app@postgres:5432` (RLS runtime role)
+and `DIRECT_URL` uses `sgs_migrator@postgres:5432` (privileged setup/teardown and
+migrations). Do not point `DIRECT_URL` at PgBouncer or use it for application
+runtime. When running tests on the host instead, set both variables explicitly
+with `localhost` endpoints; the Compose service names are not resolvable there.

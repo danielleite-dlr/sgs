@@ -22,14 +22,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { DataTable, DataTableColumn } from '@/components/ui/data-table';
+import type { DataTableColumn } from '@/components/ui/data-table';
+import { DataTable } from '@/components/ui/data-table';
 import { EntityAvatar } from '@/components/ui/entity-avatar';
 import { PackagePriceSummary } from '@/features/catalog/components/PackagePriceSummary';
 import { PacoteForm } from '@/features/catalog/components/PacoteForm';
+import type {
+  PackageData} from '@/features/catalog/api/pacotes.api';
 import {
   PackagesQuery,
-  SoftDeletePackageMutation,
-  PackageData,
+  SoftDeletePackageMutation
 } from '@/features/catalog/api/pacotes.api';
 
 const fmt = (v: string | number) =>

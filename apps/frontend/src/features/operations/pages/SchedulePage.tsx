@@ -13,8 +13,6 @@ import {
   Search,
   Eye,
   EyeOff,
-  Clock,
-  HelpCircle,
   X,
   Users,
   AlertCircle,
@@ -56,12 +54,10 @@ import {
 } from "@/features/catalog/api/members.api";
 import {
   ClientsListQuery,
-  type ClientData,
   type ClientsListResult,
 } from "@/features/clients/api/clients.api";
 import {
   ServicesQuery,
-  type ServiceData,
   type ServicesQueryResult,
 } from "@/features/catalog/api/servicos.api";
 import { cn } from "@/lib/utils";
@@ -192,14 +188,6 @@ function appointmentToSchedule(
   };
 }
 
-function formatDateLong(date: Date): string {
-  return date.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    weekday: "long",
-  });
-}
 
 function getAppointmentStyle(
   appt: ScheduleAppointment,
@@ -799,13 +787,6 @@ interface AppointmentModalProps {
   initialTime?: { hour: number; minute: number; profId?: string };
 }
 
-interface ChainedService {
-  id: string;
-  professional: string;
-  service: string;
-  duration: string;
-  value: string;
-}
 
 function maskTime(input: string): string {
   const digits = input.replace(/\D/g, "").slice(0, 4);
@@ -820,15 +801,6 @@ function maskDateBR(input: string): string {
   return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
 }
 
-function maskCurrencyBR(input: string): string {
-  const digits = input.replace(/\D/g, "");
-  if (!digits) return "";
-  const padded = digits.padStart(3, "0");
-  const cents = padded.slice(-2);
-  const reais = padded.slice(0, -2).replace(/^0+(?=\d)/, "") || "0";
-  const reaisFormatted = reais.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return `${reaisFormatted},${cents}`;
-}
 
 function AppointmentModal({
   open,
@@ -1472,7 +1444,7 @@ export function SchedulePage() {
             >
               {/* Time column */}
               <div className="border-r border-neutral-200 relative">
-                {TIME_SLOTS.map((slot, i) => (
+                {TIME_SLOTS.map((slot) => (
                   <div
                     key={`${slot.hour}-${slot.minute}`}
                     className="border-b border-neutral-100 flex items-center justify-end pr-sm"

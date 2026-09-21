@@ -154,7 +154,10 @@ function SidebarItem({ item, lowStockCount, onNavigate, level }: SidebarItemProp
           {Icon && <Icon className="h-4 w-4 shrink-0" />}
           <span className="flex-1 truncate">{item.label}</span>
           {item.badge === 'lowStock' && lowStockCount > 0 && (
-            <TriangleAlert className="h-4 w-4 text-warning-500 shrink-0" />
+            <TriangleAlert
+              aria-label={`${lowStockCount} produto(s) com estoque baixo`}
+              className="h-4 w-4 text-warning-500 shrink-0"
+            />
           )}
           {open ? (
             <ChevronDown className="h-4 w-4 text-neutral-400 shrink-0" />

@@ -1,4 +1,3 @@
-import { describe, it, expect } from '@jest/globals';
 import { validateCpf, normalizeCpf } from '../cpf.util';
 
 describe('validateCpf', () => {

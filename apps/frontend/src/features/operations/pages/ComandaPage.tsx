@@ -4,7 +4,6 @@ import {
   User,
   Phone,
   Clock,
-  Plus,
   ShoppingBag,
   Scissors,
   Construction,

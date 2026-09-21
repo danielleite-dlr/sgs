@@ -1,5 +1,6 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { CommissionsService } from './commissions.service';
+import { CreateCommissionRuleInput, UpdateCommissionRuleInput } from './dto/commission.input';
 import { RequirePermission } from '../../authz/decorators/require-permission.decorator';
 import { CurrentTenant } from '../../authz/decorators/current-tenant.decorator';
 import { PERMISSIONS } from '../../authz/permissions.catalog';
@@ -32,29 +33,19 @@ export class CommissionsResolver {
   @RequirePermission(PERMISSIONS.COMMISSION_WRITE)
   @Mutation('createCommissionRule')
   async create(
-    @Args('input')
-    input: {
-      scopeType: string;
-      kind: string;
-      value: string;
-      memberId?: string;
-      serviceId?: string;
-      categoryId?: string;
-      productId?: string;
-    },
+    @Args('input') input: CreateCommissionRuleInput,
     @CurrentTenant() tenantCtx: TenantContext,
   ) {
-    return this.commissions.create(tenantCtx.organizationId, input as any);
+    return this.commissions.create(tenantCtx.organizationId, input);
   }
 
   @RequirePermission(PERMISSIONS.COMMISSION_WRITE)
   @Mutation('updateCommissionRule')
   async update(
-    @Args('input')
-    input: { id: string; kind?: string; value?: string },
+    @Args('input') input: UpdateCommissionRuleInput,
     @CurrentTenant() tenantCtx: TenantContext,
   ) {
-    return this.commissions.update(tenantCtx.organizationId, input as any);
+    return this.commissions.update(tenantCtx.organizationId, input);
   }
 
   @RequirePermission(PERMISSIONS.COMMISSION_WRITE)

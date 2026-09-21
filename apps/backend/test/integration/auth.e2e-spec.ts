@@ -18,7 +18,6 @@ describe('Auth flow (AUTH-01, AUTH-02)', () => {
   let app: INestApplication;
   const email = `e2e-${Date.now()}@test.com`;
   let refreshToken: string;
-  let accessToken: string;
 
   beforeAll(async () => {
     // Clean up any leftover e2e data
@@ -143,7 +142,6 @@ describe('Auth flow (AUTH-01, AUTH-02)', () => {
     expect(res.body.data.login.accessToken).toBeTruthy();
     expect(res.body.data.login.refreshToken).toBeTruthy();
     expect(res.body.data.login.session.memberships[0].roleName).toBe('ADMIN');
-    accessToken = res.body.data.login.accessToken as string;
     refreshToken = res.body.data.login.refreshToken as string;
   });
 

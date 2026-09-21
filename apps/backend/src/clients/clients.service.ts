@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { TenantContextService } from '../database/tenant-context.service';
 import { validateCpf, normalizeCpf } from './cpf.util';
 import { CreateClientInput, UpdateClientInput } from './dto/client.input';
@@ -40,7 +41,7 @@ export class ClientsService {
     const search = opts.search?.trim();
 
     return this.tenant.runWithTenant(orgId, async (tx) => {
-      const where: any = { deletedAt: null };
+      const where: Prisma.ClientWhereInput = { deletedAt: null };
 
       if (search) {
         where.OR = [
@@ -81,7 +82,7 @@ export class ClientsService {
     },
   ) {
     return this.tenant.runWithTenant(orgId, async (tx) => {
-      const conditions: any[] = [];
+      const conditions: Prisma.ClientWhereInput[] = [];
       if (f.cpf) conditions.push({ cpf: normalizeCpf(f.cpf) });
       if (f.phone) conditions.push({ phone: f.phone });
       if (f.email) conditions.push({ email: f.email.toLowerCase() });

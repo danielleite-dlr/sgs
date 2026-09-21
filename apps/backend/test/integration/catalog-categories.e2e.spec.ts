@@ -1,3 +1,4 @@
+import type { PrismaService } from '../../src/database/prisma.service';
 import { adminPrisma, appPrisma } from './setup';
 
 /**
@@ -11,14 +12,11 @@ import { adminPrisma, appPrisma } from './setup';
 describe('Catalog — Categories', () => {
   let orgAId: string;
   let orgBId: string;
-  let adminRoleId: string;
-  let professionalRoleId: string;
 
   // Service is imported directly to call service methods in tests
   // (no HTTP layer needed — direct service call pattern)
   let CategoriesService: typeof import('../../src/catalog/categories/categories.service').CategoriesService;
   let TenantContextService: typeof import('../../src/database/tenant-context.service').TenantContextService;
-  let PrismaService: typeof import('../../src/database/prisma.service').PrismaService;
 
   beforeAll(async () => {
     // Lazy imports to avoid module resolution issues before compilation
@@ -27,9 +25,6 @@ describe('Catalog — Categories', () => {
 
     const tcsModule = await import('../../src/database/tenant-context.service');
     TenantContextService = tcsModule.TenantContextService;
-
-    const psModule = await import('../../src/database/prisma.service');
-    PrismaService = psModule.PrismaService;
 
     // Clean up leftovers
     await adminPrisma.$executeRawUnsafe(
@@ -47,16 +42,6 @@ describe('Catalog — Categories', () => {
     await adminPrisma.$executeRawUnsafe(
       `DELETE FROM users WHERE email LIKE 'cat-test-%'`,
     );
-
-    const adminRole = await adminPrisma.role.findFirstOrThrow({
-      where: { name: 'ADMIN', isSystem: true },
-    });
-    adminRoleId = adminRole.id;
-
-    const professionalRole = await adminPrisma.role.findFirstOrThrow({
-      where: { name: 'PROFESSIONAL', isSystem: true },
-    });
-    professionalRoleId = professionalRole.id;
 
     const orgA = await adminPrisma.organization.create({
       data: {
@@ -106,7 +91,7 @@ describe('Catalog — Categories', () => {
   // Helper: build a minimal CategoriesService using the appPrisma client
   function buildService() {
     // We create a minimal wrapper that uses appPrisma directly
-    const prismaService = appPrisma as unknown as InstanceType<typeof PrismaService>;
+    const prismaService = appPrisma as unknown as PrismaService;
     const tenantCtx = new TenantContextService(prismaService);
     return new CategoriesService(tenantCtx);
   }
@@ -133,10 +118,10 @@ describe('Catalog — Categories', () => {
 
     const child = await svc.create(orgAId, {
       name: 'cat-test-Child',
-      parentId: root.category!.id,
+      parentId: (root.category!.id as string),
     });
     expect(child.errors).toHaveLength(0);
-    expect(child.category!.parentId).toBe(root.category!.id);
+    expect(child.category!.parentId).toBe((root.category!.id as string));
   });
 
   // -----------------------------------------------------------------------
@@ -147,13 +132,13 @@ describe('Catalog — Categories', () => {
     const root = await svc.create(orgAId, { name: 'cat-test-GParent' });
     const child = await svc.create(orgAId, {
       name: 'cat-test-GChild',
-      parentId: root.category!.id,
+      parentId: (root.category!.id as string),
     });
     expect(child.errors).toHaveLength(0);
 
     const grandchild = await svc.create(orgAId, {
       name: 'cat-test-GGrandchild',
-      parentId: child.category!.id,
+      parentId: (child.category!.id as string),
     });
     expect(grandchild.errors).toHaveLength(1);
     expect(grandchild.errors[0].code).toBe('CATEGORY_DEPTH');
@@ -184,10 +169,10 @@ describe('Catalog — Categories', () => {
     const root = await svc.create(orgAId, { name: 'cat-test-DelParent' });
     await svc.create(orgAId, {
       name: 'cat-test-DelChild',
-      parentId: root.category!.id,
+      parentId: (root.category!.id as string),
     });
 
-    const result = await svc.softDelete(orgAId, root.category!.id);
+    const result = await svc.softDelete(orgAId, (root.category!.id as string));
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0].code).toBe('CATEGORY_HAS_CHILDREN');
   });
@@ -205,14 +190,14 @@ describe('Catalog — Categories', () => {
 
     // Move second UP (should swap with first)
     const result = await svc.reorder(orgAId, {
-      id: second.category!.id,
+      id: (second.category!.id as string),
       direction: 'UP',
     });
     expect(result.errors).toHaveLength(0);
     expect(result.category!.displayOrder).toBe(firstOrder);
 
     // Verify first now has secondOrder
-    const updatedFirst = await svc.getById(orgAId, first.category!.id);
+    const updatedFirst = await svc.getById(orgAId, (first.category!.id as string));
     expect(updatedFirst!.displayOrder).toBe(secondOrder);
   });
 
@@ -224,13 +209,13 @@ describe('Catalog — Categories', () => {
     const cat = await svc.create(orgAId, { name: 'cat-test-Leaf-Del' });
     expect(cat.errors).toHaveLength(0);
 
-    const result = await svc.softDelete(orgAId, cat.category!.id);
+    const result = await svc.softDelete(orgAId, (cat.category!.id as string));
     expect(result.errors).toHaveLength(0);
     expect(result.category!.deletedAt).not.toBeNull();
 
     // Should not appear in list after soft-delete
     const list = await svc.list(orgAId);
-    const found = list.find((c) => c.id === cat.category!.id);
+    const found = list.find((c) => c.id === (cat.category!.id as string));
     expect(found).toBeUndefined();
   });
 });

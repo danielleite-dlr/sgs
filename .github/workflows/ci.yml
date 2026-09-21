@@ -68,14 +68,14 @@ jobs:
         run: pnpm prisma:migrate:deploy
         env:
           DIRECT_URL: postgresql://sgs_migrator:change_me_in_production@localhost:5432/sgs_dev
-          DATABASE_URL: postgresql://sgs_app:change_me_in_production@localhost:5433/sgs_dev?pgbouncer=true&connection_limit=10
+          DATABASE_URL: postgresql://sgs_app:sgs_password@localhost:5433/sgs_dev?pgbouncer=true&connection_limit=10
 
       - name: Generate Prisma client
         working-directory: apps/backend
         run: pnpm prisma:generate
         env:
           DIRECT_URL: postgresql://sgs_migrator:change_me_in_production@localhost:5432/sgs_dev
-          DATABASE_URL: postgresql://sgs_app:change_me_in_production@localhost:5433/sgs_dev?pgbouncer=true&connection_limit=10
+          DATABASE_URL: postgresql://sgs_app:sgs_password@localhost:5433/sgs_dev?pgbouncer=true&connection_limit=10
 
       - name: Run all integration suites
         # Runs: rls-isolation, auth.e2e, rbac.e2e, invitation.e2e, full-auth-flow
@@ -84,7 +84,7 @@ jobs:
         env:
           NODE_ENV: test
           DIRECT_URL: postgresql://sgs_migrator:change_me_in_production@localhost:5432/sgs_dev
-          DATABASE_URL: postgresql://sgs_app:change_me_in_production@localhost:5433/sgs_dev?pgbouncer=true&connection_limit=10
+          DATABASE_URL: postgresql://sgs_app:sgs_password@localhost:5433/sgs_dev?pgbouncer=true&connection_limit=10
           JWT_SECRET: ci_access_secret_at_least_32_chars_long_xxxxx
           JWT_REFRESH_SECRET: ci_refresh_secret_at_least_32_chars_long_xxxxx
           FRONTEND_URL: http://localhost:5173

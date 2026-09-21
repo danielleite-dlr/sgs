@@ -22,15 +22,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { DataTable, DataTableColumn } from '@/components/ui/data-table';
+import type { DataTableColumn } from '@/components/ui/data-table';
+import { DataTable } from '@/components/ui/data-table';
 import { EntityAvatar } from '@/components/ui/entity-avatar';
 import { StockBadge } from '@/components/ui/stock-badge';
 import { ProdutoForm } from '@/features/catalog/components/ProdutoForm';
 import { AdjustStockDialog } from '@/features/catalog/components/AdjustStockDialog';
+import type {
+  ProductData} from '@/features/catalog/api/produtos.api';
 import {
   ProductsQuery,
-  SoftDeleteProductMutation,
-  ProductData,
+  SoftDeleteProductMutation
 } from '@/features/catalog/api/produtos.api';
 
 const fmt = (v: string | number) =>

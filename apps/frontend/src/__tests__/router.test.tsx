@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom';
+import { MockedProvider } from '@apollo/client/testing';
 import '@/infrastructure/i18n';
 
 // Mock Apollo Client and auth API to avoid network calls
@@ -14,11 +15,12 @@ vi.mock('@/infrastructure/apollo/client', () => ({
 }));
 
 vi.mock('@/features/auth/api/auth.api', () => ({
-  useLogoutMutation: () => [vi.fn()],
-  useLoginMutation: () => [vi.fn()],
-  useResendVerificationEmailMutation: () => [vi.fn()],
-  useVerifyEmailMutation: () => [vi.fn()],
-  useAcceptInvitationMutation: () => [vi.fn()],
+  useLogoutMutation: () => [vi.fn(), { loading: false }],
+  useLoginMutation: () => [vi.fn(), { loading: false }],
+  useRefreshMutation: () => [vi.fn(), { loading: false }],
+  useResendVerificationMutation: () => [vi.fn(), { loading: false }],
+  useVerifyEmailMutation: () => [vi.fn(), { loading: false }],
+  useAcceptInvitationMutation: () => [vi.fn(), { loading: false }],
 }));
 
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
@@ -49,9 +51,18 @@ describe('router phase 2', () => {
     '/clientes/abc/editar',
   ])('renders page at %s inside AppShell', async (path) => {
     const r = createMemoryRouter(appRouter.routes, { initialEntries: [path] });
-    render(<RouterProvider router={r} />);
-    // AppShell shows the SGS logo link
-    expect(await screen.findByText('SGS')).toBeInTheDocument();
+    const { unmount } = render(
+      <MockedProvider mocks={[]}>
+        <RouterProvider router={r} />
+      </MockedProvider>,
+    );
+
+    try {
+      expect(await screen.findByRole('link', { name: 'SGS — início' })).toBeInTheDocument();
+    } finally {
+      r.dispose();
+      unmount();
+    }
   });
 
   it('public route /login does NOT render AppShell sidebar', () => {
@@ -65,10 +76,19 @@ describe('router phase 2', () => {
       permissions: [],
     });
     const r = createMemoryRouter(appRouter.routes, { initialEntries: ['/login'] });
-    render(<RouterProvider router={r} />);
-    // No sidebar nav should be present
-    expect(
-      screen.queryByRole('navigation', { name: /Navegação principal/ }),
-    ).toBeNull();
+    const { unmount } = render(
+      <MockedProvider mocks={[]}>
+        <RouterProvider router={r} />
+      </MockedProvider>,
+    );
+
+    try {
+      expect(
+        screen.queryByRole('navigation', { name: /Navegação principal/ }),
+      ).toBeNull();
+    } finally {
+      r.dispose();
+      unmount();
+    }
   });
 });

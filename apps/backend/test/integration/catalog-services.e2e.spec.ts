@@ -1,3 +1,4 @@
+import type { PrismaService } from '../../src/database/prisma.service';
 import { adminPrisma, appPrisma } from './setup';
 
 /**
@@ -15,7 +16,6 @@ describe('Catalog — Services', () => {
 
   let ServicesService: typeof import('../../src/catalog/services/services.service').ServicesService;
   let TenantContextService: typeof import('../../src/database/tenant-context.service').TenantContextService;
-  let PrismaService: typeof import('../../src/database/prisma.service').PrismaService;
 
   beforeAll(async () => {
     const ssModule = await import('../../src/catalog/services/services.service');
@@ -23,9 +23,6 @@ describe('Catalog — Services', () => {
 
     const tcsModule = await import('../../src/database/tenant-context.service');
     TenantContextService = tcsModule.TenantContextService;
-
-    const psModule = await import('../../src/database/prisma.service');
-    PrismaService = psModule.PrismaService;
 
     // Clean up leftovers from previous test runs
     await adminPrisma.$executeRawUnsafe(
@@ -104,7 +101,7 @@ describe('Catalog — Services', () => {
   });
 
   function buildService() {
-    const prismaService = appPrisma as unknown as InstanceType<typeof PrismaService>;
+    const prismaService = appPrisma as unknown as PrismaService;
     const tenantCtx = new TenantContextService(prismaService);
     return new ServicesService(tenantCtx);
   }
@@ -157,7 +154,7 @@ describe('Catalog — Services', () => {
 
     // Update replacing variants with single one
     const updated = await svc.update(orgAId, {
-      id: created.service!.id,
+      id: (created.service!.id as string),
       pricingVariants: [{ name: 'Padrão', durationMinutes: 60, price: '80.00' }],
     });
 
@@ -216,7 +213,7 @@ describe('Catalog — Services', () => {
       defaultDurationMinutes: 30,
     });
     expect(created.errors).toHaveLength(0);
-    const serviceId = created.service!.id;
+    const serviceId: string = created.service!.id as string;
 
     // Create a package referencing this service (use adminPrisma to bypass RLS)
     const pkg = await adminPrisma.package.create({
@@ -260,13 +257,13 @@ describe('Catalog — Services', () => {
     });
     expect(created.errors).toHaveLength(0);
 
-    const result = await svc.softDelete(orgAId, created.service!.id);
+    const result = await svc.softDelete(orgAId, (created.service!.id as string));
     expect(result.errors).toHaveLength(0);
     expect(result.service!.deletedAt).not.toBeNull();
 
     // Should not appear in list after soft-delete
     const list = await svc.list(orgAId);
-    const found = list.find((s) => s.id === created.service!.id);
+    const found = list.find((s) => s.id === (created.service!.id as string));
     expect(found).toBeUndefined();
   });
 });

@@ -15,6 +15,9 @@ import { NotificationsService } from '../../src/catalog/notifications/notificati
  * Running: pnpm test:integration -- --testPathPattern catalog-notifications
  */
 
+type StockNotificationPayload = { productId: string; productName: string; currentStock: number; minStockLevel: number };
+const stockPayload = (payload: unknown) => payload as StockNotificationPayload;
+
 describe('Catalog — Notifications', () => {
   let orgAId: string;
   let orgBId: string;
@@ -185,14 +188,14 @@ describe('Catalog — Notifications', () => {
 
     // Filter notifications for this product
     const stockLow = notifications.filter(
-      (n) => n.kind === 'stock_low' && (n.payload as any).productId === productId,
+      (n) => n.kind === 'stock_low' && stockPayload(n.payload).productId === productId,
     );
     expect(stockLow).toHaveLength(1);
     expect(stockLow[0].kind).toBe('stock_low');
-    expect((stockLow[0].payload as any).productId).toBe(productId);
-    expect((stockLow[0].payload as any).productName).toBe('notif-test-Product');
-    expect((stockLow[0].payload as any).currentStock).toBe(3); // 10 - 7 = 3
-    expect((stockLow[0].payload as any).minStockLevel).toBe(5);
+    expect(stockPayload(stockLow[0].payload).productId).toBe(productId);
+    expect(stockPayload(stockLow[0].payload).productName).toBe('notif-test-Product');
+    expect(stockPayload(stockLow[0].payload).currentStock).toBe(3); // 10 - 7 = 3
+    expect(stockPayload(stockLow[0].payload).minStockLevel).toBe(5);
     expect(stockLow[0].readAt).toBeNull();
   });
 
@@ -205,7 +208,7 @@ describe('Catalog — Notifications', () => {
     // Get the unread stock_low notification
     const before = await svc.list(orgAId, memberAId, true);
     const target = before.find(
-      (n) => n.kind === 'stock_low' && (n.payload as any).productId === productId,
+      (n) => n.kind === 'stock_low' && stockPayload(n.payload).productId === productId,
     );
     expect(target).toBeDefined();
     expect(target!.readAt).toBeNull();
@@ -244,7 +247,7 @@ describe('Catalog — Notifications', () => {
     // Verify it appears as unread
     const unread = await svc.list(orgAId, memberAId, true);
     const found = unread.find(
-      (n) => n.kind === 'stock_low' && (n.payload as any).productId === newProduct.product!.id,
+      (n) => n.kind === 'stock_low' && stockPayload(n.payload).productId === newProduct.product!.id,
     );
     expect(found).toBeDefined();
 
@@ -254,7 +257,7 @@ describe('Catalog — Notifications', () => {
     // Should no longer appear in unread query
     const afterRead = await svc.list(orgAId, memberAId, true);
     const stillUnread = afterRead.find(
-      (n) => n.kind === 'stock_low' && (n.payload as any).productId === newProduct.product!.id,
+      (n) => n.kind === 'stock_low' && stockPayload(n.payload).productId === newProduct.product!.id,
     );
     expect(stillUnread).toBeUndefined();
   });
@@ -302,7 +305,7 @@ describe('Catalog — Notifications', () => {
     // Fetch unread to get the notification id
     const unread = await svc.list(orgAId, memberAId, true);
     const target = unread.find(
-      (n) => (n.payload as any).productId === newProduct.product!.id,
+      (n) => stockPayload(n.payload).productId === newProduct.product!.id,
     );
     expect(target).toBeDefined();
 

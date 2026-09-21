@@ -1,4 +1,5 @@
-import { useState, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { ChevronDown, ChevronUp, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';

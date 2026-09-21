@@ -22,13 +22,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { DataTable, DataTableColumn } from '@/components/ui/data-table';
+import type { DataTableColumn } from '@/components/ui/data-table';
+import { DataTable } from '@/components/ui/data-table';
 import { CommissionRuleForm } from '@/features/catalog/components/CommissionRuleForm';
+import type {
+  CommissionRuleData,
+  CommissionScopeType} from '@/features/catalog/api/comissoes.api';
 import {
   CommissionRulesQuery,
-  SoftDeleteCommissionRuleMutation,
-  CommissionRuleData,
-  CommissionScopeType,
+  SoftDeleteCommissionRuleMutation
 } from '@/features/catalog/api/comissoes.api';
 
 const fmt = (v: string | number) =>

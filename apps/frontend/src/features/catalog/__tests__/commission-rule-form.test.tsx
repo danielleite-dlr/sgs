@@ -96,7 +96,7 @@ const createDefaultRuleMock = {
   request: {
     query: CreateCommissionRuleMutation,
     variables: {
-      input: { scopeType: 'default', kind: 'percentage', value: '10' },
+      input: { scopeType: 'default', kind: 'percentage', value: '10.00' },
     },
   },
   result: {
@@ -106,7 +106,7 @@ const createDefaultRuleMock = {
           id: 'rule-1',
           scopeType: 'default',
           kind: 'percentage',
-          value: '10',
+          value: '10.00',
           member: null,
           service: null,
           category: null,
@@ -122,7 +122,7 @@ const createScopeConflictMock = {
   request: {
     query: CreateCommissionRuleMutation,
     variables: {
-      input: { scopeType: 'default', kind: 'percentage', value: '10' },
+      input: { scopeType: 'default', kind: 'percentage', value: '10.00' },
     },
   },
   result: {
@@ -139,7 +139,7 @@ const createValueOutOfRangeMock = {
   request: {
     query: CreateCommissionRuleMutation,
     variables: {
-      input: { scopeType: 'default', kind: 'percentage', value: '10' },
+      input: { scopeType: 'default', kind: 'percentage', value: '10.00' },
     },
   },
   result: {
@@ -217,8 +217,8 @@ describe('CommissionRuleForm', () => {
   it('6. submitting default + percentage + 10 calls createCommissionRule correctly', async () => {
     renderForm([...defaultMocks, createDefaultRuleMock]);
     // Set value to 10
-    const valueInput = screen.getByPlaceholderText('0%');
-    fireEvent.change(valueInput, { target: { value: '10' } });
+    const valueInput = screen.getByPlaceholderText('0,00');
+    fireEvent.change(valueInput, { target: { value: '1000' } });
 
     fireEvent.click(screen.getByRole('button', { name: /salvar/i }));
 
@@ -233,8 +233,8 @@ describe('CommissionRuleForm', () => {
     const serviceRadio = screen.getByLabelText(/^serviço$/i);
     fireEvent.click(serviceRadio);
 
-    const valueInput = screen.getByPlaceholderText('0%');
-    fireEvent.change(valueInput, { target: { value: '10' } });
+    const valueInput = screen.getByPlaceholderText('0,00');
+    fireEvent.change(valueInput, { target: { value: '1000' } });
 
     fireEvent.click(screen.getByRole('button', { name: /salvar/i }));
 
@@ -246,8 +246,8 @@ describe('CommissionRuleForm', () => {
   it('8. COMMISSION_SCOPE_CONFLICT → shows inline Alert', async () => {
     renderForm([...defaultMocks, createScopeConflictMock]);
 
-    const valueInput = screen.getByPlaceholderText('0%');
-    fireEvent.change(valueInput, { target: { value: '10' } });
+    const valueInput = screen.getByPlaceholderText('0,00');
+    fireEvent.change(valueInput, { target: { value: '1000' } });
 
     fireEvent.click(screen.getByRole('button', { name: /salvar/i }));
 
@@ -259,8 +259,8 @@ describe('CommissionRuleForm', () => {
   it('9. VALUE_OUT_OF_RANGE → form.setError on value field', async () => {
     renderForm([...defaultMocks, createValueOutOfRangeMock]);
 
-    const valueInput = screen.getByPlaceholderText('0%');
-    fireEvent.change(valueInput, { target: { value: '10' } });
+    const valueInput = screen.getByPlaceholderText('0,00');
+    fireEvent.change(valueInput, { target: { value: '1000' } });
 
     fireEvent.click(screen.getByRole('button', { name: /salvar/i }));
 

@@ -66,7 +66,7 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export interface ProdutoFormInitial extends ProductData {}
+export type ProdutoFormInitial = ProductData;
 
 export interface ProdutoFormProps {
   initial?: ProdutoFormInitial;

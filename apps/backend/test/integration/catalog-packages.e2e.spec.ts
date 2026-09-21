@@ -1,3 +1,4 @@
+import type { PrismaService } from '../../src/database/prisma.service';
 import { adminPrisma, appPrisma } from './setup';
 
 /**
@@ -17,7 +18,6 @@ describe('Catalog — Packages', () => {
 
   let PackagesService: typeof import('../../src/catalog/packages/packages.service').PackagesService;
   let TenantContextService: typeof import('../../src/database/tenant-context.service').TenantContextService;
-  let PrismaService: typeof import('../../src/database/prisma.service').PrismaService;
 
   beforeAll(async () => {
     const psModule = await import('../../src/catalog/packages/packages.service');
@@ -25,9 +25,6 @@ describe('Catalog — Packages', () => {
 
     const tcsModule = await import('../../src/database/tenant-context.service');
     TenantContextService = tcsModule.TenantContextService;
-
-    const dbModule = await import('../../src/database/prisma.service');
-    PrismaService = dbModule.PrismaService;
 
     // Clean up leftovers from previous runs
     await adminPrisma.$executeRawUnsafe(
@@ -132,7 +129,7 @@ describe('Catalog — Packages', () => {
   });
 
   function buildService() {
-    const prismaService = appPrisma as unknown as InstanceType<typeof PrismaService>;
+    const prismaService = appPrisma as unknown as PrismaService;
     const tenantCtx = new TenantContextService(prismaService);
     return new PackagesService(tenantCtx);
   }

@@ -13,7 +13,7 @@ import { SidebarNav } from '../SidebarNav';
 
 describe('SidebarNav (Trinks hierarchy)', () => {
   it('renders top-level menu groups', () => {
-    useAuthStore.setState({ roleName: 'Ana' } as any);
+    useAuthStore.setState({ roleName: 'Ana' });
     render(
       <MemoryRouter>
         <SidebarNav />
@@ -26,7 +26,7 @@ describe('SidebarNav (Trinks hierarchy)', () => {
   });
 
   it('shows low-stock warning icon when count > 0', () => {
-    useAuthStore.setState({ roleName: 'Ana' } as any);
+    useAuthStore.setState({ roleName: 'Ana' });
     render(
       <MemoryRouter>
         <SidebarNav lowStockCount={3} />

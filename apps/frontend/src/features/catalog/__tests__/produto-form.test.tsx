@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
 import '@/infrastructure/i18n/index';
 import { ProdutoForm } from '../components/ProdutoForm';
-import { CreateProductMutation, UpdateProductMutation, ProductsQuery } from '../api/produtos.api';
+import { CreateProductMutation, ProductsQuery } from '../api/produtos.api';
 
 // Minimal product fixture for edit mode tests
 const productFixture = {
@@ -21,30 +21,7 @@ const productFixture = {
   updatedAt: '2025-01-01T00:00:00Z',
 };
 
-const createMock = {
-  request: {
-    query: CreateProductMutation,
-    variables: {
-      input: {
-        name: 'Shampoo Teste',
-        sku: 'TST-001',
-        costPrice: '10.00',
-        salePrice: '25.00',
-        stockQuantity: 5,
-        minStockLevel: 2,
-        unit: 'un',
-      },
-    },
-  },
-  result: {
-    data: {
-      createProduct: {
-        product: { ...productFixture, name: 'Shampoo Teste', sku: 'TST-001' },
-        errors: [],
-      },
-    },
-  },
-};
+
 
 const skuTakenMock = {
   request: {

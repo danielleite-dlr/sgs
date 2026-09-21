@@ -15,7 +15,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { DialogFooter } from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { ServicesQuery } from '../api/servicos.api';
 import { CreatePackageMutation, UpdatePackageMutation, PackagesQuery } from '../api/pacotes.api';
@@ -62,7 +61,7 @@ export interface PacoteFormProps {
 export function PacoteForm({ initial, onClose }: PacoteFormProps) {
   const { t } = useTranslation();
   const { data: svcData } = useQuery(ServicesQuery);
-  const services = svcData?.services ?? [];
+  const services = useMemo(() => svcData?.services ?? [], [svcData?.services]);
 
   const [createPkg, { loading: creating }] = useMutation(CreatePackageMutation, {
     refetchQueries: [{ query: PackagesQuery }],

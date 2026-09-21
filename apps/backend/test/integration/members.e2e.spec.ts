@@ -1,4 +1,4 @@
-import { adminPrisma, appPrisma } from './setup';
+import { adminPrisma } from './setup';
 import { TenantContextService } from '../../src/database/tenant-context.service';
 import { PrismaService } from '../../src/database/prisma.service';
 import { MembersService } from '../../src/identity/members.service';
