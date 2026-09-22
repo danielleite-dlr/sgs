@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 Phase: 3
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-05-07
+Last activity: 2026-09-22 - Completed quick task 260922-0kn: Exibir a comissao cadastrada do servico (tipo e valor) na tela de editar servico
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -132,6 +132,12 @@ None yet.
 - **WABA registration**: Iniciar processo de verificação Meta Business antes do início da Phase 3 para não bloquear a Phase 5 (COMM-01 depende de WABA aprovado)
 - **Payment gateway decision**: Pagar.me vs Stripe Connect deve ser decidido antes da Phase 3 — não pode ser postergado
 - **pnpm concurrent installs**: Multiple parallel agent worktrees cause ENOENT conflicts on Windows when running pnpm install simultaneously. Workaround: stagger installs or use main repo node_modules.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260922-0kn | Exibir a comissao cadastrada do servico (tipo e valor) na tela de editar servico | 2026-09-22 | 9df355f | [260922-0kn-exibir-a-comissao-cadastrada-do-servico-](./quick/260922-0kn-exibir-a-comissao-cadastrada-do-servico-/) |
 
 ## Session Continuity
 
