@@ -126,9 +126,10 @@ export function ServicoForm({
     name: string;
   } | null>(null);
   const isEdit = Boolean(initial);
-  const [commissionDialogOpen, setCommissionDialogOpen] = useState(false);
-  const [editingCommission, setEditingCommission] =
-    useState<CommissionRuleData | null>(null);
+  const [commissionDialog, setCommissionDialog] = useState<{
+    scope: 'service' | 'member_service';
+    rule?: CommissionRuleData;
+  } | null>(null);
 
   // Effective service for commission shortcut (existing OR just-saved)
   const targetService = initial ?? justCreated;
@@ -144,12 +145,17 @@ export function ServicoForm({
   const [softDeleteCommission] = useMutation(SoftDeleteCommissionRuleMutation, {
     refetchQueries: [{ query: CommissionRulesQuery }],
   });
-  const professionalCommissions = (
-    commissionData?.commissionRules ?? []
-  ).filter(
+  const commissionRules = commissionData?.commissionRules ?? [];
+  const professionalCommissions = commissionRules.filter(
     (rule) =>
       rule.scopeType === 'member_service' &&
       rule.service?.id === targetService?.id,
+  );
+  // Commission of the service itself — applies to every professional that has
+  // no rule of their own. Unique per service (uq_cr_org_service).
+  const serviceCommission = commissionRules.find(
+    (rule) =>
+      rule.scopeType === 'service' && rule.service?.id === targetService?.id,
   );
 
   const [createSvc, { loading: creating }] = useMutation<CreateServiceResult>(
@@ -196,6 +202,16 @@ export function ServicoForm({
       name: `${root.name} > ${c.name}`,
     })),
   ]);
+
+  // Without a rule of its own the service falls back to the category rule, then
+  // to the organization default — surfaced so the user sees what is applied.
+  const selectedCategoryId = form.watch('categoryId');
+  const inheritedCommission =
+    commissionRules.find(
+      (rule) =>
+        rule.scopeType === 'category' &&
+        rule.category?.id === selectedCategoryId,
+    ) ?? commissionRules.find((rule) => rule.scopeType === 'default');
 
   async function onSubmit(values: FormValues) {
     try {
@@ -261,15 +277,20 @@ export function ServicoForm({
         toast.error(errors[0].message);
         return;
       }
-      toast.success('Comissão específica removida.');
+      toast.success('Comissão removida.');
     } catch {
       toast.error('Não foi possível remover a comissão. Tente novamente.');
     }
   }
 
+  const commissionKindLabel = (rule: CommissionRuleData) =>
+    rule.kind === 'percentage' ? 'Percentual (%)' : 'Valor fixo (R$)';
+
   const formatCommission = (rule: CommissionRuleData) =>
     rule.kind === 'percentage'
-      ? `${rule.value}%`
+      ? `${Number(rule.value).toLocaleString('pt-BR', {
+          maximumFractionDigits: 2,
+        })}%`
       : new Intl.NumberFormat('pt-BR', {
           style: 'currency',
           currency: 'BRL',
@@ -392,79 +413,160 @@ export function ServicoForm({
           {/* Pricing variants dynamic editor */}
           <PricingVariantsEditor name="pricingVariants" />
 
-          {/* Specific professional commissions — available after the service has an id. */}
+          {/* Commissions — available after the service has an id. */}
           {showCommissionSection && targetService && (
             <>
               <Separator />
-              <div className="space-y-3 rounded-md border border-neutral-200 bg-neutral-50 p-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold">
-                      Comissões por profissional
-                    </p>
-                    <p className="text-sm text-neutral-500">
-                      Defina um valor ou percentual específico para cada
-                      profissional neste serviço.
-                    </p>
+              <div className="space-y-4 rounded-md border border-neutral-200 bg-neutral-50 p-3">
+                {/* Commission of the service itself */}
+                <div className="space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold">
+                        Comissão do serviço
+                      </p>
+                      <p className="text-sm text-neutral-500">
+                        Vale para todos os profissionais que não tenham um valor
+                        próprio neste serviço.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() =>
+                        setCommissionDialog({
+                          scope: 'service',
+                          rule: serviceCommission,
+                        })
+                      }
+                    >
+                      {serviceCommission ? (
+                        <>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Editar
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Definir
+                        </>
+                      )}
+                    </Button>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setCommissionDialogOpen(true)}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Adicionar
-                  </Button>
-                </div>
-                {professionalCommissions.length > 0 ? (
-                  <ul className="divide-y rounded border bg-white">
-                    {professionalCommissions.map((rule) => (
-                      <li
-                        key={rule.id}
-                        className="flex items-center justify-between gap-3 px-3 py-2"
-                      >
+                  {serviceCommission ? (
+                    <div className="flex items-center justify-between gap-3 rounded border bg-white px-3 py-2">
+                      <dl className="flex gap-8">
                         <div>
-                          <p className="text-sm font-medium">
-                            {rule.member?.displayName ?? 'Profissional'}
-                          </p>
-                          <p className="text-xs text-neutral-500">
-                            {rule.kind === 'percentage'
-                              ? 'Percentual'
-                              : 'Valor fixo'}
-                            : {formatCommission(rule)}
-                          </p>
+                          <dt className="text-xs text-neutral-500">Tipo</dt>
+                          <dd className="text-sm font-medium">
+                            {commissionKindLabel(serviceCommission)}
+                          </dd>
                         </div>
-                        <div className="flex gap-1">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Editar comissão de ${rule.member?.displayName ?? 'profissional'}`}
-                            onClick={() => {
-                              setEditingCommission(rule);
-                              setCommissionDialogOpen(true);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Remover comissão de ${rule.member?.displayName ?? 'profissional'}`}
-                            onClick={() => void removeCommission(rule)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                        <div>
+                          <dt className="text-xs text-neutral-500">Valor</dt>
+                          <dd className="text-sm font-semibold">
+                            {formatCommission(serviceCommission)}
+                          </dd>
                         </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-neutral-500">
-                    Nenhuma comissão específica cadastrada.
-                  </p>
-                )}
+                      </dl>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Remover comissão do serviço"
+                        onClick={() => void removeCommission(serviceCommission)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-neutral-500">
+                      {inheritedCommission
+                        ? `Sem comissão própria — vale ${
+                            inheritedCommission.scopeType === 'category'
+                              ? `a regra da categoria ${inheritedCommission.category?.name ?? ''}`
+                              : 'a regra padrão da organização'
+                          }: ${formatCommission(inheritedCommission)}.`
+                        : 'Nenhuma comissão cadastrada para este serviço.'}
+                    </p>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Per-professional overrides */}
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold">
+                        Comissões por profissional
+                      </p>
+                      <p className="text-sm text-neutral-500">
+                        Sobrepõem a comissão do serviço para o profissional
+                        escolhido.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() =>
+                        setCommissionDialog({ scope: 'member_service' })
+                      }
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Adicionar
+                    </Button>
+                  </div>
+                  {professionalCommissions.length > 0 ? (
+                    <ul className="divide-y rounded border bg-white">
+                      {professionalCommissions.map((rule) => (
+                        <li
+                          key={rule.id}
+                          className="flex items-center justify-between gap-3 px-3 py-2"
+                        >
+                          <div>
+                            <p className="text-sm font-medium">
+                              {rule.member?.displayName ?? 'Profissional'}
+                            </p>
+                            <p className="text-xs text-neutral-500">
+                              {commissionKindLabel(rule)}:{' '}
+                              {formatCommission(rule)}
+                            </p>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Editar comissão de ${rule.member?.displayName ?? 'profissional'}`}
+                              onClick={() =>
+                                setCommissionDialog({
+                                  scope: 'member_service',
+                                  rule,
+                                })
+                              }
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Remover comissão de ${rule.member?.displayName ?? 'profissional'}`}
+                              onClick={() => void removeCommission(rule)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-neutral-500">
+                      Nenhuma comissão específica cadastrada.
+                    </p>
+                  )}
+                </div>
               </div>
             </>
           )}
@@ -493,31 +595,34 @@ export function ServicoForm({
       </Form>
 
       {/* Commission rule shortcut dialog (rendered outside the form) */}
-      {showCommissionSection && targetService && (
+      {showCommissionSection && targetService && commissionDialog && (
         <Dialog
-          open={commissionDialogOpen}
-          onOpenChange={setCommissionDialogOpen}
+          open
+          onOpenChange={(open) => {
+            if (!open) setCommissionDialog(null);
+          }}
         >
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>
-                {editingCommission
-                  ? 'Editar comissão'
-                  : 'Nova comissão por profissional'}{' '}
+                {commissionDialog.scope === 'service'
+                  ? commissionDialog.rule
+                    ? 'Editar comissão do serviço'
+                    : 'Definir comissão do serviço'
+                  : commissionDialog.rule
+                    ? 'Editar comissão por profissional'
+                    : 'Nova comissão por profissional'}{' '}
                 — {targetService.name}
               </DialogTitle>
             </DialogHeader>
             <CommissionRuleForm
-              onClose={() => {
-                setCommissionDialogOpen(false);
-                setEditingCommission(null);
-              }}
+              onClose={() => setCommissionDialog(null)}
               prefilledScope={{
-                scopeType: 'member_service',
+                scopeType: commissionDialog.scope,
                 serviceId: targetService.id,
               }}
               lockScope
-              initialRule={editingCommission ?? undefined}
+              initialRule={commissionDialog.rule}
             />
           </DialogContent>
         </Dialog>
