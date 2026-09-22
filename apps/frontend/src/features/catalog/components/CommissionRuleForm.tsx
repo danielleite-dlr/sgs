@@ -42,6 +42,7 @@ import {
   unmaskCurrency,
   maskPercentage,
   unmaskPercentage,
+  formatCurrencyDisplay,
 } from '../utils/currency-mask';
 
 // ---- Schema ----------------------------------------------------------------
@@ -220,7 +221,8 @@ export function CommissionRuleForm({
           categoryId: initialRule.category?.id,
           productId: initialRule.product?.id,
           kind: initialRule.kind,
-          value: initialRule.value,
+          // Backend serializes value as DECIMAL(12,4) ("120.0000"); the input is BR-masked, so format it for display
+          value: formatCurrencyDisplay(initialRule.value),
         }
       : prefilledScope
         ? {
