@@ -7,6 +7,7 @@ import { AppDrawer } from './AppDrawer';
 import { ChatBubble } from './ChatBubble';
 import { IconRail } from './IconRail';
 import { LowStockCountQuery } from '@/features/catalog/api/produtos.api';
+import { FEATURES } from '@/config/features';
 
 /**
  * AppShell — Trinks-style authenticated layout.
@@ -71,7 +72,7 @@ export function AppShell() {
       />
 
       {/* Floating chat bubble — persistent */}
-      <ChatBubble />
+      {FEATURES.chatSuporte && <ChatBubble />}
     </div>
   );
 }

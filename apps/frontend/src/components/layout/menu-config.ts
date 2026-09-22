@@ -18,6 +18,7 @@ import {
   Settings,
   type LucideIcon,
 } from 'lucide-react';
+import { isPathEnabled } from '@/config/features';
 
 export interface MenuItem {
   id: string;
@@ -37,7 +38,7 @@ export interface MenuItem {
  *   - Mobile drawer (AppDrawer)
  *   - Global search ("Buscar páginas no SGS")
  */
-export const MENU: MenuItem[] = [
+const ALL_MENU: MenuItem[] = [
   {
     id: 'home',
     label: 'Início',
@@ -376,6 +377,31 @@ export const MENU: MenuItem[] = [
     ],
   },
 ];
+
+/**
+ * Remove os destinos desligados em `config/features` e os grupos que ficam
+ * vazios por causa disso. É o que separa o menu do produto do menu do mockup.
+ */
+function pruneMenu(items: MenuItem[]): MenuItem[] {
+  const kept: MenuItem[] = [];
+  for (const item of items) {
+    const children = item.children ? pruneMenu(item.children) : undefined;
+    const hadChildren = (item.children?.length ?? 0) > 0;
+    // Grupo que perdeu todos os filhos some junto.
+    if (hadChildren && children!.length === 0) continue;
+    if (item.to && !isPathEnabled(item.to)) {
+      // Folha desligada some; pai que virou casca vazia some no nível acima.
+      if (!children || children.length === 0) continue;
+      kept.push({ ...item, to: undefined, children });
+      continue;
+    }
+    kept.push(children ? { ...item, children } : item);
+  }
+  return kept;
+}
+
+/** Menu efetivamente navegável — o que o usuário vê. */
+export const MENU: MenuItem[] = pruneMenu(ALL_MENU);
 
 /**
  * Flatten menu for global search.

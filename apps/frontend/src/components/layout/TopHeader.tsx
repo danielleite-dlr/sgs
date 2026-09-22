@@ -11,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { GlobalSearchSheet } from './GlobalSearchSheet';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { FEATURES, HOME_PATH } from '@/config/features';
 
 /**
  * Trinks-style top header.
@@ -34,7 +35,7 @@ export function TopHeader() {
         <header className="sticky top-0 z-40 flex h-14 items-stretch border-b border-neutral-200 bg-white">
           {/* Logo (matches icon rail width on desktop) */}
           <Link
-            to="/dashboard"
+            to={HOME_PATH}
             className="hidden lg:flex w-16 items-center justify-center bg-primary-700 text-white shrink-0 hover:bg-primary-500 transition-colors"
             aria-label="SGS — início"
           >
@@ -43,7 +44,7 @@ export function TopHeader() {
 
           {/* Mobile logo */}
           <Link
-            to="/dashboard"
+            to={HOME_PATH}
             className="flex lg:hidden items-center pl-md text-lg font-semibold text-primary-700"
           >
             SGS
@@ -63,69 +64,79 @@ export function TopHeader() {
             </button>
           </div>
 
-          {/* Estabelecimento selector */}
-          <div className="hidden md:flex items-center px-md border-l border-neutral-200">
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-xs text-sm font-medium text-neutral-700 hover:text-primary-500 transition-colors max-w-[220px]">
-                <span className="truncate">Studio Beleza LTDA</span>
-                <ChevronDown className="h-4 w-4 shrink-0" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem disabled>Studio Beleza LTDA (atual)</DropdownMenuItem>
-                <DropdownMenuItem disabled>+ Adicionar estabelecimento</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          {/* Estabelecimento selector — escondido até ler a organização real */}
+          {FEATURES.estabelecimentoSelector && (
+            <div className="hidden md:flex items-center px-md border-l border-neutral-200">
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-xs text-sm font-medium text-neutral-700 hover:text-primary-500 transition-colors max-w-[220px]">
+                  <span className="truncate">Studio Beleza LTDA</span>
+                  <ChevronDown className="h-4 w-4 shrink-0" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem disabled>Studio Beleza LTDA (atual)</DropdownMenuItem>
+                  <DropdownMenuItem disabled>+ Adicionar estabelecimento</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
 
           {/* Assine agora — green pill */}
-          <div className="hidden sm:flex items-center pr-md">
-            <Link
-              to="/configuracoes/plano"
-              className="flex items-center gap-xs rounded-full bg-success-500 px-md py-xs text-xs font-semibold text-white hover:bg-success-600 transition-colors"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              Assine agora
-            </Link>
-          </div>
+          {FEATURES.assinatura && (
+            <div className="hidden sm:flex items-center pr-md">
+              <Link
+                to="/configuracoes/plano"
+                className="flex items-center gap-xs rounded-full bg-success-500 px-md py-xs text-xs font-semibold text-white hover:bg-success-600 transition-colors"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Assine agora
+              </Link>
+            </div>
+          )}
 
           {/* Header actions */}
           <div className="flex items-center gap-xs px-md border-l border-neutral-200">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  aria-label="Notificações"
-                  className="relative h-9 w-9 rounded-full flex items-center justify-center text-neutral-600 hover:bg-neutral-50 hover:text-primary-700 transition-colors focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2"
-                >
-                  <Bell className="h-5 w-5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Notificações</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  aria-label="Ajuda"
-                  className="h-9 w-9 rounded-full flex items-center justify-center text-neutral-600 hover:bg-neutral-50 hover:text-primary-700 transition-colors focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2"
-                >
-                  <HelpCircle className="h-5 w-5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Ajuda</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  aria-label="Tutoriais"
-                  className="h-9 w-9 rounded-full flex items-center justify-center text-neutral-600 hover:bg-neutral-50 hover:text-primary-700 transition-colors focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2"
-                >
-                  <PlayCircle className="h-5 w-5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Tutoriais</TooltipContent>
-            </Tooltip>
+            {FEATURES.notificacoes && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Notificações"
+                    className="relative h-9 w-9 rounded-full flex items-center justify-center text-neutral-600 hover:bg-neutral-50 hover:text-primary-700 transition-colors focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2"
+                  >
+                    <Bell className="h-5 w-5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Notificações</TooltipContent>
+              </Tooltip>
+            )}
+            {FEATURES.ajudaTutoriais && (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Ajuda"
+                      className="h-9 w-9 rounded-full flex items-center justify-center text-neutral-600 hover:bg-neutral-50 hover:text-primary-700 transition-colors focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2"
+                    >
+                      <HelpCircle className="h-5 w-5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Ajuda</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Tutoriais"
+                      className="h-9 w-9 rounded-full flex items-center justify-center text-neutral-600 hover:bg-neutral-50 hover:text-primary-700 transition-colors focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2"
+                    >
+                      <PlayCircle className="h-5 w-5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Tutoriais</TooltipContent>
+                </Tooltip>
+              </>
+            )}
 
             {/* Avatar / user menu */}
             <DropdownMenu>
@@ -133,8 +144,6 @@ export function TopHeader() {
                 {initial}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem disabled>Perfil</DropdownMenuItem>
-                <DropdownMenuItem disabled>Área pessoal</DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => logout()} className="text-destructive">
                   Sair
                 </DropdownMenuItem>

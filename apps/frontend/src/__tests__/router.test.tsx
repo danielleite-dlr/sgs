@@ -40,7 +40,6 @@ describe('router phase 2', () => {
   });
 
   it.each([
-    '/dashboard',
     '/catalogo/categorias',
     '/catalogo/servicos',
     '/catalogo/pacotes',
@@ -64,6 +63,16 @@ describe('router phase 2', () => {
       unmount();
     }
   });
+
+  it.each(['/financeiro', '/comanda/abc', '/noivas', '/contratos', '/campanhas', '/relatorios', '/configuracoes'])(
+    'does not register mocked route %s',
+    (path) => {
+      const paths = appRouter.routes
+        .flatMap((r) => r.children ?? [])
+        .map((c) => c.path);
+      expect(paths).not.toContain(path);
+    },
+  );
 
   it('public route /login does NOT render AppShell sidebar', () => {
     useAuthStore.setState({

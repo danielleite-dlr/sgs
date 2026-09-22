@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Bell, CalendarDays, Menu as MenuIcon } from 'lucide-react';
+import { Home, Bell, CalendarDays, Users, Menu as MenuIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { FEATURES } from '@/config/features';
 
 interface BottomNavProps {
   /** Triggers AppDrawer open. */
@@ -14,10 +15,11 @@ interface BottomNavProps {
  * Hidden on lg+ breakpoints.
  *
  * Items:
- *   1. Início    — /dashboard
- *   2. Notificações — opens notifications panel (placeholder for now)
+ *   1. Início    — /dashboard        (só quando a home existir)
+ *   2. Notificações — painel          (só quando o painel existir)
  *   3. Agenda    — /agenda (operational center)
- *   4. Menu      — opens AppDrawer (hierarchical 3-level tree)
+ *   4. Clientes  — /clientes          (ocupa o lugar da home enquanto ela não existe)
+ *   5. Menu      — opens AppDrawer (hierarchical 3-level tree)
  */
 export function BottomNav({ onOpenMenu, notificationsCount = 0 }: BottomNavProps) {
   return (
@@ -26,16 +28,23 @@ export function BottomNav({ onOpenMenu, notificationsCount = 0 }: BottomNavProps
       aria-label="Navegação principal"
       className="fixed bottom-0 left-0 right-0 z-30 flex h-16 items-stretch justify-around border-t border-neutral-200 bg-white shadow-[0_-2px_8px_rgba(0,0,0,0.04)] lg:hidden"
     >
-      <BottomNavLink to="/dashboard" label="Início" icon={Home} />
-      <BottomNavButton
-        label="Notificações"
-        icon={Bell}
-        onClick={() => {
-          /* placeholder — opens notifications panel later */
-        }}
-        badgeCount={notificationsCount}
-      />
+      {FEATURES.dashboard && (
+        <BottomNavLink to="/dashboard" label="Início" icon={Home} />
+      )}
+      {FEATURES.notificacoes && (
+        <BottomNavButton
+          label="Notificações"
+          icon={Bell}
+          onClick={() => {
+            /* abre o painel de notificações */
+          }}
+          badgeCount={notificationsCount}
+        />
+      )}
       <BottomNavLink to="/agenda" label="Agenda" icon={CalendarDays} highlighted />
+      {!FEATURES.dashboard && (
+        <BottomNavLink to="/clientes" label="Clientes" icon={Users} />
+      )}
       <BottomNavButton label="Menu" icon={MenuIcon} onClick={onOpenMenu} />
     </nav>
   );
