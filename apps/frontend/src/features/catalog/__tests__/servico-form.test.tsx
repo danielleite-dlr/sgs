@@ -3,8 +3,10 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
 import '@/infrastructure/i18n/index';
 import { ServicoForm } from '../components/ServicoForm';
+import type { ServicoFormInitial } from '../components/ServicoForm';
 import { CategoriesQuery } from '../api/categorias.api';
 import { CreateServiceMutation, ServicesQuery } from '../api/servicos.api';
+import { CommissionRulesQuery } from '../api/comissoes.api';
 
 // A single category for all tests
 const mockCategories = [
@@ -36,6 +38,17 @@ const baseMocks = [
     result: { data: { services: [] } },
   },
 ];
+
+// Shape ServicoFormInitial — used by the commission-block tests, which require
+// an existing service (targetService) for the commission section to render.
+const mockInitial: ServicoFormInitial = {
+  id: 'svc-1',
+  name: 'Corte feminino',
+  categoryId: 'cat-1',
+  basePrice: '80.00',
+  defaultDurationMinutes: 60,
+  pricingVariants: [],
+};
 
 describe('ServicoForm', () => {
   it('renders all base fields with correct labels', async () => {
@@ -234,6 +247,79 @@ describe('ServicoForm', () => {
 
     expect(
       screen.getByText(/O preço base será aplicado quando não há variantes/i),
+    ).toBeInTheDocument();
+  });
+});
+
+describe('ServicoForm — comissão do serviço', () => {
+  it('exibe tipo e valor da comissão do serviço', async () => {
+    const mocks = [
+      ...baseMocks,
+      {
+        request: { query: CommissionRulesQuery },
+        result: {
+          data: {
+            commissionRules: [
+              {
+                id: 'cr-1',
+                scopeType: 'service',
+                kind: 'fixed',
+                value: '120.0000',
+                member: null,
+                service: { id: 'svc-1', name: 'Corte feminino' },
+                category: null,
+                product: null,
+                createdAt: '2026-01-01T00:00:00Z',
+                updatedAt: '2026-01-01T00:00:00Z',
+              },
+            ],
+          },
+        },
+      },
+    ];
+
+    render(
+      <MockedProvider mocks={mocks} addTypename={false}>
+        <ServicoForm initial={mockInitial} onClose={() => {}} />
+      </MockedProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Comissão do serviço')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Tipo')).toBeInTheDocument();
+    expect(screen.getByText('Valor fixo (R$)')).toBeInTheDocument();
+    expect(screen.getByText('Valor')).toBeInTheDocument();
+    expect(screen.getByText('R$ 120,00')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Editar/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('mostra fallback quando o serviço não tem comissão própria', async () => {
+    const mocks = [
+      ...baseMocks,
+      {
+        request: { query: CommissionRulesQuery },
+        result: { data: { commissionRules: [] } },
+      },
+    ];
+
+    render(
+      <MockedProvider mocks={mocks} addTypename={false}>
+        <ServicoForm initial={mockInitial} onClose={() => {}} />
+      </MockedProvider>,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Nenhuma comissão cadastrada para este serviço.'),
+      ).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByRole('button', { name: /Definir/i }),
     ).toBeInTheDocument();
   });
 });
