@@ -59,6 +59,8 @@ Profissional do beleza consegue agendar, atender, cobrar e comunicar com cliente
 
 **Arquitetura já decidida:** Clean Architecture (Domain→Application→Interface→Infrastructure), Modular Monolith com bounded contexts, event-driven com Outbox Pattern, persisted queries GraphQL em produção.
 
+**Diretriz de produto:** o SGS é uma plataforma modular por nichos. O onboarding aplica um template pré-configurado com os módulos adequados ao nicho escolhido, e o cliente pode ativar novos módulos depois. A especificação está em `.planning/PRODUCT_DIRECTION.md`.
+
 **SLAs definidos nos PRDs:** P95 API ≤300ms, agenda load ≤1s, uptime 99.5%, RPO 5min, RTO 1h.
 
 ## Constraints
@@ -80,6 +82,7 @@ Profissional do beleza consegue agendar, atender, cobrar e comunicar com cliente
 | BullMQ (não Temporal) | Suficiente para MVP, reavaliar para workflows complexos | — Pending |
 | WebSocket via Apollo Subscriptions | Padrão GraphQL, uso parcial (agenda em tempo real) | — Pending |
 | Pagar.me vs Stripe Connect | Ambos viáveis; decidir no início da implementação de pagamentos | — Pending |
+| Plataforma modular por nichos | Templates de onboarding ativam módulos específicos; catálogo permite adicionar módulos depois sem duplicar domínio | — Accepted |
 
 ---
 *Last updated: 2026-05-02 after initialization*
