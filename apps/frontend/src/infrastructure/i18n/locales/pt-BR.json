@@ -348,7 +348,7 @@
     "profissionais": {
       "tab": "Profissionais — SGS",
       "h1": "Profissionais",
-      "newCta": "Convidar profissional"
+      "newCta": "Cadastrar profissional"
     }
   },
   "operations": {
@@ -821,7 +821,9 @@
     "table": {
       "name": "Nome",
       "email": "E-mail",
+      "phone": "Telefone",
       "role": "Papel",
+      "categories": "Categorias",
       "seniority": "Senioridade",
       "status": "Status",
       "actions": "Ações"
@@ -849,13 +851,14 @@
       "edit": "Editar",
       "deactivate": "Desativar",
       "reactivate": "Reativar",
+      "resetPassword": "Gerar nova senha provisória",
       "invite": "Convidar profissional",
       "revoke": "Revogar"
     },
     "empty": {
       "heading": "Nenhum profissional cadastrado",
-      "body": "Convide alguém para começar a montar sua equipe.",
-      "cta": "Convidar profissional"
+      "body": "Cadastre alguém para começar a montar sua equipe.",
+      "cta": "Cadastrar profissional"
     },
     "error": {
       "heading": "Não foi possível carregar a equipe",
@@ -879,8 +882,55 @@
       },
       "empty": "Nenhum convite pendente."
     },
+    "categories": {
+      "label": "Categorias atendidas",
+      "loading": "Carregando categorias…",
+      "empty": "Nenhuma categoria cadastrada."
+    },
+    "password": {
+      "copy": "Copiar",
+      "copied": "Copiado.",
+      "copyFailed": "Não consegui copiar. Selecione e copie manualmente.",
+      "oneTimeNotice": "Envie essa senha ao profissional (por exemplo, pelo WhatsApp). Ela não será exibida novamente."
+    },
+    "createDialog": {
+      "title": "Cadastrar profissional",
+      "nameLabel": "Nome",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "nome@email.com",
+      "phoneLabel": "Telefone",
+      "phonePlaceholder": "(11) 98765-4321",
+      "pixLabel": "Chave Pix",
+      "pixPlaceholder": "CPF, CNPJ, e-mail, telefone ou chave aleatória",
+      "birthLabel": "Data de nascimento (opcional)",
+      "roleLabel": "Papel",
+      "rolePlaceholder": "Selecione o papel",
+      "alsoProfessionalLabel": "Também atende clientes",
+      "passwordLabel": "Senha provisória",
+      "generate": "Gerar",
+      "cancel": "Cancelar",
+      "submit": "Cadastrar",
+      "submitting": "Cadastrando…",
+      "resultTitle": "Profissional cadastrado",
+      "existingTitle": "Membro adicionado",
+      "createdBody": "{{name}} foi cadastrado(a) no salão.",
+      "sendHint": "No primeiro acesso, a pessoa será solicitada a trocar essa senha.",
+      "existingFallback": "Essa pessoa já tem conta no SGS e entra com a senha que já usa.",
+      "done": "Concluir"
+    },
+    "resetPassword": {
+      "confirmTitle": "Gerar nova senha para {{name}}?",
+      "confirmBody": "{{name}} precisará trocar a senha no próximo acesso e será desconectado(a) dos aparelhos.",
+      "confirmAction": "Gerar senha",
+      "submitting": "Gerando…",
+      "cancel": "Cancelar",
+      "resultTitle": "Nova senha de {{name}}"
+    },
     "editDialog": {
       "title": "Editar {{name}}",
+      "phoneLabel": "Telefone",
+      "pixLabel": "Chave Pix",
+      "birthLabel": "Data de nascimento",
       "roleLabel": "Papel",
       "isProfessionalLabel": "É profissional",
       "seniorityLabel": "Senioridade",
