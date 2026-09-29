@@ -5,7 +5,7 @@ milestone_name: milestone
 status: verifying
 stopped_at: Completed 02.1-backend-members-lifecycle-PLAN.md (wave 1 of Phase 02.1) - frontend wave (02.1-frontend-profissionais) still pending
 last_updated: "2026-09-29T02:52:41.884Z"
-last_activity: "2026-09-29 - Completed quick task 260929-dvr: Cadastro direto de profissional com senha provisoria, categorias atendidas e filtro na agenda (Needs Review: UAT manual)"
+last_activity: "2026-09-29 - Completed quick task 260929-gta: E2E Playwright do M1 (8/8 local; job e2e no CI)"
 progress:
   total_phases: 6
   completed_phases: 2
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 Phase: 3
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-09-29 - Completed quick task 260929-dvr: Cadastro direto de profissional com senha provisoria, categorias atendidas e filtro na agenda (Needs Review: UAT manual)
+Last activity: 2026-09-29 - Completed quick task 260929-gta: E2E Playwright do M1 (8/8 local; job e2e no CI)
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -156,6 +156,7 @@ Recent decisions affecting current work:
 | fast-260929d | Mascara de telefone BR nos dialogs de cadastro/edicao de profissional e na lista | 2026-09-29 | - | - |
 | fast-260929e | Tipo de chave Pix (CPF, CNPJ, e-mail, celular, aleatoria) com mascara e validacao por tipo no cadastro/edicao de profissional | 2026-09-29 | - | - |
 | fast-260929f | Profissional (papel PROFESSIONAL) so ve os proprios atendimentos (backend forca o filtro) e a agenda esconde agendar/selecao de profissionais para quem nao tem appointment.write | 2026-09-29 | - | - |
+| 260929-gta | Automatizar com Playwright os testes de verificacao manual do M1 (Fase 02.1) + job e2e no CI; corrige menu de acoes de /profissionais | 2026-09-29 | e6fda22 | [260929-gta-automatizar-com-playwright-os-testes-de-](./quick/260929-gta-automatizar-com-playwright-os-testes-de-/) |
 
 ## Session Continuity
 
