@@ -11,8 +11,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -25,8 +23,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -39,8 +35,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -53,7 +47,7 @@ jobs:
       - name: Wait for healthy
         run: |
           for i in $(seq 1 60); do
-            healthy=$(docker compose ps --format json | jq -r '[.[] | select(.Service != "backend" and .Service != "frontend" and .Service != "meilisearch")] | [.[].Health] | unique | join(",")')
+            healthy=$(docker compose ps --format json | jq -rs 'flatten | map(select(.Service != "backend" and .Service != "frontend" and .Service != "meilisearch")) | map(.Health) | unique | join(",")')
             if [ "$healthy" = "healthy" ]; then exit 0; fi
             sleep 5
           done
@@ -110,9 +104,10 @@ jobs:
           docker compose up -d --build
           # Wait for all services healthy (postgres, pgbouncer, valkey, meilisearch, backend, frontend)
           for i in $(seq 1 60); do
-            total=$(docker compose ps --format json | jq '. | length')
-            healthy=$(docker compose ps --format json | jq '[.[] | select(.Health == "healthy")] | length')
-            started=$(docker compose ps --format json | jq '[.[] | select(.State == "running")] | length')
+            ps_json=$(docker compose ps --format json)
+            total=$(printf '%s\n' "$ps_json" | jq -s 'flatten | length')
+            healthy=$(printf '%s\n' "$ps_json" | jq -s 'flatten | map(select(.Health == "healthy")) | length')
+            started=$(printf '%s\n' "$ps_json" | jq -s 'flatten | map(select(.State == "running")) | length')
             if [ "$total" -gt 0 ] && [ "$healthy" -gt 0 ] && [ "$started" = "$total" ]; then
               end=$(date +%s)
               elapsed=$((end - start))
@@ -141,8 +136,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
