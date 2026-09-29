@@ -429,6 +429,15 @@ describe('Member lifecycle (EQUIPE-01..04)', () => {
       );
       expect(ids).not.toContain(memberBId);
     });
+
+    it('allMembers de org B (via ADMIN B) não contém nenhum id de org A', async () => {
+      const res = await gql(adminBToken, orgBId, `query { allMembers { id } }`);
+      const ids: string[] = res.body.data.allMembers.map(
+        (m: { id: string }) => m.id,
+      );
+      expect(ids).not.toContain(targetMemberId);
+      expect(ids).toContain(memberBId);
+    });
   });
 
   describe('Ciclo de vida ponta a ponta', () => {
