@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: "Completed quick task 260928-vk2: Corrigir setup do pnpm e health check do CI"
-last_updated: "2026-09-29T01:55:49.443Z"
+stopped_at: Completed 02.1-backend-members-lifecycle-PLAN.md (wave 1 of Phase 02.1) - frontend wave (02.1-frontend-profissionais) still pending
+last_updated: "2026-09-29T02:52:41.884Z"
 last_activity: "2026-09-28 - Completed quick task 260928-vk2: Corrigir setup do pnpm e health check do CI"
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 2
-  total_plans: 15
-  completed_plans: 16
+  total_plans: 17
+  completed_plans: 17
   percent: 100
 ---
 
@@ -123,6 +123,7 @@ Recent decisions affecting current work:
 - [Phase 02-core-domain]: AppShell self-fetches lowStockCount with pollInterval 60s — removed prop-based approach since router passes AppShell with no props
 - [Phase 02-core-domain]: EntityCombobox is generic Popover+Command single-select reused across member/service/product pickers in CommissionRuleForm
 - [Phase quick]: Quick-260928-vk2: jq -s 'flatten | ...' (slurp+flatten) e' o padrao para parsing de docker compose ps --format json em CI, tolerante a JSON Lines e array
+- [Phase 02.1-equipe-e-profissionais-cadastro-completo-de-profissionais]: Backend wave (members-lifecycle): member_invitations gained is_professional/seniority_tier columns (Member untouched); deactivate blocks on future appointments only, commission rules inform via activeCommissionRuleCount; fixed pre-existing RLS bug in InvitationResolver.invite (unscoped organization lookup)
 
 ### Pending Todos
 
@@ -151,6 +152,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-09-29T01:55:27.934Z
-Stopped at: Completed quick task 260928-vk2: Corrigir setup do pnpm e health check do CI
+Last session: 2026-09-29T02:52:41.875Z
+Stopped at: Completed 02.1-backend-members-lifecycle-PLAN.md (wave 1 of Phase 02.1) - frontend wave (02.1-frontend-profissionais) still pending
 Resume file: None
