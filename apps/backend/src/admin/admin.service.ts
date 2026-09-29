@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { randomInt } from 'node:crypto';
+import { generatePassword } from '../auth/temporary-password';
 import { PrismaService } from '../database/prisma.service';
 import { TenantContextService, isUuid } from '../database/tenant-context.service';
 import type { TenantPrismaClient } from '../database/types';
@@ -39,18 +39,6 @@ export interface PlatformUserDto {
   isPlatformMaster: boolean;
   canAccessClientOrgs: boolean;
   lastLoginAt: Date | null;
-}
-
-/** Sem I, l, O, 0 e 1: a senha é ditada por WhatsApp, ambiguidade custa suporte. */
-const PASSWORD_ALPHABET =
-  'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-
-function generatePassword(length = 14): string {
-  let out = '';
-  for (let i = 0; i < length; i += 1) {
-    out += PASSWORD_ALPHABET[randomInt(PASSWORD_ALPHABET.length)];
-  }
-  return out;
 }
 
 /**

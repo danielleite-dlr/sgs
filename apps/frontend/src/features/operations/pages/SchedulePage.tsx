@@ -43,10 +43,16 @@ import { TIME_SLOTS } from "../mocks/schedule.mock";
 import {
   AppointmentsQuery,
   CreateAppointmentMutation,
+  ProfessionalsForServiceQuery,
   type AppointmentData,
   type AppointmentsQueryResult,
   type CreateAppointmentResult,
+  type ProfessionalsForServiceResult,
 } from "../api/appointments.api";
+import {
+  filterProfessionalsForService,
+  shouldClearProfessional,
+} from "../professional-filter";
 import {
   MembersQuery,
   type MemberData,
@@ -849,6 +855,34 @@ function AppointmentModal({
     }
   }, [open, initialTime]);
 
+  // Só o seletor do modal filtra pela categoria do serviço; a lista
+  // `professionals` das colunas da agenda não muda.
+  const { data: forServiceData } = useQuery<ProfessionalsForServiceResult>(
+    ProfessionalsForServiceQuery,
+    {
+      variables: { serviceId },
+      skip: !open || !serviceId,
+      fetchPolicy: "cache-and-network",
+    },
+  );
+  const allowedIds = useMemo<string[] | null>(
+    () =>
+      serviceId && forServiceData
+        ? forServiceData.professionalsForService.map((p) => p.id)
+        : null,
+    [serviceId, forServiceData],
+  );
+  const visibleProfessionals = filterProfessionalsForService(
+    professionals,
+    allowedIds,
+  );
+
+  useEffect(() => {
+    if (shouldClearProfessional(professionalId, allowedIds)) {
+      setProfessionalId("");
+    }
+  }, [allowedIds, professionalId]);
+
   const selectedService = servicesData?.services.find(
     (service) => service.id === serviceId,
   );
@@ -979,12 +1013,17 @@ function AppointmentModal({
                 className="mt-xs w-full rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white"
               >
                 <option value="">Selecione…</option>
-                {professionals.map((professional) => (
+                {visibleProfessionals.map((professional) => (
                   <option key={professional.id} value={professional.id}>
                     {professional.name}
                   </option>
                 ))}
               </select>
+              {allowedIds !== null && visibleProfessionals.length === 0 && (
+                <p className="mt-xs text-xs text-neutral-500">
+                  Nenhum profissional atende a categoria deste serviço.
+                </p>
+              )}
             </div>
             <div>
               <Label className="text-xs font-semibold text-neutral-700">

@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { TenantContextService } from "../database/tenant-context.service";
+import { professionalServesCategory } from "../identity/member-categories";
 
 export interface CreateAppointmentInput {
   professionalId: string;
@@ -133,6 +134,20 @@ export class AppointmentsService {
           "SERVICE_NOT_FOUND",
           "Serviço ativo não encontrado.",
           "serviceId",
+        );
+      }
+
+      if (
+        !(await professionalServesCategory(
+          tx,
+          input.professionalId,
+          service.categoryId,
+        ))
+      ) {
+        return errorPayload(
+          "PROFESSIONAL_DOES_NOT_SERVE_CATEGORY",
+          "Este profissional não atende a categoria deste serviço.",
+          "professionalId",
         );
       }
 

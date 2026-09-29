@@ -41,8 +41,18 @@ export const SENIORITY_OPTIONS = ['junior', 'pleno', 'senior'] as const;
 export type MemberStatus = 'active' | 'inactive';
 export type SeniorityTier = (typeof SENIORITY_OPTIONS)[number];
 
+export interface MemberCategoryData {
+  id: string;
+  name: string;
+}
+
 export interface AdminMemberData extends MemberData {
   status: MemberStatus;
+  /** Dados pessoais: null para papéis que não são ADMIN/MANAGER e para members antigos. */
+  phone?: string | null;
+  pixKey?: string | null;
+  birthDate?: string | null;
+  categories: MemberCategoryData[];
 }
 
 export interface UserErrorData {
@@ -66,6 +76,13 @@ export const AllMembersQuery = gql`
       seniorityTier
       isProfessional
       status
+      phone
+      pixKey
+      birthDate
+      categories {
+        id
+        name
+      }
     }
   }
 `;
@@ -84,6 +101,13 @@ export const UpdateMemberMutation = gql`
         seniorityTier
         isProfessional
         status
+        phone
+        pixKey
+        birthDate
+        categories {
+          id
+          name
+        }
       }
       errors {
         code
@@ -97,6 +121,81 @@ export const UpdateMemberMutation = gql`
 export interface UpdateMemberResult {
   updateMember: {
     member: AdminMemberData | null;
+    errors: UserErrorData[];
+  };
+}
+
+export const CreateMemberMutation = gql`
+  mutation CreateMember($input: CreateMemberInput!) {
+    createMember(input: $input) {
+      member {
+        id
+        displayName
+        email
+        roleName
+        seniorityTier
+        isProfessional
+        status
+        phone
+        pixKey
+        birthDate
+        categories {
+          id
+          name
+        }
+      }
+      existingAccount
+      warning
+      errors {
+        code
+        message
+        field
+      }
+    }
+  }
+`;
+
+export interface CreateMemberInputData {
+  displayName: string;
+  email: string;
+  phone: string;
+  pixKey: string;
+  birthDate?: string | null;
+  roleName: string;
+  isProfessional: boolean;
+  categoryIds?: string[];
+  temporaryPassword: string;
+}
+
+export interface CreateMemberResult {
+  createMember: {
+    member: AdminMemberData | null;
+    existingAccount: boolean;
+    warning: string | null;
+    errors: UserErrorData[];
+  };
+}
+
+export const ResetMemberPasswordMutation = gql`
+  mutation ResetMemberPassword($input: ResetMemberPasswordInput!) {
+    resetMemberPassword(input: $input) {
+      member {
+        id
+      }
+      temporaryPassword
+      errors {
+        code
+        message
+        field
+      }
+    }
+  }
+`;
+
+export interface ResetMemberPasswordResult {
+  resetMemberPassword: {
+    member: { id: string } | null;
+    temporaryPassword: string | null;
     errors: UserErrorData[];
   };
 }

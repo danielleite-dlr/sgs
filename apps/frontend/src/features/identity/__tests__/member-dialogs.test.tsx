@@ -5,12 +5,17 @@ import '@/infrastructure/i18n';
 import { toast } from 'sonner';
 import { MemberEditDialog } from '../components/MemberEditDialog';
 import { InviteMemberDialog } from '../components/InviteMemberDialog';
+import { CreateMemberDialog } from '../components/CreateMemberDialog';
+import { ResetMemberPasswordDialog } from '../components/ResetMemberPasswordDialog';
 import { DeactivateMemberDialog } from '../components/DeactivateMemberDialog';
 import {
   UpdateMemberMutation,
   InviteMemberMutation,
   DeactivateMemberMutation,
+  CreateMemberMutation,
+  ResetMemberPasswordMutation,
 } from '@/features/catalog/api/members.api';
+import { CategoriesQuery } from '@/features/catalog/api/categorias.api';
 import type { AdminMemberData } from '@/features/catalog/api/members.api';
 
 vi.mock('sonner', () => ({
@@ -29,6 +34,10 @@ const professionalMember: AdminMemberData = {
   seniorityTier: 'senior',
   isProfessional: true,
   status: 'active',
+  phone: '+5511987654321',
+  pixKey: '12345678909',
+  birthDate: null,
+  categories: [{ id: 'cat-1', name: 'Cabelo' }],
 };
 
 const attendantMember: AdminMemberData = {
@@ -39,10 +48,55 @@ const attendantMember: AdminMemberData = {
   seniorityTier: null,
   isProfessional: false,
   status: 'active',
+  phone: null,
+  pixKey: null,
+  birthDate: null,
+  categories: [],
 };
+
+const categoriesMock = {
+  request: { query: CategoriesQuery },
+  result: {
+    data: {
+      categories: [
+        {
+          id: 'cat-1',
+          name: 'Cabelo',
+          parentId: null,
+          displayOrder: 1,
+          coverImageUrl: null,
+          children: [
+            {
+              id: 'cat-1-1',
+              name: 'Coloração',
+              parentId: 'cat-1',
+              displayOrder: 1,
+              coverImageUrl: null,
+            },
+          ],
+        },
+        {
+          id: 'cat-2',
+          name: 'Maquiagem',
+          parentId: null,
+          displayOrder: 2,
+          coverImageUrl: null,
+          children: [],
+        },
+      ],
+    },
+  },
+};
+
+const writeText = vi.fn().mockResolvedValue(undefined);
 
 beforeEach(() => {
   vi.clearAllMocks();
+  writeText.mockResolvedValue(undefined);
+  Object.defineProperty(navigator, 'clipboard', {
+    value: { writeText },
+    configurable: true,
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -52,12 +106,15 @@ beforeEach(() => {
 describe('MemberEditDialog', () => {
   it('pre-fills role, isProfessional and seniority from the member', () => {
     render(
-      <MockedProvider mocks={[]} addTypename={false}>
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
         <MemberEditDialog member={professionalMember} open onClose={vi.fn()} />
       </MockedProvider>,
     );
 
-    expect(screen.getByLabelText('É profissional')).toBeChecked();
+    // Papel PROFESSIONAL implica profissional: o checkbox fica escondido.
+    expect(screen.queryByLabelText('É profissional')).toBeNull();
+    expect(screen.getByLabelText('Telefone')).toHaveValue('+5511987654321');
+    expect(screen.getByLabelText('Chave Pix')).toHaveValue('12345678909');
     expect(
       screen.getByRole('combobox', { name: 'Senioridade' }),
     ).not.toBeDisabled();
@@ -65,7 +122,7 @@ describe('MemberEditDialog', () => {
 
   it('marking isProfessional enables seniority; unmarking disables and clears it', () => {
     render(
-      <MockedProvider mocks={[]} addTypename={false}>
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
         <MemberEditDialog member={attendantMember} open onClose={vi.fn()} />
       </MockedProvider>,
     );
@@ -91,6 +148,7 @@ describe('MemberEditDialog', () => {
             roleName: 'PROFESSIONAL',
             isProfessional: true,
             seniorityTier: 'senior',
+            categoryIds: ['cat-1'],
           },
         },
       },
@@ -104,6 +162,10 @@ describe('MemberEditDialog', () => {
               seniorityTier: 'senior',
               isProfessional: true,
               status: 'active',
+              phone: '+5511987654321',
+              pixKey: '12345678909',
+              birthDate: null,
+              categories: [{ id: 'cat-1', name: 'Cabelo' }],
             },
             errors: [],
           },
@@ -112,7 +174,7 @@ describe('MemberEditDialog', () => {
     };
 
     render(
-      <MockedProvider mocks={[mock]} addTypename={false}>
+      <MockedProvider mocks={[mock, categoriesMock]} addTypename={false}>
         <MemberEditDialog member={professionalMember} open onClose={onClose} />
       </MockedProvider>,
     );
@@ -135,6 +197,7 @@ describe('MemberEditDialog', () => {
             roleName: 'PROFESSIONAL',
             isProfessional: true,
             seniorityTier: 'senior',
+            categoryIds: ['cat-1'],
           },
         },
       },
@@ -155,7 +218,7 @@ describe('MemberEditDialog', () => {
     };
 
     render(
-      <MockedProvider mocks={[mock]} addTypename={false}>
+      <MockedProvider mocks={[mock, categoriesMock]} addTypename={false}>
         <MemberEditDialog member={professionalMember} open onClose={vi.fn()} />
       </MockedProvider>,
     );
@@ -179,6 +242,7 @@ describe('MemberEditDialog', () => {
             roleName: 'PROFESSIONAL',
             isProfessional: true,
             seniorityTier: 'senior',
+            categoryIds: ['cat-1'],
           },
         },
       },
@@ -195,7 +259,7 @@ describe('MemberEditDialog', () => {
     };
 
     render(
-      <MockedProvider mocks={[mock]} addTypename={false}>
+      <MockedProvider mocks={[mock, categoriesMock]} addTypename={false}>
         <MemberEditDialog member={professionalMember} open onClose={vi.fn()} />
       </MockedProvider>,
     );
@@ -473,5 +537,499 @@ describe('DeactivateMemberDialog', () => {
       expect(toast.message).not.toHaveBeenCalled();
       expect(onClose).toHaveBeenCalled();
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// MemberEditDialog — extended fields
+// ---------------------------------------------------------------------------
+
+describe('MemberEditDialog (contato e categorias)', () => {
+  it('professional role hides the isProfessional checkbox and shows categories', async () => {
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <MemberEditDialog member={professionalMember} open onClose={vi.fn()} />
+      </MockedProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'Papel' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Atendente' }));
+    expect(screen.getByLabelText('É profissional')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'Papel' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Profissional' }));
+    await waitFor(() => {
+      expect(screen.queryByLabelText('É profissional')).toBeNull();
+    });
+    expect(await screen.findByLabelText('Cabelo')).toBeChecked();
+  });
+
+  it('legacy member without phone/pix can be saved without filling them', async () => {
+    const onClose = vi.fn();
+    const mock = {
+      request: {
+        query: UpdateMemberMutation,
+        variables: {
+          input: {
+            id: 'mem-2',
+            roleName: 'ATTENDANT',
+            isProfessional: false,
+            seniorityTier: null,
+          },
+        },
+      },
+      result: {
+        data: {
+          updateMember: {
+            member: {
+              ...attendantMember,
+              displayName: 'Bruno Souza',
+            },
+            errors: [],
+          },
+        },
+      },
+    };
+    render(
+      <MockedProvider mocks={[mock, categoriesMock]} addTypename={false}>
+        <MemberEditDialog member={attendantMember} open onClose={onClose} />
+      </MockedProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  it('rejects an invalid phone typed on a legacy member', async () => {
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <MemberEditDialog member={attendantMember} open onClose={vi.fn()} />
+      </MockedProvider>,
+    );
+
+    fireEvent.change(screen.getByLabelText('Telefone'), { target: { value: '123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    expect(await screen.findByText('Telefone inválido.')).toBeInTheDocument();
+  });
+
+  it('does not allow clearing an existing phone', async () => {
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <MemberEditDialog member={professionalMember} open onClose={vi.fn()} />
+      </MockedProvider>,
+    );
+
+    fireEvent.change(screen.getByLabelText('Telefone'), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    expect(await screen.findByText('Este campo é obrigatório.')).toBeInTheDocument();
+  });
+
+  it('sends changed phone (normalized), pix, birth date and categories', async () => {
+    const onClose = vi.fn();
+    const mock = {
+      request: {
+        query: UpdateMemberMutation,
+        variables: {
+          input: {
+            id: 'mem-1',
+            roleName: 'PROFESSIONAL',
+            isProfessional: true,
+            seniorityTier: 'senior',
+            phone: '+551133334444',
+            pixKey: 'ana@pix.com',
+            birthDate: '1990-05-20T00:00:00.000Z',
+            categoryIds: ['cat-1', 'cat-2'],
+          },
+        },
+      },
+      result: {
+        data: {
+          updateMember: {
+            member: { ...professionalMember },
+            errors: [],
+          },
+        },
+      },
+    };
+    render(
+      <MockedProvider mocks={[mock, categoriesMock]} addTypename={false}>
+        <MemberEditDialog member={professionalMember} open onClose={onClose} />
+      </MockedProvider>,
+    );
+
+    fireEvent.change(screen.getByLabelText('Telefone'), {
+      target: { value: '(11) 3333-4444' },
+    });
+    fireEvent.change(screen.getByLabelText('Chave Pix'), {
+      target: { value: 'ana@pix.com' },
+    });
+    fireEvent.change(screen.getByLabelText('Data de nascimento'), {
+      target: { value: '1990-05-20' },
+    });
+    fireEvent.click(await screen.findByLabelText('Maquiagem'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CreateMemberDialog
+// ---------------------------------------------------------------------------
+
+const createdMember = {
+  id: 'mem-new',
+  displayName: 'Carla Nova',
+  email: 'carla@studio.com',
+  roleName: 'PROFESSIONAL',
+  seniorityTier: null,
+  isProfessional: true,
+  status: 'active',
+  phone: '+5511987654321',
+  pixKey: '12345678909',
+  birthDate: null,
+  categories: [{ id: 'cat-1', name: 'Cabelo' }],
+};
+
+async function fillCreateForm(opts: { role?: string } = {}) {
+  fireEvent.change(screen.getByLabelText('Nome'), { target: { value: 'Carla Nova' } });
+  fireEvent.change(screen.getByLabelText('E-mail'), {
+    target: { value: 'carla@studio.com' },
+  });
+  fireEvent.change(screen.getByLabelText('Telefone'), {
+    target: { value: '(11) 98765-4321' },
+  });
+  fireEvent.change(screen.getByLabelText('Chave Pix'), {
+    target: { value: '123.456.789-09' },
+  });
+  fireEvent.click(screen.getByRole('combobox', { name: 'Papel' }));
+  fireEvent.click(
+    await screen.findByRole('option', { name: opts.role ?? 'Profissional' }),
+  );
+}
+
+describe('CreateMemberDialog', () => {
+  it('requires the mandatory fields', async () => {
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <CreateMemberDialog open onClose={vi.fn()} callerRoleName="ADMIN" />
+      </MockedProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Este campo é obrigatório.').length).toBeGreaterThanOrEqual(3);
+      expect(screen.getByText('Selecione um papel.')).toBeInTheDocument();
+    });
+  });
+
+  it('pre-generates a password and the Gerar button replaces it', () => {
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <CreateMemberDialog open onClose={vi.fn()} callerRoleName="ADMIN" />
+      </MockedProvider>,
+    );
+
+    const input = screen.getByLabelText('Senha provisória') as HTMLInputElement;
+    expect(input.value).toHaveLength(14);
+    const before = input.value;
+    fireEvent.click(screen.getByRole('button', { name: 'Gerar' }));
+    expect((screen.getByLabelText('Senha provisória') as HTMLInputElement).value).not.toBe(before);
+  });
+
+  it('MANAGER does not see the ADMIN role option', async () => {
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <CreateMemberDialog open onClose={vi.fn()} callerRoleName="MANAGER" />
+      </MockedProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'Papel' }));
+    expect(await screen.findByRole('option', { name: 'Gerente' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Admin' })).toBeNull();
+  });
+
+  it('PROFESSIONAL hides the also-attends checkbox and shows categories; ATTENDANT shows checkbox first', async () => {
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <CreateMemberDialog open onClose={vi.fn()} callerRoleName="ADMIN" />
+      </MockedProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'Papel' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Atendente' }));
+    const checkbox = await screen.findByLabelText('Também atende clientes');
+    expect(checkbox).not.toBeChecked();
+    expect(screen.queryByText('Categorias atendidas')).toBeNull();
+
+    fireEvent.click(checkbox);
+    expect(await screen.findByLabelText('Cabelo')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'Papel' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Profissional' }));
+    await waitFor(() => {
+      expect(screen.queryByLabelText('Também atende clientes')).toBeNull();
+    });
+    expect(await screen.findByLabelText('Cabelo')).toBeInTheDocument();
+  });
+
+  it('blocks a professional without categories', async () => {
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <CreateMemberDialog open onClose={vi.fn()} callerRoleName="ADMIN" />
+      </MockedProvider>,
+    );
+
+    await fillCreateForm();
+    fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    expect(
+      await screen.findByText('Escolha ao menos uma categoria que o profissional atende.'),
+    ).toBeInTheDocument();
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('submits the mutation, then shows the temporary password once with a copy button', async () => {
+    const onClose = vi.fn();
+    let sentPassword = '';
+    const mock = {
+      request: { query: CreateMemberMutation },
+      variableMatcher: (vars: { input: Record<string, unknown> }) => {
+        sentPassword = vars.input.temporaryPassword as string;
+        const { temporaryPassword: _pw, ...rest } = vars.input;
+        void _pw;
+        expect(rest).toEqual({
+          displayName: 'Carla Nova',
+          email: 'carla@studio.com',
+          phone: '+5511987654321',
+          pixKey: '123.456.789-09',
+          birthDate: null,
+          roleName: 'PROFESSIONAL',
+          isProfessional: true,
+          categoryIds: ['cat-1'],
+        });
+        return true;
+      },
+      result: {
+        data: {
+          createMember: {
+            member: createdMember,
+            existingAccount: false,
+            warning: null,
+            errors: [],
+          },
+        },
+      },
+    };
+    render(
+      <MockedProvider mocks={[mock, categoriesMock]} addTypename={false}>
+        <CreateMemberDialog open onClose={onClose} callerRoleName="ADMIN" />
+      </MockedProvider>,
+    );
+
+    await fillCreateForm();
+    fireEvent.click(await screen.findByLabelText('Cabelo'));
+    fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    const shown = await screen.findByTestId('temporary-password');
+    expect(shown).toHaveTextContent(sentPassword);
+    expect(sentPassword).toHaveLength(14);
+    expect(screen.getByText(/Ela não será exibida novamente/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copiar' }));
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(sentPassword);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Concluir' }));
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('existing account shows the warning and never a password', async () => {
+    const mock = {
+      request: { query: CreateMemberMutation },
+      variableMatcher: () => true,
+      result: {
+        data: {
+          createMember: {
+            member: createdMember,
+            existingAccount: true,
+            warning: 'Essa pessoa já tem conta no SGS e entra com a senha que já usa.',
+            errors: [],
+          },
+        },
+      },
+    };
+    render(
+      <MockedProvider mocks={[mock, categoriesMock]} addTypename={false}>
+        <CreateMemberDialog open onClose={vi.fn()} callerRoleName="ADMIN" />
+      </MockedProvider>,
+    );
+
+    await fillCreateForm();
+    fireEvent.click(await screen.findByLabelText('Cabelo'));
+    fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    expect(
+      await screen.findByText(
+        'Essa pessoa já tem conta no SGS e entra com a senha que já usa.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('temporary-password')).toBeNull();
+  });
+
+  it('maps a field error (MEMBER_ALREADY_EXISTS) to the email field, not a toast', async () => {
+    const mock = {
+      request: { query: CreateMemberMutation },
+      variableMatcher: () => true,
+      result: {
+        data: {
+          createMember: {
+            member: null,
+            existingAccount: false,
+            warning: null,
+            errors: [
+              {
+                code: 'MEMBER_ALREADY_EXISTS',
+                message: 'Essa pessoa já faz parte deste salão.',
+                field: 'email',
+              },
+            ],
+          },
+        },
+      },
+    };
+    render(
+      <MockedProvider mocks={[mock, categoriesMock]} addTypename={false}>
+        <CreateMemberDialog open onClose={vi.fn()} callerRoleName="ADMIN" />
+      </MockedProvider>,
+    );
+
+    await fillCreateForm();
+    fireEvent.click(await screen.findByLabelText('Cabelo'));
+    fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    expect(
+      await screen.findByText('Essa pessoa já faz parte deste salão.'),
+    ).toBeInTheDocument();
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('an error without a field goes to a toast', async () => {
+    const mock = {
+      request: { query: CreateMemberMutation },
+      variableMatcher: () => true,
+      result: {
+        data: {
+          createMember: {
+            member: null,
+            existingAccount: false,
+            warning: null,
+            errors: [{ code: 'BOOM', message: 'Algo deu errado.', field: null }],
+          },
+        },
+      },
+    };
+    render(
+      <MockedProvider mocks={[mock, categoriesMock]} addTypename={false}>
+        <CreateMemberDialog open onClose={vi.fn()} callerRoleName="ADMIN" />
+      </MockedProvider>,
+    );
+
+    await fillCreateForm();
+    fireEvent.click(await screen.findByLabelText('Cabelo'));
+    fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Algo deu errado.');
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// ResetMemberPasswordDialog
+// ---------------------------------------------------------------------------
+
+describe('ResetMemberPasswordDialog', () => {
+  it('asks for confirmation, then shows the new password once with copy', async () => {
+    const mock = {
+      request: {
+        query: ResetMemberPasswordMutation,
+        variables: { input: { id: 'mem-1' } },
+      },
+      result: {
+        data: {
+          resetMemberPassword: {
+            member: { id: 'mem-1' },
+            temporaryPassword: 'AbCdEfGhJkMnPq',
+            errors: [],
+          },
+        },
+      },
+    };
+    render(
+      <MockedProvider mocks={[mock]} addTypename={false}>
+        <ResetMemberPasswordDialog member={professionalMember} open onClose={vi.fn()} />
+      </MockedProvider>,
+    );
+
+    expect(
+      screen.getByText(/precisará trocar a senha no próximo acesso/),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Gerar senha' }));
+
+    expect(await screen.findByTestId('temporary-password')).toHaveTextContent(
+      'AbCdEfGhJkMnPq',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Copiar' }));
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith('AbCdEfGhJkMnPq');
+    });
+  });
+
+  it('shows a toast and stays on the confirmation on error', async () => {
+    const mock = {
+      request: {
+        query: ResetMemberPasswordMutation,
+        variables: { input: { id: 'mem-1' } },
+      },
+      result: {
+        data: {
+          resetMemberPassword: {
+            member: null,
+            temporaryPassword: null,
+            errors: [
+              {
+                code: 'MEMBER_IN_OTHER_ORGANIZATION',
+                message: 'Essa pessoa também trabalha em outro salão.',
+                field: null,
+              },
+            ],
+          },
+        },
+      },
+    };
+    render(
+      <MockedProvider mocks={[mock]} addTypename={false}>
+        <ResetMemberPasswordDialog member={professionalMember} open onClose={vi.fn()} />
+      </MockedProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Gerar senha' }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Essa pessoa também trabalha em outro salão.');
+    });
+    expect(screen.queryByTestId('temporary-password')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Gerar senha' })).toBeInTheDocument();
   });
 });

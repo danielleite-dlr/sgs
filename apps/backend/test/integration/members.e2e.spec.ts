@@ -2,6 +2,7 @@ import { adminPrisma } from './setup';
 import { TenantContextService } from '../../src/database/tenant-context.service';
 import { PrismaService } from '../../src/database/prisma.service';
 import { MembersService } from '../../src/identity/members.service';
+import { PasswordService } from '../../src/auth/password.service';
 
 /**
  * Integration tests for MembersService — members/allMembers queries and the
@@ -150,7 +151,7 @@ describe('MembersService — listActive', () => {
     // Wire up service
     const prismaService = new PrismaService();
     const tenantCtx = new TenantContextService(prismaService);
-    service = new MembersService(tenantCtx);
+    service = new MembersService(tenantCtx, prismaService, new PasswordService());
   });
 
   afterAll(async () => {
@@ -502,7 +503,7 @@ describe('MembersService — listAll, update, deactivate, reactivate', () => {
 
     const prismaService = new PrismaService();
     const tenantCtx = new TenantContextService(prismaService);
-    service = new MembersService(tenantCtx);
+    service = new MembersService(tenantCtx, prismaService, new PasswordService());
   });
 
   afterAll(async () => {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
-import { MoreHorizontal, Pencil, Power, Trash2, UserPlus } from 'lucide-react';
+import { KeyRound, MoreHorizontal, Pencil, Power, Trash2, UserPlus } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DataTable } from '@/components/ui/data-table';
 import type { DataTableColumn } from '@/components/ui/data-table';
@@ -14,56 +14,31 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
 import {
   canInviteMembers,
   canManageMembers,
 } from '@/features/identity/team-permissions';
-import { InviteMemberDialog } from '@/features/identity/components/InviteMemberDialog';
+import { CreateMemberDialog } from '@/features/identity/components/CreateMemberDialog';
+import { ResetMemberPasswordDialog } from '@/features/identity/components/ResetMemberPasswordDialog';
 import { MemberEditDialog } from '@/features/identity/components/MemberEditDialog';
 import { DeactivateMemberDialog } from '@/features/identity/components/DeactivateMemberDialog';
 import {
   AllMembersQuery,
-  PendingInvitationsQuery,
   ReactivateMemberMutation,
-  RevokeInvitationMutation,
 } from '@/features/catalog/api/members.api';
 import type {
   AdminMemberData,
   AllMembersResult,
-  PendingInvitationData,
-  PendingInvitationsResult,
   ReactivateMemberResult,
-  RevokeInvitationResult,
 } from '@/features/catalog/api/members.api';
 
-/**
- * Same reasoning as DeactivateMemberDialog: date-fns isn't an installed
- * dependency yet, so pt-BR formatting goes through Intl instead.
- */
-function formatExpiresAt(iso: string): string {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: 'long',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(iso));
-}
-
-function seniorityLabel(
-  t: (key: string) => string,
-  tier: AdminMemberData['seniorityTier'],
-): string {
-  return tier ? t(`team.seniority.${tier}`) : t('team.seniority.none');
+/** Formata E.164 brasileiro (+5511987654321) como (11) 98765-4321. */
+function formatPhone(phone: string | null | undefined): string {
+  if (!phone) return '—';
+  const m = /^\+55(\d{2})(\d{4,5})(\d{4})$/.exec(phone);
+  return m ? `(${m[1]}) ${m[2]}-${m[3]}` : phone;
 }
 
 function roleLabel(t: (key: string) => string, roleName: string): string {
@@ -75,7 +50,8 @@ export function ProfissionaisPage() {
   const roleName = useAuthStore((s) => s.roleName);
   const canInvite = canInviteMembers(roleName);
   const canManage = canManageMembers(roleName);
-  const [inviteOpen, setInviteOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [resettingMember, setResettingMember] = useState<AdminMemberData | null>(null);
   const [editingMember, setEditingMember] = useState<AdminMemberData | null>(null);
   const [deactivatingMember, setDeactivatingMember] = useState<AdminMemberData | null>(null);
 
@@ -84,11 +60,8 @@ export function ProfissionaisPage() {
   }, [t]);
 
   const { data, loading } = useQuery<AllMembersResult>(AllMembersQuery);
-  const { data: invitesData, loading: invitesLoading } =
-    useQuery<PendingInvitationsResult>(PendingInvitationsQuery);
 
   const members = data?.allMembers ?? [];
-  const invitations = invitesData?.pendingInvitations ?? [];
 
   const [reactivateMember] = useMutation<ReactivateMemberResult>(
     ReactivateMemberMutation,
@@ -106,16 +79,6 @@ export function ProfissionaisPage() {
     },
   );
 
-  const [revokeInvitation] = useMutation<RevokeInvitationResult>(
-    RevokeInvitationMutation,
-    {
-      update(cache) {
-        cache.evict({ fieldName: 'pendingInvitations' });
-        cache.gc();
-      },
-    },
-  );
-
   async function handleReactivate(member: AdminMemberData) {
     const res = await reactivateMember({ variables: { id: member.id } });
     const errors = res.data?.reactivateMember.errors ?? [];
@@ -128,23 +91,7 @@ export function ProfissionaisPage() {
     );
   }
 
-  async function handleRevoke(invite: PendingInvitationData) {
-    const res = await revokeInvitation({
-      variables: { invitationId: invite.id },
-    });
-    const errors = res.data?.revokeInvitation.errors ?? [];
-    if (errors.length) {
-      toast.error(errors[0].message);
-      return;
-    }
-    toast.success(t('team.toasts.invitationRevoked'));
-  }
-
-  const showEmpty =
-    !loading &&
-    !invitesLoading &&
-    members.length === 0 &&
-    invitations.length === 0;
+  const showEmpty = !loading && members.length === 0;
 
   return (
     <>
@@ -152,7 +99,7 @@ export function ProfissionaisPage() {
         title={t('pages.profissionais.h1')}
         cta={
           canInvite ? (
-            <Button onClick={() => setInviteOpen(true)}>
+            <Button onClick={() => setCreateOpen(true)}>
               <UserPlus className="mr-2 h-4 w-4" />
               {t('pages.profissionais.newCta')}
             </Button>
@@ -168,7 +115,7 @@ export function ProfissionaisPage() {
             {t('team.empty.body')}
           </p>
           {canInvite && (
-            <Button onClick={() => setInviteOpen(true)}>
+            <Button onClick={() => setCreateOpen(true)}>
               {t('team.empty.cta')}
             </Button>
           )}
@@ -201,14 +148,30 @@ export function ProfissionaisPage() {
                 cell: (r) => r.email,
               },
               {
+                key: 'phone',
+                header: t('team.table.phone'),
+                cell: (r) => formatPhone(r.phone),
+              },
+              {
                 key: 'role',
                 header: t('team.table.role'),
                 cell: (r) => roleLabel(t, r.roleName),
               },
               {
-                key: 'seniority',
-                header: t('team.table.seniority'),
-                cell: (r) => seniorityLabel(t, r.seniorityTier),
+                key: 'categories',
+                header: t('team.table.categories'),
+                cell: (r) =>
+                  r.categories.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {r.categories.map((c) => (
+                        <Badge key={c.id} variant="outline">
+                          {c.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    '—'
+                  ),
               },
               {
                 key: 'status',
@@ -241,6 +204,15 @@ export function ProfissionaisPage() {
                             <Pencil className="mr-2 h-4 w-4" />
                             {t('team.actions.edit')}
                           </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              setResettingMember(r);
+                            }}
+                          >
+                            <KeyRound className="mr-2 h-4 w-4" />
+                            {t('team.actions.resetPassword')}
+                          </DropdownMenuItem>
                           {r.status === 'active' ? (
                             <DropdownMenuItem
                               onSelect={(e) => {
@@ -267,54 +239,22 @@ export function ProfissionaisPage() {
             ]}
           />
 
-          {invitations.length > 0 && (
-            <div className="mt-2xl space-y-md">
-              <h2 className="text-base font-semibold text-neutral-800">
-                {t('team.invitations.title')}
-              </h2>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('team.invitations.table.email')}</TableHead>
-                    <TableHead>{t('team.invitations.table.role')}</TableHead>
-                    <TableHead>{t('team.invitations.table.seniority')}</TableHead>
-                    <TableHead>{t('team.invitations.table.expiresAt')}</TableHead>
-                    {canInvite && (
-                      <TableHead>{t('team.invitations.table.actions')}</TableHead>
-                    )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {invitations.map((invite) => (
-                    <TableRow key={invite.id}>
-                      <TableCell>{invite.email}</TableCell>
-                      <TableCell>{roleLabel(t, invite.roleName)}</TableCell>
-                      <TableCell>
-                        {seniorityLabel(t, invite.seniorityTier ?? null)}
-                      </TableCell>
-                      <TableCell>{formatExpiresAt(invite.expiresAt)}</TableCell>
-                      {canInvite && (
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRevoke(invite)}
-                          >
-                            {t('team.actions.revoke')}
-                          </Button>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
         </>
       )}
 
       {canInvite && (
-        <InviteMemberDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
+        <CreateMemberDialog
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          callerRoleName={roleName}
+        />
+      )}
+      {canManage && resettingMember && (
+        <ResetMemberPasswordDialog
+          member={resettingMember}
+          open
+          onClose={() => setResettingMember(null)}
+        />
       )}
       {canManage && editingMember && (
         <MemberEditDialog
