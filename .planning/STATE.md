@@ -126,7 +126,8 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- **CI: falta `prisma generate` nos jobs `typecheck` e `lint`** (adiado em 2026-09-29). Ambos rodam `pnpm install --frozen-lockfile` e vao direto para `tsc`/`eslint` sem gerar o Prisma client, produzindo ~20 erros com uma unica causa raiz (`Prisma.ClientWhereInput` e `PrismaClientKnownRequestError` inexistentes, `tx`/`rows`/`r` com any implicito). O `ci.yml` ja tem `pnpm prisma:generate` na linha 69, mas so dentro do job `integration`; nao ha hook `postinstall` em nenhum package.json. Correcao: uma linha por job. Evidencia: run 36510415854.
+- **CI: `pgbouncer` sem healthcheck no `docker-compose.yml`** (adiado em 2026-09-29). O job `integration` espera que todos os servicos nao-excluidos reportem `"healthy"`, mas `docker-compose.yml:29-49` define o pgbouncer sem bloco `healthcheck:`, entao ele nunca reporta estado e o loop estoura as 60 iteracoes. Estava mascarado pelo bug de parsing jq corrigido no quick 260928-vk2. Saidas: dar healthcheck ao pgbouncer (preferivel — INFRA-02 depende dele) ou excluir da lista de espera. Evidencia: run 36510415854.
 
 ### Blockers/Concerns
 
