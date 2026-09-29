@@ -114,7 +114,8 @@ describe('MemberEditDialog', () => {
     // Papel PROFESSIONAL implica profissional: o checkbox fica escondido.
     expect(screen.queryByLabelText('É profissional')).toBeNull();
     expect(screen.getByLabelText('Telefone')).toHaveValue('(11) 98765-4321');
-    expect(screen.getByLabelText('Chave Pix')).toHaveValue('12345678909');
+    expect(screen.getByLabelText('Chave Pix')).toHaveValue('123.456.789-09');
+    expect(screen.getByRole('radio', { name: 'CPF' })).toBeChecked();
     expect(
       screen.getByRole('combobox', { name: 'Senioridade' }),
     ).not.toBeDisabled();
@@ -337,7 +338,7 @@ describe('InviteMemberDialog', () => {
       </MockedProvider>,
     );
 
-    fireEvent.change(screen.getByLabelText('E-mail'), {
+    fireEvent.change(screen.getByRole('textbox', { name: 'E-mail' }), {
       target: { value: 'novo@studio.com' },
     });
 
@@ -387,7 +388,7 @@ describe('InviteMemberDialog', () => {
       </MockedProvider>,
     );
 
-    fireEvent.change(screen.getByLabelText('E-mail'), {
+    fireEvent.change(screen.getByRole('textbox', { name: 'E-mail' }), {
       target: { value: 'ja-existe@studio.com' },
     });
     fireEvent.click(screen.getByRole('combobox', { name: 'Papel' }));
@@ -665,6 +666,7 @@ describe('MemberEditDialog (contato e categorias)', () => {
     fireEvent.change(screen.getByLabelText('Telefone'), {
       target: { value: '(11) 3333-4444' },
     });
+    fireEvent.click(screen.getByRole('radio', { name: 'E-mail' }));
     fireEvent.change(screen.getByLabelText('Chave Pix'), {
       target: { value: 'ana@pix.com' },
     });
@@ -701,12 +703,13 @@ const createdMember = {
 
 async function fillCreateForm(opts: { role?: string } = {}) {
   fireEvent.change(screen.getByLabelText('Nome'), { target: { value: 'Carla Nova' } });
-  fireEvent.change(screen.getByLabelText('E-mail'), {
+  fireEvent.change(screen.getByRole('textbox', { name: 'E-mail' }), {
     target: { value: 'carla@studio.com' },
   });
   fireEvent.change(screen.getByLabelText('Telefone'), {
     target: { value: '(11) 98765-4321' },
   });
+  fireEvent.click(screen.getByRole('radio', { name: 'CPF' }));
   fireEvent.change(screen.getByLabelText('Chave Pix'), {
     target: { value: '123.456.789-09' },
   });
@@ -811,7 +814,7 @@ describe('CreateMemberDialog', () => {
           displayName: 'Carla Nova',
           email: 'carla@studio.com',
           phone: '+5511987654321',
-          pixKey: '123.456.789-09',
+          pixKey: '12345678909',
           birthDate: null,
           roleName: 'PROFESSIONAL',
           isProfessional: true,

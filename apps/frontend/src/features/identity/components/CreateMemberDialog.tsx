@@ -37,7 +37,9 @@ import {
 } from '@/features/catalog/api/members.api';
 import type { CreateMemberResult } from '@/features/catalog/api/members.api';
 import { generateTemporaryPassword } from '../temporary-password';
-import { isValidPixKey, maskBrPhone, normalizeBrPhone } from '../member-validation';
+import { maskBrPhone, normalizeBrPhone } from '../member-validation';
+import { PIX_KEY_TYPES, pixKeyError, toPixKeyPayload } from '../pix-key';
+import { PixKeyField } from './PixKeyField';
 import { MemberCategoriesField } from './MemberCategoriesField';
 import { TemporaryPasswordBox } from './TemporaryPasswordBox';
 
@@ -52,11 +54,8 @@ const schema = z
       .trim()
       .min(1, REQUIRED)
       .refine((v) => normalizeBrPhone(v) !== null, 'Telefone inválido.'),
-    pixKey: z
-      .string()
-      .trim()
-      .min(1, REQUIRED)
-      .refine(isValidPixKey, 'Chave Pix inválida.'),
+    pixKeyType: z.enum(PIX_KEY_TYPES).nullable(),
+    pixKey: z.string(),
     birthDate: z.string(),
     roleName: z.enum(ROLE_OPTIONS, {
       errorMap: () => ({ message: 'Selecione um papel.' }),
@@ -69,6 +68,10 @@ const schema = z
       .max(128, 'A senha deve ter no máximo 128 caracteres.'),
   })
   .superRefine((v, ctx) => {
+    const pixError = pixKeyError(v.pixKeyType, v.pixKey);
+    if (pixError) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: pixError, path: ['pixKey'] });
+    }
     const professional = v.roleName === 'PROFESSIONAL' || v.alsoProfessional;
     if (professional && v.categoryIds.length === 0) {
       ctx.addIssue({
@@ -86,6 +89,7 @@ function defaultValues(): FormValues {
     displayName: '',
     email: '',
     phone: '',
+    pixKeyType: null,
     pixKey: '',
     birthDate: '',
     roleName: undefined as unknown as FormValues['roleName'],
@@ -184,7 +188,7 @@ export function CreateMemberDialog({
           displayName: values.displayName.trim(),
           email: values.email.trim(),
           phone: normalizeBrPhone(values.phone) ?? values.phone,
-          pixKey: values.pixKey.trim(),
+          pixKey: toPixKeyPayload(values.pixKeyType!, values.pixKey),
           birthDate: values.birthDate ? `${values.birthDate}T00:00:00.000Z` : null,
           roleName: values.roleName,
           isProfessional: professional,
@@ -312,22 +316,16 @@ export function CreateMemberDialog({
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="pixKey"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('team.createDialog.pixLabel')}</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          autoComplete="off"
-                          placeholder={t('team.createDialog.pixPlaceholder')}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                <PixKeyField
+                  idPrefix="create-member-pix"
+                  label={t('team.createDialog.pixLabel')}
+                  type={form.watch('pixKeyType')}
+                  value={form.watch('pixKey')}
+                  onTypeChange={(next) => form.setValue('pixKeyType', next)}
+                  onValueChange={(next) =>
+                    form.setValue('pixKey', next, { shouldValidate: form.formState.isSubmitted })
+                  }
+                  error={form.formState.errors.pixKey?.message}
                 />
 
                 <FormField

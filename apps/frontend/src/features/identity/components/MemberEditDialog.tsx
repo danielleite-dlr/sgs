@@ -39,7 +39,15 @@ import type {
   AdminMemberData,
   UpdateMemberResult,
 } from '@/features/catalog/api/members.api';
-import { isValidPixKey, maskBrPhone, normalizeBrPhone } from '../member-validation';
+import { maskBrPhone, normalizeBrPhone } from '../member-validation';
+import {
+  PIX_KEY_TYPES,
+  detectPixKeyType,
+  maskPixKey,
+  pixKeyError,
+  toPixKeyPayload,
+} from '../pix-key';
+import { PixKeyField } from './PixKeyField';
 import { MemberCategoriesField } from './MemberCategoriesField';
 
 const REQUIRED = 'Este campo é obrigatório.';
@@ -68,22 +76,21 @@ function buildSchema(member: AdminMemberData) {
           ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Telefone inválido.' });
         }
       }),
-    pixKey: z
-      .string()
-      .trim()
-      .superRefine((v, ctx) => {
-        if (!v) {
-          if (member.pixKey) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: REQUIRED });
-          }
-          return;
-        }
-        if (!isValidPixKey(v)) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Chave Pix inválida.' });
-        }
-      }),
+    pixKeyType: z.enum(PIX_KEY_TYPES).nullable(),
+    pixKey: z.string(),
     birthDate: z.string(),
     categoryIds: z.array(z.string()),
+  }).superRefine((v, ctx) => {
+    if (!v.pixKey.trim()) {
+      if (member.pixKey) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: REQUIRED, path: ['pixKey'] });
+      }
+      return;
+    }
+    const pixError = pixKeyError(v.pixKeyType, v.pixKey);
+    if (pixError) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: pixError, path: ['pixKey'] });
+    }
   });
 }
 
@@ -101,7 +108,8 @@ function defaultsFor(member: AdminMemberData): FormValues {
     isProfessional: member.isProfessional,
     seniorityTier: (member.seniorityTier ?? null) as FormValues['seniorityTier'],
     phone: maskBrPhone(member.phone ?? ''),
-    pixKey: member.pixKey ?? '',
+    pixKeyType: detectPixKeyType(member.pixKey),
+    pixKey: maskPixKey(detectPixKeyType(member.pixKey), member.pixKey ?? ''),
     birthDate: member.birthDate ? member.birthDate.slice(0, 10) : '',
     categoryIds: (member.categories ?? []).map((c) => c.id),
   };
@@ -158,8 +166,10 @@ export function MemberEditDialog({ member, open, onClose }: MemberEditDialogProp
       const normalized = normalizeBrPhone(phone);
       if (normalized && normalized !== member.phone) input.phone = normalized;
     }
-    const pixKey = values.pixKey.trim();
-    if (pixKey && pixKey !== member.pixKey) input.pixKey = pixKey;
+    if (values.pixKey.trim() && values.pixKeyType) {
+      const pixKey = toPixKeyPayload(values.pixKeyType, values.pixKey);
+      if (pixKey !== member.pixKey) input.pixKey = pixKey;
+    }
 
     const originalBirth = member.birthDate ? member.birthDate.slice(0, 10) : '';
     if (values.birthDate !== originalBirth) {
@@ -218,18 +228,16 @@ export function MemberEditDialog({ member, open, onClose }: MemberEditDialogProp
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="pixKey"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('team.editDialog.pixLabel')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} autoComplete="off" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <PixKeyField
+              idPrefix="member-edit-pix"
+              label={t('team.editDialog.pixLabel')}
+              type={form.watch('pixKeyType')}
+              value={form.watch('pixKey')}
+              onTypeChange={(next) => form.setValue('pixKeyType', next)}
+              onValueChange={(next) =>
+                form.setValue('pixKey', next, { shouldValidate: form.formState.isSubmitted })
+              }
+              error={form.formState.errors.pixKey?.message}
             />
 
             <FormField
