@@ -23,6 +23,7 @@ import { ClientesPage } from '@/pages/ClientesPage';
 import { ClienteDetailPage } from '@/pages/ClienteDetailPage';
 import { ClienteEditPage } from '@/pages/ClienteEditPage';
 import { ClienteNovoPage } from '@/pages/ClienteNovoPage';
+import { ProfissionaisPage } from '@/pages/ProfissionaisPage';
 // Phase 3 — Operations
 import { SchedulePage } from '@/features/operations/pages/SchedulePage';
 import { ComandaPage } from '@/features/operations/pages/ComandaPage';
@@ -80,6 +81,7 @@ import { RelatoriosPage } from '@/pages/RelatoriosPage';
  *     /clientes/novo            — Novo cliente form
  *     /clientes/:id             — Cliente detail
  *     /clientes/:id/editar      — Cliente edit
+ *     /profissionais            — Equipe (allMembers + convites pendentes)
  *     /dashboard                — redireciona para a home vigente
  */
 
@@ -100,6 +102,7 @@ const PROTECTED_ROUTES: GatedRoute[] = [
   { path: '/clientes/novo',         element: <ClienteNovoPage /> },
   { path: '/clientes/:id',          element: <ClienteDetailPage /> },
   { path: '/clientes/:id/editar',   element: <ClienteEditPage /> },
+  { path: '/profissionais',         element: <ProfissionaisPage /> },
   { path: '/agenda',                element: <SchedulePage /> },
   { path: '/comanda/:id',           element: <ComandaPage /> },
   { path: '/financeiro',                         element: <FinanceiroPage /> },

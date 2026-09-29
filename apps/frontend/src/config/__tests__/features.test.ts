@@ -12,6 +12,7 @@ describe('feature gating', () => {
       '/catalogo/servicos',
       '/catalogo/produtos',
       '/catalogo/comissoes',
+      '/profissionais',
     ]) {
       expect(isPathEnabled(path)).toBe(true);
     }
@@ -29,7 +30,8 @@ describe('feature gating', () => {
       '/noivas',
       '/contratos/:id',
       '/campanhas',
-      '/profissionais',
+      '/profissionais/perfis',
+      '/profissionais/ranking',
       '/clientes/ranking',
       '/clientes?filtro=aniversariantes',
       '/agenda?modo=relatorio',
