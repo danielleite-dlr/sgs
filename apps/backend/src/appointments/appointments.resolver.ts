@@ -10,6 +10,18 @@ import {
   CreateAppointmentInput,
 } from "./appointments.service";
 
+/**
+ * Quem tem papel PROFESSIONAL só enxerga os atendimentos em que é o
+ * responsável: o filtro vindo do cliente é ignorado e substituído pelo próprio
+ * member. ADMIN, MANAGER e ATTENDANT (recepção) veem a agenda inteira.
+ */
+export function scopeProfessionalFilter(
+  tenant: Pick<TenantContext, "roleName" | "memberId">,
+  requested?: string,
+): string | undefined {
+  return tenant.roleName === "PROFESSIONAL" ? tenant.memberId : requested;
+}
+
 @Resolver()
 export class AppointmentsResolver {
   constructor(private readonly appointments: AppointmentsService) {}
@@ -25,7 +37,7 @@ export class AppointmentsResolver {
     return this.appointments.list(tenant.organizationId, {
       startsAt,
       endsAt,
-      professionalId,
+      professionalId: scopeProfessionalFilter(tenant, professionalId),
     });
   }
 

@@ -67,6 +67,11 @@ import {
   type ServicesQueryResult,
 } from "@/features/catalog/api/servicos.api";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/infrastructure/stores/auth.store";
+import {
+  canWriteAppointments,
+  seesOnlyOwnAppointments,
+} from "../schedule-permissions";
 
 // ─── Types & constants ────────────────────────────────────────────────────────
 
@@ -194,7 +199,6 @@ function appointmentToSchedule(
   };
 }
 
-
 function getAppointmentStyle(
   appt: ScheduleAppointment,
   slotHeight: number,
@@ -312,6 +316,8 @@ interface FilterPanelProps {
   onChangeShowFolga: (v: boolean) => void;
   onOpenBuscarAgendar: () => void;
   onOpenSelecaoProf: () => void;
+  canSchedule: boolean;
+  canSelectProfessionals: boolean;
 }
 
 function FilterPanel(props: FilterPanelProps) {
@@ -325,26 +331,30 @@ function FilterPanel(props: FilterPanelProps) {
 
       {/* Ações rápidas — Buscar e Agendar / Seleção de Profissionais */}
       <div className="flex flex-col gap-xs">
-        <button
-          type="button"
-          onClick={props.onOpenBuscarAgendar}
-          className="flex items-center gap-sm px-sm py-xs rounded-md border border-primary-200 text-sm text-neutral-700 hover:bg-primary-50 transition-colors text-left"
-        >
-          <span className="h-6 w-6 rounded-md bg-primary-500 text-white flex items-center justify-center shrink-0">
-            <CalendarDays className="h-3.5 w-3.5" />
-          </span>
-          <span className="flex-1">Buscar e Agendar</span>
-        </button>
-        <button
-          type="button"
-          onClick={props.onOpenSelecaoProf}
-          className="flex items-center gap-sm px-sm py-xs rounded-md border border-primary-200 text-sm text-neutral-700 hover:bg-primary-50 transition-colors text-left"
-        >
-          <span className="h-6 w-6 rounded-md bg-primary-700 text-white flex items-center justify-center shrink-0">
-            <Users className="h-3.5 w-3.5" />
-          </span>
-          <span className="flex-1">Seleção de Profissionais</span>
-        </button>
+        {props.canSchedule && (
+          <button
+            type="button"
+            onClick={props.onOpenBuscarAgendar}
+            className="flex items-center gap-sm px-sm py-xs rounded-md border border-primary-200 text-sm text-neutral-700 hover:bg-primary-50 transition-colors text-left"
+          >
+            <span className="h-6 w-6 rounded-md bg-primary-500 text-white flex items-center justify-center shrink-0">
+              <CalendarDays className="h-3.5 w-3.5" />
+            </span>
+            <span className="flex-1">Buscar e Agendar</span>
+          </button>
+        )}
+        {props.canSelectProfessionals && (
+          <button
+            type="button"
+            onClick={props.onOpenSelecaoProf}
+            className="flex items-center gap-sm px-sm py-xs rounded-md border border-primary-200 text-sm text-neutral-700 hover:bg-primary-50 transition-colors text-left"
+          >
+            <span className="h-6 w-6 rounded-md bg-primary-700 text-white flex items-center justify-center shrink-0">
+              <Users className="h-3.5 w-3.5" />
+            </span>
+            <span className="flex-1">Seleção de Profissionais</span>
+          </button>
+        )}
       </div>
 
       {/* Nome do profissional — chips */}
@@ -793,7 +803,6 @@ interface AppointmentModalProps {
   initialTime?: { hour: number; minute: number; profId?: string };
 }
 
-
 function maskTime(input: string): string {
   const digits = input.replace(/\D/g, "").slice(0, 4);
   if (digits.length <= 2) return digits;
@@ -806,7 +815,6 @@ function maskDateBR(input: string): string {
   if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
   return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
 }
-
 
 function AppointmentModal({
   open,
@@ -1143,11 +1151,16 @@ export function SchedulePage() {
   >();
   const [buscarAgendarOpen, setBuscarAgendarOpen] = useState(false);
   const [selecaoProfOpen, setSelecaoProfOpen] = useState(false);
+  const roleName = useAuthStore((s) => s.roleName);
+  const memberId = useAuthStore((s) => s.memberId);
+  const canSchedule = canWriteAppointments(roleName);
+  const ownOnly = seesOnlyOwnAppointments(roleName);
   const { data: membersData } = useQuery<MembersQueryResult>(MembersQuery);
   const professionals = useMemo<ScheduleProfessional[]>(
     () =>
       (membersData?.members ?? [])
         .filter((member: MemberData) => member.isProfessional)
+        .filter((member: MemberData) => !ownOnly || member.id === memberId)
         .map((member, index) => ({
           id: member.id,
           name: member.displayName,
@@ -1159,7 +1172,7 @@ export function SchedulePage() {
             .toUpperCase(),
           color: PROFESSIONAL_COLORS[index % PROFESSIONAL_COLORS.length],
         })),
-    [membersData],
+    [membersData, ownOnly, memberId],
   );
   const range = useMemo(() => dayRange(selectedDate), [selectedDate]);
   const { data: appointmentsData, refetch: refetchAppointments } =
@@ -1167,7 +1180,9 @@ export function SchedulePage() {
       variables: {
         startsAt: range.from,
         endsAt: range.to,
-        professionalId: null,
+        // O backend já restringe o PROFESSIONAL; mandar o próprio id deixa
+        // o pedido explícito.
+        professionalId: ownOnly ? memberId : null,
       },
     });
 
@@ -1220,6 +1235,7 @@ export function SchedulePage() {
     });
   }
   function openModalAt(hour: number, minute: number, profId?: string) {
+    if (!canSchedule) return;
     setModalSeed({ hour, minute, profId });
     setModalOpen(true);
   }
@@ -1250,6 +1266,8 @@ export function SchedulePage() {
       onChangeShowFolga={setShowFolga}
       onOpenBuscarAgendar={() => setBuscarAgendarOpen(true)}
       onOpenSelecaoProf={() => setSelecaoProfOpen(true)}
+      canSchedule={canSchedule}
+      canSelectProfessionals={!ownOnly}
     />
   );
 
@@ -1353,17 +1371,19 @@ export function SchedulePage() {
           </div>
 
           {/* +Agendar */}
-          <Button
-            size="sm"
-            className="gap-xs bg-error-500 hover:bg-error-700 text-white"
-            onClick={() => {
-              setModalSeed(undefined);
-              setModalOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4" />
-            Agendar
-          </Button>
+          {canSchedule && (
+            <Button
+              size="sm"
+              className="gap-xs bg-error-500 hover:bg-error-700 text-white"
+              onClick={() => {
+                setModalSeed(undefined);
+                setModalOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Agendar
+            </Button>
+          )}
 
           {/* Filtros (mobile) */}
           <Button
@@ -1540,6 +1560,7 @@ export function SchedulePage() {
                       <button
                         key={i}
                         type="button"
+                        disabled={!canSchedule}
                         onClick={() =>
                           openModalAt(slot.hour, slot.minute, pro.id)
                         }
@@ -1548,10 +1569,16 @@ export function SchedulePage() {
                           slot.minute === 0
                             ? "border-neutral-200"
                             : "border-neutral-100 border-dashed",
-                          "hover:bg-primary-50/30",
+                          canSchedule
+                            ? "hover:bg-primary-50/30"
+                            : "cursor-default",
                         )}
                         style={{ top: i * slotHeight, height: slotHeight }}
-                        aria-label={`Cadastrar agendamento às ${slot.label} para ${pro.name}`}
+                        aria-label={
+                          canSchedule
+                            ? `Cadastrar agendamento às ${slot.label} para ${pro.name}`
+                            : `${slot.label} — ${pro.name}`
+                        }
                       />
                     ))}
 
@@ -1658,19 +1685,23 @@ export function SchedulePage() {
         </footer>
       </div>
 
-      <AppointmentModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        initialTime={modalSeed}
-        professionals={professionals}
-        onCreated={() => void refetchAppointments()}
-      />
+      {canSchedule && (
+        <AppointmentModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          initialTime={modalSeed}
+          professionals={professionals}
+          onCreated={() => void refetchAppointments()}
+        />
+      )}
 
-      <BuscarAgendarModal
-        open={buscarAgendarOpen}
-        onOpenChange={setBuscarAgendarOpen}
-        professionals={professionals}
-      />
+      {canSchedule && (
+        <BuscarAgendarModal
+          open={buscarAgendarOpen}
+          onOpenChange={setBuscarAgendarOpen}
+          professionals={professionals}
+        />
+      )}
 
       <SelecaoProfissionaisModal
         open={selecaoProfOpen}
