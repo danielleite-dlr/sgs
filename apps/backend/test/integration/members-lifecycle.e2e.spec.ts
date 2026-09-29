@@ -5,6 +5,8 @@ import request from 'supertest';
 import { createHash } from 'crypto';
 import { AppModule } from '../../src/app.module';
 import { adminPrisma } from './setup';
+import { TestEmailAdapter } from '../../src/email/test-email.adapter';
+import { EMAIL_ADAPTER } from '../../src/email/email.module';
 
 /**
  * Member lifecycle e2e tests — RBAC + RLS + business guards for
@@ -34,9 +36,15 @@ describe('Member lifecycle (EQUIPE-01..04)', () => {
   let futureApptMemberId: string; // org A, has a future appointment
 
   beforeAll(async () => {
+    // O convite dispara envio de e-mail. Sem este override a suite bate na API
+    // real do Resend e falha com 401 fora de um ambiente com chave valida —
+    // mesmo padrao usado em full-auth-flow.e2e-spec.ts.
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(EMAIL_ADAPTER)
+      .useClass(TestEmailAdapter)
+      .compile();
     app = moduleRef.createNestApplication(new FastifyAdapter());
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
