@@ -1,0 +1,17 @@
+{
+  "name": "@sgs/e2e",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "SGS E2E — Playwright contra backend e frontend reais",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^22.13.4",
+    "typescript": "^5.7.3"
+  }
+}
