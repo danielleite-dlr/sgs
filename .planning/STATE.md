@@ -5,7 +5,7 @@ milestone_name: milestone
 status: verifying
 stopped_at: Completed 02.1-backend-members-lifecycle-PLAN.md (wave 1 of Phase 02.1) - frontend wave (02.1-frontend-profissionais) still pending
 last_updated: "2026-09-29T02:52:41.884Z"
-last_activity: "2026-09-29 - Completed quick task 260929-dek: Esconder acoes de equipe por papel, proteger ultimo admin e no-cache do index.html"
+last_activity: "2026-09-29 - Completed quick task 260929-dvr: Cadastro direto de profissional com senha provisoria, categorias atendidas e filtro na agenda (Needs Review: UAT manual)"
 progress:
   total_phases: 6
   completed_phases: 2
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 Phase: 3
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-09-29 - Completed quick task 260929-dek: Esconder acoes de equipe por papel, proteger ultimo admin e no-cache do index.html
+Last activity: 2026-09-29 - Completed quick task 260929-dvr: Cadastro direto de profissional com senha provisoria, categorias atendidas e filtro na agenda (Needs Review: UAT manual)
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -152,6 +152,7 @@ Recent decisions affecting current work:
 | fast-260929 | Corrigir CI: prisma generate nos jobs typecheck/lint e healthcheck do pgbouncer (resolve os 2 achados de CI adiados) | 2026-09-29 | - | - |
 | fast-260929b | Corrigir nome dos scalars DateTime/Email no schema publicado (query da agenda falhava com Unknown type "DateTime") + teste de regressao | 2026-09-29 | - | - |
 | fast-260929c | Declarar prettier no frontend (hook do graphql-codegen falhava com prettier: not found no CI) | 2026-09-29 | - | - |
+| 260929-dvr | Cadastro direto de profissional com senha provisoria, categorias atendidas e filtro de profissional por categoria na agenda | 2026-09-29 | 1da3b73 | [260929-dvr-cadastro-direto-de-profissional-com-senh](./quick/260929-dvr-cadastro-direto-de-profissional-com-senh/) |
 
 ## Session Continuity
 
