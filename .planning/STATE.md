@@ -127,8 +127,6 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- **CI: falta `prisma generate` nos jobs `typecheck` e `lint`** (adiado em 2026-09-29). Ambos rodam `pnpm install --frozen-lockfile` e vao direto para `tsc`/`eslint` sem gerar o Prisma client, produzindo ~20 erros com uma unica causa raiz (`Prisma.ClientWhereInput` e `PrismaClientKnownRequestError` inexistentes, `tx`/`rows`/`r` com any implicito). O `ci.yml` ja tem `pnpm prisma:generate` na linha 69, mas so dentro do job `integration`; nao ha hook `postinstall` em nenhum package.json. Correcao: uma linha por job. Evidencia: run 36510415854.
-- **CI: `pgbouncer` sem healthcheck no `docker-compose.yml`** (adiado em 2026-09-29). O job `integration` espera que todos os servicos nao-excluidos reportem `"healthy"`, mas `docker-compose.yml:29-49` define o pgbouncer sem bloco `healthcheck:`, entao ele nunca reporta estado e o loop estoura as 60 iteracoes. Estava mascarado pelo bug de parsing jq corrigido no quick 260928-vk2. Saidas: dar healthcheck ao pgbouncer (preferivel — INFRA-02 depende dele) ou excluir da lista de espera. Evidencia: run 36510415854.
 
 - **Testes de RBAC e auth nunca rodaram — 4 arquivos invisiveis para o Jest** (descoberto em 2026-09-29 pelo plan-checker da fase 02.1, confirmado empiricamente). `apps/backend/jest-integration.config.ts:7` usa `testRegex: '.*\.spec\.ts$'`, que exige PONTO antes de `spec.ts`. Os arquivos `rbac.e2e-spec.ts`, `invitation.e2e-spec.ts`, `auth.e2e-spec.ts` e `full-auth-flow.e2e-spec.ts` usam HIFEN e nunca sao descobertos — ou seja, a cobertura de RBAC e do fluxo completo de autenticacao nunca executou, apesar de a Fase 1 ter sido marcada completa com eles no plano. Correcao: renomear os 4 para `.e2e.spec.ts` e rodar, esperando que falhas reais aparecam. Nao feito agora para nao virar desvio grande no meio da fase 02.1.
 - **`pnpm test:e2e` aponta para config inexistente** (mesmo contexto). `apps/backend/package.json:18` roda `jest --config ./test/jest-e2e.json`, mas `apps/backend/test/jest-e2e.json` nao existe no repo. O comando falha imediatamente. Decidir: criar a config ou remover o script.
@@ -151,6 +149,7 @@ Recent decisions affecting current work:
 | 260922-0kn | Exibir a comissao cadastrada do servico (tipo e valor) na tela de editar servico | 2026-09-22 | 9df355f | [260922-0kn-exibir-a-comissao-cadastrada-do-servico-](./quick/260922-0kn-exibir-a-comissao-cadastrada-do-servico-/) |
 | 260928-vk2 | Corrigir setup do pnpm (ERR_PNPM_BAD_PM_VERSION) e parsing jq do health check do CI (JSON Lines) | 2026-09-28 | 31d6bdf | [260928-vk2-corrigir-setup-do-pnpm-e-health-check-do](./quick/260928-vk2-corrigir-setup-do-pnpm-e-health-check-do/) |
 | 260929-dek | Esconder acoes de equipe por papel, proteger ultimo admin e no-cache do index.html | 2026-09-29 | 24a6e63 | [260929-dek-esconder-acoes-de-equipe-por-papel-prote](./quick/260929-dek-esconder-acoes-de-equipe-por-papel-prote/) |
+| fast-260929 | Corrigir CI: prisma generate nos jobs typecheck/lint e healthcheck do pgbouncer (resolve os 2 achados de CI adiados) | 2026-09-29 | - | - |
 
 ## Session Continuity
 
