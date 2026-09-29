@@ -11,6 +11,8 @@ extend type Mutation {
   updateMember(input: UpdateMemberInput!): UpdateMemberPayload!
   deactivateMember(id: UUID!): DeactivateMemberPayload!
   reactivateMember(id: UUID!): ReactivateMemberPayload!
+  createMember(input: CreateMemberInput!): CreateMemberPayload!
+  resetMemberPassword(input: ResetMemberPasswordInput!): ResetMemberPasswordPayload!
 }
 
 # ===== Members (added Phase 2 — needed by commissions.graphql cross-SDL reference) =====
@@ -25,7 +27,49 @@ type Member {
   seniorityTier: SeniorityTier
   isProfessional: Boolean!
   status: MemberStatus!
+  "Dados pessoais: só ADMIN/MANAGER recebem valores (LGPD); os demais recebem null."
+  phone: String
+  pixKey: String
+  birthDate: DateTime
+  "Categorias atendidas. Vazio = atende todas."
+  categories: [MemberCategory!]!
   createdAt: DateTime!
+}
+
+type MemberCategory {
+  id: UUID!
+  name: String!
+}
+
+input CreateMemberInput {
+  displayName: String!
+  email: Email!
+  phone: String!
+  pixKey: String!
+  birthDate: DateTime
+  roleName: String!
+  isProfessional: Boolean
+  categoryIds: [UUID!]
+  temporaryPassword: String!
+}
+
+"A senha provisória NÃO volta aqui: o frontend já a tem e a exibe uma única vez."
+type CreateMemberPayload {
+  member: Member
+  "true quando o e-mail já tinha conta: só o member foi criado, a senha não foi tocada."
+  existingAccount: Boolean!
+  warning: String
+  errors: [UserError!]!
+}
+
+input ResetMemberPasswordInput {
+  id: UUID!
+}
+
+type ResetMemberPasswordPayload {
+  member: Member
+  temporaryPassword: String
+  errors: [UserError!]!
 }
 
 # SeniorityTier enum is defined in catalog.graphql (shared with ServicePricingVariant)
@@ -48,6 +92,10 @@ input UpdateMemberInput {
   roleName: String
   isProfessional: Boolean
   seniorityTier: SeniorityTier
+  phone: String
+  pixKey: String
+  birthDate: DateTime
+  categoryIds: [UUID!]
 }
 
 type UpdateMemberPayload {

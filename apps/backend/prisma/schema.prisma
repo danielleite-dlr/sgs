@@ -29,7 +29,8 @@ model Organization {
   updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   members         Member[]
-  roles           Role[]
+  memberCategories MemberCategory[]
+  roles          Role[]
   invitations     MemberInvitation[]
   outboxEvents    OutboxEvent[]
   categories      Category[]
@@ -109,21 +110,41 @@ model Member {
   isProfessional Boolean   @default(false) @map("is_professional")
   status         String    @default("active") @db.VarChar(20)
   seniorityTier  String?   @map("seniority_tier") @db.VarChar(20)
+  phone          String?   @db.VarChar(20)
+  pixKey         String?   @map("pix_key") @db.VarChar(140)
+  birthDate      DateTime? @map("birth_date") @db.Date
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   organization    Organization     @relation(fields: [organizationId], references: [id])
-  user            User             @relation(fields: [userId], references: [id])
+  user            User           @relation(fields: [userId], references: [id])
   role            Role             @relation(fields: [roleId], references: [id])
   stockMovements  StockMovement[]
   notifications   Notification[]
   commissionRules CommissionRule[]
   appointments    Appointment[]
+  categories      MemberCategory[]
 
   @@unique([organizationId, userId], name: "uq_members_org_user")
   @@index([organizationId, status], name: "ix_members_org_status")
   @@map("members")
+}
+
+/// Categorias que o profissional atende (sem vinculos = atende tudo).
+model MemberCategory {
+  organizationId String   @map("organization_id") @db.Uuid
+  memberId       String   @map("member_id") @db.Uuid
+  categoryId     String   @map("category_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  member       Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  category     Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([memberId, categoryId], name: "pk_member_categories")
+  @@index([organizationId, categoryId], name: "ix_member_categories_org_category")
+  @@map("member_categories")
 }
 
 // ===== Auth tokens =====
@@ -222,6 +243,7 @@ model Category {
   children        Category[]       @relation("CategoryHierarchy")
   services        Service[]
   commissionRules CommissionRule[]
+  memberLinks     MemberCategory[]
 
   @@index([organizationId, parentId], name: "ix_categories_org_parent")
   @@index([organizationId, parentId, displayOrder], name: "ix_categories_org_order")
