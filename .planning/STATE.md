@@ -150,6 +150,7 @@ Recent decisions affecting current work:
 | 260928-vk2 | Corrigir setup do pnpm (ERR_PNPM_BAD_PM_VERSION) e parsing jq do health check do CI (JSON Lines) | 2026-09-28 | 31d6bdf | [260928-vk2-corrigir-setup-do-pnpm-e-health-check-do](./quick/260928-vk2-corrigir-setup-do-pnpm-e-health-check-do/) |
 | 260929-dek | Esconder acoes de equipe por papel, proteger ultimo admin e no-cache do index.html | 2026-09-29 | 24a6e63 | [260929-dek-esconder-acoes-de-equipe-por-papel-prote](./quick/260929-dek-esconder-acoes-de-equipe-por-papel-prote/) |
 | fast-260929 | Corrigir CI: prisma generate nos jobs typecheck/lint e healthcheck do pgbouncer (resolve os 2 achados de CI adiados) | 2026-09-29 | - | - |
+| fast-260929b | Corrigir nome dos scalars DateTime/Email no schema publicado (query da agenda falhava com Unknown type "DateTime") + teste de regressao | 2026-09-29 | - | - |
 
 ## Session Continuity
 
