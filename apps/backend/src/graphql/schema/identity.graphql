@@ -1,6 +1,8 @@
 extend type Query {
   members: [Member!]!
   allMembers: [Member!]!
+  "Profissionais ativos que atendem a categoria do serviço (sem vínculos = atende tudo)."
+  professionalsForService(serviceId: UUID!): [Member!]!
   pendingInvitations: [PendingInvitation!]!
 }
 

@@ -109,3 +109,17 @@ export interface CreateAppointmentResult {
     errors: AppointmentUserError[];
   };
 }
+
+/** Profissionais ativos que atendem a categoria do serviço (filtro no backend). */
+export const ProfessionalsForServiceQuery = gql`
+  query ProfessionalsForService($serviceId: UUID!) {
+    professionalsForService(serviceId: $serviceId) {
+      id
+      displayName
+    }
+  }
+`;
+
+export interface ProfessionalsForServiceResult {
+  professionalsForService: { id: string; displayName: string }[];
+}

@@ -16,6 +16,7 @@ import {
   UpdateMemberInput,
 } from './dto/member.input';
 import { normalizeBrPhone, normalizePixKey } from './member-contact';
+import { loadCategoryParents, memberServesCategory } from './member-categories';
 
 export interface UserError {
   code: string;
@@ -690,6 +691,47 @@ export class MembersService {
         activeCommissionRuleCount,
         errors: [] as UserError[],
       };
+    });
+  }
+
+  /**
+   * Profissionais ativos que atendem a categoria do serviço (a própria ou
+   * descendente de uma vinculada; sem vínculos atende tudo). Serviço
+   * inexistente/de outra organização -> lista vazia.
+   */
+  async listProfessionalsForService(orgId: string, serviceId: string) {
+    return this.tenant.runWithTenant(orgId, async (tx) => {
+      const service = await tx.service.findFirst({
+        where: { id: serviceId, deletedAt: null },
+        select: { categoryId: true },
+      });
+      if (!service) return [];
+
+      const [rows, parents] = await Promise.all([
+        tx.member.findMany({
+          where: {
+            organizationId: orgId,
+            deletedAt: null,
+            status: MEMBER_STATUS_ACTIVE,
+            isProfessional: true,
+          },
+          select: MEMBER_SELECT,
+          orderBy: { displayName: 'asc' },
+        }),
+        loadCategoryParents(tx),
+      ]);
+
+      return rows
+        .filter((r) =>
+          memberServesCategory(
+            r.categories
+              .filter((c) => c.category.deletedAt === null)
+              .map((c) => c.category.id),
+            service.categoryId,
+            parents,
+          ),
+        )
+        .map(toMemberDto);
     });
   }
 

@@ -40,6 +40,19 @@ export class MembersResolver {
     return rows.map((r) => redactPersonal(r, tenantCtx.roleName));
   }
 
+  @RequirePermission(PERMISSIONS.MEMBER_READ)
+  @Query('professionalsForService')
+  async professionalsForService(
+    @Args('serviceId') serviceId: string,
+    @CurrentTenant() tenantCtx: TenantContext,
+  ) {
+    const rows = await this.members.listProfessionalsForService(
+      tenantCtx.organizationId,
+      serviceId,
+    );
+    return rows.map((r) => redactPersonal(r, tenantCtx.roleName));
+  }
+
   @RequirePermission(PERMISSIONS.MEMBER_INVITE)
   @Mutation('createMember')
   async createMember(
