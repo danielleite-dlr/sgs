@@ -40,6 +40,49 @@ type MemberRow = {
   role: { name: string } | null;
 };
 
+type BlockingAppointment = {
+  id: string;
+  startsAt: Date;
+  clientName: string;
+  serviceName: string;
+};
+
+const ADMIN_ROLE_NAME = 'ADMIN';
+
+/**
+ * True when `member` is an active ADMIN and no OTHER active, non-deleted ADMIN
+ * exists in the organization — i.e. demoting/deactivating it would leave the
+ * salon without any administrator. Must run inside the tenant transaction (RLS).
+ */
+async function isLastActiveAdmin(
+  tx: TenantPrismaClient,
+  orgId: string,
+  member: {
+    id: string;
+    status: string;
+    deletedAt: Date | null;
+    role: { name: string } | null;
+  },
+): Promise<boolean> {
+  if (
+    member.deletedAt !== null ||
+    member.status !== MEMBER_STATUS_ACTIVE ||
+    member.role?.name !== ADMIN_ROLE_NAME
+  ) {
+    return false;
+  }
+  const others = await tx.member.count({
+    where: {
+      organizationId: orgId,
+      id: { not: member.id },
+      status: MEMBER_STATUS_ACTIVE,
+      deletedAt: null,
+      role: { name: ADMIN_ROLE_NAME },
+    },
+  });
+  return others === 0;
+}
+
 function toMemberDto(r: MemberRow) {
   return {
     id: r.id,
@@ -112,6 +155,7 @@ export class MembersService {
     return this.tenant.runWithTenant(orgId, async (tx) => {
       const existing = await tx.member.findFirst({
         where: { id: input.id, organizationId: orgId, deletedAt: null },
+        include: { role: { select: { name: true } } },
       });
       if (!existing) {
         return errPayload('MEMBER_NOT_FOUND', 'Membro não encontrado.');
@@ -131,6 +175,16 @@ export class MembersService {
           return errPayload(
             'ROLE_NOT_FOUND',
             'Papel inválido.',
+            'roleName',
+          );
+        }
+        if (
+          input.roleName !== ADMIN_ROLE_NAME &&
+          (await isLastActiveAdmin(tx, orgId, existing))
+        ) {
+          return errPayload(
+            'LAST_ADMIN',
+            'Não é possível remover o papel de administrador do último administrador ativo do salão. Promova outro membro a administrador antes.',
             'roleName',
           );
         }
@@ -170,18 +224,34 @@ export class MembersService {
     return this.tenant.runWithTenant(orgId, async (tx: TenantPrismaClient) => {
       const existing = await tx.member.findFirst({
         where: { id, organizationId: orgId, deletedAt: null },
+        include: { role: { select: { name: true } } },
       });
       if (!existing) {
         return {
           ...errPayload('MEMBER_NOT_FOUND', 'Membro não encontrado.'),
           futureAppointmentCount: 0,
-          blockingAppointments: [] as {
-            id: string;
-            startsAt: Date;
-            clientName: string;
-            serviceName: string;
-          }[],
+          blockingAppointments: [] as BlockingAppointment[],
           activeCommissionRuleCount: 0,
+        };
+      }
+
+      if (await isLastActiveAdmin(tx, orgId, existing)) {
+        const ruleCount = await tx.commissionRule.count({
+          where: { memberId: id, deletedAt: null },
+        });
+        return {
+          member: null,
+          futureAppointmentCount: 0,
+          blockingAppointments: [] as BlockingAppointment[],
+          activeCommissionRuleCount: ruleCount,
+          errors: [
+            {
+              code: 'LAST_ADMIN',
+              message:
+                'Não é possível desativar o último administrador ativo do salão. Promova outro membro a administrador antes.',
+              field: null,
+            },
+          ] as UserError[],
         };
       }
 
@@ -247,12 +317,7 @@ export class MembersService {
       return {
         member: toMemberDto(row),
         futureAppointmentCount: 0,
-        blockingAppointments: [] as {
-          id: string;
-          startsAt: Date;
-          clientName: string;
-          serviceName: string;
-        }[],
+        blockingAppointments: [] as BlockingAppointment[],
         activeCommissionRuleCount,
         errors: [] as UserError[],
       };
