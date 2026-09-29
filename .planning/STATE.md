@@ -153,6 +153,7 @@ Recent decisions affecting current work:
 | fast-260929b | Corrigir nome dos scalars DateTime/Email no schema publicado (query da agenda falhava com Unknown type "DateTime") + teste de regressao | 2026-09-29 | - | - |
 | fast-260929c | Declarar prettier no frontend (hook do graphql-codegen falhava com prettier: not found no CI) | 2026-09-29 | - | - |
 | 260929-dvr | Cadastro direto de profissional com senha provisoria, categorias atendidas e filtro de profissional por categoria na agenda | 2026-09-29 | 1da3b73 | [260929-dvr-cadastro-direto-de-profissional-com-senh](./quick/260929-dvr-cadastro-direto-de-profissional-com-senh/) |
+| fast-260929d | Mascara de telefone BR nos dialogs de cadastro/edicao de profissional e na lista | 2026-09-29 | - | - |
 
 ## Session Continuity
 

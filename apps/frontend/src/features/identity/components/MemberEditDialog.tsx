@@ -39,7 +39,7 @@ import type {
   AdminMemberData,
   UpdateMemberResult,
 } from '@/features/catalog/api/members.api';
-import { isValidPixKey, normalizeBrPhone } from '../member-validation';
+import { isValidPixKey, maskBrPhone, normalizeBrPhone } from '../member-validation';
 import { MemberCategoriesField } from './MemberCategoriesField';
 
 const REQUIRED = 'Este campo é obrigatório.';
@@ -100,7 +100,7 @@ function defaultsFor(member: AdminMemberData): FormValues {
     roleName: member.roleName as FormValues['roleName'],
     isProfessional: member.isProfessional,
     seniorityTier: (member.seniorityTier ?? null) as FormValues['seniorityTier'],
-    phone: member.phone ?? '',
+    phone: maskBrPhone(member.phone ?? ''),
     pixKey: member.pixKey ?? '',
     birthDate: member.birthDate ? member.birthDate.slice(0, 10) : '',
     categoryIds: (member.categories ?? []).map((c) => c.id),
@@ -205,7 +205,13 @@ export function MemberEditDialog({ member, open, onClose }: MemberEditDialogProp
                 <FormItem>
                   <FormLabel>{t('team.editDialog.phoneLabel')}</FormLabel>
                   <FormControl>
-                    <Input {...field} type="tel" autoComplete="off" />
+                    <Input
+                      {...field}
+                      type="tel"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      onChange={(e) => field.onChange(maskBrPhone(e.target.value))}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

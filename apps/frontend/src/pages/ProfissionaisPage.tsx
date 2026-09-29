@@ -24,6 +24,7 @@ import { CreateMemberDialog } from '@/features/identity/components/CreateMemberD
 import { ResetMemberPasswordDialog } from '@/features/identity/components/ResetMemberPasswordDialog';
 import { MemberEditDialog } from '@/features/identity/components/MemberEditDialog';
 import { DeactivateMemberDialog } from '@/features/identity/components/DeactivateMemberDialog';
+import { maskBrPhone } from '@/features/identity/member-validation';
 import {
   AllMembersQuery,
   ReactivateMemberMutation,
@@ -36,9 +37,7 @@ import type {
 
 /** Formata E.164 brasileiro (+5511987654321) como (11) 98765-4321. */
 function formatPhone(phone: string | null | undefined): string {
-  if (!phone) return '—';
-  const m = /^\+55(\d{2})(\d{4,5})(\d{4})$/.exec(phone);
-  return m ? `(${m[1]}) ${m[2]}-${m[3]}` : phone;
+  return phone ? maskBrPhone(phone) : '—';
 }
 
 function roleLabel(t: (key: string) => string, roleName: string): string {

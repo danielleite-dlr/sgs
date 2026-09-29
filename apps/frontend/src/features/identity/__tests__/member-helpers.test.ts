@@ -3,7 +3,7 @@ import {
   PASSWORD_ALPHABET,
   generateTemporaryPassword,
 } from '../temporary-password';
-import { isValidPixKey, normalizeBrPhone } from '../member-validation';
+import { isValidPixKey, maskBrPhone, normalizeBrPhone } from '../member-validation';
 
 describe('generateTemporaryPassword', () => {
   it('gera 14 caracteres só do alfabeto sem ambíguos', () => {
@@ -47,5 +47,29 @@ describe('isValidPixKey', () => {
 
   it.each(['abc', '', '   ', '+55 123', '1234567'])('rejeita %s', (raw) => {
     expect(isValidPixKey(raw)).toBe(false);
+  });
+});
+
+describe('maskBrPhone', () => {
+  it.each([
+    ['', ''],
+    ['1', '(1'],
+    ['11', '(11'],
+    ['119', '(11) 9'],
+    ['119876', '(11) 9876'],
+    ['1198765', '(11) 9876-5'],
+    ['1134567890', '(11) 3456-7890'],
+    ['11987654321', '(11) 98765-4321'],
+    ['119876543219999', '(11) 98765-4321'],
+    ['(11) 98765-4321', '(11) 98765-4321'],
+    ['+5511987654321', '(11) 98765-4321'],
+    ['+551134567890', '(11) 3456-7890'],
+    ['5511987654', '(55) 1198-7654'],
+  ])('mascara %j como %j', (raw, expected) => {
+    expect(maskBrPhone(raw)).toBe(expected);
+  });
+
+  it('o valor mascarado continua normalizavel para E.164', () => {
+    expect(normalizeBrPhone(maskBrPhone('11987654321'))).toBe('+5511987654321');
   });
 });

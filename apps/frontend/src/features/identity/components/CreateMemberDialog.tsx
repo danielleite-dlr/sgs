@@ -37,7 +37,7 @@ import {
 } from '@/features/catalog/api/members.api';
 import type { CreateMemberResult } from '@/features/catalog/api/members.api';
 import { generateTemporaryPassword } from '../temporary-password';
-import { isValidPixKey, normalizeBrPhone } from '../member-validation';
+import { isValidPixKey, maskBrPhone, normalizeBrPhone } from '../member-validation';
 import { MemberCategoriesField } from './MemberCategoriesField';
 import { TemporaryPasswordBox } from './TemporaryPasswordBox';
 
@@ -301,8 +301,10 @@ export function CreateMemberDialog({
                         <Input
                           {...field}
                           type="tel"
+                          inputMode="numeric"
                           autoComplete="off"
                           placeholder={t('team.createDialog.phonePlaceholder')}
+                          onChange={(e) => field.onChange(maskBrPhone(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />

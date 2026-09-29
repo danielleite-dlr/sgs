@@ -113,7 +113,7 @@ describe('MemberEditDialog', () => {
 
     // Papel PROFESSIONAL implica profissional: o checkbox fica escondido.
     expect(screen.queryByLabelText('É profissional')).toBeNull();
-    expect(screen.getByLabelText('Telefone')).toHaveValue('+5511987654321');
+    expect(screen.getByLabelText('Telefone')).toHaveValue('(11) 98765-4321');
     expect(screen.getByLabelText('Chave Pix')).toHaveValue('12345678909');
     expect(
       screen.getByRole('combobox', { name: 'Senioridade' }),

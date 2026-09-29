@@ -22,6 +22,24 @@ export function normalizeBrPhone(raw: string): string | null {
   return `+55${digits}`;
 }
 
+/**
+ * Máscara progressiva de telefone BR para exibição e digitação:
+ * `(11) 98765-4321` (celular) ou `(11) 3456-7890` (fixo). Aceita também o
+ * valor já salvo em E.164 (`+5511987654321`).
+ */
+export function maskBrPhone(raw: string): string {
+  let digits = raw.replace(/\D/g, '');
+  if (raw.trim().startsWith('+55')) digits = digits.slice(2);
+  digits = digits.slice(0, 11);
+  if (!digits) return '';
+  if (digits.length <= 2) return `(${digits}`;
+  const ddd = digits.slice(0, 2);
+  const rest = digits.slice(2);
+  if (rest.length <= 4) return `(${ddd}) ${rest}`;
+  const split = digits.length === 11 ? 5 : 4;
+  return `(${ddd}) ${rest.slice(0, split)}-${rest.slice(split)}`;
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
