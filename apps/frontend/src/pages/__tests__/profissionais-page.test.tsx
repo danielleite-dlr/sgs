@@ -202,6 +202,21 @@ describe('ProfissionaisPage', () => {
     expect(screen.queryByText('Desativar')).toBeNull();
   });
 
+  it('closes the actions menu when an action opens its dialog, so it does not reappear afterwards', async () => {
+    renderPage();
+    await screen.findByText('Ana Silva');
+
+    const row = screen.getByText('Ana Silva').closest('tr')!;
+    openDropdown(within(row).getByRole('button', { name: 'Ações' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Editar' }));
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    await waitFor(() => {
+      // hidden: o dialog modal marca o resto da página como aria-hidden.
+      expect(screen.queryByRole('menu', { hidden: true })).toBeNull();
+    });
+  });
+
   it('shows an empty state with a register CTA when there are no members', async () => {
     renderPage([membersMock([]), categoriesMock]);
 

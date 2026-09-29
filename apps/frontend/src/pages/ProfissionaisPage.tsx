@@ -195,29 +195,20 @@ export function ProfissionaisPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                           <DropdownMenuItem
-                            onSelect={(e) => {
-                              e.preventDefault();
-                              setEditingMember(r);
-                            }}
+                            onSelect={() => setEditingMember(r)}
                           >
                             <Pencil className="mr-2 h-4 w-4" />
                             {t('team.actions.edit')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onSelect={(e) => {
-                              e.preventDefault();
-                              setResettingMember(r);
-                            }}
+                            onSelect={() => setResettingMember(r)}
                           >
                             <KeyRound className="mr-2 h-4 w-4" />
                             {t('team.actions.resetPassword')}
                           </DropdownMenuItem>
                           {r.status === 'active' ? (
                             <DropdownMenuItem
-                              onSelect={(e) => {
-                                e.preventDefault();
-                                setDeactivatingMember(r);
-                              }}
+                              onSelect={() => setDeactivatingMember(r)}
                               className="text-error-500"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
