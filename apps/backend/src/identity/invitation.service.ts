@@ -43,6 +43,8 @@ export class InvitationService {
     salonName: string;
     email: string;
     roleName: string;
+    isProfessional?: boolean;
+    seniorityTier?: string | null;
   }): Promise<{ invitationId: string; expiresAt: Date }> {
     const lowercaseEmail = args.email.toLowerCase();
 
@@ -98,6 +100,8 @@ export class InvitationService {
             tokenHash,
             invitedById: args.invitedById,
             expiresAt,
+            isProfessional: args.isProfessional ?? false,
+            seniorityTier: args.seniorityTier ?? null,
           },
           select: { id: true, expiresAt: true },
         });
@@ -134,9 +138,12 @@ export class InvitationService {
         expires_at: Date;
         accepted_at: Date | null;
         revoked_at: Date | null;
+        is_professional: boolean;
+        seniority_tier: string | null;
       }>
     >`
-      SELECT id, organization_id, email, role_id, expires_at, accepted_at, revoked_at
+      SELECT id, organization_id, email, role_id, expires_at, accepted_at, revoked_at,
+             is_professional, seniority_tier
       FROM member_invitations
       WHERE token_hash = ${tokenHash}
       LIMIT 1
@@ -187,6 +194,8 @@ export class InvitationService {
           roleId: row.role_id,
           displayName: fullName,
           status: 'active',
+          isProfessional: row.is_professional,
+          seniorityTier: row.seniority_tier,
         },
       });
       await tx.memberInvitation.update({

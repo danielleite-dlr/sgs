@@ -1,5 +1,6 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { InvitationService } from './invitation.service';
+import { InviteMemberInput } from './dto/member.input';
 import { PrismaService } from '../database/prisma.service';
 import { TenantContextService } from '../database/tenant-context.service';
 import { Public } from '../auth/decorators/public.decorator';
@@ -22,14 +23,21 @@ export class InvitationResolver {
   @RequirePermission(PERMISSIONS.MEMBER_INVITE)
   @Mutation('inviteMember')
   async invite(
-    @Args('input') input: { email: string; roleName: string },
+    @Args('input') input: InviteMemberInput,
     @CurrentUser() user: JwtAccessPayload,
     @CurrentTenant() tenantCtx: TenantContext,
   ) {
     try {
-      const org = await this.prisma.organization.findUniqueOrThrow({
-        where: { id: tenantCtx.organizationId },
-      });
+      // organizations has FORCE RLS keyed on app.current_organization; this
+      // read must run inside the tenant transaction, or it always returns 0
+      // rows (the raw PrismaService connection has no session var set).
+      const org = await this.tenant.runWithTenant(
+        tenantCtx.organizationId,
+        (tx) =>
+          tx.organization.findUniqueOrThrow({
+            where: { id: tenantCtx.organizationId },
+          }),
+      );
       const result = await this.invitations.invite({
         organizationId: tenantCtx.organizationId,
         invitedById: tenantCtx.memberId,
@@ -37,6 +45,8 @@ export class InvitationResolver {
         salonName: org.tradeName,
         email: input.email,
         roleName: input.roleName,
+        isProfessional: input.isProfessional,
+        seniorityTier: input.seniorityTier,
       });
       return {
         invitationId: result.invitationId,
@@ -111,6 +121,8 @@ export class InvitationResolver {
         id: r.id,
         email: r.email,
         roleName: r.role.name,
+        isProfessional: r.isProfessional,
+        seniorityTier: r.seniorityTier,
         expiresAt: r.expiresAt,
         createdAt: r.createdAt,
       }));
