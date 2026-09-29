@@ -94,13 +94,23 @@ Plans:
 
 ### Phase 02.1: Equipe e profissionais — cadastro completo de profissionais (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
+**Goal:** Um admin convida um profissional definindo papel e senioridade, gerencia a equipe em `/profissionais` (editar, desativar, reativar, revogar convite), e esse profissional passa a aparecer no seletor da agenda e no formulário de regra de comissão.
+
+**Requirements:**
+- EQUIPE-01: Convidar membro já definindo papel, `isProfessional` e senioridade, com a configuração aplicada ao membro no aceite do convite
+- EQUIPE-02: `updateMember` altera papel, `isProfessional` e senioridade de membro existente (permissão `member.editRole`)
+- EQUIPE-03: `deactivateMember`/`reactivateMember` desligam e religam o profissional sem perder histórico; a desativação é recusada enquanto houver agendamento futuro, com quantidade e identificação (permissão `member.remove`)
+- EQUIPE-04: A query `members` (picker da agenda e da regra de comissão) só devolve ativos; a query nova `allMembers` devolve todos com status, para a tela administrativa
+- EQUIPE-05: Tela `/profissionais` no ar — rota registrada em `router.tsx` e flag `equipe: true` no mesmo commit em que a tela lê dado real
+
+**Fora de escopo:** `/profissionais/perfis` e o filtro `?filtro=aniversariantes` em `/clientes` (ambos do M1 do ROADMAP-MOCKS, cortados desta fase).
+
 **Depends on:** Phase 2
-**Plans:** 0 plans
+**Plans:** 2 plans (2 waves)
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 02.1 to break down)
+- [ ] 02.1-backend-members-lifecycle-PLAN.md — SDL + DTOs, `MembersService` (listAll/update/deactivate com guarda/reactivate), resolvers autorizados e cobertura RBAC/RLS de integração
+- [ ] 02.1-frontend-profissionais-PLAN.md — API layer + i18n, dialogs de convidar/editar/desativar, `ProfissionaisPage`, rota e flag `equipe: true`
 
 ### Phase 3: Core Operations
 
