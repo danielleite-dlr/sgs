@@ -133,6 +133,10 @@ None yet.
 - **Payment gateway decision**: Pagar.me vs Stripe Connect deve ser decidido antes da Phase 3 — não pode ser postergado
 - **pnpm concurrent installs**: Multiple parallel agent worktrees cause ENOENT conflicts on Windows when running pnpm install simultaneously. Workaround: stagger installs or use main repo node_modules.
 
+### Roadmap Evolution
+
+- Phase 02.1 inserted after Phase 2: Equipe e profissionais — cadastro completo de profissionais (URGENT)
+
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Directory |
