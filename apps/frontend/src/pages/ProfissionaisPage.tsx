@@ -186,8 +186,11 @@ export function ProfissionaisPage() {
                   {
                     key: 'actions',
                     header: t('team.table.actions'),
+                    // modal={false}: o menu fecha ao selecionar e o dialog (modal) assume o
+                    // bloqueio da pagina. Com o menu modal, abrir um dialog a partir dele
+                    // podia deixar body { pointer-events: none } preso.
                     cell: (r) => (
-                      <DropdownMenu>
+                      <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                           <Button variant="ghost" size="icon" aria-label={t('team.table.actions')}>
                             <MoreHorizontal className="h-4 w-4" />
