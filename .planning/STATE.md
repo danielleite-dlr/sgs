@@ -5,7 +5,7 @@ milestone_name: milestone
 status: verifying
 stopped_at: Completed 02.1-backend-members-lifecycle-PLAN.md (wave 1 of Phase 02.1) - frontend wave (02.1-frontend-profissionais) still pending
 last_updated: "2026-09-29T02:52:41.884Z"
-last_activity: "2026-09-28 - Completed quick task 260928-vk2: Corrigir setup do pnpm e health check do CI"
+last_activity: "2026-09-29 - Completed quick task 260929-dek: Esconder acoes de equipe por papel, proteger ultimo admin e no-cache do index.html"
 progress:
   total_phases: 6
   completed_phases: 2
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 Phase: 3
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-09-28 - Completed quick task 260928-vk2: Corrigir setup do pnpm e health check do CI
+Last activity: 2026-09-29 - Completed quick task 260929-dek: Esconder acoes de equipe por papel, proteger ultimo admin e no-cache do index.html
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -150,6 +150,7 @@ Recent decisions affecting current work:
 |---|-------------|------|--------|-----------|
 | 260922-0kn | Exibir a comissao cadastrada do servico (tipo e valor) na tela de editar servico | 2026-09-22 | 9df355f | [260922-0kn-exibir-a-comissao-cadastrada-do-servico-](./quick/260922-0kn-exibir-a-comissao-cadastrada-do-servico-/) |
 | 260928-vk2 | Corrigir setup do pnpm (ERR_PNPM_BAD_PM_VERSION) e parsing jq do health check do CI (JSON Lines) | 2026-09-28 | 31d6bdf | [260928-vk2-corrigir-setup-do-pnpm-e-health-check-do](./quick/260928-vk2-corrigir-setup-do-pnpm-e-health-check-do/) |
+| 260929-dek | Esconder acoes de equipe por papel, proteger ultimo admin e no-cache do index.html | 2026-09-29 | 24a6e63 | [260929-dek-esconder-acoes-de-equipe-por-papel-prote](./quick/260929-dek-esconder-acoes-de-equipe-por-papel-prote/) |
 
 ## Session Continuity
 
