@@ -1,5 +1,6 @@
 extend type Query {
   members: [Member!]!
+  allMembers: [Member!]!
   pendingInvitations: [PendingInvitation!]!
 }
 
@@ -7,9 +8,14 @@ extend type Mutation {
   inviteMember(input: InviteMemberInput!): InviteMemberPayload!
   acceptInvitation(input: AcceptInvitationInput!): AuthPayload!
   revokeInvitation(invitationId: UUID!): RevokeInvitationPayload!
+  updateMember(input: UpdateMemberInput!): UpdateMemberPayload!
+  deactivateMember(id: UUID!): DeactivateMemberPayload!
+  reactivateMember(id: UUID!): ReactivateMemberPayload!
 }
 
 # ===== Members (added Phase 2 — needed by commissions.graphql cross-SDL reference) =====
+
+enum MemberStatus { active inactive }
 
 type Member {
   id: UUID!
@@ -18,6 +24,7 @@ type Member {
   roleName: String!
   seniorityTier: SeniorityTier
   isProfessional: Boolean!
+  status: MemberStatus!
   createdAt: DateTime!
 }
 
@@ -26,12 +33,50 @@ type Member {
 input InviteMemberInput {
   email: Email!
   roleName: String!
+  isProfessional: Boolean
+  seniorityTier: SeniorityTier
 }
 
 input AcceptInvitationInput {
   token: String!
   fullName: String!
   password: String!
+}
+
+input UpdateMemberInput {
+  id: UUID!
+  roleName: String
+  isProfessional: Boolean
+  seniorityTier: SeniorityTier
+}
+
+type UpdateMemberPayload {
+  member: Member
+  errors: [UserError!]!
+}
+
+"Agendamento futuro que impede a desativação. Usado para a mensagem acionável."
+type BlockingAppointment {
+  id: UUID!
+  startsAt: DateTime!
+  clientName: String!
+  serviceName: String!
+}
+
+type DeactivateMemberPayload {
+  member: Member
+  "Total de agendamentos futuros. > 0 junto com errors significa bloqueio."
+  futureAppointmentCount: Int!
+  "Os 5 mais próximos, para a UI identificar o que remanejar."
+  blockingAppointments: [BlockingAppointment!]!
+  "Informativo: regras de comissão vinculadas NÃO bloqueiam (ver MembersService.deactivate)."
+  activeCommissionRuleCount: Int!
+  errors: [UserError!]!
+}
+
+type ReactivateMemberPayload {
+  member: Member
+  errors: [UserError!]!
 }
 
 type InviteMemberPayload {
@@ -49,6 +94,8 @@ type PendingInvitation {
   id: UUID!
   email: Email!
   roleName: String!
+  isProfessional: Boolean!
+  seniorityTier: SeniorityTier
   expiresAt: DateTime!
   createdAt: DateTime!
 }
