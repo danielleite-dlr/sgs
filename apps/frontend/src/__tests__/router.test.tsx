@@ -48,6 +48,7 @@ describe('router phase 2', () => {
     '/clientes',
     '/clientes/abc',
     '/clientes/abc/editar',
+    '/profissionais',
   ])('renders page at %s inside AppShell', async (path) => {
     const r = createMemoryRouter(appRouter.routes, { initialEntries: [path] });
     const { unmount } = render(

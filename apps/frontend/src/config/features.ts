@@ -22,8 +22,8 @@ const FLAGS = {
   clientesAniversariantes: false,
   /** Rankings (clientes, serviços, produtos, profissionais) — sem tela. */
   rankings: false,
-  /** Gestão de equipe: `/profissionais` — backend pronto, tela não existe. */
-  equipe: false,
+  /** Gestão de equipe: `/profissionais` — lista, convite, edição e desativação reais. */
+  equipe: true,
   /** Comanda / PDV — `mocks/comanda.mock.ts`. */
   comanda: false,
   /** Controle de entrada e saída — números fixos em R$ 0,00. */
@@ -73,6 +73,7 @@ const GATED_PATHS: ReadonlyArray<readonly [string, FeatureKey]> = [
   ['/catalogo/servicos/ranking', 'rankings'],
   ['/catalogo/produtos/ranking', 'rankings'],
   ['/profissionais/ranking', 'rankings'],
+  ['/profissionais/perfis', 'configuracoes'],
   ['/profissionais', 'equipe'],
   ['/comanda', 'comanda'],
   ['/financeiro/comissoes', 'financeiroComissoes'],

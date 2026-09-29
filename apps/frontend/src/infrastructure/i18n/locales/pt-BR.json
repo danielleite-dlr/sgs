@@ -344,6 +344,11 @@
       "newCta": "Novo cliente",
       "newTitle": "Novo cliente",
       "editTitle": "Editar cliente"
+    },
+    "profissionais": {
+      "tab": "Profissionais — SGS",
+      "h1": "Profissionais",
+      "newCta": "Convidar profissional"
     }
   },
   "operations": {
@@ -810,6 +815,103 @@
         "scopeConflict": "Já existe uma regra para este escopo. Edite a regra existente.",
         "valueOutOfRange": "Percentual deve ser entre 0 e 100."
       }
+    }
+  },
+  "team": {
+    "table": {
+      "name": "Nome",
+      "email": "E-mail",
+      "role": "Papel",
+      "seniority": "Senioridade",
+      "status": "Status",
+      "actions": "Ações"
+    },
+    "roles": {
+      "ADMIN": "Admin",
+      "MANAGER": "Gerente",
+      "ATTENDANT": "Atendente",
+      "PROFESSIONAL": "Profissional"
+    },
+    "seniority": {
+      "junior": "Júnior",
+      "pleno": "Pleno",
+      "senior": "Sênior",
+      "none": "—"
+    },
+    "status": {
+      "active": "Ativo",
+      "inactive": "Inativo"
+    },
+    "badge": {
+      "professional": "Profissional"
+    },
+    "actions": {
+      "edit": "Editar",
+      "deactivate": "Desativar",
+      "reactivate": "Reativar",
+      "invite": "Convidar profissional",
+      "revoke": "Revogar"
+    },
+    "empty": {
+      "heading": "Nenhum profissional cadastrado",
+      "body": "Convide alguém para começar a montar sua equipe.",
+      "cta": "Convidar profissional"
+    },
+    "error": {
+      "heading": "Não foi possível carregar a equipe",
+      "body": "Tente novamente em instantes."
+    },
+    "toasts": {
+      "memberUpdated": "{{name}} atualizado com sucesso.",
+      "memberDeactivated": "{{name}} foi desativado.",
+      "memberReactivated": "{{name}} foi reativado.",
+      "invitationSent": "Convite enviado para {{email}}.",
+      "invitationRevoked": "Convite revogado."
+    },
+    "invitations": {
+      "title": "Convites pendentes",
+      "table": {
+        "email": "E-mail",
+        "role": "Papel",
+        "seniority": "Senioridade",
+        "expiresAt": "Expira em",
+        "actions": "Ações"
+      },
+      "empty": "Nenhum convite pendente."
+    },
+    "editDialog": {
+      "title": "Editar {{name}}",
+      "roleLabel": "Papel",
+      "isProfessionalLabel": "É profissional",
+      "seniorityLabel": "Senioridade",
+      "seniorityPlaceholder": "Selecione a senioridade",
+      "cancel": "Cancelar",
+      "submit": "Salvar",
+      "submitting": "Salvando…"
+    },
+    "inviteDialog": {
+      "title": "Convidar profissional",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "nome@email.com",
+      "roleLabel": "Papel",
+      "rolePlaceholder": "Selecione o papel",
+      "isProfessionalLabel": "É profissional",
+      "seniorityLabel": "Senioridade",
+      "seniorityPlaceholder": "Selecione a senioridade",
+      "cancel": "Cancelar",
+      "submit": "Convidar",
+      "submitting": "Enviando…"
+    },
+    "deactivate": {
+      "confirmTitle": "Desativar {{name}}?",
+      "confirmBody": "{{name}} ficará inativo e não aparecerá em novos agendamentos. O histórico é preservado e a reativação pode ser feita a qualquer momento.",
+      "confirmCancel": "Cancelar",
+      "confirmAction": "Desativar",
+      "blockedTitle": "Não é possível desativar {{name}} agora",
+      "blockedBody": "{{count}} agendamento(s) futuro(s) dependem deste profissional. Remaneje-os e tente de novo.",
+      "blockedListLabel": "Próximos agendamentos",
+      "blockedClose": "Entendi",
+      "commissionNote": "{{count}} regra(s) de comissão continuam vinculadas a {{name}}. Elas não impedem a desativação e o histórico é preservado."
     }
   }
 }
