@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Phase 3 context gathered
-last_updated: "2026-05-08T02:20:57.841Z"
-last_activity: 2026-05-07
+stopped_at: "Completed quick task 260928-vk2: Corrigir setup do pnpm e health check do CI"
+last_updated: "2026-09-29T01:55:49.443Z"
+last_activity: "2026-09-28 - Completed quick task 260928-vk2: Corrigir setup do pnpm e health check do CI"
 progress:
   total_phases: 5
   completed_phases: 2
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 Phase: 3
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-09-22 - Completed quick task 260922-0kn: Exibir a comissao cadastrada do servico (tipo e valor) na tela de editar servico
+Last activity: 2026-09-28 - Completed quick task 260928-vk2: Corrigir setup do pnpm e health check do CI
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -122,6 +122,7 @@ Recent decisions affecting current work:
 - [Phase 02-core-domain]: AdjustStockDialog uses cache.evict pattern (not hardcoded refetchQueries variables) to avoid variable-mismatch with ProdutosPage's lowStockOnly state
 - [Phase 02-core-domain]: AppShell self-fetches lowStockCount with pollInterval 60s — removed prop-based approach since router passes AppShell with no props
 - [Phase 02-core-domain]: EntityCombobox is generic Popover+Command single-select reused across member/service/product pickers in CommissionRuleForm
+- [Phase quick]: Quick-260928-vk2: jq -s 'flatten | ...' (slurp+flatten) e' o padrao para parsing de docker compose ps --format json em CI, tolerante a JSON Lines e array
 
 ### Pending Todos
 
@@ -138,9 +139,10 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260922-0kn | Exibir a comissao cadastrada do servico (tipo e valor) na tela de editar servico | 2026-09-22 | 9df355f | [260922-0kn-exibir-a-comissao-cadastrada-do-servico-](./quick/260922-0kn-exibir-a-comissao-cadastrada-do-servico-/) |
+| 260928-vk2 | Corrigir setup do pnpm (ERR_PNPM_BAD_PM_VERSION) e parsing jq do health check do CI (JSON Lines) | 2026-09-28 | 31d6bdf | [260928-vk2-corrigir-setup-do-pnpm-e-health-check-do](./quick/260928-vk2-corrigir-setup-do-pnpm-e-health-check-do/) |
 
 ## Session Continuity
 
-Last session: 2026-05-08T02:20:57.821Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-core-operations/03-CONTEXT.md
+Last session: 2026-09-29T01:55:27.934Z
+Stopped at: Completed quick task 260928-vk2: Corrigir setup do pnpm e health check do CI
+Resume file: None
