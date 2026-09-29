@@ -554,6 +554,203 @@ describe('Member lifecycle (EQUIPE-01..04)', () => {
     });
   });
 
+  describe('Último administrador (LAST_ADMIN)', () => {
+    let orgCId: string;
+    let adminCToken: string;
+    let adminCMemberId: string;
+    let secondAdminId: string; // ADMIN de org C, começa inativo
+    let adminRoleId: string;
+    let managerRoleId: string;
+
+    beforeAll(async () => {
+      const adminRole = await adminPrisma.role.findFirstOrThrow({
+        where: { name: 'ADMIN', isSystem: true },
+      });
+      const managerRole = await adminPrisma.role.findFirstOrThrow({
+        where: { name: 'MANAGER', isSystem: true },
+      });
+      adminRoleId = adminRole.id;
+      managerRoleId = managerRole.id;
+
+      const orgC = await adminPrisma.organization.create({
+        data: {
+          legalName: 'memlc-test-org-C',
+          tradeName: 'memlc-C',
+          documentType: 'CNPJ',
+          documentNumber: `${Date.now() + 2}`.slice(0, 14).padEnd(14, '7'),
+          email: 'memlc-c@t.com',
+          subdomain: `memlc-c-${Date.now()}`,
+          segment: 'salon',
+        },
+      });
+      orgCId = orgC.id;
+
+      const argon2 = await import('argon2');
+      const pwHash = await argon2.hash('password1234', {
+        type: argon2.argon2id,
+      });
+      const mkUser = (tag: string) =>
+        adminPrisma.user.create({
+          data: {
+            email: `memlc-test-${tag}-${Date.now()}@t.com`,
+            fullName: `memlc ${tag}`,
+            passwordHash: pwHash,
+            emailVerifiedAt: new Date(),
+          },
+        });
+      const [adminCUser, secondUser, deletedUser] = await Promise.all([
+        mkUser('admin-c'),
+        mkUser('admin-c2'),
+        mkUser('admin-c3'),
+      ]);
+
+      const adminC = await adminPrisma.member.create({
+        data: {
+          organizationId: orgCId,
+          userId: adminCUser.id,
+          roleId: adminRoleId,
+          displayName: 'memlc-admin-c',
+          status: 'active',
+        },
+      });
+      adminCMemberId = adminC.id;
+
+      // Outro ADMIN, porém inativo: não conta como "outro admin ativo".
+      const second = await adminPrisma.member.create({
+        data: {
+          organizationId: orgCId,
+          userId: secondUser.id,
+          roleId: adminRoleId,
+          displayName: 'memlc-admin-c2',
+          status: 'inactive',
+        },
+      });
+      secondAdminId = second.id;
+
+      // Outro ADMIN ativo porém removido (deletedAt): também não conta.
+      await adminPrisma.member.create({
+        data: {
+          organizationId: orgCId,
+          userId: deletedUser.id,
+          roleId: adminRoleId,
+          displayName: 'memlc-admin-c3',
+          status: 'active',
+          deletedAt: new Date(),
+        },
+      });
+
+      const res = await request(app.getHttpServer())
+        .post('/graphql')
+        .set('Content-Type', 'application/json')
+        .send({
+          query: `mutation($i: LoginInput!) { login(input: $i) { accessToken errors { code } } }`,
+          variables: {
+            i: { email: adminCUser.email, password: 'password1234' },
+          },
+        });
+      adminCToken = res.body.data.login.accessToken as string;
+    });
+
+    const updateMutation = `mutation($i: UpdateMemberInput!) {
+      updateMember(input: $i) { member { id roleName seniorityTier } errors { code field message } }
+    }`;
+    const deactivateMutation = `mutation($id: UUID!) {
+      deactivateMember(id: $id) {
+        member { id status }
+        futureAppointmentCount
+        blockingAppointments { id }
+        activeCommissionRuleCount
+        errors { code field message }
+      }
+    }`;
+
+    it('rebaixar o único ADMIN ativo → LAST_ADMIN e banco intacto', async () => {
+      const res = await gql(adminCToken, orgCId, updateMutation, {
+        i: { id: adminCMemberId, roleName: 'MANAGER' },
+      });
+      expect(res.body.errors).toBeUndefined();
+      expect(res.body.data.updateMember.member).toBeNull();
+      expect(res.body.data.updateMember.errors).toEqual([
+        expect.objectContaining({ code: 'LAST_ADMIN', field: 'roleName' }),
+      ]);
+
+      const row = await adminPrisma.member.findUniqueOrThrow({
+        where: { id: adminCMemberId },
+      });
+      expect(row.roleId).toBe(adminRoleId);
+    });
+
+    it('update do único ADMIN sem mudar papel (ou com roleName ADMIN) → sucesso', async () => {
+      const a = await gql(adminCToken, orgCId, updateMutation, {
+        i: { id: adminCMemberId, seniorityTier: 'senior' },
+      });
+      expect(a.body.data.updateMember.errors).toEqual([]);
+      expect(a.body.data.updateMember.member.seniorityTier).toBe('senior');
+
+      const b = await gql(adminCToken, orgCId, updateMutation, {
+        i: { id: adminCMemberId, roleName: 'ADMIN' },
+      });
+      expect(b.body.data.updateMember.errors).toEqual([]);
+      expect(b.body.data.updateMember.member.roleName).toBe('ADMIN');
+    });
+
+    it('desativar o único ADMIN ativo → LAST_ADMIN com payload completo e status intacto', async () => {
+      const res = await gql(adminCToken, orgCId, deactivateMutation, {
+        id: adminCMemberId,
+      });
+      expect(res.body.errors).toBeUndefined();
+      const payload = res.body.data.deactivateMember;
+      expect(payload.member).toBeNull();
+      expect(payload.futureAppointmentCount).toBe(0);
+      expect(payload.blockingAppointments).toEqual([]);
+      expect(typeof payload.activeCommissionRuleCount).toBe('number');
+      expect(payload.errors).toEqual([
+        expect.objectContaining({ code: 'LAST_ADMIN' }),
+      ]);
+
+      const row = await adminPrisma.member.findUniqueOrThrow({
+        where: { id: adminCMemberId },
+      });
+      expect(row.status).toBe('active');
+    });
+
+    it('com outro ADMIN ativo, rebaixar e desativar funcionam (estado restaurado ao final)', async () => {
+      await adminPrisma.member.update({
+        where: { id: secondAdminId },
+        data: { status: 'active' },
+      });
+
+      const demote = await gql(adminCToken, orgCId, updateMutation, {
+        i: { id: adminCMemberId, roleName: 'MANAGER' },
+      });
+      expect(demote.body.data.updateMember.errors).toEqual([]);
+      expect(demote.body.data.updateMember.member.roleName).toBe('MANAGER');
+
+      // Restaura o papel (via banco) — o token continua o mesmo, mas o papel
+      // de MANAGER não teria permissão para a próxima chamada.
+      await adminPrisma.member.update({
+        where: { id: adminCMemberId },
+        data: { roleId: adminRoleId },
+      });
+
+      const deact = await gql(adminCToken, orgCId, deactivateMutation, {
+        id: adminCMemberId,
+      });
+      expect(deact.body.data.deactivateMember.errors).toEqual([]);
+      expect(deact.body.data.deactivateMember.member.status).toBe('inactive');
+
+      await adminPrisma.member.update({
+        where: { id: adminCMemberId },
+        data: { status: 'active', roleId: adminRoleId },
+      });
+      await adminPrisma.member.update({
+        where: { id: secondAdminId },
+        data: { status: 'inactive' },
+      });
+      expect(managerRoleId).toBeTruthy();
+    });
+  });
+
   describe('Convite', () => {
     it('inviteMember só com { email, roleName } continua funcionando (não regride rbac.e2e-spec.ts)', async () => {
       const email = `memlc-invitee-${Date.now()}@t.com`;

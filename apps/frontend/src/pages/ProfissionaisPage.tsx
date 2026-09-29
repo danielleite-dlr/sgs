@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { MoreHorizontal, Pencil, Power, Trash2, UserPlus } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DataTable } from '@/components/ui/data-table';
+import type { DataTableColumn } from '@/components/ui/data-table';
 import { EntityAvatar } from '@/components/ui/entity-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/infrastructure/stores/auth.store';
+import {
+  canInviteMembers,
+  canManageMembers,
+} from '@/features/identity/team-permissions';
 import { InviteMemberDialog } from '@/features/identity/components/InviteMemberDialog';
 import { MemberEditDialog } from '@/features/identity/components/MemberEditDialog';
 import { DeactivateMemberDialog } from '@/features/identity/components/DeactivateMemberDialog';
@@ -66,6 +72,9 @@ function roleLabel(t: (key: string) => string, roleName: string): string {
 
 export function ProfissionaisPage() {
   const { t } = useTranslation();
+  const roleName = useAuthStore((s) => s.roleName);
+  const canInvite = canInviteMembers(roleName);
+  const canManage = canManageMembers(roleName);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<AdminMemberData | null>(null);
   const [deactivatingMember, setDeactivatingMember] = useState<AdminMemberData | null>(null);
@@ -142,10 +151,12 @@ export function ProfissionaisPage() {
       <PageHeader
         title={t('pages.profissionais.h1')}
         cta={
-          <Button onClick={() => setInviteOpen(true)}>
-            <UserPlus className="mr-2 h-4 w-4" />
-            {t('pages.profissionais.newCta')}
-          </Button>
+          canInvite ? (
+            <Button onClick={() => setInviteOpen(true)}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              {t('pages.profissionais.newCta')}
+            </Button>
+          ) : undefined
         }
       />
 
@@ -156,9 +167,11 @@ export function ProfissionaisPage() {
           <p className="text-sm text-neutral-500 max-w-md">
             {t('team.empty.body')}
           </p>
-          <Button onClick={() => setInviteOpen(true)}>
-            {t('team.empty.cta')}
-          </Button>
+          {canInvite && (
+            <Button onClick={() => setInviteOpen(true)}>
+              {t('team.empty.cta')}
+            </Button>
+          )}
         </div>
       ) : (
         <>
@@ -206,47 +219,51 @@ export function ProfissionaisPage() {
                   </Badge>
                 ),
               },
-              {
-                key: 'actions',
-                header: t('team.table.actions'),
-                cell: (r) => (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon" aria-label={t('team.table.actions')}>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenuItem
-                        onSelect={(e) => {
-                          e.preventDefault();
-                          setEditingMember(r);
-                        }}
-                      >
-                        <Pencil className="mr-2 h-4 w-4" />
-                        {t('team.actions.edit')}
-                      </DropdownMenuItem>
-                      {r.status === 'active' ? (
-                        <DropdownMenuItem
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            setDeactivatingMember(r);
-                          }}
-                          className="text-error-500"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          {t('team.actions.deactivate')}
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem onSelect={() => handleReactivate(r)}>
-                          <Power className="mr-2 h-4 w-4" />
-                          {t('team.actions.reactivate')}
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ),
-              },
+              ...(canManage
+                ? [
+                  {
+                    key: 'actions',
+                    header: t('team.table.actions'),
+                    cell: (r) => (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" aria-label={t('team.table.actions')}>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              setEditingMember(r);
+                            }}
+                          >
+                            <Pencil className="mr-2 h-4 w-4" />
+                            {t('team.actions.edit')}
+                          </DropdownMenuItem>
+                          {r.status === 'active' ? (
+                            <DropdownMenuItem
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                setDeactivatingMember(r);
+                              }}
+                              className="text-error-500"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {t('team.actions.deactivate')}
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem onSelect={() => handleReactivate(r)}>
+                              <Power className="mr-2 h-4 w-4" />
+                              {t('team.actions.reactivate')}
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ),
+                  } satisfies DataTableColumn<AdminMemberData>,
+                  ]
+                : []),
             ]}
           />
 
@@ -262,7 +279,9 @@ export function ProfissionaisPage() {
                     <TableHead>{t('team.invitations.table.role')}</TableHead>
                     <TableHead>{t('team.invitations.table.seniority')}</TableHead>
                     <TableHead>{t('team.invitations.table.expiresAt')}</TableHead>
-                    <TableHead>{t('team.invitations.table.actions')}</TableHead>
+                    {canInvite && (
+                      <TableHead>{t('team.invitations.table.actions')}</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -274,15 +293,17 @@ export function ProfissionaisPage() {
                         {seniorityLabel(t, invite.seniorityTier ?? null)}
                       </TableCell>
                       <TableCell>{formatExpiresAt(invite.expiresAt)}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRevoke(invite)}
-                        >
-                          {t('team.actions.revoke')}
-                        </Button>
-                      </TableCell>
+                      {canInvite && (
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRevoke(invite)}
+                          >
+                            {t('team.actions.revoke')}
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -292,15 +313,17 @@ export function ProfissionaisPage() {
         </>
       )}
 
-      <InviteMemberDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
-      {editingMember && (
+      {canInvite && (
+        <InviteMemberDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
+      )}
+      {canManage && editingMember && (
         <MemberEditDialog
           member={editingMember}
           open
           onClose={() => setEditingMember(null)}
         />
       )}
-      {deactivatingMember && (
+      {canManage && deactivatingMember && (
         <DeactivateMemberDialog
           member={deactivatingMember}
           open

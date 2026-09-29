@@ -1,8 +1,9 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
 import '@/infrastructure/i18n';
 import { ProfissionaisPage } from '../ProfissionaisPage';
+import { useAuthStore } from '@/infrastructure/stores/auth.store';
 import {
   AllMembersQuery,
   PendingInvitationsQuery,
@@ -90,6 +91,74 @@ function openDropdown(trigger: HTMLElement) {
 }
 
 describe('ProfissionaisPage', () => {
+  beforeEach(() => {
+    useAuthStore.setState({ roleName: 'ADMIN' });
+  });
+
+  afterEach(() => {
+    useAuthStore.setState({ roleName: null });
+  });
+
+  describe('acoes por papel', () => {
+    it('ADMIN ve Convidar, coluna de acoes dos membros e Revogar', async () => {
+      renderPage();
+      await screen.findByText('Ana Silva');
+
+      expect(
+        screen.getByRole('button', { name: 'Convidar profissional' }),
+      ).toBeInTheDocument();
+      expect(screen.getAllByRole('button', { name: 'Ações' })).toHaveLength(2);
+      expect(screen.getByRole('button', { name: 'Revogar' })).toBeInTheDocument();
+    });
+
+    it('MANAGER ve Convidar e Revogar, mas nao as acoes de membros', async () => {
+      useAuthStore.setState({ roleName: 'MANAGER' });
+      renderPage();
+      await screen.findByText('Ana Silva');
+
+      expect(
+        screen.getByRole('button', { name: 'Convidar profissional' }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Revogar' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Ações' })).toBeNull();
+      // A tabela de convites mantem sua propria coluna (Revogar); a de membros nao.
+      const membersTable = screen.getByText('Ana Silva').closest('table')!;
+      expect(
+        within(membersTable).queryByRole('columnheader', { name: 'Ações' }),
+      ).toBeNull();
+    });
+
+    it.each(['ATTENDANT', 'PROFESSIONAL'])(
+      '%s nao ve nenhuma acao, mas a lista continua legivel',
+      async (role) => {
+        useAuthStore.setState({ roleName: role });
+        renderPage();
+        await screen.findByText('Ana Silva');
+
+        expect(
+          screen.queryByRole('button', { name: 'Convidar profissional' }),
+        ).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Ações' })).toBeNull();
+        expect(screen.queryByRole('columnheader', { name: 'Ações' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Revogar' })).toBeNull();
+        // Convites pendentes continuam listados (somente leitura).
+        expect(screen.getByText('convidado@studio.com')).toBeInTheDocument();
+      },
+    );
+
+    it('ATTENDANT no empty state ve a mensagem sem CTA de convite', async () => {
+      useAuthStore.setState({ roleName: 'ATTENDANT' });
+      renderPage([membersMock([]), invitationsMock([])]);
+
+      expect(
+        await screen.findByText('Nenhum profissional cadastrado'),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: 'Convidar profissional' }),
+      ).toBeNull();
+    });
+  });
+
   it('renders one row per member with name, email, role, seniority and status', async () => {
     renderPage();
 
