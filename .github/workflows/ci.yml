@@ -34,7 +34,7 @@ jobs:
       - name: Generate Prisma client
         working-directory: apps/backend
         run: pnpm prisma:generate
-      - run: pnpm -r lint --if-present
+      - run: pnpm -r --if-present lint
 
   integration:
     runs-on: ubuntu-latest
@@ -89,6 +89,7 @@ jobs:
           JWT_REFRESH_SECRET: ci_refresh_secret_at_least_32_chars_long_xxxxx
           FRONTEND_URL: http://localhost:5173
           EMAIL_FROM: ci@test.local
+          MEILISEARCH_KEY: ci_meilisearch_master_key_xxxxx
 
       - name: Confirm PgBouncer is in transaction mode
         run: |
