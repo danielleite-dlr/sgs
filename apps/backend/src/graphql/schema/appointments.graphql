@@ -7,6 +7,12 @@ extend type Query {
     endsAt: DateTime!
     professionalId: UUID
   ): [Appointment!]!
+  "Bloqueios do intervalo; com professionalId inclui os feriados (org-wide)."
+  timeBlocks(
+    startsAt: DateTime!
+    endsAt: DateTime!
+    professionalId: UUID
+  ): [TimeBlock!]!
 }
 
 extend type Mutation {
@@ -16,6 +22,8 @@ extend type Mutation {
   updateAppointmentStatus(input: UpdateAppointmentStatusInput!): AppointmentPayload!
   "Todo cancelamento exige motivo; reasonTag 'no_show' grava o status no_show."
   cancelAppointment(input: CancelAppointmentInput!): AppointmentPayload!
+  createTimeBlock(input: CreateTimeBlockInput!): TimeBlockPayload!
+  deleteTimeBlock(id: UUID!): TimeBlockPayload!
 }
 
 type Appointment {
@@ -69,4 +77,30 @@ input CancelAppointmentInput {
   id: UUID!
   reason: String!
   reasonTag: String
+}
+
+"kind: folga | intervalo | feriado | indisponibilidade. professionalId nulo = feriado (org-wide)."
+type TimeBlock {
+  id: UUID!
+  kind: String!
+  professionalId: UUID
+  startsAt: DateTime!
+  endsAt: DateTime!
+  allDay: Boolean!
+  note: String
+  createdAt: DateTime!
+}
+
+input CreateTimeBlockInput {
+  kind: String!
+  professionalId: UUID
+  startsAt: DateTime!
+  endsAt: DateTime!
+  allDay: Boolean
+  note: String
+}
+
+type TimeBlockPayload {
+  timeBlock: TimeBlock
+  errors: [UserError!]!
 }
