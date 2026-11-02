@@ -23,6 +23,7 @@ export class TenantContextService {
   async runWithTenant<T>(
     organizationId: string,
     fn: (tx: TenantPrismaClient) => Promise<T>,
+    options?: { timeout?: number; maxWait?: number },
   ): Promise<T> {
     if (!isUuid(organizationId)) {
       throw new Error(
@@ -36,7 +37,7 @@ export class TenantContextService {
         `SET LOCAL app.current_organization = '${organizationId}'`,
       );
       return fn(tx as unknown as TenantPrismaClient);
-    });
+    }, options);
   }
 
   /**
