@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 02.1-backend-members-lifecycle-PLAN.md (wave 1 of Phase 02.1) - frontend wave (02.1-frontend-profissionais) still pending
-last_updated: "2026-09-29T02:52:41.884Z"
-last_activity: "2026-09-29 - Completed quick task 260929-gta: E2E Playwright do M1 (8/8 local; job e2e no CI)"
+status: executing
+stopped_at: Completed 03-01-database-schema-PLAN.md
+last_updated: "2026-11-02T03:09:54.208Z"
+last_activity: 2026-11-02
 progress:
   total_phases: 6
-  completed_phases: 2
-  total_plans: 17
-  completed_plans: 17
+  completed_phases: 3
+  total_plans: 29
+  completed_plans: 19
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-02)
 
 **Core value:** Profissional do beleza consegue agendar, atender, cobrar e comunicar com cliente em um único fluxo — sem sair da plataforma.
-**Current focus:** Phase 02 — core-domain
+**Current focus:** Phase 03 — core-operations
 
 ## Current Position
 
-Phase: 3
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-09-29 - Completed quick task 260929-gta: E2E Playwright do M1 (8/8 local; job e2e no CI)
+Phase: 03 (core-operations) — EXECUTING
+Plan: 2 of 12
+Status: Ready to execute
+Last activity: 2026-11-02
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -65,6 +65,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 02-core-domain P08 | 45 | 3 tasks | 15 files |
 | Phase 02-core-domain P06 | 75 | 3 tasks | 11 files |
 | Phase 02-core-domain P07 | 23 | 3 tasks | 22 files |
+| Phase 03 P01 | 45min | 3 tasks | 16 files |
 
 ## Accumulated Context
 
@@ -124,9 +125,9 @@ Recent decisions affecting current work:
 - [Phase 02-core-domain]: EntityCombobox is generic Popover+Command single-select reused across member/service/product pickers in CommissionRuleForm
 - [Phase quick]: Quick-260928-vk2: jq -s 'flatten | ...' (slurp+flatten) e' o padrao para parsing de docker compose ps --format json em CI, tolerante a JSON Lines e array
 - [Phase 02.1-equipe-e-profissionais-cadastro-completo-de-profissionais]: Backend wave (members-lifecycle): member_invitations gained is_professional/seniority_tier columns (Member untouched); deactivate blocks on future appointments only, commission rules inform via activeCommissionRuleCount; fixed pre-existing RLS bug in InvitationResolver.invite (unscoped organization lookup)
+- [Phase 03]: Plan 03-01: ledgers append-only via REVOKE UPDATE/DELETE para sgs_app (sem trigger); exclusion constraint de appointments cobre scheduled/confirmed/in_progress/completed
 
 ### Pending Todos
-
 
 - **Testes de RBAC e auth nunca rodaram — 4 arquivos invisiveis para o Jest** (descoberto em 2026-09-29 pelo plan-checker da fase 02.1, confirmado empiricamente). `apps/backend/jest-integration.config.ts:7` usa `testRegex: '.*\.spec\.ts$'`, que exige PONTO antes de `spec.ts`. Os arquivos `rbac.e2e-spec.ts`, `invitation.e2e-spec.ts`, `auth.e2e-spec.ts` e `full-auth-flow.e2e-spec.ts` usam HIFEN e nunca sao descobertos — ou seja, a cobertura de RBAC e do fluxo completo de autenticacao nunca executou, apesar de a Fase 1 ter sido marcada completa com eles no plano. Correcao: renomear os 4 para `.e2e.spec.ts` e rodar, esperando que falhas reais aparecam. Nao feito agora para nao virar desvio grande no meio da fase 02.1.
 - **`pnpm test:e2e` aponta para config inexistente** (mesmo contexto). `apps/backend/package.json:18` roda `jest --config ./test/jest-e2e.json`, mas `apps/backend/test/jest-e2e.json` nao existe no repo. O comando falha imediatamente. Decidir: criar a config ou remover o script.
@@ -160,6 +161,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-09-29T02:52:41.875Z
-Stopped at: Completed 02.1-backend-members-lifecycle-PLAN.md (wave 1 of Phase 02.1) - frontend wave (02.1-frontend-profissionais) still pending
+Last session: 2026-11-02T03:09:54.202Z
+Stopped at: Completed 03-01-database-schema-PLAN.md
 Resume file: None
