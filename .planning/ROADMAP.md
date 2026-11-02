@@ -143,7 +143,7 @@ Plans:
 - [x] 03-02-frontend-foundation-PLAN.md — dnd-kit + override react-is (Recharts), libs puras de dinheiro/período/semana/grade 07h–22h/rótulos/máscaras (W1)
 - [x] 03-03-backend-scheduling-PLAN.md — Advisory lock por profissional, mover/status/cancelar com motivo, bloqueios dos 4 tipos, testes de concorrência (W2)
 - [x] 03-04-backend-comandas-core-PLAN.md — Código C-AAAA-NNN, walk-in, itens/pacote rateado, pagamentos parciais com falta/troco (W2)
-- [ ] 03-05-backend-financial-credit-PLAN.md — Ledger de crédito/caixa/auditoria, dashboard Faturado × Recebido por método, comissões e crédito de cliente (W2)
+- [x] 03-05-backend-financial-credit-PLAN.md — Ledger de crédito/caixa/auditoria, dashboard Faturado × Recebido por método, comissões e crédito de cliente (W2)
 - [ ] 03-06-backend-visit-deposit-PLAN.md — createVisit/createAppointment abrem comanda na mesma transação, sinal como crédito + caixa (W3)
 - [ ] 03-07-backend-close-reopen-PLAN.md — Resolver de comissão (preço cheio, sem regra = R$0 + aviso), fechamento atômico, reabertura auditada com reversões (W3)
 - [ ] 03-08-frontend-agenda-grid-PLAN.md — Grade componentizada, drag-and-drop com revert otimista, vista Semana, bloqueios na grade (W3)
