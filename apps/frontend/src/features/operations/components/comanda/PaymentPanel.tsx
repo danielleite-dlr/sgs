@@ -1,0 +1,259 @@
+import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  formatCurrencyDisplay,
+  maskCurrency,
+  unmaskCurrency,
+} from '@/features/catalog/utils/currency-mask';
+import { centsToDecimal, computePaymentSummary, decimalToCents } from '../../lib/money';
+import {
+  ALL_PAYMENT_METHODS,
+  CLIENT_CREDIT_METHOD,
+  PAYMENT_METHODS,
+  paymentMethodLabel,
+} from '../../lib/operations-labels';
+import type { ComandaData } from '../../api/comandas.api';
+
+const brl = (v: string) => `R$ ${formatCurrencyDisplay(v)}`;
+
+const CHANGE_ERROR_TEXT = 'O troco só pode sair de pagamento em dinheiro.';
+
+export interface PaymentPanelProps {
+  comanda: ComandaData;
+  canWrite: boolean;
+  canClose: boolean;
+  busy: boolean;
+  onAddPayment: (p: { method: string; amount: string }) => Promise<void>;
+  onRemovePayment: (id: string) => Promise<void>;
+  onClose: () => Promise<void>;
+}
+
+/** Valor digitado ("50,00") -> decimal do backend ("50.00") ou null quando vazio/zero/inválido. */
+function parseTyped(masked: string): string | null {
+  const un = unmaskCurrency(masked);
+  if (!un || !/^\d+\.\d{2}$/.test(un)) return null;
+  return decimalToCents(un) > 0 ? un : null;
+}
+
+export function PaymentPanel({
+  comanda,
+  canWrite,
+  canClose,
+  busy,
+  onAddPayment,
+  onRemovePayment,
+  onClose,
+}: PaymentPanelProps) {
+  const isOpen = comanda.status === 'open';
+  const [method, setMethod] = useState<string>('cash');
+  const [typed, setTyped] = useState('');
+  const [dirty, setDirty] = useState(false);
+
+  const lines = comanda.payments.map((p) => ({ method: p.method, amount: p.amount }));
+  const base = computePaymentSummary(comanda.total, lines);
+
+  const remainingMasked = maskCurrency(base.remaining.replace('.', ''));
+  const shownAmount = dirty ? typed : base.remaining === '0.00' ? '' : remainingMasked;
+  const pending = isOpen && canWrite ? parseTyped(shownAmount) : null;
+  // Preview em tempo real só quando a pessoa digitou algo (senão "Falta" ficaria sempre zerada).
+  const previewLines = dirty && pending ? [...lines, { method, amount: pending }] : lines;
+  const summary = computePaymentSummary(comanda.total, previewLines);
+
+  const changeError =
+    summary.error === 'INVALID_CHANGE' || comanda.closeError === 'INVALID_CHANGE';
+
+  const hasCreditLine = comanda.payments.some((p) => p.method === CLIENT_CREDIT_METHOD.value);
+  const creditCents = decimalToCents(comanda.clientCreditBalance);
+  const remainingCents = decimalToCents(base.remaining);
+  const creditSuggestion = Math.min(creditCents, remainingCents);
+  const showCreditShortcut =
+    isOpen && canWrite && creditCents > 0 && remainingCents > 0 && !hasCreditLine;
+
+  const methods = creditCents > 0 || hasCreditLine ? ALL_PAYMENT_METHODS : PAYMENT_METHODS;
+
+  const closeEnabled = comanda.canClose && base.canClose && !busy;
+
+  async function add() {
+    if (!pending) return;
+    await onAddPayment({ method, amount: pending });
+    setTyped('');
+    setDirty(false);
+  }
+
+  async function applyCredit() {
+    await onAddPayment({
+      method: CLIENT_CREDIT_METHOD.value,
+      amount: centsToDecimal(creditSuggestion),
+    });
+  }
+
+  return (
+    <Card data-testid="payment-panel">
+      <CardHeader className="pb-sm">
+        <CardTitle className="text-base">Pagamento</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-md">
+        {comanda.payments.length > 0 && (
+          <ul className="space-y-xs" aria-label="Pagamentos lançados">
+            {comanda.payments.map((p) => (
+              <li
+                key={p.id}
+                data-testid={`payment-row-${p.id}`}
+                className="flex items-center justify-between rounded-md border border-neutral-100 bg-neutral-50 px-sm py-xs text-sm"
+              >
+                <span className="text-neutral-700">{paymentMethodLabel(p.method)}</span>
+                <span className="flex items-center gap-xs font-semibold text-neutral-800">
+                  {brl(p.amount)}
+                  {isOpen && canWrite && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      disabled={busy}
+                      aria-label={`Remover pagamento ${paymentMethodLabel(p.method)} ${brl(p.amount)}`}
+                      onClick={() => void onRemovePayment(p.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {isOpen && canWrite && (
+          <div className="space-y-sm">
+            {showCreditShortcut && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={busy}
+                data-testid="payment-use-credit"
+                onClick={() => void applyCredit()}
+              >
+                Usar crédito do cliente ({brl(centsToDecimal(creditSuggestion))})
+              </Button>
+            )}
+            <div className="grid grid-cols-[1fr_1fr] gap-sm">
+              <div>
+                <Label htmlFor="payment-method-select" className="text-xs font-semibold text-neutral-700">
+                  Forma
+                </Label>
+                <select
+                  id="payment-method-select"
+                  data-testid="payment-method-select"
+                  value={method}
+                  onChange={(e) => setMethod(e.target.value)}
+                  className="mt-xs w-full rounded-md border border-neutral-200 bg-white px-sm py-xs text-sm"
+                >
+                  {methods.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="payment-amount" className="text-xs font-semibold text-neutral-700">
+                  Valor
+                </Label>
+                <Input
+                  id="payment-amount"
+                  data-testid="payment-amount"
+                  className="mt-xs"
+                  inputMode="numeric"
+                  placeholder="0,00"
+                  value={shownAmount}
+                  onChange={(e) => {
+                    setTyped(maskCurrency(e.target.value));
+                    setDirty(true);
+                  }}
+                />
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={busy || !pending}
+              data-testid="payment-add"
+              onClick={() => void add()}
+            >
+              Adicionar
+            </Button>
+          </div>
+        )}
+
+        <dl className="space-y-xs border-t border-neutral-100 pt-sm text-sm">
+          <div className="flex justify-between text-neutral-700">
+            <dt>Total</dt>
+            <dd data-testid="payment-total" className="font-semibold">
+              {brl(summary.total)}
+            </dd>
+          </div>
+          <div className="flex justify-between text-neutral-700">
+            <dt>Pago</dt>
+            <dd data-testid="payment-paid" className="font-semibold">
+              {brl(summary.paid)}
+            </dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-neutral-700">Falta</dt>
+            <dd
+              data-testid="payment-remaining"
+              className={`font-semibold ${Number(summary.remaining) > 0 ? 'text-warning-700' : 'text-neutral-800'}`}
+            >
+              {brl(summary.remaining)}
+            </dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-neutral-700">Troco</dt>
+            <dd
+              data-testid="payment-change"
+              className={`font-semibold ${Number(summary.change) > 0 ? 'text-success-700' : 'text-neutral-800'}`}
+            >
+              {brl(summary.change)}
+            </dd>
+          </div>
+        </dl>
+
+        {changeError && (
+          <p role="alert" data-testid="payment-error" className="text-sm text-error-600">
+            {CHANGE_ERROR_TEXT}
+          </p>
+        )}
+
+        {isOpen && canClose && (
+          <div className="space-y-xs">
+            <Button
+              type="button"
+              size="lg"
+              className="w-full"
+              disabled={!closeEnabled}
+              data-testid="comanda-close"
+              onClick={() => void onClose()}
+            >
+              Fechar comanda
+            </Button>
+            {!closeEnabled && !busy && Number(base.remaining) > 0 && (
+              <p className="text-xs text-neutral-600">
+                Falta {brl(base.remaining)} para poder fechar.
+              </p>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
