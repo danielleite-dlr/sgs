@@ -147,7 +147,7 @@ Plans:
 - [x] 03-06-backend-visit-deposit-PLAN.md — createVisit/createAppointment abrem comanda na mesma transação, sinal como crédito + caixa (W3)
 - [x] 03-07-backend-close-reopen-PLAN.md — Resolver de comissão (preço cheio, sem regra = R$0 + aviso), fechamento atômico, reabertura auditada com reversões (W3)
 - [x] 03-08-frontend-agenda-grid-PLAN.md — Grade componentizada, drag-and-drop com revert otimista, vista Semana, bloqueios na grade (W3)
-- [ ] 03-09-frontend-financeiro-PLAN.md — /financeiro, /financeiro/comissoes e /financeiro/credito-cliente reais + flags (W3)
+- [x] 03-09-frontend-financeiro-PLAN.md — /financeiro, /financeiro/comissoes e /financeiro/credito-cliente reais + flags (W3)
 - [ ] 03-10-frontend-agenda-dialogs-PLAN.md — Modal de visita multi-serviço/pacote com sinal, detalhes/status/cancelamento, bloqueios (W4)
 - [ ] 03-11-frontend-comanda-PLAN.md — /comanda e /comanda/:id reais, pagamento dividido, fechamento com comissões, reabertura + flag comanda (W4)
 - [ ] 03-12-e2e-verification-PLAN.md — RLS/RBAC transversal, Playwright dos 5 critérios, VALIDATION + verificação humana (W5)

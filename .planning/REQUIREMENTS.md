@@ -47,7 +47,7 @@
 
 ### Financeiro
 
-- [ ] **FIN-01**: Proprietário consegue visualizar dashboard financeiro com receita por dia/semana/mês e breakdown por método de pagamento
+- [x] **FIN-01**: Proprietário consegue visualizar dashboard financeiro com receita por dia/semana/mês e breakdown por método de pagamento
 - [ ] **FIN-02**: Sistema calcula e registra comissões automaticamente por profissional ao fechar comanda, com snapshot imutável dos inputs
 - [ ] **FIN-03**: Sistema gera previsão financeira para os próximos 30 dias baseada em histórico e agendamentos confirmados
 
@@ -141,7 +141,7 @@
 | POS-01 | Phase 3 | Pending |
 | POS-02 | Phase 3 | Pending |
 | POS-03 | Phase 3 | Pending |
-| FIN-01 | Phase 3 | Pending |
+| FIN-01 | Phase 3 | Complete |
 | FIN-02 | Phase 3 | Pending |
 | FIN-03 | Phase 5 | Pending |
 | CONT-01 | Phase 4 | Pending |
