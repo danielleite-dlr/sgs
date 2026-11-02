@@ -111,4 +111,19 @@ export class ComandasResolver {
   ) {
     return this.comandas.removePayment(tenant.organizationId, comandaId, paymentId);
   }
+
+  @Mutation('closeComanda')
+  @RequirePermission(PERMISSIONS.COMANDA_CLOSE)
+  close(@CurrentTenant() tenant: TenantContext, @Args('id') id: string) {
+    return this.comandas.close(tenant.organizationId, tenant, id);
+  }
+
+  @Mutation('reopenComanda')
+  @RequirePermission(PERMISSIONS.COMANDA_REOPEN)
+  reopen(
+    @CurrentTenant() tenant: TenantContext,
+    @Args('input') input: { id: string; reason: string },
+  ) {
+    return this.comandas.reopen(tenant.organizationId, tenant, input);
+  }
 }

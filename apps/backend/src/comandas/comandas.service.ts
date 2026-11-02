@@ -17,6 +17,9 @@ import {
   recalcComandaTotal,
 } from './comanda-items';
 import { openComandaTx } from './comanda-open';
+import { closeComandaTx, reopenComandaTx } from './comanda-close';
+import { StockError } from '../catalog/products/stock';
+import { CreditError } from '../financial/client-credit';
 import {
   loadComandaView,
   loadComandaViews,
@@ -41,8 +44,33 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const fail = (e: unknown): ComandaPayload => {
   const m = mapComandaError(e);
   if (m) return { comanda: null, errors: [m] };
+  if (e instanceof CreditError) {
+    return {
+      comanda: null,
+      errors: [{ code: e.code, message: e.message, field: null }],
+    };
+  }
+  if (e instanceof StockError) {
+    return {
+      comanda: null,
+      errors: [{ code: e.code, message: e.message, field: null }],
+    };
+  }
   throw e;
 };
+
+const CLOSE_TX_OPTIONS = { timeout: 15000, maxWait: 5000 } as const;
+
+/** PROFESSIONAL só enxerga as próprias comissões. */
+function scopeCommissions(view: ComandaView | null, tenant: Pick<TenantContext, 'roleName' | 'memberId'>) {
+  if (!view || tenant.roleName !== 'PROFESSIONAL') return view;
+  const commissions = view.commissions.filter((c) => c.memberId === tenant.memberId);
+  return {
+    ...view,
+    commissions,
+    hasCommissionWarnings: commissions.some((c) => c.kind === 'accrual' && c.noRule && !c.reversed),
+  };
+}
 
 const brl = (cents: number) => fromCents(cents).replace('.', ',');
 
@@ -348,6 +376,47 @@ export class ComandasService {
     });
   }
 
+  async close(
+    orgId: string,
+    tenant: Pick<TenantContext, 'roleName' | 'memberId'>,
+    id: string,
+  ): Promise<ComandaPayload> {
+    try {
+      return await this.tenant.runWithTenant(
+        orgId,
+        async (tx) => {
+          await closeComandaTx(tx, orgId, tenant.memberId, id);
+          return { comanda: scopeCommissions(await loadComandaView(tx, id), tenant), errors: [] };
+        },
+        CLOSE_TX_OPTIONS,
+      );
+    } catch (e) {
+      return fail(e);
+    }
+  }
+
+  async reopen(
+    orgId: string,
+    tenant: Pick<TenantContext, 'roleName' | 'memberId'>,
+    input: { id: string; reason: string },
+  ): Promise<ComandaPayload> {
+    try {
+      return await this.tenant.runWithTenant(
+        orgId,
+        async (tx) => {
+          await reopenComandaTx(tx, orgId, tenant.memberId, input.id, input.reason);
+          return {
+            comanda: scopeCommissions(await loadComandaView(tx, input.id), tenant),
+            errors: [],
+          };
+        },
+        CLOSE_TX_OPTIONS,
+      );
+    } catch (e) {
+      return fail(e);
+    }
+  }
+
   async get(
     orgId: string,
     tenant: Pick<TenantContext, 'roleName' | 'memberId'>,
@@ -361,7 +430,7 @@ export class ComandasService {
         });
         if (!mine) return null;
       }
-      return loadComandaView(tx, id);
+      return scopeCommissions(await loadComandaView(tx, id), tenant);
     });
   }
 
@@ -391,10 +460,11 @@ export class ComandasService {
       const rows = await tx.$queryRaw<{ id: string }[]>(
         Prisma.sql`SELECT id FROM comandas WHERE ${Prisma.join(conds, ' AND ')} ORDER BY opened_at DESC LIMIT ${LIST_LIMIT}`,
       );
-      return loadComandaViews(
+      const views = await loadComandaViews(
         tx,
         rows.map((r) => r.id),
       );
+      return views.map((v) => scopeCommissions(v, tenant) as ComandaView);
     });
   }
 }

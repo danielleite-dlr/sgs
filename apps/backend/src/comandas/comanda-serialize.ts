@@ -52,8 +52,50 @@ function memberView(m: ComandaRow['items'][number]['professional']) {
   };
 }
 
+type CommissionRow = Awaited<ReturnType<typeof findCommissionRows>>[number];
+
+function findCommissionRows(tx: TenantPrismaClient, comandaIds: string[]) {
+  return tx.commissionRecord.findMany({
+    where: { comandaId: { in: comandaIds } },
+    include: { member: { select: { displayName: true } } },
+    orderBy: [{ calculatedAt: 'asc' }, { createdAt: 'asc' }],
+  });
+}
+
+/** Registros do ciclo atual (accrual + reversal) no formato do SDL (D-24: noRule não revertido = aviso). */
+function serializeCommissions(row: ComandaRow, all: CommissionRow[]) {
+  const cycleRows = all.filter((r) => r.comandaId === row.id && r.cycle === row.closeCycle);
+  const reversedIds = new Set(
+    cycleRows.filter((r) => r.kind === 'reversal').map((r) => r.reversesRecordId),
+  );
+  return cycleRows.map((r) => {
+    const snap = (r.ruleSnapshot ?? {}) as { itemName?: string };
+    return {
+      id: r.id,
+      comandaItemId: r.comandaItemId,
+      memberId: r.memberId,
+      memberName: r.member.displayName,
+      itemName: snap.itemName ?? '',
+      kind: r.kind,
+      cycle: r.cycle,
+      baseAmount: money(r.baseAmount),
+      chargedAmount: money(r.chargedAmount),
+      calculatedAmount: money(r.calculatedAmount),
+      noRule: r.noRule,
+      reversed: r.kind === 'accrual' && reversedIds.has(r.id),
+    };
+  });
+}
+
+export type ComandaCommissionView = ReturnType<typeof serializeCommissions>[number];
+
 /** Converte a linha do Prisma no formato do SDL (Decimals em string, totais calculados). */
-export function serializeComanda(row: ComandaRow, creditBalanceCents: number) {
+export function serializeComanda(
+  row: ComandaRow,
+  creditBalanceCents: number,
+  commissionRows: CommissionRow[] = [],
+) {
+  const commissions = serializeCommissions(row, commissionRows);
   const totals = computeComandaTotals(
     toCents(row.total),
     row.payments.map((p) => ({ method: p.method, cents: toCents(p.amount) })),
@@ -98,6 +140,10 @@ export function serializeComanda(row: ComandaRow, creditBalanceCents: number) {
       memberId: p.memberId,
     })),
     appointmentIds: row.appointments.map((a) => a.id),
+    commissions,
+    hasCommissionWarnings: commissions.some(
+      (c) => c.kind === 'accrual' && c.noRule && !c.reversed,
+    ),
   };
 }
 
@@ -125,10 +171,14 @@ export async function loadComandaViews(
   const rows = await findRows(tx, ids);
   const byId = new Map(rows.map((r) => [r.id, r]));
   const balances = await creditBalances(tx, [...new Set(rows.map((r) => r.clientId))]);
+  const commissionRows = await findCommissionRows(
+    tx,
+    rows.map((r) => r.id),
+  );
   return ids
     .map((id) => byId.get(id))
     .filter((r): r is ComandaRow => !!r)
-    .map((r) => serializeComanda(r, balances.get(r.clientId) ?? 0));
+    .map((r) => serializeComanda(r, balances.get(r.clientId) ?? 0, commissionRows));
 }
 
 export async function loadComandaView(

@@ -11,6 +11,29 @@ extend type Mutation {
   addComandaPackage(input: AddComandaPackageInput!): ComandaPayload!
   addComandaPayment(input: AddComandaPaymentInput!): ComandaPayload!
   removeComandaPayment(comandaId: UUID!, paymentId: UUID!): ComandaPayload!
+  closeComanda(id: UUID!): ComandaPayload!
+  reopenComanda(input: ReopenComandaInput!): ComandaPayload!
+}
+
+input ReopenComandaInput {
+  id: UUID!
+  reason: String!
+}
+
+"Registro de comissão do ciclo atual da comanda (accrual ou reversal). Valores com 2 casas; reversal é negativo."
+type ComandaCommission {
+  id: UUID!
+  comandaItemId: UUID!
+  memberId: UUID!
+  memberName: String!
+  itemName: String!
+  kind: String!
+  cycle: Int!
+  baseAmount: String!
+  chargedAmount: String!
+  calculatedAmount: String!
+  noRule: Boolean!
+  reversed: Boolean!
 }
 
 "status: open | closed | cancelled. Valores monetários como string decimal com 2 casas."
@@ -34,6 +57,10 @@ type Comanda {
   items: [ComandaItem!]!
   payments: [ComandaPayment!]!
   appointmentIds: [UUID!]!
+  "Comissões do ciclo atual (PROFESSIONAL vê só as próprias)"
+  commissions: [ComandaCommission!]!
+  "true quando há comissão sem regra (R$ 0,00) não revertida no ciclo atual (D-24)"
+  hasCommissionWarnings: Boolean!
 }
 
 "listUnitPrice = preço cheio do serviço (base da comissão, D-23); unitPrice = valor cobrado (rateado em pacote)."
