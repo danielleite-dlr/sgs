@@ -26,8 +26,8 @@ const FLAGS = {
   equipe: true,
   /** Comanda / PDV — `mocks/comanda.mock.ts`. */
   comanda: false,
-  /** Controle de entrada e saída — números fixos em R$ 0,00. */
-  financeiro: false,
+  /** Dashboard financeiro — financialSummary real (Faturado × Recebido). */
+  financeiro: true,
   /** Comissões calculadas — `mocks/financeiro.mock.ts`. */
   financeiroComissoes: false,
   /** As 10 sub-páginas de relatório financeiro — layout sem consulta. */

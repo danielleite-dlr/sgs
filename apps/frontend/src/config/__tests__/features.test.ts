@@ -22,7 +22,6 @@ describe('feature gating', () => {
     for (const path of [
       '/dashboard',
       '/comanda/:id',
-      '/financeiro',
       '/financeiro/caixa',
       '/financeiro/comissoes',
       '/relatorios',

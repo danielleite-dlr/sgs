@@ -1,90 +1,280 @@
-import { useState } from 'react';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@apollo/client';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { useAuthStore } from '@/infrastructure/stores/auth.store';
+import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
+import {
+  CashMovementsQuery,
+  FinancialSummaryQuery,
+  type CashMovementsResult,
+  type FinancialSummaryResult,
+} from '../api/financial.api';
+import { PeriodFilter } from '../components/PeriodFilter';
+import { defaultPeriod, type PeriodValue } from '../lib/period-value';
+import { paymentMethodLabel } from '../lib/operations-labels';
 
-interface PeriodChip {
-  label: string;
+type Granularity = 'day' | 'week' | 'month';
+
+const GRANULARITIES: { value: Granularity; label: string }[] = [
+  { value: 'day', label: 'Dia' },
+  { value: 'week', label: 'Semana' },
+  { value: 'month', label: 'Mês' },
+];
+
+const KIND_LABELS: Record<string, string> = {
+  deposit_in: 'Sinal',
+  payment_in: 'Pagamento',
+  change_out: 'Troco',
+  reversal: 'Estorno',
+};
+
+const brl = (v: string) => `R$ ${formatCurrencyDisplay(v)}`;
+
+function daysBetween(from: string, to: string): number {
+  return Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000);
 }
 
-/**
- * Controle de entrada e saída — /financeiro page (Trinks-pattern, SGS design system).
- *
- * Layout:
- *   PageHeader "Controle de entrada e saída"
- *   ┌──────────────────┐                ┌────────────────────┐
- *   │ Período: chip    │                │ Lançamentos        │
- *   │                  │                │                    │
- *   │     Resultado    │                │                    │
- *   │     R$ 0,00      │                │                    │
- *   │                  │                │                    │
- *   │  [Receita ↑]     │                │                    │
- *   │  [Despesa ↓]     │                │                    │
- *   │                  │                │                    │
- *   │  [Lançar receita][Lançar despesa] │                    │
- *   └──────────────────┘                └────────────────────┘
- */
+function bucketLabel(bucketStart: string, granularity: Granularity): string {
+  const [y, m, d] = bucketStart.slice(0, 10).split('-');
+  return granularity === 'month' ? `${m}/${y}` : `${d}/${m}`;
+}
+
+function Kpi({ id, label, hint, value }: { id: string; label: string; hint?: string; value: string }) {
+  return (
+    <article className="rounded-md border border-neutral-200 bg-white p-md">
+      <p className="text-xs text-neutral-500">{label}</p>
+      <p className="text-xl font-semibold text-neutral-800" data-testid={id}>
+        {value}
+      </p>
+      {hint && <p className="text-xs text-neutral-400 mt-xs">{hint}</p>}
+    </article>
+  );
+}
+
 export function FinanceiroPage() {
-  const [period] = useState<PeriodChip>({ label: 'Período: 01/05/2026 - 31/05/2026' });
+  const permissions = useAuthStore((s) => s.permissions);
+  const canRead = permissions.includes('financial.read');
+
+  const [period, setPeriod] = useState<PeriodValue>(() => defaultPeriod());
+  const [granularity, setGranularity] = useState<Granularity>('day');
+
+  const rangeDays = daysBetween(period.from, period.to);
+  useEffect(() => {
+    if (rangeDays > 62 && granularity === 'day') setGranularity('week');
+  }, [rangeDays, granularity]);
+
+  const { data, loading, error } = useQuery<FinancialSummaryResult>(FinancialSummaryQuery, {
+    variables: { from: period.from, to: period.to, granularity },
+    skip: !canRead,
+  });
+  const movements = useQuery<CashMovementsResult>(CashMovementsQuery, {
+    variables: { from: period.from, to: period.to },
+    skip: !canRead,
+  });
+
+  const summary = data?.financialSummary;
+
+  const chartData = useMemo(
+    () =>
+      (summary?.buckets ?? []).map((b) => ({
+        label: bucketLabel(b.bucketStart, granularity),
+        billed: Number(b.billed),
+        received: Number(b.received),
+      })),
+    [summary, granularity],
+  );
+
+  const receivedTotalNum = Number(summary?.receivedTotal ?? 0);
 
   return (
     <>
       <PageHeader
-        title="Controle de entrada e saída"
-        breadcrumbs={[
-          { label: 'Financeiro' },
-          { label: 'Controle de entrada e saída' },
-        ]}
+        title="Financeiro"
+        breadcrumbs={[{ label: 'Financeiro' }, { label: 'Visão geral' }]}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-lg">
-        {/* Coluna esquerda — resumo + ações */}
-        <div className="flex flex-col items-center gap-md py-md">
-          <span className="rounded-md border border-primary-200 bg-primary-50 px-md py-xs text-sm text-primary-700 font-medium">
-            {period.label}
-          </span>
-
-          <div className="text-center mt-md">
-            <p className="text-sm text-neutral-500 mb-xs">Resultado</p>
-            <p className="text-3xl font-semibold text-neutral-800">R$ 0,00</p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-md w-full max-w-md mt-md">
-            <article className="rounded-md border border-neutral-200 bg-white p-sm flex items-center justify-between">
-              <div>
-                <p className="text-xs text-neutral-500 mb-xs">Receita</p>
-                <p className="text-sm font-semibold text-neutral-800">R$ 0,00</p>
-              </div>
-              <TrendingUp className="h-5 w-5 text-success-500 shrink-0" />
-            </article>
-            <article className="rounded-md border border-neutral-200 bg-white p-sm flex items-center justify-between">
-              <div>
-                <p className="text-xs text-neutral-500 mb-xs">Despesa</p>
-                <p className="text-sm font-semibold text-neutral-800">R$ 0,00</p>
-              </div>
-              <TrendingDown className="h-5 w-5 text-error-500 shrink-0" />
-            </article>
-          </div>
-
-          <div className="grid grid-cols-2 gap-md w-full max-w-md mt-sm">
-            <Button>
-              Lançar receita <TrendingUp className="h-4 w-4" />
-            </Button>
-            <Button variant="destructive">
-              Lançar despesa <TrendingDown className="h-4 w-4" />
-            </Button>
-          </div>
+      {!canRead ? (
+        <div className="rounded-md border border-neutral-200 bg-white p-md text-sm text-neutral-600">
+          Você não tem acesso ao financeiro.
         </div>
+      ) : (
+        <div className="flex flex-col gap-lg">
+          <div className="flex flex-wrap items-start justify-between gap-md">
+            <PeriodFilter value={period} onChange={setPeriod} />
+            <div role="group" aria-label="Agrupar por" className="flex gap-xs">
+              {GRANULARITIES.map((g) => (
+                <Button
+                  key={g.value}
+                  type="button"
+                  size="sm"
+                  variant={granularity === g.value ? 'default' : 'outline'}
+                  aria-pressed={granularity === g.value}
+                  data-testid={`granularity-${g.value}`}
+                  onClick={() => setGranularity(g.value)}
+                >
+                  {g.label}
+                </Button>
+              ))}
+            </div>
+          </div>
 
-        {/* Coluna direita — Lançamentos */}
-        <aside>
-          <h2 className="text-sm font-semibold text-neutral-800 mb-sm">Lançamentos</h2>
-          <p className="text-sm text-neutral-500 leading-relaxed">
-            Nenhum lançamento foi encontrado no período selecionado. Selecione "Lançar despesa" ou
-            "Lançar receita" para adicionar um novo registro.
-          </p>
-        </aside>
-      </div>
+          {error ? (
+            <Alert variant="destructive">
+              <AlertDescription>Não foi possível carregar o financeiro.</AlertDescription>
+            </Alert>
+          ) : loading || !summary ? (
+            <div className="flex flex-col gap-md" aria-busy="true">
+              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-72 w-full" />
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-md">
+                <Kpi
+                  id="kpi-billed"
+                  label="Faturado"
+                  hint="comandas fechadas no período"
+                  value={brl(summary.billedTotal)}
+                />
+                <Kpi
+                  id="kpi-received"
+                  label="Recebido"
+                  hint="entradas de caixa no período, incluindo sinais"
+                  value={brl(summary.receivedTotal)}
+                />
+                <Kpi
+                  id="kpi-closed-comandas"
+                  label="Comandas fechadas"
+                  value={String(summary.closedComandas)}
+                />
+                <Kpi
+                  id="kpi-average-ticket"
+                  label="Ticket médio"
+                  value={brl(summary.averageTicket)}
+                />
+                <Kpi
+                  id="kpi-commissions"
+                  label="Comissões"
+                  value={brl(summary.commissionsTotal)}
+                />
+              </div>
+
+              <section
+                aria-label="Faturado e recebido por período"
+                className="rounded-md border border-neutral-200 bg-white p-md"
+                data-testid="financial-chart"
+              >
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="label" />
+                    <YAxis />
+                    <Tooltip
+                      formatter={(v: number) =>
+                        `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                      }
+                    />
+                    <Legend />
+                    <Bar dataKey="billed" name="Faturado" fill="#570080" isAnimationActive={false} />
+                    <Bar dataKey="received" name="Recebido" fill="#1D9E75" isAnimationActive={false} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </section>
+
+              <section className="rounded-md border border-neutral-200 bg-white p-md">
+                <h2 className="text-sm font-semibold text-neutral-800 mb-sm">
+                  Recebido por forma de pagamento
+                </h2>
+                {summary.receivedByMethod.length === 0 ? (
+                  <p className="text-sm text-neutral-500">Nenhum recebimento no período.</p>
+                ) : (
+                  <table className="w-full text-sm" data-testid="received-by-method">
+                    <tbody>
+                      {summary.receivedByMethod.map((m) => {
+                        const pct =
+                          receivedTotalNum > 0
+                            ? ((Number(m.total) / receivedTotalNum) * 100).toFixed(1).replace('.', ',')
+                            : '0,0';
+                        return (
+                          <tr
+                            key={m.method}
+                            data-testid={`received-method-${m.method}`}
+                            className="border-t border-neutral-100"
+                          >
+                            <td className="py-xs">{paymentMethodLabel(m.method)}</td>
+                            <td className="py-xs text-right font-medium">{brl(m.total)}</td>
+                            <td className="py-xs text-right text-neutral-500">{pct}%</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </section>
+            </>
+          )}
+
+          <section className="rounded-md border border-neutral-200 bg-white p-md">
+            <h2 className="text-sm font-semibold text-neutral-800 mb-sm">Lançamentos</h2>
+            {movements.loading ? (
+              <Skeleton className="h-16 w-full" />
+            ) : movements.error ? (
+              <p className="text-sm text-error-600">Não foi possível carregar os lançamentos.</p>
+            ) : (movements.data?.cashMovements ?? []).length === 0 ? (
+              <p className="text-sm text-neutral-500">Nenhum lançamento no período.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm" data-testid="cash-movements">
+                  <thead>
+                    <tr className="text-left text-xs text-neutral-500">
+                      <th className="py-xs">Data</th>
+                      <th>Tipo</th>
+                      <th>Forma</th>
+                      <th>Cliente</th>
+                      <th>Comanda</th>
+                      <th className="text-right">Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {movements.data!.cashMovements.map((mv) => {
+                      const negative = Number(mv.amount) < 0;
+                      const d = new Date(mv.occurredAt);
+                      return (
+                        <tr key={mv.id} className="border-t border-neutral-100">
+                          <td className="py-xs">
+                            {d.toLocaleDateString('pt-BR')}{' '}
+                            {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          </td>
+                          <td>{KIND_LABELS[mv.kind] ?? mv.kind}</td>
+                          <td>{paymentMethodLabel(mv.method)}</td>
+                          <td>{mv.clientName ?? '—'}</td>
+                          <td>{mv.comandaCode ?? '—'}</td>
+                          <td className={`text-right ${negative ? 'text-error-600' : ''}`}>
+                            {brl(mv.amount)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        </div>
+      )}
     </>
   );
 }
