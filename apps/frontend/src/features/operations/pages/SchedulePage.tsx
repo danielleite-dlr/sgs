@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
-import { useQuery } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
+import { toast } from "sonner";
 import {
   CalendarDays,
   ChevronLeft,
@@ -8,6 +9,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Plus,
+  Ban,
   SlidersHorizontal,
   Search,
   Eye,
@@ -34,6 +36,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   AppointmentsQuery,
   TimeBlocksQuery,
+  DeleteTimeBlockMutation,
+  type DeleteTimeBlockResult,
+  type TimeBlockData,
   type TimeBlocksQueryResult,
   type AppointmentsQueryResult,
 } from "../api/appointments.api";
@@ -44,6 +49,20 @@ import {
 } from "@/features/catalog/api/members.api";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/infrastructure/stores/auth.store";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { AppointmentDetailsDialog } from "../components/calendar/AppointmentDetailsDialog";
+import { TimeBlockDialog } from "../components/calendar/TimeBlockDialog";
+import { TIME_BLOCK_KINDS } from "../lib/operations-labels";
+import { formatHM } from "../components/calendar/types";
 import { VisitFormDialog } from "../components/calendar/VisitFormDialog";
 import { DayGrid } from "../components/calendar/DayGrid";
 import { WeekGrid } from "../components/calendar/WeekGrid";
@@ -193,6 +212,7 @@ interface FilterPanelProps {
   onChangeShowFolga: (v: boolean) => void;
   onOpenBuscarAgendar: () => void;
   onOpenSelecaoProf: () => void;
+  onOpenBlock: () => void;
   canSchedule: boolean;
   canSelectProfessionals: boolean;
 }
@@ -218,6 +238,18 @@ function FilterPanel(props: FilterPanelProps) {
               <CalendarDays className="h-3.5 w-3.5" />
             </span>
             <span className="flex-1">Buscar e Agendar</span>
+          </button>
+        )}
+        {props.canSchedule && (
+          <button
+            type="button"
+            onClick={props.onOpenBlock}
+            className="flex items-center gap-sm px-sm py-xs rounded-md border border-primary-200 text-sm text-neutral-700 hover:bg-primary-50 transition-colors text-left"
+          >
+            <span className="h-6 w-6 rounded-md bg-neutral-700 text-white flex items-center justify-center shrink-0">
+              <Ban className="h-3.5 w-3.5" />
+            </span>
+            <span className="flex-1">Bloquear horário</span>
           </button>
         )}
         {props.canSelectProfessionals && (
@@ -700,6 +732,11 @@ export function SchedulePage() {
   >();
   const [buscarAgendarOpen, setBuscarAgendarOpen] = useState(false);
   const [selecaoProfOpen, setSelecaoProfOpen] = useState(false);
+  const [blockOpen, setBlockOpen] = useState(false);
+  const [detailsId, setDetailsId] = useState<string | null>(null);
+  const [blockToRemove, setBlockToRemove] = useState<TimeBlockData | null>(null);
+  const [deleteTimeBlock] =
+    useMutation<DeleteTimeBlockResult>(DeleteTimeBlockMutation);
   const roleName = useAuthStore((s) => s.roleName);
   const memberId = useAuthStore((s) => s.memberId);
   const canSchedule = canWriteAppointments(roleName);
@@ -807,6 +844,27 @@ export function SchedulePage() {
     setModalSeed({ hour, minute, profId });
     setModalOpen(true);
   }
+  function refetchAll() {
+    void refetchAppointments();
+    void refetchTimeBlocks();
+  }
+  async function removeBlock() {
+    const block = blockToRemove;
+    if (!block) return;
+    try {
+      const res = await deleteTimeBlock({ variables: { id: block.id } });
+      const errors = res.data?.deleteTimeBlock.errors ?? [];
+      if (errors.length > 0) {
+        toast.error(errors[0].message);
+        return;
+      }
+      toast.success("Bloqueio removido.");
+      setBlockToRemove(null);
+      refetchAll();
+    } catch {
+      toast.error("Não foi possível remover o bloqueio. Tente novamente.");
+    }
+  }
   function shiftDay(delta: number) {
     setSelectedDate((day) => {
       const next = new Date(day);
@@ -834,6 +892,7 @@ export function SchedulePage() {
       onChangeShowFolga={setShowFolga}
       onOpenBuscarAgendar={() => setBuscarAgendarOpen(true)}
       onOpenSelecaoProf={() => setSelecaoProfOpen(true)}
+      onOpenBlock={() => setBlockOpen(true)}
       canSchedule={canSchedule}
       canSelectProfessionals={!ownOnly}
     />
@@ -965,6 +1024,19 @@ export function SchedulePage() {
             </Button>
           )}
 
+          {canSchedule && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-xs"
+              data-testid="block-open"
+              onClick={() => setBlockOpen(true)}
+            >
+              <Ban className="h-4 w-4" />
+              Bloquear horário
+            </Button>
+          )}
+
           {/* Filtros (mobile) */}
           <Button
             variant="outline"
@@ -1048,6 +1120,7 @@ export function SchedulePage() {
                 setSelectedDate(d);
                 setView("day");
               }}
+              onOpenAppointment={setDetailsId}
             />
           ) : (
             <DayGrid
@@ -1061,6 +1134,8 @@ export function SchedulePage() {
               canDrag={canSchedule}
               showFolga={showFolga}
               onSlotClick={openModalAt}
+              onOpenAppointment={setDetailsId}
+              onOpenTimeBlock={canSchedule ? setBlockToRemove : undefined}
             />
           )}
         </div>
@@ -1118,12 +1193,60 @@ export function SchedulePage() {
           initialTime={modalSeed}
           date={selectedDate}
           professionals={professionals}
-          onCreated={() => {
-            void refetchAppointments();
-            void refetchTimeBlocks();
-          }}
+          onCreated={refetchAll}
         />
       )}
+
+      {canSchedule && (
+        <TimeBlockDialog
+          open={blockOpen}
+          onOpenChange={setBlockOpen}
+          professionals={professionals}
+          defaultDate={selectedDate}
+          onCreated={refetchAll}
+        />
+      )}
+
+      <AppointmentDetailsDialog
+        appointment={
+          (appointmentsData?.appointments ?? []).find(
+            (a) => a.id === detailsId,
+          ) ?? null
+        }
+        open={detailsId !== null}
+        onOpenChange={(o) => {
+          if (!o) setDetailsId(null);
+        }}
+        canWrite={canSchedule}
+        onChanged={refetchAll}
+      />
+
+      <AlertDialog
+        open={blockToRemove !== null}
+        onOpenChange={(o) => {
+          if (!o) setBlockToRemove(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover bloqueio</AlertDialogTitle>
+            <AlertDialogDescription>
+              {blockToRemove
+                ? `Remover bloqueio de ${(TIME_BLOCK_KINDS.find((k) => k.value === blockToRemove.kind)?.label ?? blockToRemove.kind).toLowerCase()} das ${formatHM(new Date(blockToRemove.startsAt))} às ${formatHM(new Date(blockToRemove.endsAt))}?`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="block-remove-confirm"
+              onClick={() => void removeBlock()}
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {canSchedule && (
         <BuscarAgendarModal
