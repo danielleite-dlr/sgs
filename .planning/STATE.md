@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-02-frontend-foundation-PLAN.md
-last_updated: "2026-11-02T03:15:23.508Z"
+stopped_at: Completed 03-03-backend-scheduling-PLAN.md
+last_updated: "2026-11-02T03:32:56.980Z"
 last_activity: 2026-11-02
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 29
-  completed_plans: 20
+  completed_plans: 21
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 03 (core-operations) — EXECUTING
-Plan: 3 of 12
+Plan: 4 of 12
 Status: Ready to execute
 Last activity: 2026-11-02
 
@@ -67,6 +67,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 02-core-domain P07 | 23 | 3 tasks | 22 files |
 | Phase 03 P01 | 45min | 3 tasks | 16 files |
 | Phase 03 P02 | 20min | 3 tasks | 16 files |
+| Phase 03 P03 | 50min | 3 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -128,6 +129,8 @@ Recent decisions affecting current work:
 - [Phase 02.1-equipe-e-profissionais-cadastro-completo-de-profissionais]: Backend wave (members-lifecycle): member_invitations gained is_professional/seniority_tier columns (Member untouched); deactivate blocks on future appointments only, commission rules inform via activeCommissionRuleCount; fixed pre-existing RLS bug in InvitationResolver.invite (unscoped organization lookup)
 - [Phase 03]: Plan 03-01: ledgers append-only via REVOKE UPDATE/DELETE para sgs_app (sem trigger); exclusion constraint de appointments cobre scheduled/confirmed/in_progress/completed
 - [Phase 03]: react-is forcado para ^19 via pnpm.overrides (Recharts + React 19)
+- [Phase 03]: 23P01 via ORM chega como PrismaClientUnknownRequestError; isPgError inspeciona a mensagem
+- [Phase 03]: Cancelar agendamento em comanda aberta remove itens do agendamento e cancela a comanda se nada sobrar
 
 ### Pending Todos
 
@@ -163,6 +166,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-02T03:15:23.502Z
-Stopped at: Completed 03-02-frontend-foundation-PLAN.md
+Last session: 2026-11-02T03:32:56.973Z
+Stopped at: Completed 03-03-backend-scheduling-PLAN.md
 Resume file: None
