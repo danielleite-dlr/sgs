@@ -13,6 +13,8 @@ describe('feature gating', () => {
       '/catalogo/produtos',
       '/catalogo/comissoes',
       '/profissionais',
+      '/financeiro',
+      '/financeiro/comissoes',
     ]) {
       expect(isPathEnabled(path)).toBe(true);
     }
@@ -23,7 +25,6 @@ describe('feature gating', () => {
       '/dashboard',
       '/comanda/:id',
       '/financeiro/caixa',
-      '/financeiro/comissoes',
       '/relatorios',
       '/configuracoes/sistema',
       '/noivas',

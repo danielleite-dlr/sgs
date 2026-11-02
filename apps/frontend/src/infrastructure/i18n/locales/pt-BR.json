@@ -397,7 +397,24 @@
       "statusValues": {
         "pendente": "Pendente",
         "pago": "Pago"
-      }
+      },
+      "noRuleWarning": "Há itens sem regra de comissão no período. Eles foram registrados com R$ 0,00.",
+      "reviewRules": "Revisar regras de comissão",
+      "noRuleBadge": "Sem regra",
+      "reversed": "Estornada",
+      "reversal": "Estorno",
+      "base": "Preço cheio",
+      "charged": "Cobrado",
+      "rule": "Regra",
+      "item": "Item",
+      "date": "Data",
+      "comanda": "Comanda",
+      "commission": "Comissão",
+      "empty": "Nenhuma comissão no período.",
+      "noAccess": "Você não tem acesso às comissões.",
+      "loadError": "Não foi possível carregar as comissões.",
+      "allProfessionals": "Todos",
+      "selectToSee": "Selecione um profissional para ver os registros."
     }
   },
   "bridal": {

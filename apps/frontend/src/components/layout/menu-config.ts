@@ -207,6 +207,13 @@ const ALL_MENU: MenuItem[] = [
         searchTerms: ['pagamento profissional', 'comissão', 'gorjeta', 'fechamento'],
       },
       {
+        id: 'fin-comissoes',
+        label: 'Comissões calculadas',
+        to: '/financeiro/comissoes',
+        icon: BadgeDollarSign,
+        searchTerms: ['comissão', 'comissões calculadas', 'profissional'],
+      },
+      {
         id: 'fin-fluxo',
         label: 'Fluxo financeiro por forma de pagamento',
         to: '/financeiro/fluxo',

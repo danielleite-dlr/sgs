@@ -28,8 +28,8 @@ const FLAGS = {
   comanda: false,
   /** Dashboard financeiro — financialSummary real (Faturado × Recebido). */
   financeiro: true,
-  /** Comissões calculadas — `mocks/financeiro.mock.ts`. */
-  financeiroComissoes: false,
+  /** Comissões calculadas — commissionTotals/commissionRecords reais. */
+  financeiroComissoes: true,
   /** As 10 sub-páginas de relatório financeiro — layout sem consulta. */
   financeiroRelatorios: false,
   /** Central de relatórios — catálogo de cards sem destino. */
