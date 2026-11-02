@@ -49,4 +49,33 @@ export class AppointmentsResolver {
   ) {
     return this.appointments.create(tenant.organizationId, input);
   }
+
+  @Mutation("moveAppointment")
+  @RequirePermission(PERMISSIONS.APPOINTMENT_WRITE)
+  move(
+    @CurrentTenant() tenant: TenantContext,
+    @Args("input")
+    input: { id: string; professionalId: string; startsAt: Date },
+  ) {
+    return this.appointments.move(tenant.organizationId, tenant.memberId, input);
+  }
+
+  @Mutation("updateAppointmentStatus")
+  @RequirePermission(PERMISSIONS.APPOINTMENT_WRITE)
+  updateStatus(
+    @CurrentTenant() tenant: TenantContext,
+    @Args("input") input: { id: string; status: string },
+  ) {
+    return this.appointments.updateStatus(tenant.organizationId, input);
+  }
+
+  @Mutation("cancelAppointment")
+  @RequirePermission(PERMISSIONS.APPOINTMENT_WRITE)
+  cancel(
+    @CurrentTenant() tenant: TenantContext,
+    @Args("input")
+    input: { id: string; reason: string; reasonTag?: string | null },
+  ) {
+    return this.appointments.cancel(tenant.organizationId, tenant.memberId, input);
+  }
 }

@@ -28,6 +28,15 @@ describe("advisory-lock helpers", () => {
     expect(isLockTimeout(null)).toBe(false);
   });
 
+  it("reconhece SQLSTATE na mensagem de PrismaClientUnknownRequestError (ORM)", () => {
+    const e = new Prisma.PrismaClientUnknownRequestError(
+      'PostgresError { code: "23P01", message: "conflicting key" }',
+      { clientVersion: "6" },
+    );
+    expect(isExclusionViolation(e)).toBe(true);
+    expect(isLockTimeout(e)).toBe(false);
+  });
+
   it("não confunde SQLSTATEs", () => {
     expect(isLockTimeout(known("P2010", { code: "23P01" }))).toBe(false);
   });

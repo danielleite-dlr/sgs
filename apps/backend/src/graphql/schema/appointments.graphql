@@ -11,6 +11,11 @@ extend type Query {
 
 extend type Mutation {
   createAppointment(input: CreateAppointmentInput!): AppointmentPayload!
+  "Move (drag-and-drop) preservando a duração; pode trocar de profissional."
+  moveAppointment(input: MoveAppointmentInput!): AppointmentPayload!
+  updateAppointmentStatus(input: UpdateAppointmentStatusInput!): AppointmentPayload!
+  "Todo cancelamento exige motivo; reasonTag 'no_show' grava o status no_show."
+  cancelAppointment(input: CancelAppointmentInput!): AppointmentPayload!
 }
 
 type Appointment {
@@ -22,6 +27,12 @@ type Appointment {
   endsAt: DateTime!
   status: String!
   notes: String
+  comandaId: UUID
+  serviceVariantId: UUID
+  depositAmount: String!
+  cancelReason: String
+  cancelReasonTag: String
+  cancelledAt: DateTime
   professional: Member!
   client: Client!
   service: Service!
@@ -41,4 +52,21 @@ input CreateAppointmentInput {
 type AppointmentPayload {
   appointment: Appointment
   errors: [UserError!]!
+}
+
+input MoveAppointmentInput {
+  id: UUID!
+  professionalId: UUID!
+  startsAt: DateTime!
+}
+
+input UpdateAppointmentStatusInput {
+  id: UUID!
+  status: String!
+}
+
+input CancelAppointmentInput {
+  id: UUID!
+  reason: String!
+  reasonTag: String
 }

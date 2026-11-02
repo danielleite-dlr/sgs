@@ -42,11 +42,21 @@ export async function lockProfessional(
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${professionalLockKey(orgId, professionalId)}, 0))`;
 }
 
-/** SQLSTATE vindo de erro do Prisma (meta.code em raw queries; mensagem como fallback). */
+/**
+ * SQLSTATE vindo de erro do Prisma. Formatos observados (Prisma 6.19):
+ * - raw query ($executeRaw/$queryRaw): PrismaClientKnownRequestError code P2010, meta.code = SQLSTATE;
+ * - ORM (create/update) violando exclusion constraint: PrismaClientUnknownRequestError sem code/meta,
+ *   SQLSTATE só aparece na mensagem (`code: "23P01"`).
+ */
 export function isPgError(e: unknown, sqlstate: string): boolean {
-  if (!(e instanceof Prisma.PrismaClientKnownRequestError)) return false;
-  const metaCode = (e.meta as { code?: string } | undefined)?.code;
-  return metaCode === sqlstate || e.message.includes(sqlstate);
+  if (e instanceof Prisma.PrismaClientKnownRequestError) {
+    const metaCode = (e.meta as { code?: string } | undefined)?.code;
+    return metaCode === sqlstate || e.message.includes(sqlstate);
+  }
+  if (e instanceof Prisma.PrismaClientUnknownRequestError) {
+    return e.message.includes(sqlstate);
+  }
+  return false;
 }
 
 export const isLockTimeout = (e: unknown): boolean => isPgError(e, "55P03");
