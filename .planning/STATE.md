@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-09-PLAN.md
-last_updated: "2026-11-02T05:13:00.241Z"
+stopped_at: Completed 03-10-PLAN.md
+last_updated: "2026-11-02T05:34:17.681Z"
 last_activity: 2026-11-02
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 29
-  completed_plans: 27
+  completed_plans: 28
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 03 (core-operations) — EXECUTING
-Plan: 10 of 12
+Plan: 11 of 12
 Status: Ready to execute
 Last activity: 2026-11-02
 
@@ -74,6 +74,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 03 P07 | 75min | 3 tasks | 13 files |
 | Phase 03 P08 | 45min | 3 tasks | 13 files |
 | Phase 03 P09 | 45min | 3 tasks | 16 files |
+| Phase 03 P10 | 75min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -144,6 +145,8 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-07: fechamento/reabertura atômicos; comissão sobre preço cheio (D-23), sem regra = 0 + no_rule (D-24); reabertura só por reversões append-only
 - [Phase 03]: 03-08: revert otimista sem escrever no cache (payload com appointment null); sem restrictToFirstScrollableAncestor, faixa 07h-22h validada no onDragEnd
 - [Phase 03]: Plano 09: defaultPeriod/PeriodValue em lib/period-value.ts (lint react-refresh); flag financeiroCreditoCliente criada e ligada; FIN-01 fechado, FIN-02 e POS-02 aguardam UI de comanda (03-11)
+- [Phase 03]: 03-10: VisitPackagesQuery local em appointments.api.ts (PackagesQuery do catálogo não traz duração do serviço); com pacote as linhas ficam fixas
+- [Phase 03]: 03-10: link Abrir comanda só com comandaId && isPathEnabled('/comanda'); código sempre visível em appointment-comanda-code
 
 ### Pending Todos
 
@@ -179,6 +182,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-02T05:13:00.234Z
-Stopped at: Completed 03-09-PLAN.md
+Last session: 2026-11-02T05:34:17.675Z
+Stopped at: Completed 03-10-PLAN.md
 Resume file: None

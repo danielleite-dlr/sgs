@@ -36,8 +36,8 @@
 
 - [x] **SCHED-01**: Profissional/Atendente consegue visualizar agenda em calendário com raias por profissional (visão dia e semana), protegido contra double-booking via advisory lock no PostgreSQL
 - [x] **SCHED-02**: Atendente consegue criar agendamentos e movê-los via drag-and-drop no calendário
-- [ ] **SCHED-03**: Atendente consegue criar bloqueios de horário (intervalos, feriados, indisponibilidade de qualquer duração)
-- [ ] **SCHED-04**: Atendente consegue registrar sinal/depósito ao criar agendamento, com rastreamento do valor pré-pago
+- [x] **SCHED-03**: Atendente consegue criar bloqueios de horário (intervalos, feriados, indisponibilidade de qualquer duração)
+- [x] **SCHED-04**: Atendente consegue registrar sinal/depósito ao criar agendamento, com rastreamento do valor pré-pago
 
 ### POS / Comanda
 
@@ -136,8 +136,8 @@
 | CLI-03 | Phase 4 | Pending |
 | SCHED-01 | Phase 3 | Complete |
 | SCHED-02 | Phase 3 | Complete |
-| SCHED-03 | Phase 3 | Pending |
-| SCHED-04 | Phase 3 | Pending |
+| SCHED-03 | Phase 3 | Complete |
+| SCHED-04 | Phase 3 | Complete |
 | POS-01 | Phase 3 | Pending |
 | POS-02 | Phase 3 | Pending |
 | POS-03 | Phase 3 | Pending |
