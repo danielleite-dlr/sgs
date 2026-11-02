@@ -24,8 +24,8 @@ const FLAGS = {
   rankings: false,
   /** Gestão de equipe: `/profissionais` — lista, convite, edição e desativação reais. */
   equipe: true,
-  /** Comanda / PDV — `mocks/comanda.mock.ts`. */
-  comanda: false,
+  /** Comanda / PDV — comandas reais (03-11). */
+  comanda: true,
   /** Dashboard financeiro — financialSummary real (Faturado × Recebido). */
   financeiro: true,
   /** Comissões calculadas — commissionTotals/commissionRecords reais. */

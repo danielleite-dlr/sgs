@@ -65,7 +65,7 @@ describe('router phase 2', () => {
     }
   });
 
-  it.each(['/financeiro/caixa', '/comanda/abc', '/noivas', '/contratos', '/campanhas', '/relatorios', '/configuracoes'])(
+  it.each(['/financeiro/caixa', '/noivas', '/contratos', '/campanhas', '/relatorios', '/configuracoes'])(
     'does not register mocked route %s',
     (path) => {
       const paths = appRouter.routes

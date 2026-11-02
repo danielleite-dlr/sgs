@@ -27,6 +27,7 @@ import { ProfissionaisPage } from '@/pages/ProfissionaisPage';
 // Phase 3 — Operations
 import { SchedulePage } from '@/features/operations/pages/SchedulePage';
 import { ComandaPage } from '@/features/operations/pages/ComandaPage';
+import { ComandaListPage } from '@/features/operations/pages/ComandaListPage';
 import { FinanceiroPage } from '@/features/operations/pages/FinanceiroPage';
 import { ComissoesCalculadasPage } from '@/features/operations/pages/ComissoesCalculadasPage';
 // Phase 4 — Bridal / Contracts
@@ -104,6 +105,7 @@ const PROTECTED_ROUTES: GatedRoute[] = [
   { path: '/clientes/:id/editar',   element: <ClienteEditPage /> },
   { path: '/profissionais',         element: <ProfissionaisPage /> },
   { path: '/agenda',                element: <SchedulePage /> },
+  { path: '/comanda',               element: <ComandaListPage /> },
   { path: '/comanda/:id',           element: <ComandaPage /> },
   { path: '/financeiro',                         element: <FinanceiroPage /> },
   { path: '/financeiro/comissoes',               element: <ComissoesCalculadasPage /> },

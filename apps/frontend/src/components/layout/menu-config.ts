@@ -264,7 +264,7 @@ const ALL_MENU: MenuItem[] = [
       {
         id: 'fin-comandas',
         label: 'Comandas',
-        to: '/comanda/demo',
+        to: '/comanda',
         icon: Receipt,
         searchTerms: ['comanda', 'venda', 'atendimento'],
       },

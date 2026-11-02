@@ -16,6 +16,8 @@ describe('feature gating', () => {
       '/financeiro',
       '/financeiro/comissoes',
       '/financeiro/credito-cliente',
+      '/comanda',
+      '/comanda/:id',
     ]) {
       expect(isPathEnabled(path)).toBe(true);
     }
@@ -24,7 +26,6 @@ describe('feature gating', () => {
   it('bloqueia os mockups, inclusive sub-rotas e query strings', () => {
     for (const path of [
       '/dashboard',
-      '/comanda/:id',
       '/financeiro/caixa',
       '/relatorios',
       '/configuracoes/sistema',
