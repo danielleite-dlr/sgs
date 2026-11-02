@@ -34,17 +34,11 @@ import {
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { TIME_SLOTS } from "../mocks/schedule.mock";
-import {
   AppointmentsQuery,
   CreateAppointmentMutation,
   ProfessionalsForServiceQuery,
-  type AppointmentData,
+  TimeBlocksQuery,
+  type TimeBlocksQueryResult,
   type AppointmentsQueryResult,
   type CreateAppointmentResult,
   type ProfessionalsForServiceResult,
@@ -68,6 +62,15 @@ import {
 } from "@/features/catalog/api/servicos.api";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/infrastructure/stores/auth.store";
+import { DayGrid } from "../components/calendar/DayGrid";
+import {
+  APPT_STATUSES,
+  HIDDEN_STATUSES,
+} from "../components/calendar/appointment-statuses";
+import {
+  PROFESSIONAL_COLORS,
+  type ScheduleProfessional,
+} from "../components/calendar/types";
 import {
   canWriteAppointments,
   seesOnlyOwnAppointments,
@@ -75,50 +78,6 @@ import {
 
 // ─── Types & constants ────────────────────────────────────────────────────────
 
-const APPT_STATUSES = [
-  {
-    id: "absent",
-    label: "Ausência de profissional",
-    color: "#D9D9D9",
-    textOnColor: "#5C5C5C",
-  },
-  {
-    id: "scheduled",
-    label: "Agendado",
-    color: "#EF9F27",
-    textOnColor: "#FFFFFF",
-  },
-  {
-    id: "confirmed",
-    label: "Confirmado",
-    color: "#1D9E75",
-    textOnColor: "#FFFFFF",
-  },
-  {
-    id: "no_show",
-    label: "Cliente não compareceu",
-    color: "#3F3F3F",
-    textOnColor: "#FFFFFF",
-  },
-  {
-    id: "in_progress",
-    label: "Em atendimento",
-    color: "#28A89F",
-    textOnColor: "#FFFFFF",
-  },
-  {
-    id: "completed",
-    label: "Finalizado",
-    color: "#5D54C7",
-    textOnColor: "#FFFFFF",
-  },
-  {
-    id: "cancelled",
-    label: "Cancelado",
-    color: "#FBE4E4",
-    textOnColor: "#A03A3A",
-  },
-] as const;
 
 type DensitySize = "PP" | "P" | "M" | "G";
 const DENSITY_VALUES: DensitySize[] = ["PP", "P", "M", "G"];
@@ -138,33 +97,6 @@ const COL_WIDTHS: Record<DensitySize, string> = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-interface ScheduleProfessional {
-  id: string;
-  name: string;
-  initials: string;
-  color: string;
-}
-
-interface ScheduleAppointment {
-  id: string;
-  professionalId: string;
-  clientName: string;
-  service: string;
-  categoryColor: string;
-  startHour: number;
-  startMinute: number;
-  durationMinutes: number;
-  status: string;
-}
-
-const PROFESSIONAL_COLORS = [
-  "#5D54C7",
-  "#1D9E75",
-  "#EF9F27",
-  "#D85A30",
-  "#3C3489",
-];
-
 function toLocalDateInput(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
@@ -175,43 +107,6 @@ function dayRange(date: Date) {
   const to = new Date(date);
   to.setHours(23, 59, 59, 999);
   return { from: from.toISOString(), to: to.toISOString() };
-}
-
-function appointmentToSchedule(
-  appointment: AppointmentData,
-): ScheduleAppointment {
-  const startsAt = new Date(appointment.startsAt);
-  return {
-    id: appointment.id,
-    professionalId: appointment.professionalId,
-    clientName: appointment.client.fullName,
-    service: appointment.service.name,
-    categoryColor:
-      PROFESSIONAL_COLORS[
-        Math.abs(appointment.service.name.length) % PROFESSIONAL_COLORS.length
-      ],
-    startHour: startsAt.getHours(),
-    startMinute: startsAt.getMinutes(),
-    durationMinutes: Math.round(
-      (new Date(appointment.endsAt).getTime() - startsAt.getTime()) / 60000,
-    ),
-    status: appointment.status,
-  };
-}
-
-function getAppointmentStyle(
-  appt: ScheduleAppointment,
-  slotHeight: number,
-): React.CSSProperties {
-  const startOffset = (appt.startHour - 8) * 2 + appt.startMinute / 30;
-  const top = startOffset * slotHeight;
-  const height = (appt.durationMinutes / 30) * slotHeight - 4;
-  return {
-    top: `${top}px`,
-    height: `${height}px`,
-    backgroundColor: appt.categoryColor + "22",
-    borderLeft: `3px solid ${appt.categoryColor}`,
-  };
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -1186,6 +1081,17 @@ export function SchedulePage() {
       },
     });
 
+  const { data: timeBlocksData } = useQuery<TimeBlocksQueryResult>(
+    TimeBlocksQuery,
+    {
+      variables: {
+        startsAt: range.from,
+        endsAt: range.to,
+        professionalId: ownOnly ? memberId : null,
+      },
+    },
+  );
+
   useEffect(() => {
     if (professionals.length)
       setVisibleProfIds((current) =>
@@ -1204,17 +1110,16 @@ export function SchedulePage() {
   );
   const dayAppointments = useMemo(
     () =>
-      (appointmentsData?.appointments ?? [])
-        .map(appointmentToSchedule)
-        .filter(
-          (appointment) =>
-            visibleProfIds.has(appointment.professionalId) &&
-            activeStatuses.has(appointment.status) &&
-            (!searchQuery ||
-              appointment.clientName
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase())),
-        ),
+      (appointmentsData?.appointments ?? []).filter(
+        (appointment) =>
+          !HIDDEN_STATUSES.has(appointment.status) &&
+          visibleProfIds.has(appointment.professionalId) &&
+          activeStatuses.has(appointment.status) &&
+          (!searchQuery ||
+            appointment.client.fullName
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase())),
+      ),
     [appointmentsData, visibleProfIds, activeStatuses, searchQuery],
   );
 
@@ -1270,20 +1175,6 @@ export function SchedulePage() {
       canSelectProfessionals={!ownOnly}
     />
   );
-
-  const WORK_START_HOUR = 9;
-  const WORK_END_HOUR = 19;
-
-  // Now-line: hour/min as fraction of 8h-21h day → top offset
-  const now = new Date();
-  const nowMinutesFromStart = (now.getHours() - 8) * 60 + now.getMinutes();
-  const isToday = selectedDate.toDateString() === new Date().toDateString();
-  const nowLineTop = (nowMinutesFromStart / 30) * slotHeight;
-
-  // Fora-expediente bands: pixel ranges within the grid
-  const beforeWorkHeight = (WORK_START_HOUR - 8) * 2 * slotHeight;
-  const afterWorkTop = (WORK_END_HOUR - 8) * 2 * slotHeight;
-  const afterWorkHeight = (21 - WORK_END_HOUR) * 2 * slotHeight;
 
   return (
     <div className="flex h-[calc(100vh-7rem)] lg:h-[calc(100vh-5rem)] -mx-md lg:-mx-lg -my-md lg:-my-lg">
@@ -1459,184 +1350,18 @@ export function SchedulePage() {
 
         {/* GRID — single scroll container */}
         <div className="flex-1 overflow-auto">
-          <div className="bg-white border border-neutral-200 m-md rounded-lg overflow-hidden">
-            {/* Header profs */}
-            <div
-              className="grid border-b border-neutral-200 bg-white sticky top-0 z-10"
-              style={{
-                gridTemplateColumns: `64px repeat(${Math.max(visibleProfs.length, 1)}, ${COL_WIDTHS[colSize]})`,
-              }}
-            >
-              <div className="p-sm border-r border-neutral-200" />
-              {visibleProfs.length === 0 ? (
-                <div className="p-md text-xs text-neutral-500">
-                  Nenhum profissional selecionado.
-                </div>
-              ) : (
-                visibleProfs.map((pro) => (
-                  <div
-                    key={pro.id}
-                    className="px-sm py-md border-r border-neutral-200 last:border-r-0 flex items-center gap-sm"
-                  >
-                    <div className="h-8 w-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-500 shrink-0 overflow-hidden">
-                      <div
-                        className="h-full w-full rounded-full flex items-center justify-center text-white text-xs font-semibold"
-                        style={{ backgroundColor: pro.color }}
-                      >
-                        {pro.initials}
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-neutral-700 truncate">
-                      {pro.name.split(" ")[0]}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Time + appts */}
-            <div
-              className="grid relative"
-              style={{
-                gridTemplateColumns: `64px repeat(${Math.max(visibleProfs.length, 1)}, ${COL_WIDTHS[colSize]})`,
-              }}
-            >
-              {/* Time column */}
-              <div className="border-r border-neutral-200 relative">
-                {TIME_SLOTS.map((slot) => (
-                  <div
-                    key={`${slot.hour}-${slot.minute}`}
-                    className="border-b border-neutral-100 flex items-center justify-end pr-sm"
-                    style={{ height: slotHeight }}
-                  >
-                    {slot.minute === 0 && (
-                      <span className="text-xs text-neutral-500 font-medium">
-                        {slot.hour}h
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Pro columns */}
-              {visibleProfs.length === 0 ? (
-                <div
-                  className="border-r border-neutral-200 relative bg-neutral-50/40"
-                  style={{ height: TIME_SLOTS.length * slotHeight }}
-                />
-              ) : (
-                visibleProfs.map((pro) => (
-                  <div
-                    key={pro.id}
-                    className="border-r border-neutral-200 last:border-r-0 relative"
-                    style={{ height: TIME_SLOTS.length * slotHeight }}
-                  >
-                    {/* Fora-expediente bands */}
-                    {beforeWorkHeight > 0 && (
-                      <div
-                        className="absolute left-0 right-0 bg-info-50 pointer-events-none"
-                        style={{
-                          top: 0,
-                          height: beforeWorkHeight,
-                          backgroundColor: "#DDE7F3",
-                        }}
-                        aria-label="Fora do expediente"
-                      />
-                    )}
-                    {afterWorkHeight > 0 && (
-                      <div
-                        className="absolute left-0 right-0 pointer-events-none"
-                        style={{
-                          top: afterWorkTop,
-                          height: afterWorkHeight,
-                          backgroundColor: "#DDE7F3",
-                        }}
-                        aria-label="Fora do expediente"
-                      />
-                    )}
-
-                    {/* Slots clicáveis */}
-                    {TIME_SLOTS.map((slot, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        disabled={!canSchedule}
-                        onClick={() =>
-                          openModalAt(slot.hour, slot.minute, pro.id)
-                        }
-                        className={cn(
-                          "absolute w-full border-b text-left",
-                          slot.minute === 0
-                            ? "border-neutral-200"
-                            : "border-neutral-100 border-dashed",
-                          canSchedule
-                            ? "hover:bg-primary-50/30"
-                            : "cursor-default",
-                        )}
-                        style={{ top: i * slotHeight, height: slotHeight }}
-                        aria-label={
-                          canSchedule
-                            ? `Cadastrar agendamento às ${slot.label} para ${pro.name}`
-                            : `${slot.label} — ${pro.name}`
-                        }
-                      />
-                    ))}
-
-                    {/* Agendamentos */}
-                    <TooltipProvider delayDuration={200}>
-                      {dayAppointments
-                        .filter((a) => a.professionalId === pro.id)
-                        .map((appt) => (
-                          <Tooltip key={appt.id}>
-                            <TooltipTrigger asChild>
-                              <div
-                                className="absolute left-1 right-1 rounded-md px-xs py-xs cursor-pointer hover:brightness-95 transition-all overflow-hidden z-10"
-                                style={getAppointmentStyle(appt, slotHeight)}
-                              >
-                                <p className="text-xs font-semibold text-neutral-800 truncate leading-tight">
-                                  {appt.clientName}
-                                </p>
-                                <p className="text-xs text-neutral-600 truncate leading-tight">
-                                  {appt.service}
-                                </p>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <div className="text-sm space-y-xs">
-                                <p className="font-semibold">
-                                  {appt.clientName}
-                                </p>
-                                <p className="text-neutral-600">
-                                  {appt.service}
-                                </p>
-                                <p className="text-neutral-500 text-xs">
-                                  {String(appt.startHour).padStart(2, "0")}:
-                                  {String(appt.startMinute).padStart(2, "0")} —{" "}
-                                  {appt.durationMinutes} min
-                                </p>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        ))}
-                    </TooltipProvider>
-                  </div>
-                ))
-              )}
-
-              {/* Now-line — só hoje, dentro do expediente */}
-              {isToday &&
-                nowLineTop > 0 &&
-                nowLineTop < TIME_SLOTS.length * slotHeight && (
-                  <div
-                    className="absolute left-0 right-0 z-20 pointer-events-none flex items-center"
-                    style={{ top: nowLineTop }}
-                  >
-                    <span className="h-2 w-2 rounded-full bg-error-500 ml-[60px]" />
-                    <div className="flex-1 h-px bg-error-500" />
-                  </div>
-                )}
-            </div>
-          </div>
+          <DayGrid
+            date={selectedDate}
+            professionals={visibleProfs}
+            appointments={dayAppointments}
+            timeBlocks={timeBlocksData?.timeBlocks ?? []}
+            slotHeight={slotHeight}
+            colWidth={COL_WIDTHS[colSize]}
+            canSchedule={canSchedule}
+            canDrag={canSchedule}
+            showFolga={showFolga}
+            onSlotClick={openModalAt}
+          />
         </div>
 
         {/* Footer institucional (estilo Trinks) */}
