@@ -6,6 +6,7 @@ import { AppModule } from '../../src/app.module';
 import { adminPrisma } from './setup';
 import { TestEmailAdapter } from '../../src/email/test-email.adapter';
 import { EMAIL_ADAPTER } from '../../src/email/email.module';
+import { deletePhase3Rows } from './helpers/phase3-cleanup';
 
 /**
  * Regra "profissional atende a categoria": professionalsForService e a
@@ -45,6 +46,9 @@ describe('Professional categories (agenda)', () => {
   };
 
   const cleanup = async () => {
+    await deletePhase3Rows(
+      "SELECT id FROM organizations WHERE legal_name LIKE 'procat-%'",
+    );
     await adminPrisma.$executeRawUnsafe(
       `DELETE FROM appointments WHERE organization_id IN (SELECT id FROM organizations WHERE legal_name LIKE 'procat-%')`,
     );

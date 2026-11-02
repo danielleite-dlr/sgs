@@ -7,6 +7,7 @@ import { AppModule } from '../../src/app.module';
 import { adminPrisma } from './setup';
 import { TestEmailAdapter } from '../../src/email/test-email.adapter';
 import { EMAIL_ADAPTER } from '../../src/email/email.module';
+import { deletePhase3Rows } from './helpers/phase3-cleanup';
 
 /**
  * Member lifecycle e2e tests — RBAC + RLS + business guards for
@@ -50,6 +51,9 @@ describe('Member lifecycle (EQUIPE-01..04)', () => {
     await app.getHttpAdapter().getInstance().ready();
 
     // Cleanup stale test data
+    await deletePhase3Rows(
+      "SELECT id FROM organizations WHERE legal_name LIKE 'memlc-%'",
+    );
     await adminPrisma.$executeRawUnsafe(
       `DELETE FROM appointments WHERE organization_id IN (SELECT id FROM organizations WHERE legal_name LIKE 'memlc-%')`,
     );
@@ -248,6 +252,9 @@ describe('Member lifecycle (EQUIPE-01..04)', () => {
 
   afterAll(async () => {
     await app.close();
+    await deletePhase3Rows(
+      "SELECT id FROM organizations WHERE legal_name LIKE 'memlc-%'",
+    );
     await adminPrisma.$executeRawUnsafe(
       `DELETE FROM appointments WHERE organization_id IN (SELECT id FROM organizations WHERE legal_name LIKE 'memlc-%')`,
     );

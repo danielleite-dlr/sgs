@@ -42,7 +42,7 @@
 ### POS / Comanda
 
 - [ ] **POS-01**: Atendente consegue criar comanda acumulando serviços e produtos consumidos durante o atendimento
-- [ ] **POS-02**: Atendente consegue registrar pagamento com múltiplos métodos: dinheiro, Pix (QR code), cartão de crédito/débito, transferência, crédito na conta, voucher
+- [ ] **POS-02**: Atendente consegue registrar pagamento com múltiplos métodos: dinheiro, Pix (QR code), cartão de crédito/débito, transferência, crédito na conta, voucher — **Fase 3 (redução de escopo aceita, D-09/D-10):** Pix por registro manual (sem QR/gateway, que vai para a Fase 5) e sem voucher; crédito na conta incluído.
 - [ ] **POS-03**: Atendente consegue dividir o total de uma comanda em múltiplos pagamentos parciais de métodos diferentes
 
 ### Financeiro

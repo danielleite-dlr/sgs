@@ -3,6 +3,7 @@ import { TenantContextService } from '../../src/database/tenant-context.service'
 import { PrismaService } from '../../src/database/prisma.service';
 import { MembersService } from '../../src/identity/members.service';
 import { PasswordService } from '../../src/auth/password.service';
+import { deletePhase3Rows } from './helpers/phase3-cleanup';
 
 /**
  * Integration tests for MembersService — members/allMembers queries and the
@@ -247,6 +248,9 @@ describe('MembersService — listAll, update, deactivate, reactivate', () => {
     // Cleanup
     await adminPrisma.$executeRawUnsafe(
       `DELETE FROM commission_rules WHERE organization_id IN (SELECT id FROM organizations WHERE legal_name LIKE 'memlife-test-%')`,
+    );
+    await deletePhase3Rows(
+      "SELECT id FROM organizations WHERE legal_name LIKE 'memlife-test-%'",
     );
     await adminPrisma.$executeRawUnsafe(
       `DELETE FROM appointments WHERE organization_id IN (SELECT id FROM organizations WHERE legal_name LIKE 'memlife-test-%')`,
@@ -509,6 +513,9 @@ describe('MembersService — listAll, update, deactivate, reactivate', () => {
   afterAll(async () => {
     await adminPrisma.$executeRawUnsafe(
       `DELETE FROM commission_rules WHERE organization_id IN (SELECT id FROM organizations WHERE legal_name LIKE 'memlife-test-%')`,
+    );
+    await deletePhase3Rows(
+      "SELECT id FROM organizations WHERE legal_name LIKE 'memlife-test-%'",
     );
     await adminPrisma.$executeRawUnsafe(
       `DELETE FROM appointments WHERE organization_id IN (SELECT id FROM organizations WHERE legal_name LIKE 'memlife-test-%')`,
