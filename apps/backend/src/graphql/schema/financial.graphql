@@ -1,0 +1,110 @@
+extend type Query {
+  "from/to = datas locais YYYY-MM-DD no fuso da org (to exclusivo); granularity = day | week | month"
+  financialSummary(from: String!, to: String!, granularity: String!): FinancialSummary!
+  cashMovements(from: String!, to: String!): [CashMovementEntry!]!
+  commissionRecords(from: String!, to: String!, memberId: UUID): [CommissionRecordEntry!]!
+  commissionTotals(from: String!, to: String!, memberId: UUID): [CommissionMemberTotal!]!
+  clientCreditBalances: [ClientCreditBalance!]!
+  clientCreditMovements(clientId: UUID!): [ClientCreditMovementEntry!]!
+}
+
+extend type Mutation {
+  adjustClientCredit(input: AdjustClientCreditInput!): ClientCreditPayload!
+}
+
+"Faturado = comandas fechadas (data de fechamento); Recebido = cash_movements (data do movimento)."
+type FinancialSummary {
+  from: String!
+  to: String!
+  timezone: String!
+  granularity: String!
+  billedTotal: String!
+  receivedTotal: String!
+  closedComandas: Int!
+  averageTicket: String!
+  commissionsTotal: String!
+  buckets: [FinancialBucket!]!
+  receivedByMethod: [MethodTotal!]!
+}
+
+type FinancialBucket {
+  bucketStart: String!
+  billed: String!
+  received: String!
+  closedComandas: Int!
+}
+
+type MethodTotal {
+  method: String!
+  total: String!
+}
+
+type CashMovementEntry {
+  id: UUID!
+  kind: String!
+  method: String!
+  amount: String!
+  occurredAt: DateTime!
+  comandaId: UUID
+  comandaCode: String
+  appointmentId: UUID
+  clientName: String
+  note: String
+}
+
+type CommissionRecordEntry {
+  id: UUID!
+  comandaId: UUID!
+  comandaCode: String!
+  comandaItemId: UUID!
+  memberId: UUID!
+  memberName: String!
+  kind: String!
+  cycle: Int!
+  itemName: String!
+  baseAmount: String!
+  chargedAmount: String!
+  ruleKind: String
+  ruleValue: String
+  noRule: Boolean!
+  calculatedAmount: String!
+  reversed: Boolean!
+  ruleSnapshot: String!
+  calculatedAt: DateTime!
+}
+
+type CommissionMemberTotal {
+  memberId: UUID!
+  memberName: String!
+  total: String!
+  records: Int!
+  noRuleCount: Int!
+}
+
+type ClientCreditBalance {
+  clientId: UUID!
+  clientName: String!
+  balance: String!
+}
+
+type ClientCreditMovementEntry {
+  id: UUID!
+  kind: String!
+  amount: String!
+  reason: String
+  appointmentId: UUID
+  comandaId: UUID
+  createdAt: DateTime!
+}
+
+input AdjustClientCreditInput {
+  clientId: UUID!
+  "decimal com sinal e ponto, ex.: 20.00 ou -10.00"
+  amount: String!
+  reason: String!
+}
+
+type ClientCreditPayload {
+  balance: String
+  errors: [UserError!]!
+}
