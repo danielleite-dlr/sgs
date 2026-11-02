@@ -175,3 +175,167 @@ export const ProfessionalsForServiceQuery = gql`
 export interface ProfessionalsForServiceResult {
   professionalsForService: { id: string; displayName: string }[];
 }
+
+// ─── Visita (agendamento multi-serviço + sinal) ──────────────────────────────
+
+export interface CreateVisitInputVars {
+  clientId: string;
+  items: {
+    serviceId: string;
+    serviceVariantId: string | null;
+    professionalId: string;
+    startsAt: string;
+    endsAt: string;
+  }[];
+  packageId: string | null;
+  deposit: { amount: string; method: string } | null;
+  notes?: string | null;
+}
+
+export const CreateVisitMutation = gql`
+  mutation CreateVisit($input: CreateVisitInput!) {
+    createVisit(input: $input) {
+      appointments {
+        ...AppointmentFields
+      }
+      comandaId
+      errors {
+        code
+        message
+        field
+      }
+    }
+  }
+  ${APPOINTMENT_FIELDS}
+`;
+
+export interface CreateVisitResult {
+  createVisit: {
+    appointments: AppointmentData[];
+    comandaId: string | null;
+    errors: AppointmentUserError[];
+  };
+}
+
+export const UpdateAppointmentStatusMutation = gql`
+  mutation UpdateAppointmentStatus($input: UpdateAppointmentStatusInput!) {
+    updateAppointmentStatus(input: $input) {
+      appointment {
+        ...AppointmentFields
+      }
+      errors {
+        code
+        message
+        field
+      }
+    }
+  }
+  ${APPOINTMENT_FIELDS}
+`;
+
+export interface UpdateAppointmentStatusResult {
+  updateAppointmentStatus: {
+    appointment: AppointmentData | null;
+    errors: AppointmentUserError[];
+  };
+}
+
+export const CancelAppointmentMutation = gql`
+  mutation CancelAppointment($input: CancelAppointmentInput!) {
+    cancelAppointment(input: $input) {
+      appointment {
+        ...AppointmentFields
+      }
+      errors {
+        code
+        message
+        field
+      }
+    }
+  }
+  ${APPOINTMENT_FIELDS}
+`;
+
+export interface CancelAppointmentResult {
+  cancelAppointment: {
+    appointment: AppointmentData | null;
+    errors: AppointmentUserError[];
+  };
+}
+
+export const CreateTimeBlockMutation = gql`
+  mutation CreateTimeBlock($input: CreateTimeBlockInput!) {
+    createTimeBlock(input: $input) {
+      timeBlock {
+        id
+        kind
+        professionalId
+        startsAt
+        endsAt
+        allDay
+        note
+      }
+      errors {
+        code
+        message
+        field
+      }
+    }
+  }
+`;
+
+export const DeleteTimeBlockMutation = gql`
+  mutation DeleteTimeBlock($id: UUID!) {
+    deleteTimeBlock(id: $id) {
+      timeBlock {
+        id
+      }
+      errors {
+        code
+        message
+        field
+      }
+    }
+  }
+`;
+
+export interface CreateTimeBlockResult {
+  createTimeBlock: { timeBlock: TimeBlockData | null; errors: AppointmentUserError[] };
+}
+export interface DeleteTimeBlockResult {
+  deleteTimeBlock: { timeBlock: { id: string } | null; errors: AppointmentUserError[] };
+}
+
+/** Pacotes com a duração padrão dos serviços (usada para expandir as linhas da visita). */
+export const VisitPackagesQuery = gql`
+  query VisitPackages {
+    packages {
+      id
+      name
+      services {
+        serviceId
+        quantity
+        displayOrder
+        service {
+          id
+          name
+          defaultDurationMinutes
+        }
+      }
+    }
+  }
+`;
+
+export interface VisitPackageData {
+  id: string;
+  name: string;
+  services: {
+    serviceId: string;
+    quantity: number;
+    displayOrder: number;
+    service: { id: string; name: string; defaultDurationMinutes: number };
+  }[];
+}
+export interface VisitPackagesResult {
+  packages: VisitPackageData[];
+}
