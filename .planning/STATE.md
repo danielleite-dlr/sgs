@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-10-PLAN.md
-last_updated: "2026-11-02T05:34:17.681Z"
+stopped_at: Completed 03-11-frontend-comanda-PLAN.md
+last_updated: "2026-11-02T05:59:31.169Z"
 last_activity: 2026-11-02
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 29
-  completed_plans: 28
+  completed_plans: 29
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 03 (core-operations) — EXECUTING
-Plan: 11 of 12
+Plan: 12 of 12
 Status: Ready to execute
 Last activity: 2026-11-02
 
@@ -75,6 +75,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 03 P08 | 45min | 3 tasks | 13 files |
 | Phase 03 P09 | 45min | 3 tasks | 16 files |
 | Phase 03 P10 | 75min | 3 tasks | 12 files |
+| Phase 03 P11 | 110min | 3 tasks | 18 files |
 
 ## Accumulated Context
 
@@ -147,6 +148,7 @@ Recent decisions affecting current work:
 - [Phase 03]: Plano 09: defaultPeriod/PeriodValue em lib/period-value.ts (lint react-refresh); flag financeiroCreditoCliente criada e ligada; FIN-01 fechado, FIN-02 e POS-02 aguardam UI de comanda (03-11)
 - [Phase 03]: 03-10: VisitPackagesQuery local em appointments.api.ts (PackagesQuery do catálogo não traz duração do serviço); com pacote as linhas ficam fixas
 - [Phase 03]: 03-10: link Abrir comanda só com comandaId && isPathEnabled('/comanda'); código sempre visível em appointment-comanda-code
+- [Phase 03]: 03-11: flag comanda ligada com mock removido; PaymentPanel usa computePaymentSummary e só inclui a linha digitada no preview (dirty)
 
 ### Pending Todos
 
@@ -182,6 +184,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-02T05:34:17.675Z
-Stopped at: Completed 03-10-PLAN.md
+Last session: 2026-11-02T05:59:31.163Z
+Stopped at: Completed 03-11-frontend-comanda-PLAN.md
 Resume file: None

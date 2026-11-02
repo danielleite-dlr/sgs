@@ -41,14 +41,14 @@
 
 ### POS / Comanda
 
-- [ ] **POS-01**: Atendente consegue criar comanda acumulando serviços e produtos consumidos durante o atendimento
-- [ ] **POS-02**: Atendente consegue registrar pagamento com múltiplos métodos: dinheiro, Pix (QR code), cartão de crédito/débito, transferência, crédito na conta, voucher — **Fase 3 (redução de escopo aceita, D-09/D-10):** Pix por registro manual (sem QR/gateway, que vai para a Fase 5) e sem voucher; crédito na conta incluído.
-- [ ] **POS-03**: Atendente consegue dividir o total de uma comanda em múltiplos pagamentos parciais de métodos diferentes
+- [x] **POS-01**: Atendente consegue criar comanda acumulando serviços e produtos consumidos durante o atendimento
+- [x] **POS-02**: Atendente consegue registrar pagamento com múltiplos métodos: dinheiro, Pix (QR code), cartão de crédito/débito, transferência, crédito na conta, voucher — **Fase 3 (redução de escopo aceita, D-09/D-10):** Pix por registro manual (sem QR/gateway, que vai para a Fase 5) e sem voucher; crédito na conta incluído.
+- [x] **POS-03**: Atendente consegue dividir o total de uma comanda em múltiplos pagamentos parciais de métodos diferentes
 
 ### Financeiro
 
 - [x] **FIN-01**: Proprietário consegue visualizar dashboard financeiro com receita por dia/semana/mês e breakdown por método de pagamento
-- [ ] **FIN-02**: Sistema calcula e registra comissões automaticamente por profissional ao fechar comanda, com snapshot imutável dos inputs
+- [x] **FIN-02**: Sistema calcula e registra comissões automaticamente por profissional ao fechar comanda, com snapshot imutável dos inputs
 - [ ] **FIN-03**: Sistema gera previsão financeira para os próximos 30 dias baseada em histórico e agendamentos confirmados
 
 ### Contratos / Noivas
@@ -138,11 +138,11 @@
 | SCHED-02 | Phase 3 | Complete |
 | SCHED-03 | Phase 3 | Complete |
 | SCHED-04 | Phase 3 | Complete |
-| POS-01 | Phase 3 | Pending |
-| POS-02 | Phase 3 | Pending |
-| POS-03 | Phase 3 | Pending |
+| POS-01 | Phase 3 | Complete |
+| POS-02 | Phase 3 | Complete |
+| POS-03 | Phase 3 | Complete |
 | FIN-01 | Phase 3 | Complete |
-| FIN-02 | Phase 3 | Pending |
+| FIN-02 | Phase 3 | Complete |
 | FIN-03 | Phase 5 | Pending |
 | CONT-01 | Phase 4 | Pending |
 | CONT-02 | Phase 4 | Pending |
