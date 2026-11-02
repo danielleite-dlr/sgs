@@ -145,7 +145,7 @@ Plans:
 - [x] 03-04-backend-comandas-core-PLAN.md — Código C-AAAA-NNN, walk-in, itens/pacote rateado, pagamentos parciais com falta/troco (W2)
 - [x] 03-05-backend-financial-credit-PLAN.md — Ledger de crédito/caixa/auditoria, dashboard Faturado × Recebido por método, comissões e crédito de cliente (W2)
 - [x] 03-06-backend-visit-deposit-PLAN.md — createVisit/createAppointment abrem comanda na mesma transação, sinal como crédito + caixa (W3)
-- [ ] 03-07-backend-close-reopen-PLAN.md — Resolver de comissão (preço cheio, sem regra = R$0 + aviso), fechamento atômico, reabertura auditada com reversões (W3)
+- [x] 03-07-backend-close-reopen-PLAN.md — Resolver de comissão (preço cheio, sem regra = R$0 + aviso), fechamento atômico, reabertura auditada com reversões (W3)
 - [ ] 03-08-frontend-agenda-grid-PLAN.md — Grade componentizada, drag-and-drop com revert otimista, vista Semana, bloqueios na grade (W3)
 - [ ] 03-09-frontend-financeiro-PLAN.md — /financeiro, /financeiro/comissoes e /financeiro/credito-cliente reais + flags (W3)
 - [ ] 03-10-frontend-agenda-dialogs-PLAN.md — Modal de visita multi-serviço/pacote com sinal, detalhes/status/cancelamento, bloqueios (W4)
