@@ -259,6 +259,50 @@ setup('seed', async () => {
   );
   expectNoUserErrors(appointment.createAppointment, 'createAppointment');
 
+  // (e) Fase 3: produto, regra de comissão (40% no serviço) e profissional com login.
+  const productName = `E2E Shampoo ${suffix}`;
+  const product = await gql<{
+    createProduct: { product: { id: string } | null; errors: never[] };
+  }>(
+    `mutation($input: CreateProductInput!) {
+      createProduct(input: $input) { product { id } errors { code message } }
+    }`,
+    {
+      input: {
+        name: productName,
+        sku: `E2E-SHAMPOO-${suffix}`,
+        costPrice: '15.00',
+        salePrice: '35.00',
+        stockQuantity: 10,
+        minStockLevel: 1,
+        unit: 'un',
+      },
+    },
+    ctx,
+  );
+  expectNoUserErrors(product.createProduct, 'createProduct');
+
+  const rule = await gql<{
+    createCommissionRule: { rule: { id: string } | null; errors: never[] };
+  }>(
+    `mutation($input: CreateCommissionRuleInput!) {
+      createCommissionRule(input: $input) { rule { id } errors { code message } }
+    }`,
+    { input: { scopeType: 'service', kind: 'percentage', value: '40.00', serviceId } },
+    ctx,
+  );
+  expectNoUserErrors(rule.createCommissionRule, 'createCommissionRule');
+
+  const proPhase3 = await createMember(
+    `E2E Pro Fase3 ${suffix}`,
+    `e2e-pro-fase3-${suffix}@example.com`,
+    'PROFESSIONAL',
+    '(11) 91234-5605',
+    `e2e-pro-fase3-${suffix}@example.com`,
+  );
+  const proFirst = await login(proPhase3.email, 'Prov#Temp2026');
+  await changePassword(proFirst.accessToken, 'Prov#Temp2026', KNOWN_PASSWORD, proPhase3.name);
+
   writeSeedState({
     suffix,
     orgId,
@@ -277,6 +321,22 @@ setup('seed', async () => {
       serviceName,
       startsAt,
       endsAt,
+    },
+    phase3: {
+      categoryId,
+      serviceId,
+      serviceName,
+      servicePrice: '80.00',
+      productId: product.createProduct.product!.id,
+      productName,
+      productPrice: '35.00',
+      clientId,
+      clientName,
+      commissionRuleId: rule.createCommissionRule.rule!.id,
+      proId: proPhase3.memberId!,
+      proName: proPhase3.name,
+      proEmail: proPhase3.email,
+      proPassword: KNOWN_PASSWORD,
     },
   });
 });

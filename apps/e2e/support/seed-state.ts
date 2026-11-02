@@ -32,6 +32,26 @@ export interface SeedState {
     startsAt: string;
     endsAt: string;
   };
+  /** Dados da Fase 3 (agenda, comanda, financeiro). */
+  phase3: {
+    categoryId: string;
+    serviceId: string;
+    serviceName: string;
+    /** preço base do serviço, ex.: "80.00" */
+    servicePrice: string;
+    productId: string;
+    productName: string;
+    /** preço de venda do produto, ex.: "35.00" */
+    productPrice: string;
+    clientId: string;
+    clientName: string;
+    commissionRuleId: string;
+    /** profissional com login (senha já trocada), atende o serviço do seed */
+    proId: string;
+    proName: string;
+    proEmail: string;
+    proPassword: string;
+  };
 }
 
 export function writeSeedState(state: SeedState): void {
