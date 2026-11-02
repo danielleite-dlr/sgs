@@ -296,3 +296,23 @@ Ideias que apareceram durante a discussão mas pertencem a outras phases ou v2:
 
 *Phase: 03-core-operations*
 *Context gathered: 2026-05-07*
+
+---
+
+## Adendo — decisões de 2026-11-01 (pós-pesquisa, antes do planejamento)
+
+Decididas pelo dono do produto após `03-RESEARCH.md`. **Prevalecem sobre D-01..D-21 onde conflitarem.**
+
+- **D-22 — Receita no dashboard (FIN-01): mostrar os dois.** "Faturado" = total das comandas fechadas no período (competência, pela data de fechamento). "Recebido" = dinheiro que entrou no período, por método de pagamento (caixa, via `cash_movements`); o sinal conta no dia em que foi recebido. O breakdown por método é sobre "Recebido".
+- **D-23 — Comissão de item vindo de pacote = preço cheio do serviço.** A comissão é calculada pela regra do serviço (percentual ou valor fixo) aplicada sobre o **preço cheio/normal do serviço** (o preço que ele teria avulso, considerando a variante aplicável), **nunca** sobre o valor rateado do pacote. O desconto do pacote é absorvido inteiramente pelo estabelecimento e não interfere na comissão do profissional. O rateio do preço do pacote entre os itens continua necessário só para totalizar a comanda e para relatórios de faturamento; o snapshot (`rule_snapshot`) deve gravar a base usada (preço cheio) e o valor rateado cobrado.
+- **D-24 — Item sem regra de comissão: comissão R$ 0,00 + aviso.** A comanda fecha normalmente; grava-se `commission_records` com valor 0 e marcação `no_rule`, e a UI mostra aviso na comanda e no relatório de comissões para o gerente corrigir. Não bloqueia o fechamento.
+- **D-25 — Expediente do salão fora desta fase.** Agenda exibe faixa fixa (constante, ex.: 07h–22h); só bloqueios (`time_blocks`) e conflitos impedem agendar. Cadastro de horário de funcionamento fica para depois.
+
+### Ajustes técnicos aceitos da pesquisa (ver `03-RESEARCH.md`)
+
+- **D-01 (ajustado):** lock por profissional — `pg_advisory_xact_lock_shared(org)` + `pg_advisory_xact_lock(org, profissional)` com `SET LOCAL lock_timeout`; feriado org-wide pega o lock exclusivo da org; ao mover entre raias, travar em ordem determinística. A exclusion constraint existente é recriada cobrindo todos os status ativos (`scheduled`, `confirmed`, `in_progress`, `completed`) como rede de segurança (23P01).
+- **Dinheiro:** seguir a Phase 2 — `NUMERIC(12,2)` no banco e `String` no GraphQL; cálculos em centavos inteiros dentro dos services.
+- **D-14 (esclarecido):** `commission_records` é append-only (`REVOKE UPDATE, DELETE` para `sgs_app`); reversão (D-08) é um novo registro `kind='reversal'` com valor negativo, não um `UPDATE reversed_at`.
+- **D-15/D-20:** todo cancelamento exige motivo, inclusive por ADMIN.
+- **Escopo POS-02:** Pix QR real e voucher cortados (D-09/D-10) — redução de escopo aceita; registrar no VERIFICATION.
+- **Fora da fase:** desconto por item e agregação de `clientHistory` (a não ser que caiba sem custo no plano de comandas).
