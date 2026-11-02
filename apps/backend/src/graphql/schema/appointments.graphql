@@ -17,6 +17,8 @@ extend type Query {
 
 extend type Mutation {
   createAppointment(input: CreateAppointmentInput!): AppointmentPayload!
+  "Visita: vários serviços/raias (pacote opcional) + comanda aberta + sinal opcional, atômico."
+  createVisit(input: CreateVisitInput!): VisitPayload!
   "Move (drag-and-drop) preservando a duração; pode trocar de profissional."
   moveAppointment(input: MoveAppointmentInput!): AppointmentPayload!
   updateAppointmentStatus(input: UpdateAppointmentStatusInput!): AppointmentPayload!
@@ -38,6 +40,8 @@ type Appointment {
   comandaId: UUID
   serviceVariantId: UUID
   depositAmount: String!
+  comandaCode: String
+  comandaStatus: String
   cancelReason: String
   cancelReasonTag: String
   cancelledAt: DateTime
@@ -102,5 +106,29 @@ input CreateTimeBlockInput {
 
 type TimeBlockPayload {
   timeBlock: TimeBlock
+  errors: [UserError!]!
+}
+
+input VisitItemInput {
+  serviceId: UUID!
+  serviceVariantId: UUID
+  professionalId: UUID!
+  startsAt: DateTime!
+  endsAt: DateTime!
+}
+
+input DepositInput { amount: String! method: String! }
+
+input CreateVisitInput {
+  clientId: UUID!
+  items: [VisitItemInput!]!
+  packageId: UUID
+  deposit: DepositInput
+  notes: String
+}
+
+type VisitPayload {
+  appointments: [Appointment!]!
+  comandaId: UUID
   errors: [UserError!]!
 }

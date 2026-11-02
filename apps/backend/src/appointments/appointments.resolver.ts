@@ -9,6 +9,7 @@ import {
   AppointmentsService,
   CreateAppointmentInput,
 } from "./appointments.service";
+import type { CreateVisitInput } from "./visits";
 import {
   CreateTimeBlockInput,
   TimeBlocksService,
@@ -54,7 +55,24 @@ export class AppointmentsResolver {
     @CurrentTenant() tenant: TenantContext,
     @Args("input") input: CreateAppointmentInput,
   ) {
-    return this.appointments.create(tenant.organizationId, input);
+    return this.appointments.create(
+      tenant.organizationId,
+      tenant.memberId,
+      input,
+    );
+  }
+
+  @Mutation("createVisit")
+  @RequirePermission(PERMISSIONS.APPOINTMENT_WRITE)
+  createVisit(
+    @CurrentTenant() tenant: TenantContext,
+    @Args("input") input: CreateVisitInput,
+  ) {
+    return this.appointments.createVisit(
+      tenant.organizationId,
+      tenant.memberId,
+      input,
+    );
   }
 
   @Mutation("moveAppointment")

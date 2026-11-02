@@ -5,7 +5,9 @@ import {
   isLockTimeout,
   setLockTimeout,
 } from "../database/advisory-lock";
+import { ComandaError } from "../comandas/comanda-items";
 import type { TenantPrismaClient } from "../database/types";
+import { CreditError } from "../financial/client-credit";
 import { BLOCKING_STATUSES } from "./appointment-status";
 
 export const SLOT_TAKEN_MESSAGE =
@@ -93,6 +95,12 @@ export function mapSchedulingError(
 ): { code: string; message: string; field: string | null } | null {
   if (e instanceof SchedulingError) {
     return { code: e.code, message: e.message, field: e.field };
+  }
+  if (e instanceof ComandaError) {
+    return { code: e.code, message: e.message, field: e.field };
+  }
+  if (e instanceof CreditError) {
+    return { code: e.code, message: e.message, field: null };
   }
   if (isLockTimeout(e) || isExclusionViolation(e)) {
     return { code: "SLOT_TAKEN", message: SLOT_TAKEN_MESSAGE, field: "startsAt" };

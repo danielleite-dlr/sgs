@@ -17,6 +17,7 @@ import {
   assertSlotFree,
   mapSchedulingError,
 } from "./scheduling-guard";
+import { createVisitTx, type CreateVisitInput } from "./visits";
 
 export interface CreateAppointmentInput {
   professionalId: string;
@@ -38,6 +39,12 @@ type AppointmentPayload = {
   errors: AppointmentUserError[];
 };
 
+type VisitPayload = {
+  appointments: Record<string, unknown>[];
+  comandaId: string | null;
+  errors: AppointmentUserError[];
+};
+
 export const CANCEL_REASON_TAGS = [
   "cliente_desmarcou",
   "profissional_doente",
@@ -48,14 +55,20 @@ const APPOINTMENT_INCLUDE = {
   professional: true,
   client: true,
   service: true,
+  comanda: { select: { code: true, status: true } },
 } as const;
 
 /** depositAmount sempre com 2 casas (Decimal do Prisma serializa sem zeros). */
-export function serializeAppointment<T extends { depositAmount?: unknown }>(
-  row: T,
-): T & { depositAmount: string } {
+export function serializeAppointment<
+  T extends {
+    depositAmount?: unknown;
+    comanda?: { code: string; status: string } | null;
+  },
+>(row: T): T & { depositAmount: string } {
   return {
     ...row,
+    comandaCode: row.comanda?.code ?? null,
+    comandaStatus: row.comanda?.status ?? null,
     depositAmount: fromCents(
       toCents((row.depositAmount ?? 0) as string | number),
     ),
@@ -131,103 +144,59 @@ export class AppointmentsService {
 
   async create(
     orgId: string,
+    memberId: string,
     input: CreateAppointmentInput,
   ): Promise<AppointmentPayload> {
-    const interval = parseAppointmentInterval(input.startsAt, input.endsAt);
-    if (!interval) {
-      return {
-        appointment: null,
-        errors: [
-          {
-            code: "INVALID_INTERVAL",
-            message: "O fim do agendamento deve ser posterior ao início.",
-            field: "endsAt",
-          },
-        ],
-      };
-    }
+    const r = await this.createVisit(orgId, memberId, {
+      clientId: input.clientId,
+      notes: input.notes ?? null,
+      items: [
+        {
+          serviceId: input.serviceId,
+          professionalId: input.professionalId,
+          startsAt: input.startsAt,
+          endsAt: input.endsAt,
+        },
+      ],
+    });
+    return {
+      appointment: (r.appointments[0] as Record<string, unknown>) ?? null,
+      errors: r.errors,
+    };
+  }
 
+  /** Visita: N agendamentos + comanda + sinal opcional, tudo atômico (D-05). */
+  async createVisit(
+    orgId: string,
+    memberId: string,
+    input: CreateVisitInput,
+  ): Promise<VisitPayload> {
     return this.tenant
       .runWithTenant(
         orgId,
         async (tx) => {
-          await acquireScheduleLocks(tx, orgId, [input.professionalId]);
-
-          const [professional, client, service] = await Promise.all([
-            tx.member.findFirst({
-              where: {
-                id: input.professionalId,
-                status: "active",
-                deletedAt: null,
-                isProfessional: true,
-              },
-            }),
-            tx.client.findFirst({
-              where: { id: input.clientId, deletedAt: null },
-            }),
-            tx.service.findFirst({
-              where: { id: input.serviceId, deletedAt: null },
-            }),
-          ]);
-
-          if (!professional) {
-            throw new SchedulingError(
-              "PROFESSIONAL_NOT_FOUND",
-              "Profissional ativo não encontrado.",
-              "professionalId",
-            );
-          }
-          if (!client) {
-            throw new SchedulingError(
-              "CLIENT_NOT_FOUND",
-              "Cliente ativo não encontrado.",
-              "clientId",
-            );
-          }
-          if (!service) {
-            throw new SchedulingError(
-              "SERVICE_NOT_FOUND",
-              "Serviço ativo não encontrado.",
-              "serviceId",
-            );
-          }
-          if (
-            !(await professionalServesCategory(
-              tx,
-              input.professionalId,
-              service.categoryId,
-            ))
-          ) {
-            throw new SchedulingError(
-              "PROFESSIONAL_DOES_NOT_SERVE_CATEGORY",
-              "Este profissional não atende a categoria deste serviço.",
-              "professionalId",
-            );
-          }
-
-          await assertSlotFree(tx, {
-            professionalId: input.professionalId,
-            startsAt: interval.startsAt,
-            endsAt: interval.endsAt,
-          });
-
-          const appointment = await tx.appointment.create({
-            data: {
-              organizationId: orgId,
-              professionalId: input.professionalId,
-              clientId: input.clientId,
-              serviceId: input.serviceId,
-              startsAt: interval.startsAt,
-              endsAt: interval.endsAt,
-              notes: input.notes ?? null,
-            },
+          const r = await createVisitTx(tx, orgId, memberId, input);
+          const rows = await tx.appointment.findMany({
+            where: { id: { in: r.appointmentIds } },
             include: APPOINTMENT_INCLUDE,
+            orderBy: [{ startsAt: "asc" }, { createdAt: "asc" }],
           });
-          return ok(appointment);
+          return {
+            appointments: rows.map(serializeAppointment) as unknown as Record<
+              string,
+              unknown
+            >[],
+            comandaId: r.comandaId as string | null,
+            errors: [] as AppointmentUserError[],
+          };
         },
         SCHEDULE_TX_OPTIONS,
       )
-      .catch(fail);
+      .catch((e: unknown): VisitPayload => {
+        const m = mapSchedulingError(e);
+        if (m) return { appointments: [], comandaId: null, errors: [m] };
+        throw e;
+      });
   }
 
   async move(
