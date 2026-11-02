@@ -373,7 +373,18 @@
       "status": {
         "open": "Em atendimento",
         "closed": "Fechada"
-      }
+      },
+      "addPackage": "Adicionar pacote",
+      "paid": "Pago",
+      "remaining": "Falta",
+      "change": "Troco",
+      "closeComanda": "Fechar comanda",
+      "reopen": "Reabrir comanda",
+      "reopenReason": "Motivo da reabertura",
+      "commissionsGenerated": "Comissões geradas",
+      "noRuleWarning": "Alguns itens não têm regra de comissão e foram registrados com R$ 0,00.",
+      "useClientCredit": "Usar crédito do cliente",
+      "notFound": "Comanda não encontrada."
     },
     "financial": {
       "title": "Financeiro",
