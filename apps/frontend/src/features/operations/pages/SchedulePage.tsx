@@ -63,6 +63,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/infrastructure/stores/auth.store";
 import { DayGrid } from "../components/calendar/DayGrid";
+import { WeekGrid } from "../components/calendar/WeekGrid";
+import { weekRange } from "../lib/week-range";
 import {
   APPT_STATUSES,
   HIDDEN_STATUSES,
@@ -1025,6 +1027,7 @@ function AppointmentModal({
 
 export function SchedulePage() {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [view, setView] = useState<"day" | "week">("day");
   const [visibleProfIds, setVisibleProfIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -1069,7 +1072,14 @@ export function SchedulePage() {
         })),
     [membersData, ownOnly, memberId],
   );
-  const range = useMemo(() => dayRange(selectedDate), [selectedDate]);
+  const week = useMemo(() => weekRange(selectedDate), [selectedDate]);
+  const range = useMemo(
+    () =>
+      view === "week"
+        ? { from: week.startsAt, to: week.endsAt }
+        : dayRange(selectedDate),
+    [view, week, selectedDate],
+  );
   const { data: appointmentsData, refetch: refetchAppointments } =
     useQuery<AppointmentsQueryResult>(AppointmentsQuery, {
       variables: {
@@ -1147,7 +1157,7 @@ export function SchedulePage() {
   function shiftDay(delta: number) {
     setSelectedDate((day) => {
       const next = new Date(day);
-      next.setDate(next.getDate() + delta);
+      next.setDate(next.getDate() + delta * (view === "week" ? 7 : 1));
       return next;
     });
   }
@@ -1219,7 +1229,7 @@ export function SchedulePage() {
               variant="ghost"
               size="icon"
               onClick={() => shiftDay(-1)}
-              aria-label="Dia anterior"
+              aria-label={view === "week" ? "Semana anterior" : "Dia anterior"}
               className="h-8 w-8"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -1229,24 +1239,50 @@ export function SchedulePage() {
               className="flex flex-col items-center px-sm leading-tight hover:bg-neutral-50 rounded-md py-xs min-w-[120px]"
             >
               <span className="text-sm font-bold text-neutral-800">
-                {selectedDate.getDate()}{" "}
-                {selectedDate
-                  .toLocaleDateString("pt-BR", { month: "short" })
-                  .replace(".", "")}{" "}
-                {selectedDate.getFullYear()}
+                {view === "week"
+                  ? `${week.days[0].toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} – ${week.days[6].toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}`
+                  : `${selectedDate.getDate()} ${selectedDate
+                      .toLocaleDateString("pt-BR", { month: "short" })
+                      .replace(".", "")} ${selectedDate.getFullYear()}`}
               </span>
               <span className="text-[11px] text-neutral-500 capitalize">
-                {selectedDate.toLocaleDateString("pt-BR", { weekday: "long" })}
+                {view === "week"
+                  ? selectedDate.getFullYear()
+                  : selectedDate.toLocaleDateString("pt-BR", { weekday: "long" })}
               </span>
             </button>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => shiftDay(1)}
-              aria-label="Próximo dia"
+              aria-label={view === "week" ? "Próxima semana" : "Próximo dia"}
               className="h-8 w-8"
             >
               <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Dia / Semana (D-18) */}
+          <div className="flex items-center gap-xs" role="group" aria-label="Vista da agenda">
+            <Button
+              type="button"
+              size="sm"
+              data-testid="view-day"
+              aria-pressed={view === "day"}
+              variant={view === "day" ? "default" : "outline"}
+              onClick={() => setView("day")}
+            >
+              Dia
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              data-testid="view-week"
+              aria-pressed={view === "week"}
+              variant={view === "week" ? "default" : "outline"}
+              onClick={() => setView("week")}
+            >
+              Semana
             </Button>
           </div>
 
@@ -1350,18 +1386,30 @@ export function SchedulePage() {
 
         {/* GRID — single scroll container */}
         <div className="flex-1 overflow-auto">
-          <DayGrid
-            date={selectedDate}
-            professionals={visibleProfs}
-            appointments={dayAppointments}
-            timeBlocks={timeBlocksData?.timeBlocks ?? []}
-            slotHeight={slotHeight}
-            colWidth={COL_WIDTHS[colSize]}
-            canSchedule={canSchedule}
-            canDrag={canSchedule}
-            showFolga={showFolga}
-            onSlotClick={openModalAt}
-          />
+          {view === "week" ? (
+            <WeekGrid
+              days={week.days}
+              appointments={dayAppointments}
+              timeBlocks={timeBlocksData?.timeBlocks ?? []}
+              onOpenDay={(d) => {
+                setSelectedDate(d);
+                setView("day");
+              }}
+            />
+          ) : (
+            <DayGrid
+              date={selectedDate}
+              professionals={visibleProfs}
+              appointments={dayAppointments}
+              timeBlocks={timeBlocksData?.timeBlocks ?? []}
+              slotHeight={slotHeight}
+              colWidth={COL_WIDTHS[colSize]}
+              canSchedule={canSchedule}
+              canDrag={canSchedule}
+              showFolga={showFolga}
+              onSlotClick={openModalAt}
+            />
+          )}
         </div>
 
         {/* Footer institucional (estilo Trinks) */}
