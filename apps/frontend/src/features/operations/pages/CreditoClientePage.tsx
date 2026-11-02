@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
-import { useAuthStore } from '@/infrastructure/stores/auth.store';
+import { useHasPermission } from '../operations-permissions';
 import { ClientsListQuery } from '@/features/clients/api/clients.api';
 import {
   formatCurrencyDisplay,
@@ -260,9 +260,8 @@ function AdjustDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
 }
 
 export function CreditoClientePage() {
-  const permissions = useAuthStore((s) => s.permissions);
-  const canRead = permissions.includes('credit.read');
-  const canAdjust = permissions.includes('credit.adjust');
+  const canRead = useHasPermission('credit.read');
+  const canAdjust = useHasPermission('credit.adjust');
 
   const [filter, setFilter] = useState('');
   const [history, setHistory] = useState<ClientCreditBalance | null>(null);

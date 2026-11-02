@@ -25,6 +25,7 @@ import {
 import { PageHeader } from '@/components/layout/PageHeader';
 import { isPathEnabled } from '@/config/features';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
+import { useHasPermission } from '../operations-permissions';
 import { MembersQuery, type MembersQueryResult } from '@/features/catalog/api/members.api';
 import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
 import {
@@ -42,12 +43,11 @@ const HEAD = 'text-xs font-semibold text-neutral-500 uppercase tracking-wide';
 
 export function ComissoesCalculadasPage() {
   const { t } = useTranslation();
-  const permissions = useAuthStore((s) => s.permissions);
   const roleName = useAuthStore((s) => s.roleName);
   const isProfessional = roleName === 'PROFESSIONAL';
-  const canRead = permissions.includes('commissionRecord.read');
+  const canRead = useHasPermission('commissionRecord.read');
   const canReviewRules =
-    permissions.includes('commission.write') || roleName === 'ADMIN' || roleName === 'MANAGER';
+    useHasPermission('commission.write') || roleName === 'ADMIN' || roleName === 'MANAGER';
 
   const [period, setPeriod] = useState<PeriodValue>(() => defaultPeriod());
   const [memberId, setMemberId] = useState<string>(ALL);

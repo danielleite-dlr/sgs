@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { useAuthStore } from '@/infrastructure/stores/auth.store';
+import { useHasPermission } from '../operations-permissions';
 import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
 import {
   AddComandaPaymentMutation,
@@ -40,11 +40,10 @@ function firstError(p: ComandaPayloadResult | undefined): string | null {
 export function ComandaPage() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
-  const permissions = useAuthStore((s) => s.permissions);
-  const canWrite = permissions.includes('comanda.write');
-  const canClose = permissions.includes('comanda.close');
-  const canReopen = permissions.includes('comanda.reopen');
-  const canReviewRules = permissions.includes('commission.write');
+  const canWrite = useHasPermission('comanda.write');
+  const canClose = useHasPermission('comanda.close');
+  const canReopen = useHasPermission('comanda.reopen');
+  const canReviewRules = useHasPermission('commission.write');
 
   const { data, loading } = useQuery<ComandaQueryResult>(ComandaQuery, {
     variables: { id },

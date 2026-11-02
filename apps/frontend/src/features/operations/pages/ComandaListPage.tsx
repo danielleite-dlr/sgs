@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { useAuthStore } from '@/infrastructure/stores/auth.store';
+import { useHasPermission } from '../operations-permissions';
 import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
 import { ComandasQuery, type ComandasQueryResult } from '../api/comandas.api';
 import { PeriodFilter } from '../components/PeriodFilter';
@@ -36,7 +36,7 @@ function formatOpenedAt(iso: string): string {
 
 export function ComandaListPage() {
   const { t } = useTranslation();
-  const canWrite = useAuthStore((s) => s.permissions.includes('comanda.write'));
+  const canWrite = useHasPermission('comanda.write');
   const [period, setPeriod] = useState<PeriodValue>(() => defaultPeriod());
   const [status, setStatus] = useState('');
   const [walkInOpen, setWalkInOpen] = useState(false);

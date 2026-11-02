@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { useAuthStore } from '@/infrastructure/stores/auth.store';
+import { useHasPermission } from '../operations-permissions';
 import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
 import {
   CashMovementsQuery,
@@ -65,8 +65,7 @@ function Kpi({ id, label, hint, value }: { id: string; label: string; hint?: str
 }
 
 export function FinanceiroPage() {
-  const permissions = useAuthStore((s) => s.permissions);
-  const canRead = permissions.includes('financial.read');
+  const canRead = useHasPermission('financial.read');
 
   const [period, setPeriod] = useState<PeriodValue>(() => defaultPeriod());
   const [granularity, setGranularity] = useState<Granularity>('day');
