@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useMutation, useQuery } from "@apollo/client";
-import { toast } from "sonner";
+import { useQuery } from "@apollo/client";
 import {
   CalendarDays,
   ChevronLeft,
@@ -24,7 +23,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Sheet,
   SheetContent,
@@ -35,35 +33,21 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   AppointmentsQuery,
-  CreateAppointmentMutation,
-  ProfessionalsForServiceQuery,
   TimeBlocksQuery,
   type TimeBlocksQueryResult,
   type AppointmentsQueryResult,
-  type CreateAppointmentResult,
-  type ProfessionalsForServiceResult,
 } from "../api/appointments.api";
-import {
-  filterProfessionalsForService,
-  shouldClearProfessional,
-} from "../professional-filter";
 import {
   MembersQuery,
   type MemberData,
   type MembersQueryResult,
 } from "@/features/catalog/api/members.api";
-import {
-  ClientsListQuery,
-  type ClientsListResult,
-} from "@/features/clients/api/clients.api";
-import {
-  ServicesQuery,
-  type ServicesQueryResult,
-} from "@/features/catalog/api/servicos.api";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/infrastructure/stores/auth.store";
+import { VisitFormDialog } from "../components/calendar/VisitFormDialog";
 import { DayGrid } from "../components/calendar/DayGrid";
 import { WeekGrid } from "../components/calendar/WeekGrid";
+import { maskDateBR } from "../lib/input-masks";
 import { weekRange } from "../lib/week-range";
 import {
   APPT_STATUSES,
@@ -98,10 +82,6 @@ const COL_WIDTHS: Record<DensitySize, string> = {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function toLocalDateInput(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
 
 function dayRange(date: Date) {
   const from = new Date(date);
@@ -694,335 +674,6 @@ function SelecaoProfissionaisModal({
   );
 }
 
-interface AppointmentModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  initialTime?: { hour: number; minute: number; profId?: string };
-}
-
-function maskTime(input: string): string {
-  const digits = input.replace(/\D/g, "").slice(0, 4);
-  if (digits.length <= 2) return digits;
-  return `${digits.slice(0, 2)}:${digits.slice(2)}`;
-}
-
-function maskDateBR(input: string): string {
-  const digits = input.replace(/\D/g, "").slice(0, 8);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-}
-
-function AppointmentModal({
-  open,
-  onOpenChange,
-  initialTime,
-  professionals,
-  onCreated,
-}: AppointmentModalProps & {
-  professionals: ScheduleProfessional[];
-  onCreated: () => void;
-}) {
-  const [clientSearch, setClientSearch] = useState("");
-  const [clientId, setClientId] = useState("");
-  const [professionalId, setProfessionalId] = useState(
-    initialTime?.profId ?? "",
-  );
-  const [serviceId, setServiceId] = useState("");
-  const [date, setDate] = useState(() => toLocalDateInput(new Date()));
-  const [time, setTime] = useState(() =>
-    initialTime
-      ? `${String(initialTime.hour).padStart(2, "0")}:${String(initialTime.minute).padStart(2, "0")}`
-      : "",
-  );
-  const [duration, setDuration] = useState("");
-  const [notes, setNotes] = useState("");
-  const { data: clientsData } = useQuery<ClientsListResult>(ClientsListQuery, {
-    variables: { search: clientSearch || null, limit: 10, offset: 0 },
-    skip: !open,
-  });
-  const { data: servicesData } = useQuery<ServicesQueryResult>(ServicesQuery, {
-    skip: !open,
-  });
-  const [createAppointment, { loading }] = useMutation<CreateAppointmentResult>(
-    CreateAppointmentMutation,
-  );
-
-  useEffect(() => {
-    if (open) {
-      setProfessionalId(initialTime?.profId ?? "");
-      setTime(
-        initialTime
-          ? `${String(initialTime.hour).padStart(2, "0")}:${String(initialTime.minute).padStart(2, "0")}`
-          : "",
-      );
-      setDate(toLocalDateInput(new Date()));
-    }
-  }, [open, initialTime]);
-
-  // Só o seletor do modal filtra pela categoria do serviço; a lista
-  // `professionals` das colunas da agenda não muda.
-  const { data: forServiceData } = useQuery<ProfessionalsForServiceResult>(
-    ProfessionalsForServiceQuery,
-    {
-      variables: { serviceId },
-      skip: !open || !serviceId,
-      fetchPolicy: "cache-and-network",
-    },
-  );
-  const allowedIds = useMemo<string[] | null>(
-    () =>
-      serviceId && forServiceData
-        ? forServiceData.professionalsForService.map((p) => p.id)
-        : null,
-    [serviceId, forServiceData],
-  );
-  const visibleProfessionals = filterProfessionalsForService(
-    professionals,
-    allowedIds,
-  );
-
-  useEffect(() => {
-    if (shouldClearProfessional(professionalId, allowedIds)) {
-      setProfessionalId("");
-    }
-  }, [allowedIds, professionalId]);
-
-  const selectedService = servicesData?.services.find(
-    (service) => service.id === serviceId,
-  );
-  const selectedClient = clientsData?.clients.rows.find(
-    (client) => client.id === clientId,
-  );
-
-  function handleClose() {
-    setClientSearch("");
-    setClientId("");
-    setServiceId("");
-    setDuration("");
-    setNotes("");
-    onOpenChange(false);
-  }
-
-  async function handleSave() {
-    if (
-      !clientId ||
-      !professionalId ||
-      !serviceId ||
-      !date ||
-      !/^\d{2}:\d{2}$/.test(time)
-    ) {
-      toast.error("Preencha cliente, profissional, serviço, data e hora.");
-      return;
-    }
-    const startsAt = new Date(`${date}T${time}:00`);
-    if (Number.isNaN(startsAt.getTime())) {
-      toast.error("Data ou hora inválida.");
-      return;
-    }
-    const durationMinutes = Number(
-      duration || selectedService?.defaultDurationMinutes,
-    );
-    if (!Number.isInteger(durationMinutes) || durationMinutes <= 0) {
-      toast.error("Informe uma duração válida.");
-      return;
-    }
-    try {
-      const endsAt = new Date(startsAt.getTime() + durationMinutes * 60_000);
-      const result = await createAppointment({
-        variables: {
-          input: {
-            clientId,
-            professionalId,
-            serviceId,
-            startsAt: startsAt.toISOString(),
-            endsAt: endsAt.toISOString(),
-            notes: notes || null,
-          },
-        },
-      });
-      const errors = result.data?.createAppointment.errors ?? [];
-      if (errors.length) {
-        toast.error(errors[0].message);
-        return;
-      }
-      toast.success("Agendamento criado.");
-      handleClose();
-      onCreated();
-    } catch {
-      toast.error("Não foi possível criar o agendamento. Tente novamente.");
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[640px] p-0 max-h-[90vh] flex flex-col">
-        <header className="flex items-center justify-between px-md py-md border-b border-neutral-200 bg-neutral-50">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-neutral-800">
-            Cadastrar agendamento
-          </h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleClose}
-            aria-label="Fechar"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </header>
-        <div className="flex-1 overflow-y-auto px-md py-md space-y-md">
-          <div>
-            <Label className="text-xs font-semibold text-neutral-700">
-              Cliente
-            </Label>
-            <Input
-              value={clientSearch}
-              onChange={(e) => {
-                setClientSearch(e.target.value);
-                setClientId("");
-              }}
-              placeholder="Buscar cliente…"
-              className="mt-xs"
-            />
-            {clientSearch && !clientId && (
-              <div className="mt-xs max-h-32 overflow-y-auto rounded-md border border-neutral-200 bg-white">
-                {(clientsData?.clients.rows ?? []).map((client) => (
-                  <button
-                    key={client.id}
-                    type="button"
-                    onClick={() => {
-                      setClientId(client.id);
-                      setClientSearch(client.fullName);
-                    }}
-                    className="block w-full px-sm py-xs text-left text-sm hover:bg-neutral-50"
-                  >
-                    {client.fullName}
-                  </button>
-                ))}
-              </div>
-            )}
-            {selectedClient && (
-              <p className="mt-xs text-xs text-primary-700">
-                Cliente selecionado: {selectedClient.fullName}
-              </p>
-            )}
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
-            <div>
-              <Label className="text-xs font-semibold text-neutral-700">
-                Profissional
-              </Label>
-              <select
-                value={professionalId}
-                onChange={(e) => setProfessionalId(e.target.value)}
-                className="mt-xs w-full rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white"
-              >
-                <option value="">Selecione…</option>
-                {visibleProfessionals.map((professional) => (
-                  <option key={professional.id} value={professional.id}>
-                    {professional.name}
-                  </option>
-                ))}
-              </select>
-              {allowedIds !== null && visibleProfessionals.length === 0 && (
-                <p className="mt-xs text-xs text-neutral-500">
-                  Nenhum profissional atende a categoria deste serviço.
-                </p>
-              )}
-            </div>
-            <div>
-              <Label className="text-xs font-semibold text-neutral-700">
-                Serviço
-              </Label>
-              <select
-                value={serviceId}
-                onChange={(e) => {
-                  const id = e.target.value;
-                  setServiceId(id);
-                  const service = servicesData?.services.find(
-                    (item) => item.id === id,
-                  );
-                  if (service)
-                    setDuration(String(service.defaultDurationMinutes));
-                }}
-                className="mt-xs w-full rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white"
-              >
-                <option value="">Selecione…</option>
-                {(servicesData?.services ?? []).map((service) => (
-                  <option key={service.id} value={service.id}>
-                    {service.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
-            <div>
-              <Label className="text-xs font-semibold text-neutral-700">
-                Data
-              </Label>
-              <Input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="mt-xs"
-              />
-            </div>
-            <div>
-              <Label className="text-xs font-semibold text-neutral-700">
-                Hora
-              </Label>
-              <Input
-                value={time}
-                onChange={(e) => setTime(maskTime(e.target.value))}
-                placeholder="HH:mm"
-                inputMode="numeric"
-                maxLength={5}
-                className="mt-xs"
-              />
-            </div>
-            <div>
-              <Label className="text-xs font-semibold text-neutral-700">
-                Duração (min)
-              </Label>
-              <Input
-                value={duration}
-                onChange={(e) =>
-                  setDuration(e.target.value.replace(/\D/g, "").slice(0, 4))
-                }
-                inputMode="numeric"
-                placeholder="60"
-                className="mt-xs"
-              />
-            </div>
-          </div>
-          <div>
-            <Label className="text-xs font-semibold text-neutral-700">
-              Observações{" "}
-              <span className="font-normal text-neutral-400">(opcional)</span>
-            </Label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value.slice(0, 400))}
-              rows={3}
-              className="mt-xs resize-none"
-              placeholder="Preferências do cliente, alergias, observações…"
-            />
-          </div>
-        </div>
-        <footer className="flex justify-end gap-xs px-md py-md border-t border-neutral-200 bg-neutral-50">
-          <Button variant="outline" size="sm" onClick={handleClose}>
-            Cancelar
-          </Button>
-          <Button size="sm" disabled={loading} onClick={handleSave}>
-            {loading ? "Salvando…" : "Salvar"}
-          </Button>
-        </footer>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export function SchedulePage() {
@@ -1069,6 +720,7 @@ export function SchedulePage() {
             .join("")
             .toUpperCase(),
           color: PROFESSIONAL_COLORS[index % PROFESSIONAL_COLORS.length],
+          seniorityTier: member.seniorityTier ?? null,
         })),
     [membersData, ownOnly, memberId],
   );
@@ -1091,7 +743,8 @@ export function SchedulePage() {
       },
     });
 
-  const { data: timeBlocksData } = useQuery<TimeBlocksQueryResult>(
+  const { data: timeBlocksData, refetch: refetchTimeBlocks } =
+    useQuery<TimeBlocksQueryResult>(
     TimeBlocksQuery,
     {
       variables: {
@@ -1459,12 +1112,16 @@ export function SchedulePage() {
       </div>
 
       {canSchedule && (
-        <AppointmentModal
+        <VisitFormDialog
           open={modalOpen}
           onOpenChange={setModalOpen}
           initialTime={modalSeed}
+          date={selectedDate}
           professionals={professionals}
-          onCreated={() => void refetchAppointments()}
+          onCreated={() => {
+            void refetchAppointments();
+            void refetchTimeBlocks();
+          }}
         />
       )}
 

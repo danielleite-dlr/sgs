@@ -12,6 +12,7 @@ export interface ScheduleProfessional {
   name: string;
   initials: string;
   color: string;
+  seniorityTier?: string | null;
 }
 
 export interface ScheduleAppointment {
