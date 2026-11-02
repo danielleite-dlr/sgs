@@ -30,7 +30,9 @@ const FLAGS = {
   financeiro: true,
   /** Comissões calculadas — commissionTotals/commissionRecords reais. */
   financeiroComissoes: true,
-  /** As 10 sub-páginas de relatório financeiro — layout sem consulta. */
+  /** Crédito de cliente — client_credit_movements real. */
+  financeiroCreditoCliente: true,
+  /** As 9 sub-páginas de relatório financeiro — layout sem consulta. */
   financeiroRelatorios: false,
   /** Central de relatórios — catálogo de cards sem destino. */
   relatorios: false,
@@ -82,7 +84,7 @@ const GATED_PATHS: ReadonlyArray<readonly [string, FeatureKey]> = [
   ['/financeiro/fluxo', 'financeiroRelatorios'],
   ['/financeiro/despesas', 'financeiroRelatorios'],
   ['/financeiro/clientes-debito', 'financeiroRelatorios'],
-  ['/financeiro/credito-cliente', 'financeiroRelatorios'],
+  ['/financeiro/credito-cliente', 'financeiroCreditoCliente'],
   ['/financeiro/contas', 'financeiroRelatorios'],
   ['/financeiro/exportacao', 'financeiroRelatorios'],
   ['/financeiro/antecipacao', 'financeiroRelatorios'],

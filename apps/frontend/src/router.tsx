@@ -42,12 +42,12 @@ import {
   FluxoFinanceiroPage,
   DespesasPage,
   ClientesDebitoPage,
-  CreditoClientePage,
   MotivosDescontoPage,
   ContasFinanceirasPage,
   ExportacaoLancamentosPage,
   LancamentoAntecipacaoPage,
 } from '@/features/operations/pages/FinancialSubPages';
+import { CreditoClientePage } from '@/features/operations/pages/CreditoClientePage';
 import { ConfiguracoesPage } from '@/pages/ConfiguracoesPage';
 import { RelatoriosPage } from '@/pages/RelatoriosPage';
 

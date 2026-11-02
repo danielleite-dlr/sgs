@@ -15,6 +15,7 @@ describe('feature gating', () => {
       '/profissionais',
       '/financeiro',
       '/financeiro/comissoes',
+      '/financeiro/credito-cliente',
     ]) {
       expect(isPathEnabled(path)).toBe(true);
     }

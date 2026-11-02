@@ -519,68 +519,6 @@ export function ClientesDebitoPage() {
   );
 }
 
-// ─── Crédito de cliente ───────────────────────────────────────────────────────
-
-export function CreditoClientePage() {
-  return (
-    <FinancialReportLayout
-      title="Crédito de cliente"
-      filters={
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-md">
-          <div className="flex items-end gap-xs">
-            <Label className="text-xs font-semibold text-neutral-600 mb-xs">
-              Clientes que deixaram crédito ou consumiram crédito entre:
-            </Label>
-            <Input className="h-9 w-[120px] text-sm" placeholder="dd/mm/aaaa" />
-            <span className="text-sm text-neutral-500 mb-sm">e</span>
-            <Input className="h-9 w-[120px] text-sm" placeholder="dd/mm/aaaa" />
-          </div>
-          <div className="flex flex-col gap-xs">
-            <label className="flex items-center gap-xs">
-              <input type="radio" name="filtro-credito" defaultChecked />
-              <span className="text-xs text-neutral-700">Apenas clientes com saldo para consumo</span>
-            </label>
-            <label className="flex items-center gap-xs">
-              <input type="radio" name="filtro-credito" />
-              <span className="text-xs text-neutral-700">Selecionar cliente</span>
-            </label>
-          </div>
-        </div>
-      }
-      onPrimaryAction={() => {}}
-      onClear={() => {}}
-      showExport={false}
-    >
-      <div className="flex items-center justify-between mb-sm">
-        <Button size="sm" className="">
-          Incluir Crédito
-        </Button>
-        <Button size="sm" variant="outline" className="">
-          Exportar
-        </Button>
-      </div>
-      <div className="rounded-md border border-neutral-200 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-primary-700 text-white">
-            <tr>
-              <th className="px-md py-sm text-center font-semibold">Cliente</th>
-              <th className="px-md py-sm text-center font-semibold">Histórico</th>
-              <th className="px-md py-sm w-[40px]" />
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colSpan={3} className="text-center py-md text-sm text-neutral-500">
-                Não existem clientes com saldo de crédito
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </FinancialReportLayout>
-  );
-}
-
 // ─── Motivos de desconto ──────────────────────────────────────────────────────
 
 const MOTIVOS_DESCONTO = [
