@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-03-backend-scheduling-PLAN.md
-last_updated: "2026-11-02T03:32:56.980Z"
+stopped_at: Completed 03-04-PLAN.md
+last_updated: "2026-11-02T03:48:22.934Z"
 last_activity: 2026-11-02
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 29
-  completed_plans: 21
+  completed_plans: 22
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 03 (core-operations) — EXECUTING
-Plan: 4 of 12
+Plan: 5 of 12
 Status: Ready to execute
 Last activity: 2026-11-02
 
@@ -68,6 +68,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 03 P01 | 45min | 3 tasks | 16 files |
 | Phase 03 P02 | 20min | 3 tasks | 16 files |
 | Phase 03 P03 | 50min | 3 tasks | 17 files |
+| Phase 03 P04 | 60min | 3 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -131,6 +132,8 @@ Recent decisions affecting current work:
 - [Phase 03]: react-is forcado para ^19 via pnpm.overrides (Recharts + React 19)
 - [Phase 03]: 23P01 via ORM chega como PrismaClientUnknownRequestError; isPgError inspeciona a mensagem
 - [Phase 03]: Cancelar agendamento em comanda aberta remove itens do agendamento e cancela a comanda se nada sobrar
+- [Phase 03]: 03-04: item de pacote guarda list_unit_price (preço cheio, base da comissão) e unit_price rateado; ledgers só no fechamento
+- [Phase 03]: 03-04: migration remove chk_clients_contact para permitir walk-in só com nome (D-06); regra de contato segue no ClientsService
 
 ### Pending Todos
 
@@ -166,6 +169,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-02T03:32:56.973Z
-Stopped at: Completed 03-03-backend-scheduling-PLAN.md
+Last session: 2026-11-02T03:48:22.929Z
+Stopped at: Completed 03-04-PLAN.md
 Resume file: None
