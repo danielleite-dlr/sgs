@@ -80,7 +80,7 @@ describe('Phase 3 - fechamento da comanda (D-12)', () => {
     expect((await adminPrisma.product.findUnique({ where: { id: w.productId } }))!.stockQuantity).toBe(10);
     expect(await adminPrisma.commissionRecord.count({ where: { comandaId } })).toBe(0);
     expect(await adminPrisma.cashMovement.count({ where: { comandaId, cycle: 1 } })).toBe(0);
-    expect(await adminPrisma.clientCreditMovement.count({ where: { kind: 'consumption' } })).toBe(0);
+    expect(await adminPrisma.clientCreditMovement.count({ where: { organizationId: w.orgId, kind: 'consumption' } })).toBe(0);
   });
 
   it('estoque zerado: STOCK_INSUFFICIENT e rollback completo', async () => {
@@ -90,7 +90,7 @@ describe('Phase 3 - fechamento da comanda (D-12)', () => {
     expect(r.errors[0].code).toBe('STOCK_INSUFFICIENT');
     expect(await adminPrisma.commissionRecord.count({ where: { comandaId } })).toBe(0);
     expect(await adminPrisma.cashMovement.count({ where: { comandaId, cycle: 1 } })).toBe(0);
-    expect(await adminPrisma.clientCreditMovement.count({ where: { kind: 'consumption' } })).toBe(0);
+    expect(await adminPrisma.clientCreditMovement.count({ where: { organizationId: w.orgId, kind: 'consumption' } })).toBe(0);
     expect((await adminPrisma.comanda.findUnique({ where: { id: comandaId } }))!.status).toBe('open');
   });
 
