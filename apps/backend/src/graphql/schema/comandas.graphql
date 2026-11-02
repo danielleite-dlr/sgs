@@ -1,0 +1,109 @@
+extend type Query {
+  comanda(id: UUID!): Comanda
+  "from/to = datas locais YYYY-MM-DD no fuso da org; to exclusivo; filtra por opened_at"
+  comandas(from: String!, to: String!, status: String, clientId: UUID): [Comanda!]!
+}
+
+extend type Mutation {
+  openWalkInComanda(input: OpenWalkInComandaInput!): ComandaPayload!
+  addComandaItem(input: AddComandaItemInput!): ComandaPayload!
+  removeComandaItem(comandaId: UUID!, itemId: UUID!): ComandaPayload!
+  addComandaPackage(input: AddComandaPackageInput!): ComandaPayload!
+  addComandaPayment(input: AddComandaPaymentInput!): ComandaPayload!
+  removeComandaPayment(comandaId: UUID!, paymentId: UUID!): ComandaPayload!
+}
+
+"status: open | closed | cancelled. Valores monetários como string decimal com 2 casas."
+type Comanda {
+  id: UUID!
+  code: String!
+  status: String!
+  clientId: UUID!
+  client: Client!
+  openedAt: DateTime!
+  closedAt: DateTime
+  closeCycle: Int!
+  total: String!
+  paid: String!
+  remaining: String!
+  change: String!
+  canClose: Boolean!
+  "INSUFFICIENT_PAYMENT | INVALID_CHANGE | null"
+  closeError: String
+  clientCreditBalance: String!
+  items: [ComandaItem!]!
+  payments: [ComandaPayment!]!
+  appointmentIds: [UUID!]!
+}
+
+"listUnitPrice = preço cheio do serviço (base da comissão, D-23); unitPrice = valor cobrado (rateado em pacote)."
+type ComandaItem {
+  id: UUID!
+  kind: String!
+  serviceId: UUID
+  productId: UUID
+  packageId: UUID
+  appointmentId: UUID
+  serviceVariantId: UUID
+  professionalId: UUID!
+  professional: Member!
+  name: String!
+  quantity: Int!
+  listUnitPrice: String!
+  unitPrice: String!
+  total: String!
+}
+
+type ComandaPayment {
+  id: UUID!
+  method: String!
+  amount: String!
+  paidAt: DateTime!
+  memberId: UUID
+}
+
+input WalkInClientInput {
+  fullName: String!
+  phone: String
+}
+
+"Exatamente um entre clientId e newClient."
+input OpenWalkInComandaInput {
+  clientId: UUID
+  newClient: WalkInClientInput
+}
+
+"kind: service | product. Para produto, professionalId é o vendedor."
+input AddComandaItemInput {
+  comandaId: UUID!
+  kind: String!
+  serviceId: UUID
+  serviceVariantId: UUID
+  productId: UUID
+  professionalId: UUID!
+  quantity: Int!
+}
+
+input PackageAssignmentInput {
+  serviceId: UUID!
+  professionalId: UUID!
+  serviceVariantId: UUID
+}
+
+input AddComandaPackageInput {
+  comandaId: UUID!
+  packageId: UUID!
+  assignments: [PackageAssignmentInput!]!
+}
+
+"method: cash | pix | credit_card | debit_card | transfer | client_credit; amount decimal positivo com ponto."
+input AddComandaPaymentInput {
+  comandaId: UUID!
+  method: String!
+  amount: String!
+}
+
+type ComandaPayload {
+  comanda: Comanda
+  errors: [UserError!]!
+}
