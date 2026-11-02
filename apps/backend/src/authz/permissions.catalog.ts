@@ -3,6 +3,7 @@
  * Pattern: <resource>.<action>
  * Phase 1: organization, member, role permissions.
  * Phase 2: category, service, package, product, commission, client, notification permissions.
+ * Phase 3: comanda, credit, financial, commissionRecord permissions (migration 20261101000000_phase3_operations).
  * Materialized into role_permissions table by seed migrations.
  */
 export const PERMISSIONS = {
@@ -44,6 +45,16 @@ export const PERMISSIONS = {
 
   // ===== Phase 2: Notifications =====
   NOTIFICATION_READ: 'notification.read',
+
+  // ===== Phase 3: Operations =====
+  COMANDA_READ: 'comanda.read',
+  COMANDA_WRITE: 'comanda.write',
+  COMANDA_CLOSE: 'comanda.close',
+  COMANDA_REOPEN: 'comanda.reopen',
+  CREDIT_READ: 'credit.read',
+  CREDIT_ADJUST: 'credit.adjust',
+  FINANCIAL_READ: 'financial.read',
+  COMMISSION_RECORD_READ: 'commissionRecord.read',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -54,6 +65,7 @@ export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
  * Materialized into role_permissions table by the seed migration.
  * Phase 1: 20260502010000_seed_role_permissions
  * Phase 2: 20260506010000_seed_phase2_permissions
+ * Phase 3: 20261101000000_phase3_operations
  */
 export const ROLE_PERMISSIONS: Record<
   'ADMIN' | 'MANAGER' | 'ATTENDANT' | 'PROFESSIONAL',
@@ -85,6 +97,15 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.NOTIFICATION_READ,
     PERMISSIONS.APPOINTMENT_READ,
     PERMISSIONS.APPOINTMENT_WRITE,
+    // Phase 3 — operations
+    PERMISSIONS.COMANDA_READ,
+    PERMISSIONS.COMANDA_WRITE,
+    PERMISSIONS.COMANDA_CLOSE,
+    PERMISSIONS.COMANDA_REOPEN,
+    PERMISSIONS.CREDIT_READ,
+    PERMISSIONS.CREDIT_ADJUST,
+    PERMISSIONS.FINANCIAL_READ,
+    PERMISSIONS.COMMISSION_RECORD_READ,
   ],
   MANAGER: [
     // Phase 1
@@ -108,6 +129,15 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.NOTIFICATION_READ,
     PERMISSIONS.APPOINTMENT_READ,
     PERMISSIONS.APPOINTMENT_WRITE,
+    // Phase 3 — operations
+    PERMISSIONS.COMANDA_READ,
+    PERMISSIONS.COMANDA_WRITE,
+    PERMISSIONS.COMANDA_CLOSE,
+    PERMISSIONS.COMANDA_REOPEN,
+    PERMISSIONS.CREDIT_READ,
+    PERMISSIONS.CREDIT_ADJUST,
+    PERMISSIONS.FINANCIAL_READ,
+    PERMISSIONS.COMMISSION_RECORD_READ,
   ],
   ATTENDANT: [
     // Phase 1
@@ -123,6 +153,11 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.NOTIFICATION_READ,
     PERMISSIONS.APPOINTMENT_READ,
     PERMISSIONS.APPOINTMENT_WRITE,
+    // Phase 3 — operations
+    PERMISSIONS.COMANDA_READ,
+    PERMISSIONS.COMANDA_WRITE,
+    PERMISSIONS.COMANDA_CLOSE,
+    PERMISSIONS.CREDIT_READ,
   ],
   PROFESSIONAL: [
     // Phase 1
@@ -136,5 +171,8 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.CLIENT_READ,
     PERMISSIONS.NOTIFICATION_READ,
     PERMISSIONS.APPOINTMENT_READ,
+    // Phase 3 — operations
+    PERMISSIONS.COMANDA_READ,
+    PERMISSIONS.COMMISSION_RECORD_READ,
   ],
 };

@@ -13,6 +13,8 @@ import { IdentityModule } from './identity/identity.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { ClientsModule } from './clients/clients.module';
 import { AppointmentsModule } from './appointments/appointments.module';
+import { ComandasModule } from './comandas/comandas.module';
+import { FinancialModule } from './financial/financial.module';
 import { envSchema } from './config/env.schema';
 import configuration from './config/configuration';
 
@@ -45,6 +47,8 @@ import configuration from './config/configuration';
     CatalogModule,
     ClientsModule,
     AppointmentsModule,
+    ComandasModule,
+    FinancialModule,
     HealthModule,
   ],
 })
