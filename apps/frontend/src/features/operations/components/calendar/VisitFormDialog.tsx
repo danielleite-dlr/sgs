@@ -15,7 +15,14 @@ import {
   type ProfessionalsForServiceResult,
   type VisitPackagesResult,
 } from '../../api/appointments.api';
-import { ClientsListQuery, type ClientsListResult } from '@/features/clients/api/clients.api';
+import {
+  ClientsListQuery,
+  CreateClientMutation,
+  type ClientsListResult,
+  type CreateClientResult,
+} from '@/features/clients/api/clients.api';
+import { maskBrPhone, normalizeBrPhone } from '@/features/identity/member-validation';
+import { useHasPermission } from '../../operations-permissions';
 import {
   ServicesQuery,
   type ServiceData,
@@ -257,6 +264,12 @@ export function VisitFormDialog({
 }: VisitFormDialogProps) {
   const [clientSearch, setClientSearch] = useState('');
   const [clientId, setClientId] = useState('');
+  const [clientName, setClientName] = useState('');
+  const [newClientOpen, setNewClientOpen] = useState(false);
+  const [newClientName, setNewClientName] = useState('');
+  const [newClientPhone, setNewClientPhone] = useState('');
+  const [newClientError, setNewClientError] = useState('');
+  const canCreateClient = useHasPermission('client.write');
   const [dateBr, setDateBr] = useState(() => dateToBr(date));
   const [packageId, setPackageId] = useState('');
   const [lines, setLines] = useState<LineState[]>(() => [
@@ -276,6 +289,10 @@ export function VisitFormDialog({
     skip: !open,
   });
   const [createVisit, { loading }] = useMutation<CreateVisitResult>(CreateVisitMutation);
+  const [createClient, { loading: creatingClient }] = useMutation<CreateClientResult>(
+    CreateClientMutation,
+    { refetchQueries: ['ClientsList'] },
+  );
   const services = servicesData?.services ?? [];
   const selectedPackage = packagesData?.packages.find((p) => p.id === packageId) ?? null;
 
@@ -289,11 +306,57 @@ export function VisitFormDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialTime]);
 
-  const selectedClient = clientsData?.clients.rows.find((c) => c.id === clientId);
+  const clientRows = clientsData?.clients.rows ?? [];
+  const selectedClient = clientId ? { id: clientId, fullName: clientName } : null;
+
+  function pickClient(id: string, fullName: string) {
+    setClientId(id);
+    setClientName(fullName);
+    setClientSearch(fullName);
+  }
+
+  function openNewClient() {
+    setNewClientOpen(true);
+    setNewClientName(clientSearch.trim());
+    setNewClientPhone('');
+    setNewClientError('');
+  }
+
+  async function handleCreateClient() {
+    setNewClientError('');
+    const fullName = newClientName.trim();
+    if (fullName.length < 2) {
+      setNewClientError('Informe o nome do cliente.');
+      return;
+    }
+    const phone = normalizeBrPhone(newClientPhone);
+    if (!phone) {
+      setNewClientError('Informe um telefone válido com DDD.');
+      return;
+    }
+    try {
+      const result = await createClient({ variables: { input: { fullName, phone } } });
+      const payload = result.data?.createClient;
+      if (!payload?.client || payload.errors.length > 0) {
+        setNewClientError(payload?.errors[0]?.message ?? 'Não foi possível cadastrar o cliente.');
+        return;
+      }
+      pickClient(payload.client.id, payload.client.fullName);
+      setNewClientOpen(false);
+      toast.success('Cliente cadastrado.');
+    } catch {
+      setNewClientError('Não foi possível cadastrar o cliente.');
+    }
+  }
 
   function reset() {
     setClientSearch('');
     setClientId('');
+    setClientName('');
+    setNewClientOpen(false);
+    setNewClientName('');
+    setNewClientPhone('');
+    setNewClientError('');
     setPackageId('');
     setDepositAmount('');
     setDepositMethod('pix');
@@ -413,22 +476,114 @@ export function VisitFormDialog({
               placeholder="Buscar cliente…"
               className="mt-xs"
             />
-            {clientSearch && !clientId && (
-              <div className="mt-xs max-h-32 overflow-y-auto rounded-md border border-neutral-200 bg-white">
-                {(clientsData?.clients.rows ?? []).map((client) => (
+            {clientSearch && !clientId && !newClientOpen && (
+              <div className="mt-xs max-h-40 overflow-y-auto rounded-md border border-neutral-200 bg-white">
+                {clientRows.map((client) => (
                   <button
                     key={client.id}
                     type="button"
                     data-testid={`visit-client-option-${client.id}`}
-                    onClick={() => {
-                      setClientId(client.id);
-                      setClientSearch(client.fullName);
-                    }}
+                    onClick={() => pickClient(client.id, client.fullName)}
                     className="block w-full px-sm py-xs text-left text-sm hover:bg-neutral-50"
                   >
                     {client.fullName}
                   </button>
                 ))}
+                {clientsData && clientRows.length === 0 && (
+                  <p
+                    data-testid="visit-client-empty"
+                    className="px-sm py-xs text-sm text-neutral-500"
+                  >
+                    Nenhum cliente encontrado.
+                  </p>
+                )}
+                {canCreateClient && (
+                  <button
+                    type="button"
+                    data-testid="visit-client-new"
+                    onClick={openNewClient}
+                    className="flex w-full items-center gap-xs border-t border-neutral-100 px-sm py-xs text-left text-sm font-medium text-primary-700 hover:bg-primary-50"
+                  >
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    Cadastrar cliente
+                  </button>
+                )}
+              </div>
+            )}
+            {!clientSearch && !clientId && !newClientOpen && canCreateClient && (
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="mt-xs h-auto px-0"
+                data-testid="visit-client-new-empty"
+                onClick={openNewClient}
+              >
+                <Plus className="mr-xs h-4 w-4" aria-hidden="true" />
+                Cadastrar novo cliente
+              </Button>
+            )}
+            {newClientOpen && (
+              <div
+                data-testid="visit-new-client"
+                className="mt-xs space-y-sm rounded-md border border-neutral-200 bg-neutral-50 p-sm"
+              >
+                <p className="text-sm font-medium text-neutral-800">Novo cliente</p>
+                <div className="grid grid-cols-1 gap-sm sm:grid-cols-2">
+                  <div>
+                    <Label className={LABEL_CLASS} htmlFor="visit-new-client-name">
+                      Nome
+                    </Label>
+                    <Input
+                      id="visit-new-client-name"
+                      data-testid="visit-new-client-name"
+                      value={newClientName}
+                      onChange={(e) => setNewClientName(e.target.value)}
+                      placeholder="Nome completo"
+                      className="mt-xs"
+                      autoFocus
+                    />
+                  </div>
+                  <div>
+                    <Label className={LABEL_CLASS} htmlFor="visit-new-client-phone">
+                      Telefone (WhatsApp)
+                    </Label>
+                    <Input
+                      id="visit-new-client-phone"
+                      data-testid="visit-new-client-phone"
+                      type="tel"
+                      inputMode="tel"
+                      value={newClientPhone}
+                      onChange={(e) => setNewClientPhone(maskBrPhone(e.target.value))}
+                      placeholder="(11) 98765-4321"
+                      className="mt-xs"
+                    />
+                  </div>
+                </div>
+                {newClientError && (
+                  <p data-testid="visit-new-client-error" role="alert" className="text-sm text-error-600">
+                    {newClientError}
+                  </p>
+                )}
+                <div className="flex justify-end gap-sm">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setNewClientOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    data-testid="visit-new-client-submit"
+                    disabled={creatingClient}
+                    onClick={handleCreateClient}
+                  >
+                    {creatingClient ? 'Salvando…' : 'Salvar cliente'}
+                  </Button>
+                </div>
               </div>
             )}
             {selectedClient && (

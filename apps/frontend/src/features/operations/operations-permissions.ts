@@ -11,10 +11,13 @@
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
 
 const COMANDA_FULL = ['comanda.read', 'comanda.write', 'comanda.close'];
+/** Cadastro rápido de cliente no agendamento (CLIENT_WRITE no backend). */
+const CLIENT_WRITE = 'client.write';
 
 const ROLE_OPERATION_PERMISSIONS: Record<string, readonly string[]> = {
   ADMIN: [
     ...COMANDA_FULL,
+    CLIENT_WRITE,
     'comanda.reopen',
     'credit.read',
     'credit.adjust',
@@ -24,13 +27,14 @@ const ROLE_OPERATION_PERMISSIONS: Record<string, readonly string[]> = {
   ],
   MANAGER: [
     ...COMANDA_FULL,
+    CLIENT_WRITE,
     'comanda.reopen',
     'credit.read',
     'credit.adjust',
     'financial.read',
     'commissionRecord.read',
   ],
-  ATTENDANT: [...COMANDA_FULL, 'credit.read'],
+  ATTENDANT: [...COMANDA_FULL, CLIENT_WRITE, 'credit.read'],
   PROFESSIONAL: ['comanda.read', 'commissionRecord.read'],
 };
 
