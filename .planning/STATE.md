@@ -5,7 +5,7 @@ milestone_name: milestone
 status: executing
 stopped_at: Phase 4 context gathered
 last_updated: "2026-11-03T01:45:26.003Z"
-last_activity: 2026-11-02
+last_activity: 2026-11-03
 progress:
   total_phases: 6
   completed_phases: 4
@@ -181,6 +181,7 @@ Recent decisions affecting current work:
 | fast-260929e | Tipo de chave Pix (CPF, CNPJ, e-mail, celular, aleatoria) com mascara e validacao por tipo no cadastro/edicao de profissional | 2026-09-29 | - | - |
 | fast-260929f | Profissional (papel PROFESSIONAL) so ve os proprios atendimentos (backend forca o filtro) e a agenda esconde agendar/selecao de profissionais para quem nao tem appointment.write | 2026-09-29 | - | - |
 | 260929-gta | Automatizar com Playwright os testes de verificacao manual do M1 (Fase 02.1) + job e2e no CI; corrige menu de acoes de /profissionais | 2026-09-29 | e6fda22 | [260929-gta-automatizar-com-playwright-os-testes-de-](./quick/260929-gta-automatizar-com-playwright-os-testes-de-/) |
+| 261103-hmb | Cadastro rapido de cliente dentro do formulario de agendamento (sem sair da agenda) | 2026-11-03 | 64888bf | [261103-hmb-cadastro-rapido-de-cliente-no-agendament](./quick/261103-hmb-cadastro-rapido-de-cliente-no-agendament/) |
 
 ## Session Continuity
 
