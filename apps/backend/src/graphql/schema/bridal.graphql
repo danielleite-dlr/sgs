@@ -15,6 +15,7 @@ type BridalGroup {
   contractCode: String
   contractStatus: String
   appointmentCount: Int!
+  appointments: [BridalAppointment!]!
   createdAt: DateTime!
 }
 
@@ -78,6 +79,55 @@ type BridalGroupPayload {
   errors: [UserError!]!
 }
 
+input BridalScheduleItemInput {
+  groupMemberId: UUID!
+  serviceId: UUID!
+  professionalId: UUID!
+  startsAt: DateTime!
+  endsAt: DateTime!
+  "event (padrão) | trial"
+  purpose: String
+}
+
+input BridalDepositInput {
+  groupMemberId: UUID!
+  amount: String!
+  method: String!
+}
+
+input ScheduleBridalEventInput {
+  groupId: UUID!
+  items: [BridalScheduleItemInput!]!
+  deposits: [BridalDepositInput!]
+}
+
+type BridalSchedulePayload {
+  group: BridalGroup
+  appointmentIds: [UUID!]!
+  errors: [UserError!]!
+}
+
+input CancelBridalGroupInput {
+  id: UUID!
+  reason: String!
+}
+
+type BridalAppointment {
+  id: UUID!
+  groupMemberId: UUID
+  clientName: String!
+  serviceName: String!
+  professionalId: UUID!
+  professionalName: String!
+  startsAt: DateTime!
+  endsAt: DateTime!
+  status: String!
+  purpose: String
+  covered: Boolean!
+  comandaId: UUID
+  comandaStatus: String
+}
+
 extend type Query {
   "from/to = datas YYYY-MM-DD do evento (inclusivas)"
   bridalGroups(status: String, from: String, to: String): [BridalGroup!]!
@@ -94,4 +144,8 @@ extend type Mutation {
     memberId: UUID!
     services: [BridalMemberServiceInput!]!
   ): BridalGroupPayload!
+  "Agenda o evento: um agendamento real por pessoa x servico x profissional x horario (D-03)."
+  scheduleBridalEvent(input: ScheduleBridalEventInput!): BridalSchedulePayload!
+  "Exige contrato ja cancelado; cancela os agendamentos e remove os deslocamentos."
+  cancelBridalGroup(input: CancelBridalGroupInput!): BridalGroupPayload!
 }

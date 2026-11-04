@@ -34,6 +34,15 @@ export interface CreateVisitInput {
   packageId?: string | null;
   deposit?: { amount: string; method: string } | null;
   notes?: string | null;
+  /** Visita de um grupo de noivas (04-08): finalidade e cobertura do contrato (D-08). */
+  bridal?: {
+    groupId: string;
+    purpose: "event" | "trial";
+    coverage?: {
+      contractId: string;
+      priceByServiceId: Record<string, string>;
+    } | null;
+  } | null;
 }
 
 /**
@@ -48,6 +57,14 @@ export async function createVisitTx(
   input: CreateVisitInput,
 ): Promise<{ appointmentIds: string[]; comandaId: string }> {
   const { items } = input;
+  if (input.bridal && input.packageId) {
+    throw new SchedulingError(
+      "PACKAGE_NOT_ALLOWED",
+      "Pacote não pode ser usado em visita de grupo de noivas.",
+      "packageId",
+    );
+  }
+  const coverage = input.bridal?.coverage ?? null;
   if (!items || items.length === 0) {
     throw new SchedulingError(
       "ITEMS_REQUIRED",
@@ -182,6 +199,16 @@ export async function createVisitTx(
         startsAt: intervals[idx].startsAt,
         endsAt: intervals[idx].endsAt,
         notes: input.notes ?? null,
+        ...(input.bridal
+          ? {
+              bridalGroupId: input.bridal.groupId,
+              purpose: input.bridal.purpose,
+              contractId:
+                coverage && item.serviceId in coverage.priceByServiceId
+                  ? coverage.contractId
+                  : null,
+            }
+          : {}),
       },
       select: { id: true },
     });
@@ -250,18 +277,24 @@ export async function createVisitTx(
   } else {
     const rows = [];
     for (const c of created) {
-      rows.push(
-        await buildServiceItem(tx, {
-          orgId,
-          comandaId: comanda.id,
-          serviceId: c.item.serviceId,
-          serviceVariantId: c.item.serviceVariantId ?? null,
-          professionalId: c.item.professionalId,
-          quantity: 1,
-          appointmentId: c.id,
-          createdBy: memberId,
-        }),
-      );
+      const row = await buildServiceItem(tx, {
+        orgId,
+        comandaId: comanda.id,
+        serviceId: c.item.serviceId,
+        serviceVariantId: c.item.serviceVariantId ?? null,
+        professionalId: c.item.professionalId,
+        quantity: 1,
+        appointmentId: c.id,
+        createdBy: memberId,
+      });
+      const agreed = coverage?.priceByServiceId[c.item.serviceId];
+      if (coverage && agreed !== undefined) {
+        // Preço acordado no contrato; listUnitPrice segue o catálogo (comissão cheia — D-08).
+        row.contractId = coverage.contractId;
+        row.unitPrice = agreed;
+        row.total = agreed;
+      }
+      rows.push(row);
     }
     await tx.comandaItem.createMany({ data: rows });
   }

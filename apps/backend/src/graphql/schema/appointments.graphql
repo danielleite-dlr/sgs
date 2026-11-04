@@ -83,7 +83,7 @@ input CancelAppointmentInput {
   reasonTag: String
 }
 
-"kind: folga | intervalo | feriado | indisponibilidade. professionalId nulo = feriado (org-wide)."
+"kind: folga | intervalo | feriado | indisponibilidade | deslocamento (gerado pelo grupo de noivas). professionalId nulo = feriado (org-wide)."
 type TimeBlock {
   id: UUID!
   kind: String!
@@ -92,6 +92,7 @@ type TimeBlock {
   endsAt: DateTime!
   allDay: Boolean!
   note: String
+  bridalGroupId: UUID
   createdAt: DateTime!
 }
 

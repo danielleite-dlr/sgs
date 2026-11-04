@@ -1,9 +1,19 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { recordAudit } from '../common/audit-log';
 import { TenantContextService } from '../database/tenant-context.service';
 import type { TenantPrismaClient } from '../database/types';
+import { syncContractCoverageTx } from './bridal-coverage';
+import {
+  BRIDAL_SCHEDULE_TX_OPTIONS,
+  cancelGroupAppointmentsTx,
+  createBridalScheduleTx,
+  rebuildTravelBlocksTx,
+  type BridalScheduleInput,
+} from './bridal-schedule';
 import { resolvePersonClientTx, type BridalPersonRef } from './bridal-clients';
 import { BridalError, mapBridalError, type BridalUserError } from './bridal-errors';
 import {
+  BRIDAL_APPOINTMENT_INCLUDE,
   BRIDAL_GROUP_INCLUDE,
   serializeBridalGroup,
   type BridalGroupRow,
@@ -35,6 +45,12 @@ export interface CreateBridalGroupInput {
   group: BridalGroupFieldsInput;
   bride: BridalPersonInput;
   companions?: BridalPersonInput[] | null;
+}
+
+export interface BridalSchedulePayload {
+  group: BridalGroupView | null;
+  appointmentIds: string[];
+  errors: BridalUserError[];
 }
 
 export type BridalGroupView = ReturnType<typeof serializeBridalGroup>;
@@ -214,9 +230,17 @@ async function buildViews(
     where: { bridalGroupId: { in: ids }, comanda: { status: 'closed' } },
     select: { bridalGroupId: true, clientId: true },
   });
+  const details = await tx.appointment.findMany({
+    where: { bridalGroupId: { in: ids } },
+    include: BRIDAL_APPOINTMENT_INCLUDE,
+    orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
+    take: 1000,
+  });
   return rows.map((row) => {
     const contract = contracts.find((c) => c.bridalGroupId === row.id) ?? null;
     return serializeBridalGroup(row, {
+      appointments: details.filter((a) => a.bridalGroupId === row.id),
+      groupMemberIdByClient: new Map(row.members.map((m) => [m.clientId, m.id])),
       contract,
       appointmentCount: appts.filter((a) => a.bridalGroupId === row.id).length,
       closedComandaClientIds: new Set(
@@ -370,6 +394,7 @@ export class BridalService {
 
   update(
     orgId: string,
+    memberId: string,
     id: string,
     input: BridalGroupFieldsInput,
   ): Promise<BridalGroupPayload> {
@@ -377,7 +402,19 @@ export class BridalService {
     return this.write(orgId, async (tx) => {
       await requireActiveGroup(tx, id);
       const fields = await validateGroupFields(tx, input);
+      const before = await tx.bridalGroup.findFirstOrThrow({
+        where: { id },
+        select: { locationKind: true, travelMinutesBefore: true, travelMinutesAfter: true },
+      });
       await tx.bridalGroup.update({ where: { id }, data: fields });
+      if (
+        before.locationKind !== fields.locationKind ||
+        before.travelMinutesBefore !== fields.travelMinutesBefore ||
+        before.travelMinutesAfter !== fields.travelMinutesAfter
+      ) {
+        await rebuildTravelBlocksTx(tx, orgId, memberId, id);
+      }
+      await syncContractCoverageTx(tx, orgId, id);
       return id;
     });
   }
@@ -469,6 +506,7 @@ export class BridalService {
           where: { id: memberId },
           data: { coveredByContract: covered },
         });
+        await syncContractCoverageTx(tx, orgId, m.groupId);
       }
       return m.groupId;
     });
@@ -497,6 +535,86 @@ export class BridalService {
       }
       return m.groupId;
     });
+  }
+
+  /** Agenda o evento: pessoa × serviço × profissional × horário viram agendamentos reais (D-03). */
+  async schedule(
+    orgId: string,
+    memberId: string,
+    input: BridalScheduleInput,
+  ): Promise<BridalSchedulePayload> {
+    try {
+      return await this.tenant.runWithTenant(
+        orgId,
+        async (tx) => {
+          const { appointmentIds } = await createBridalScheduleTx(tx, orgId, memberId, input);
+          await syncContractCoverageTx(tx, orgId, input.groupId);
+          return { group: await viewOf(tx, input.groupId), appointmentIds, errors: [] };
+        },
+        BRIDAL_SCHEDULE_TX_OPTIONS,
+      );
+    } catch (e) {
+      const m = mapBridalError(e);
+      if (m) return { group: null, appointmentIds: [], errors: [m] };
+      throw e;
+    }
+  }
+
+  /** Cancela o grupo: exige contrato já cancelado; cancela agendamentos e remove deslocamentos. */
+  async cancelGroup(
+    orgId: string,
+    memberId: string,
+    input: { id: string; reason: string },
+  ): Promise<BridalGroupPayload> {
+    const reason = (input.reason ?? '').trim();
+    if (reason.length < 3) {
+      return {
+        group: null,
+        errors: [
+          { code: 'REASON_REQUIRED', message: 'Informe o motivo do cancelamento.', field: 'reason' },
+        ],
+      };
+    }
+    try {
+      return await this.tenant.runWithTenant(
+        orgId,
+        async (tx) => {
+          await requireActiveGroup(tx, input.id);
+          const live = await tx.contract.findFirst({
+            where: { bridalGroupId: input.id, status: { not: 'cancelled' } },
+            select: { id: true },
+          });
+          if (live) {
+            throw new BridalError(
+              'CANCEL_CONTRACT_FIRST',
+              'Cancele o contrato antes de cancelar o grupo.',
+              'id',
+            );
+          }
+          const cancelled = await cancelGroupAppointmentsTx(tx, orgId, memberId, {
+            groupId: input.id,
+            reason,
+          });
+          await tx.bridalGroup.update({
+            where: { id: input.id },
+            data: { status: 'cancelled', cancelledAt: new Date(), cancelReason: reason },
+          });
+          await recordAudit(tx, {
+            orgId,
+            actorMemberId: memberId,
+            action: 'bridal.cancel',
+            entityType: 'bridal_group',
+            entityId: input.id,
+            reason,
+            metadata: { cancelledAppointments: cancelled },
+          });
+          return { group: await viewOf(tx, input.id), errors: [] };
+        },
+        BRIDAL_SCHEDULE_TX_OPTIONS,
+      );
+    } catch (e) {
+      return fail(e);
+    }
   }
 
   async list(

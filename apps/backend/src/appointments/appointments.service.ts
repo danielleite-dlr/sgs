@@ -1,11 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { fromCents, toCents } from "../common/money";
-import type { TenantPrismaClient } from "../database/types";
 import { TenantContextService } from "../database/tenant-context.service";
 import { professionalServesCategory } from "../identity/member-categories";
 import {
-  BLOCKING_STATUSES,
-  CANCELLABLE_STATUSES,
   MOVABLE_STATUSES,
   SETTABLE_STATUSES,
   canTransition,
@@ -17,6 +14,7 @@ import {
   assertSlotFree,
   mapSchedulingError,
 } from "./scheduling-guard";
+import { cancelAppointmentTx } from "./appointment-cancel";
 import { createVisitTx, type CreateVisitInput } from "./visits";
 
 export interface CreateAppointmentInput {
@@ -395,89 +393,20 @@ export class AppointmentsService {
 
     return this.tenant
       .runWithTenant(orgId, async (tx) => {
-        await tx.$queryRaw`SELECT id FROM appointments WHERE id = ${input.id}::uuid FOR UPDATE`;
-        const current = await tx.appointment.findFirst({
-          where: { id: input.id },
+        await cancelAppointmentTx(tx, {
+          appointmentId: input.id,
+          memberId,
+          reason,
+          reasonTag: tag,
         });
-        if (!current) throw notFound();
-        if (!isIn(CANCELLABLE_STATUSES, current.status)) {
-          throw new SchedulingError(
-            "INVALID_STATUS",
-            "Este agendamento não pode ser cancelado.",
-            "id",
-          );
-        }
-
-        if (current.comandaId) {
-          await this.releaseComanda(tx, current.id, current.comandaId, reason);
-        }
-
-        const updated = await tx.appointment.update({
-          where: { id: current.id },
-          data: {
-            status: tag === "no_show" ? "no_show" : "cancelled",
-            cancelReason: reason,
-            cancelReasonTag: tag,
-            cancelledAt: new Date(),
-            cancelledBy: memberId,
-          },
+        const updated = await tx.appointment.findFirst({
+          where: { id: input.id },
           include: APPOINTMENT_INCLUDE,
         });
+        if (!updated) throw notFound();
         return ok(updated);
       })
       .catch(fail);
-  }
-
-  /**
-   * Cancelar um agendamento ligado a comanda: comanda fechada bloqueia;
-   * remove os itens do agendamento e cancela a comanda quando nada sobra.
-   * O sinal NÃO é tocado (já é crédito do cliente — D-03/D-15).
-   */
-  private async releaseComanda(
-    tx: TenantPrismaClient,
-    appointmentId: string,
-    comandaId: string,
-    reason: string,
-  ): Promise<void> {
-    const rows = await tx.$queryRaw<{ status: string }[]>`
-      SELECT status FROM comandas WHERE id = ${comandaId}::uuid FOR UPDATE`;
-    const status = rows[0]?.status;
-    if (!status) return;
-    if (status === "closed") {
-      throw new SchedulingError(
-        "COMANDA_CLOSED",
-        "Reabra a comanda antes de cancelar este agendamento.",
-        "id",
-      );
-    }
-    if (status !== "open") return;
-
-    const otherActive = await tx.appointment.count({
-      where: {
-        comandaId,
-        id: { not: appointmentId },
-        status: { in: [...BLOCKING_STATUSES] },
-      },
-    });
-    const payments = await tx.comandaPayment.count({ where: { comandaId } });
-    if (otherActive === 0 && payments > 0) {
-      throw new SchedulingError(
-        "COMANDA_HAS_PAYMENTS",
-        "Remova os pagamentos da comanda antes de cancelar.",
-        "id",
-      );
-    }
-
-    await tx.comandaItem.deleteMany({ where: { appointmentId, comandaId } });
-    await tx.$executeRaw`
-      UPDATE comandas SET total = COALESCE((SELECT SUM(total) FROM comanda_items WHERE comanda_id = ${comandaId}::uuid), 0)
-      WHERE id = ${comandaId}::uuid`;
-    const remainingItems = await tx.comandaItem.count({ where: { comandaId } });
-    if (remainingItems === 0 && otherActive === 0) {
-      await tx.$executeRaw`
-        UPDATE comandas SET status = 'cancelled', cancelled_at = now(), cancel_reason = ${reason}
-        WHERE id = ${comandaId}::uuid`;
-    }
   }
 }
 

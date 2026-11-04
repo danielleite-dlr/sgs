@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { syncContractCoverageTx } from '../bridal/bridal-coverage';
 import { prorateUnits } from '../comandas/comanda-items';
 import { recordAudit } from '../common/audit-log';
 import { fromCents, parseMoneyInput, toCents } from '../common/money';
@@ -308,6 +309,7 @@ export class ContractsService {
           entityId: contract.id,
           metadata: { code, totalCents: totals.totalCents, depositCents: totals.depositCents },
         });
+        await syncContractCoverageTx(tx, orgId, group.id);
         return { contract: await loadContractView(tx, orgId, contract.id), errors: [] };
       });
     } catch (e) {
@@ -432,6 +434,7 @@ export class ContractsService {
           entityId: id,
           metadata: { version: v.version },
         });
+        await syncContractCoverageTx(tx, orgId, current.bridalGroupId);
         return { contract: await loadContractView(tx, orgId, id), errors: [] };
       });
     } catch (e) {

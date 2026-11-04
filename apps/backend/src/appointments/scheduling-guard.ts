@@ -31,6 +31,7 @@ const KIND_LABELS: Record<string, string> = {
   intervalo: "intervalo",
   feriado: "feriado",
   indisponibilidade: "indisponibilidade",
+  deslocamento: "deslocamento",
 };
 
 /**
