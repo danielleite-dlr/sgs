@@ -38,3 +38,130 @@ extend type Query {
 extend type Mutation {
   updateContractSettings(input: UpdateContractSettingsInput!): ContractSettingsPayload!
 }
+
+# ===== Contrato da noiva =====
+
+type Contract {
+  id: UUID!
+  code: String!
+  status: String!
+  groupId: UUID!
+  groupName: String!
+  eventDate: String!
+  brideClientId: UUID!
+  brideName: String!
+  packageId: UUID
+  itemsTotal: String!
+  discountAmount: String!
+  totalAmount: String!
+  depositAmount: String!
+  balanceDueDaysBefore: Int!
+  balanceDueDate: String!
+  paid: String!
+  balance: String!
+  depositPaid: String!
+  depositPending: String!
+  settled: Boolean!
+  daysToBalanceDue: Int!
+  balanceDueSoon: Boolean!
+  balanceOverdue: Boolean!
+  depositOverdue: Boolean!
+  cancellationPolicy: JSON!
+  currentVersion: Int!
+  acceptedVersion: Int
+  needsAcceptance: Boolean!
+  linkGeneratedAt: DateTime
+  linkExpiresAt: DateTime
+  acceptedAt: DateTime
+  acceptance: ContractAcceptanceView
+  currentText: String!
+  currentTextSha256: String!
+  items: [ContractItem!]!
+  payments: [ContractPaymentView!]!
+  cancelledAt: DateTime
+  cancelReason: String
+  cancelledByParty: String
+  createdAt: DateTime!
+}
+
+type ContractItem {
+  id: UUID!
+  groupMemberId: UUID!
+  personName: String!
+  serviceId: UUID!
+  packageId: UUID
+  description: String!
+  quantity: Int!
+  unitPrice: String!
+  total: String!
+  purpose: String!
+}
+
+type ContractPaymentView {
+  id: UUID!
+  kind: String!
+  method: String!
+  amount: String!
+  paidAt: DateTime!
+  memberId: UUID
+  reversesPaymentId: UUID
+  reversed: Boolean!
+  note: String
+}
+
+type ContractAcceptanceView {
+  acceptedName: String!
+  acceptedCpfMasked: String!
+  acceptedAt: DateTime!
+  ip: String!
+  textSha256: String!
+  version: Int!
+}
+
+input ContractItemInput {
+  groupMemberId: UUID!
+  serviceId: UUID!
+  unitPrice: String
+  quantity: Int
+  purpose: String
+}
+
+input CreateContractInput {
+  groupId: UUID!
+  packageId: UUID
+  items: [ContractItemInput!]
+  discountAmount: String
+  depositAmount: String
+  balanceDueDaysBefore: Int
+}
+
+input UpdateContractInput {
+  packageId: UUID
+  items: [ContractItemInput!]
+  discountAmount: String
+  depositAmount: String
+  balanceDueDaysBefore: Int
+}
+
+type ContractPayload {
+  contract: Contract
+  errors: [UserError!]!
+}
+
+type ContractLinkPayload {
+  url: String
+  expiresAt: DateTime
+  contract: Contract
+  errors: [UserError!]!
+}
+
+extend type Query {
+  contracts(status: String, derived: String): [Contract!]!
+  contract(id: UUID!): Contract
+}
+
+extend type Mutation {
+  createContract(input: CreateContractInput!): ContractPayload!
+  updateContract(id: UUID!, input: UpdateContractInput!): ContractPayload!
+  generateContractLink(id: UUID!): ContractLinkPayload!
+}
