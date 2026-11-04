@@ -12,7 +12,7 @@ import {
   type RuleLite,
 } from '../financial/commission-resolver';
 import { loadCategoryParents } from '../identity/member-categories';
-import { CLIENT_CREDIT_METHOD, computeComandaTotals } from './comanda-math';
+import { CLIENT_CREDIT_METHOD, computeComandaTotals, coveredCents } from './comanda-math';
 import { ComandaError, recalcComandaTotal } from './comanda-items';
 
 type LockedComanda = {
@@ -65,8 +65,12 @@ export async function closeComandaTx(
   const [{ total }] = await tx.$queryRaw<{ total: Prisma.Decimal }[]>`
     SELECT total FROM comandas WHERE id = ${comandaId}::uuid`;
   const payments = await tx.comandaPayment.findMany({ where: { comandaId } });
+  // D-08: itens cobertos por contrato não são cobrados; estoque e comissão seguem em TODOS os itens.
+  const covered = coveredCents(
+    items.map((i) => ({ totalCents: toCents(i.total), contractId: i.contractId })),
+  );
   const totals = computeComandaTotals(
-    toCents(total),
+    toCents(total) - covered,
     payments.map((p) => ({ method: p.method, cents: toCents(p.amount) })),
   );
   if (totals.error === 'INSUFFICIENT_PAYMENT') {

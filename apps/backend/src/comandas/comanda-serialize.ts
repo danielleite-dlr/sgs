@@ -1,11 +1,12 @@
 import type { TenantPrismaClient } from '../database/types';
 import { fromCents, toCents } from '../common/money';
-import { computeComandaTotals } from './comanda-math';
+import { computeComandaTotals, coveredCents } from './comanda-math';
 
 const COMANDA_INCLUDE = {
   client: true,
   items: {
     include: {
+      contract: { select: { code: true } },
       professional: {
         include: {
           user: { select: { email: true } },
@@ -96,8 +97,12 @@ export function serializeComanda(
   commissionRows: CommissionRow[] = [],
 ) {
   const commissions = serializeCommissions(row, commissionRows);
+  const totalCents = toCents(row.total);
+  const covered = coveredCents(
+    row.items.map((i) => ({ totalCents: toCents(i.total), contractId: i.contractId })),
+  );
   const totals = computeComandaTotals(
-    toCents(row.total),
+    totalCents - covered,
     row.payments.map((p) => ({ method: p.method, cents: toCents(p.amount) })),
   );
   return {
@@ -109,7 +114,9 @@ export function serializeComanda(
     openedAt: row.openedAt,
     closedAt: row.closedAt,
     closeCycle: row.closeCycle,
-    total: fromCents(totals.totalCents),
+    total: fromCents(totalCents),
+    covered: fromCents(covered),
+    owed: fromCents(totalCents - covered),
     paid: fromCents(totals.paidCents),
     remaining: fromCents(totals.remainingCents),
     change: fromCents(totals.changeCents),
@@ -125,6 +132,8 @@ export function serializeComanda(
       appointmentId: i.appointmentId,
       serviceVariantId: i.serviceVariantId,
       professionalId: i.professionalId,
+      contractId: i.contractId,
+      contractCode: i.contract?.code ?? null,
       professional: memberView(i.professional),
       name: i.nameSnapshot,
       quantity: i.quantity,

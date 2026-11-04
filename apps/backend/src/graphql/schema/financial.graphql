@@ -19,6 +19,8 @@ type FinancialSummary {
   timezone: String!
   granularity: String!
   billedTotal: String!
+  "Pagamentos de contrato de noiva por data de pagamento (D-14)"
+  contractBilledTotal: String!
   receivedTotal: String!
   closedComandas: Int!
   averageTicket: String!
@@ -30,6 +32,7 @@ type FinancialSummary {
 type FinancialBucket {
   bucketStart: String!
   billed: String!
+  billedContracts: String!
   received: String!
   closedComandas: Int!
 }
@@ -47,6 +50,8 @@ type CashMovementEntry {
   occurredAt: DateTime!
   comandaId: UUID
   comandaCode: String
+  contractId: UUID
+  contractCode: String
   appointmentId: UUID
   clientName: String
   note: String

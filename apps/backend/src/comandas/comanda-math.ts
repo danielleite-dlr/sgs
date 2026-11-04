@@ -32,6 +32,13 @@ export interface ComandaTotals {
   error: 'INSUFFICIENT_PAYMENT' | 'INVALID_CHANGE' | null;
 }
 
+/** Soma dos itens cobertos por contrato de noiva (D-08): não entram no "a pagar". */
+export function coveredCents(
+  items: { totalCents: number; contractId: string | null }[],
+): number {
+  return items.reduce((acc, i) => (i.contractId ? acc + i.totalCents : acc), 0);
+}
+
 export function computeComandaTotals(
   totalCents: number,
   payments: PaymentCents[],

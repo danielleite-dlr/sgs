@@ -50,7 +50,14 @@ export class FinancialService {
     return this.tenant.runWithTenant(orgId, async (tx) => {
       const tz = await this.timezone(tx, orgId);
       const rows = await tx.$queryRaw<
-        { bucket: string; billed: string; received: string; n: number }[]
+        {
+          bucket: string;
+          billed: string;
+          billed_contracts: string;
+          billed_comandas: string;
+          received: string;
+          n: number;
+        }[]
       >`
         WITH series AS (
           SELECT gs::date AS bucket
@@ -58,13 +65,25 @@ export class FinancialService {
                    date_trunc(${u}, ${from}::date::timestamp)::date,
                    (${to}::date - 1),
                    ${step}) gs
-        ), billed AS (
-          SELECT date_trunc(${u}, closed_at AT TIME ZONE ${tz})::date AS bucket,
-                 SUM(total) AS v, COUNT(*) AS n
-            FROM comandas
-           WHERE status = 'closed'
-             AND closed_at >= (${from}::date)::timestamp AT TIME ZONE ${tz}
-             AND closed_at <  (${to}::date)::timestamp AT TIME ZONE ${tz}
+        ), billed_comandas AS (
+          -- D-14/D-25: só a parte NÃO coberta por contrato; ticket conta só a pagar > 0
+          SELECT date_trunc(${u}, c.closed_at AT TIME ZONE ${tz})::date AS bucket,
+                 SUM(c.total - COALESCE(cov.v, 0)) AS v,
+                 COUNT(*) FILTER (WHERE c.total - COALESCE(cov.v, 0) > 0) AS n
+            FROM comandas c
+            LEFT JOIN LATERAL (SELECT SUM(i.total) AS v FROM comanda_items i
+                                WHERE i.comanda_id = c.id AND i.contract_id IS NOT NULL) cov ON true
+           WHERE c.status = 'closed'
+             AND c.closed_at >= (${from}::date)::timestamp AT TIME ZONE ${tz}
+             AND c.closed_at <  (${to}::date)::timestamp AT TIME ZONE ${tz}
+           GROUP BY 1
+        ), billed_contracts AS (
+          -- D-14: pagamentos de contrato (assinados) por data de pagamento
+          SELECT date_trunc(${u}, p.paid_at AT TIME ZONE ${tz})::date AS bucket,
+                 SUM(p.amount) AS v
+            FROM contract_payments p
+           WHERE p.paid_at >= (${from}::date)::timestamp AT TIME ZONE ${tz}
+             AND p.paid_at <  (${to}::date)::timestamp AT TIME ZONE ${tz}
            GROUP BY 1
         ), received AS (
           SELECT date_trunc(${u}, occurred_at AT TIME ZONE ${tz})::date AS bucket,
@@ -75,11 +94,14 @@ export class FinancialService {
            GROUP BY 1
         )
         SELECT s.bucket::text AS bucket,
-               COALESCE(b.v, 0)::text AS billed,
+               (COALESCE(bc.v, 0) + COALESCE(bk.v, 0))::text AS billed,
+               COALESCE(bk.v, 0)::text AS billed_contracts,
+               COALESCE(bc.v, 0)::text AS billed_comandas,
                COALESCE(r.v, 0)::text AS received,
-               COALESCE(b.n, 0)::int AS n
+               COALESCE(bc.n, 0)::int AS n
           FROM series s
-          LEFT JOIN billed b USING (bucket)
+          LEFT JOIN billed_comandas bc USING (bucket)
+          LEFT JOIN billed_contracts bk USING (bucket)
           LEFT JOIN received r USING (bucket)
          ORDER BY s.bucket`;
 
@@ -99,15 +121,20 @@ export class FinancialService {
            AND calculated_at <  (${to}::date)::timestamp AT TIME ZONE ${tz}`;
 
       let billedCents = 0;
+      let billedComandasCents = 0;
+      let contractBilledCents = 0;
       let receivedCents = 0;
       let closed = 0;
       const buckets = rows.map((r) => {
         billedCents += toCents(r.billed);
+        billedComandasCents += toCents(r.billed_comandas);
+        contractBilledCents += toCents(r.billed_contracts);
         receivedCents += toCents(r.received);
         closed += Number(r.n);
         return {
           bucketStart: r.bucket,
           billed: money(r.billed),
+          billedContracts: money(r.billed_contracts),
           received: money(r.received),
           closedComandas: Number(r.n),
         };
@@ -119,9 +146,10 @@ export class FinancialService {
         timezone: tz,
         granularity: unit,
         billedTotal: fromCents(billedCents),
+        contractBilledTotal: fromCents(contractBilledCents),
         receivedTotal: fromCents(receivedCents),
         closedComandas: closed,
-        averageTicket: fromCents(closed ? Math.round(billedCents / closed) : 0),
+        averageTicket: fromCents(closed ? Math.round(billedComandasCents / closed) : 0),
         commissionsTotal: money(comm[0]?.total),
         buckets,
         receivedByMethod: methods.map((m) => ({ method: m.method, total: money(m.total) })),
@@ -142,6 +170,8 @@ export class FinancialService {
           occurred_at: Date;
           comanda_id: string | null;
           comanda_code: string | null;
+          contract_id: string | null;
+          contract_code: string | null;
           appointment_id: string | null;
           client_name: string | null;
           note: string | null;
@@ -149,9 +179,11 @@ export class FinancialService {
       >`
         SELECT m.id, m.kind, m.method, m.amount::text AS amount, m.occurred_at,
                m.comanda_id, c.code AS comanda_code, m.appointment_id,
+               m.contract_id, k.code AS contract_code,
                cl.full_name AS client_name, m.note
           FROM cash_movements m
           LEFT JOIN comandas c ON c.id = m.comanda_id
+          LEFT JOIN contracts k ON k.id = m.contract_id
           LEFT JOIN clients cl ON cl.id = m.client_id
          WHERE m.occurred_at >= (${from}::date)::timestamp AT TIME ZONE ${tz}
            AND m.occurred_at <  (${to}::date)::timestamp AT TIME ZONE ${tz}
@@ -165,6 +197,8 @@ export class FinancialService {
         occurredAt: r.occurred_at,
         comandaId: r.comanda_id,
         comandaCode: r.comanda_code,
+        contractId: r.contract_id,
+        contractCode: r.contract_code,
         appointmentId: r.appointment_id,
         clientName: r.client_name,
         note: r.note,

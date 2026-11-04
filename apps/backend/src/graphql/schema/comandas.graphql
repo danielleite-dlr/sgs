@@ -47,6 +47,10 @@ type Comanda {
   closedAt: DateTime
   closeCycle: Int!
   total: String!
+  "Parte coberta por contrato de noiva (D-08); owed = total - covered"
+  covered: String!
+  "Valor a pagar (total - covered); remaining/change/canClose são sobre ele"
+  owed: String!
   paid: String!
   remaining: String!
   change: String!
@@ -73,6 +77,8 @@ type ComandaItem {
   appointmentId: UUID
   serviceVariantId: UUID
   professionalId: UUID!
+  contractId: UUID
+  contractCode: String
   professional: Member!
   name: String!
   quantity: Int!
