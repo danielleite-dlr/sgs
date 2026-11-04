@@ -145,6 +145,8 @@ type Package {
   price: String!
   individualSum: String!
   validForDays: Int
+  depositKind: String
+  depositValue: String
   services: [PackageServiceItem!]!
   coverImageUrl: String
   createdAt: DateTime!
@@ -167,6 +169,8 @@ input CreatePackageInput {
   name: String!
   price: String!
   validForDays: Int
+  depositKind: String
+  depositValue: String
   services: [PackageServiceInput!]!
 }
 
@@ -175,6 +179,8 @@ input UpdatePackageInput {
   name: String
   price: String
   validForDays: Int
+  depositKind: String
+  depositValue: String
   services: [PackageServiceInput!]
 }
 
