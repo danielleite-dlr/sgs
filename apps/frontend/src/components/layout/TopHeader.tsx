@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
-import { Search, Bell, HelpCircle, PlayCircle, ChevronDown, Sparkles } from 'lucide-react';
+import { Search, HelpCircle, PlayCircle, ChevronDown, Sparkles } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +12,7 @@ import { GlobalSearchSheet } from './GlobalSearchSheet';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { FEATURES, HOME_PATH } from '@/config/features';
+import { NotificationsBell } from '@/features/notifications/components/NotificationsBell';
 
 /**
  * Trinks-style top header.
@@ -95,20 +96,7 @@ export function TopHeader() {
 
           {/* Header actions */}
           <div className="flex items-center gap-xs px-md border-l border-neutral-200">
-            {FEATURES.notificacoes && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    aria-label="Notificações"
-                    className="relative h-9 w-9 rounded-full flex items-center justify-center text-neutral-600 hover:bg-neutral-50 hover:text-primary-700 transition-colors focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2"
-                  >
-                    <Bell className="h-5 w-5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>Notificações</TooltipContent>
-              </Tooltip>
-            )}
+            {FEATURES.notificacoes && <NotificationsBell />}
             {FEATURES.ajudaTutoriais && (
               <>
                 <Tooltip>

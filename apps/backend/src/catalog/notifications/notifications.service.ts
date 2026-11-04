@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { TenantContextService } from '../../database/tenant-context.service';
 
 @Injectable()
@@ -25,15 +25,29 @@ export class NotificationsService {
 
   /**
    * Marks a notification as read (sets read_at to now).
-   * RLS ensures only notifications within the org are accessible.
+   * Only notifications visible to the member (own or org-wide) can be marked;
+   * otherwise NotFoundException.
    */
-  async markRead(orgId: string, id: string) {
-    return this.tenant.runWithTenant(orgId, (tx) =>
-      tx.notification.update({
-        where: { id },
+  async markRead(orgId: string, memberId: string, id: string) {
+    return this.tenant.runWithTenant(orgId, async (tx) => {
+      const { count } = await tx.notification.updateMany({
+        where: { id, OR: [{ memberId }, { memberId: null }] },
         data: { readAt: new Date() },
-      }),
-    );
+      });
+      if (count === 0) throw new NotFoundException('Notificação não encontrada');
+      return tx.notification.findUniqueOrThrow({ where: { id } });
+    });
+  }
+
+  /** Marks all unread notifications visible to the member as read; returns how many. */
+  async markAllRead(orgId: string, memberId: string): Promise<number> {
+    return this.tenant.runWithTenant(orgId, async (tx) => {
+      const { count } = await tx.notification.updateMany({
+        where: { readAt: null, OR: [{ memberId }, { memberId: null }] },
+        data: { readAt: new Date() },
+      });
+      return count;
+    });
   }
 
   /**

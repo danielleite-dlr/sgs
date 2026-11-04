@@ -26,9 +26,9 @@
 | `financeiroRelatorios` | 10 sub-páginas financeiras | layout sem nenhuma consulta |
 | `relatorios` | `/relatorios` | catálogo de cards sem destino |
 | `configuracoes` | `/configuracoes` | lista de links; nenhum destino existe |
-| `noivas`, `contratos` | `/noivas`, `/contratos` | `mocks/bridal.mock.ts` |
+| `noivas`, `contratos` | `/noivas`, `/contratos` | páginas-casca; mock removido em 04-04 (telas reais em 04-13/04-14) |
 | `campanhas` | `/campanhas` | `mocks/communication.mock.ts` |
-| `notificacoes` | sino do header / bottom nav | backend existe, painel não |
+| `notificacoes` | sino do header | ligada em 04-04 (painel mínimo) |
 | `estabelecimentoSelector` | seletor no header | nome do salão hardcoded |
 | `chatSuporte`, `assinatura`, `ajudaTutoriais` | controles decorativos | sem produto por trás |
 

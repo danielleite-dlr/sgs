@@ -38,14 +38,14 @@ const FLAGS = {
   relatorios: false,
   /** Configurações — lista de links; nenhum destino existe. */
   configuracoes: false,
-  /** Grupos de noivas — `mocks/bridal.mock.ts`. */
+  /** Grupos de noivas — páginas-casca até 04-13 (ligar em 04-15). */
   noivas: false,
-  /** Contratos de evento — `mocks/bridal.mock.ts`. */
+  /** Contratos de evento — páginas-casca até 04-14 (ligar em 04-15). */
   contratos: false,
   /** Campanhas de comunicação — `mocks/communication.mock.ts`. */
   campanhas: false,
-  /** Painel de notificações (sino) — backend existe, painel não. */
-  notificacoes: false,
+  /** Painel mínimo do sino (04-04): contador, lista, marcar lida. */
+  notificacoes: true,
   /** Bolha de chat de suporte — UI sem envio. */
   chatSuporte: false,
   /** Seletor de estabelecimento — nome do salão hardcoded no header. */
