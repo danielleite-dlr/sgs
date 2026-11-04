@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 /**
  * Contexto canônico da sugestão de agenda do evento (AI-01).
@@ -13,7 +13,7 @@ export interface ScheduleContext {
   travelAfterMinutes: number;
   persons: {
     ref: string; // 'p1'...'pN' — rótulo SEM PII
-    role: "bride" | "companion";
+    role: 'bride' | 'companion';
     services: {
       serviceId: string;
       label: string;
