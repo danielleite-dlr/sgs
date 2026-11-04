@@ -1,5 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 
+// Suítes que sobem o AppModule não registram o scheduler BullMQ dos alertas de contrato
+// (o plano 04-10 tem seu próprio smoke com 'true').
+process.env.CONTRACT_ALERTS_SCHEDULER ??= 'false';
+
 /**
  * Privileged client uses DIRECT_URL (sgs_migrator, BYPASSRLS) for test setup/teardown only.
  * This client bypasses RLS so it can create and delete test data across tenants freely.

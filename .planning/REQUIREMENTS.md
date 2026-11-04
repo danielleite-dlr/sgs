@@ -53,9 +53,9 @@
 
 ### Contratos / Noivas
 
-- [ ] **CONT-01**: Proprietário consegue criar contrato de evento para grupo de noivas com valor total, parcelamento e datas de vencimento
+- [ ] **CONT-01**: Proprietário consegue criar contrato de evento para grupo de noivas com valor total, parcelamento e datas de vencimento _(Fase 4: parcelamento reinterpretado como entrada + restante livre até D-10 — 04 D-10/D-11; retenção = cliente cancela retém tudo o que foi pago, estúdio cancela devolve tudo — 04 D-22, sem faixas por antecedência)_
 - [ ] **CONT-02**: Sistema rastreia status de cada parcela e alerta sobre vencimentos próximos e atrasos
-- [ ] **CONT-03**: Contrato suporta política de cancelamento configurável com regras de retenção de valor
+- [ ] **CONT-03**: Contrato suporta política de cancelamento configurável com regras de retenção de valor _(Fase 4: parcelamento reinterpretado como entrada + restante livre até D-10 — 04 D-10/D-11; retenção = cliente cancela retém tudo o que foi pago, estúdio cancela devolve tudo — 04 D-22, sem faixas por antecedência)_
 
 ### Comunicação
 
