@@ -187,7 +187,7 @@ Plans:
 - [x] 04-07-backend-comanda-coverage-dashboard-PLAN.md — Abatimento do contrato na comanda (D-08) e Faturado sem dupla contagem (D-14/D-25)
 - [ ] 04-08-backend-bridal-schedule-PLAN.md — Agenda do evento (agendamentos reais, cobertura, sinal, deslocamento, teste, cancelamento do grupo)
 - [ ] 04-09-public-acceptance-pdf-PLAN.md — Aceite público com rate limit/trustProxy, PDF e página pública
-- [ ] 04-10-backend-contract-alerts-PLAN.md — Job BullMQ diário de alertas, notificações deduplicadas por papel e e-mail de resumo
+- [x] 04-10-backend-contract-alerts-PLAN.md — Job BullMQ diário de alertas, notificações deduplicadas por papel e e-mail de resumo
 - [ ] 04-11-backend-contract-payments-cancel-PLAN.md — Pagamentos livres, estorno e cancelamento com acerto
 - [ ] 04-12-backend-ai-schedule-PLAN.md — Sugestão de agenda via Claude API com cache, limite, fallback e confirmação
 - [ ] 04-13-frontend-bridal-groups-PLAN.md — Telas de grupos de noivas e "Sugerir agenda IA"
