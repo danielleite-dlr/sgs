@@ -64,7 +64,7 @@
 
 ### IA / Inteligência
 
-- [ ] **AI-01**: Sistema sugere alocação ótima de profissionais para agenda completa de evento de noivas via Claude API, considerando disponibilidade e tempo de serviço
+- [x] **AI-01**: Sistema sugere alocação ótima de profissionais para agenda completa de evento de noivas via Claude API, considerando disponibilidade e tempo de serviço
 
 ### Qualidade / Observabilidade
 
@@ -149,7 +149,7 @@
 | CONT-03 | Phase 4 | Pending |
 | COMM-01 | Phase 5 | Pending |
 | COMM-02 | Phase 5 | Pending |
-| AI-01 | Phase 4 | Pending |
+| AI-01 | Phase 4 | Complete |
 | QA-01 | Phase 5 | Pending |
 | QA-02 | Phase 5 | Pending |
 | QA-03 | Phase 5 | Pending |
