@@ -103,7 +103,7 @@ export const TimeBlocksQuery = gql`
 
 export interface TimeBlockData {
   id: string;
-  kind: 'folga' | 'intervalo' | 'feriado' | 'indisponibilidade';
+  kind: 'folga' | 'intervalo' | 'feriado' | 'indisponibilidade' | 'deslocamento';
   professionalId: string | null;
   startsAt: string;
   endsAt: string;
