@@ -15,6 +15,12 @@ import { ClientsModule } from './clients/clients.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { ComandasModule } from './comandas/comandas.module';
 import { FinancialModule } from './financial/financial.module';
+import { BridalModule } from './bridal/bridal.module';
+import { AiScheduleModule } from './bridal/ai/ai-schedule.module';
+import { ContractsModule } from './contracts/contracts.module';
+import { ContractPaymentsModule } from './contracts/payments/contract-payments.module';
+import { ContractAcceptanceModule } from './contracts/acceptance/contract-acceptance.module';
+import { ContractAlertsModule } from './contracts/alerts/contract-alerts.module';
 import { envSchema } from './config/env.schema';
 import configuration from './config/configuration';
 
@@ -49,6 +55,12 @@ import configuration from './config/configuration';
     AppointmentsModule,
     ComandasModule,
     FinancialModule,
+    BridalModule,
+    AiScheduleModule,
+    ContractsModule,
+    ContractPaymentsModule,
+    ContractAcceptanceModule,
+    ContractAlertsModule,
     HealthModule,
   ],
 })

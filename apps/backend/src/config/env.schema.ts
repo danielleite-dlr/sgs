@@ -73,6 +73,25 @@ export const envSchema = z.object({
       'Somente dev/test/E2E: grava e-mails como JSON neste diretório em vez de enviar. Ignorado em production.',
     ),
 
+  // Fase 4 — IA da agenda de noivas (opcional: sem chave usa a heurística)
+  ANTHROPIC_API_KEY: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim() ? v.trim() : undefined))
+    .describe('Anthropic API key; ausente => sugestão de agenda por heurística'),
+  ANTHROPIC_MODEL: z.string().min(1).default('claude-sonnet-5-5'),
+  AI_SCHEDULE_DAILY_LIMIT: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .default(20)
+    .describe('Limite diário de chamadas ao Claude por organização'),
+  CONTRACT_ALERTS_SCHEDULER: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true')
+    .describe('Liga o agendador BullMQ dos alertas de contrato'),
+
   // Frontend
   FRONTEND_URL: z
     .string()

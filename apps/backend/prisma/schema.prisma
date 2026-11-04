@@ -52,6 +52,19 @@ model Organization {
   cashMovements         CashMovement[]
   commissionRecords     CommissionRecord[]
   auditLogs             AuditLog[]
+  contractSettings      ContractSettings?
+  bridalGroups          BridalGroup[]
+  bridalGroupMembers    BridalGroupMember[]
+  bridalMemberServices  BridalMemberService[]
+  contractSequences     ContractSequence[]
+  contracts             Contract[]
+  contractItems         ContractItem[]
+  contractVersions      ContractVersion[]
+  contractAccessTokens  ContractAccessToken[]
+  contractAcceptances   ContractAcceptance[]
+  contractPayments      ContractPayment[]
+  aiScheduleSuggestions AiScheduleSuggestion[]
+  contractAlertRuns     ContractAlertRun[]
 
   @@unique([documentNumber], name: "uq_organizations_document")
   @@map("organizations")
@@ -126,17 +139,25 @@ model Member {
   updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  organization      Organization       @relation(fields: [organizationId], references: [id])
-  user              User               @relation(fields: [userId], references: [id])
-  role              Role               @relation(fields: [roleId], references: [id])
-  stockMovements    StockMovement[]
-  notifications     Notification[]
-  commissionRules   CommissionRule[]
-  appointments      Appointment[]
-  categories        MemberCategory[]
-  timeBlocks        TimeBlock[]        @relation("TimeBlockProfessional")
-  comandaItems      ComandaItem[]      @relation("ComandaItemProfessional")
-  commissionRecords CommissionRecord[] @relation("CommissionRecordMember")
+  organization            Organization           @relation(fields: [organizationId], references: [id])
+  user                    User                   @relation(fields: [userId], references: [id])
+  role                    Role                   @relation(fields: [roleId], references: [id])
+  stockMovements          StockMovement[]
+  notifications           Notification[]
+  commissionRules         CommissionRule[]
+  appointments            Appointment[]
+  categories              MemberCategory[]
+  timeBlocks              TimeBlock[]            @relation("TimeBlockProfessional")
+  comandaItems            ComandaItem[]          @relation("ComandaItemProfessional")
+  commissionRecords       CommissionRecord[]     @relation("CommissionRecordMember")
+  contractSettingsUpdated ContractSettings[]     @relation("ContractSettingsUpdatedBy")
+  bridalGroupsCreated     BridalGroup[]          @relation("BridalGroupCreatedBy")
+  contractsCreated        Contract[]             @relation("ContractCreatedBy")
+  contractsCancelled      Contract[]             @relation("ContractCancelledBy")
+  contractVersionsCreated ContractVersion[]      @relation("ContractVersionCreatedBy")
+  contractTokensCreated   ContractAccessToken[]  @relation("ContractTokenCreatedBy")
+  contractPayments        ContractPayment[]      @relation("ContractPaymentMember")
+  aiScheduleSuggestions   AiScheduleSuggestion[] @relation("AiScheduleSuggestionCreatedBy")
 
   @@unique([organizationId, userId], name: "uq_members_org_user")
   @@index([organizationId, status], name: "ix_members_org_status")
@@ -275,13 +296,15 @@ model Service {
   updatedAt              DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt              DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  organization    Organization            @relation(fields: [organizationId], references: [id])
-  category        Category                @relation(fields: [categoryId], references: [id])
-  pricingVariants ServicePricingVariant[]
-  packages        PackageService[]
-  commissionRules CommissionRule[]
-  appointments    Appointment[]
-  comandaItems    ComandaItem[]
+  organization         Organization            @relation(fields: [organizationId], references: [id])
+  category             Category                @relation(fields: [categoryId], references: [id])
+  pricingVariants      ServicePricingVariant[]
+  packages             PackageService[]
+  commissionRules      CommissionRule[]
+  appointments         Appointment[]
+  comandaItems         ComandaItem[]
+  bridalMemberServices BridalMemberService[]
+  contractItems        ContractItem[]
 
   @@index([organizationId, categoryId], name: "ix_services_org_category")
   @@map("services")
@@ -314,14 +337,18 @@ model Package {
   name           String    @db.VarChar(160)
   price          Decimal   @db.Decimal(12, 2)
   validForDays   Int?      @map("valid_for_days")
+  depositKind    String?   @map("deposit_kind") @db.VarChar(10)
+  depositValue   Decimal?  @map("deposit_value") @db.Decimal(12, 2)
   coverImageUrl  String?   @map("cover_image_url") @db.Text
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  organization Organization     @relation(fields: [organizationId], references: [id])
-  services     PackageService[]
-  comandaItems ComandaItem[]
+  organization  Organization     @relation(fields: [organizationId], references: [id])
+  services      PackageService[]
+  comandaItems  ComandaItem[]
+  contracts     Contract[]
+  contractItems ContractItem[]
 
   @@index([organizationId], name: "ix_packages_org")
   @@map("packages")
@@ -427,11 +454,13 @@ model Client {
   deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
   version        Int       @default(1)
 
-  organization    Organization           @relation(fields: [organizationId], references: [id])
-  appointments    Appointment[]
-  comandas        Comanda[]
-  creditMovements ClientCreditMovement[]
-  cashMovements   CashMovement[]
+  organization       Organization           @relation(fields: [organizationId], references: [id])
+  appointments       Appointment[]
+  comandas           Comanda[]
+  creditMovements    ClientCreditMovement[]
+  cashMovements      CashMovement[]
+  bridalGroupMembers BridalGroupMember[]
+  contractsAsBride   Contract[]             @relation("ContractBride")
 
   @@index([organizationId, fullName], name: "ix_clients_org_name")
   @@map("clients")
@@ -456,6 +485,9 @@ model Appointment {
   cancelReasonTag  String?   @map("cancel_reason_tag") @db.VarChar(30)
   cancelledAt      DateTime? @map("cancelled_at") @db.Timestamptz(6)
   cancelledBy      String?   @map("cancelled_by") @db.Uuid
+  bridalGroupId    String?   @map("bridal_group_id") @db.Uuid
+  contractId       String?   @map("contract_id") @db.Uuid
+  purpose          String?   @db.VarChar(10)
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -468,6 +500,8 @@ model Appointment {
   comandaItems    ComandaItem[]
   creditMovements ClientCreditMovement[]
   cashMovements   CashMovement[]
+  bridalGroup     BridalGroup?           @relation(fields: [bridalGroupId], references: [id], onDelete: SetNull)
+  contract        Contract?              @relation(fields: [contractId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, startsAt], name: "ix_appointments_org_starts")
   @@index([organizationId, professionalId, startsAt], name: "ix_appointments_org_professional_starts")
@@ -504,11 +538,13 @@ model TimeBlock {
   allDay         Boolean  @default(false) @map("all_day")
   note           String?  @db.Text
   createdBy      String?  @map("created_by") @db.Uuid
+  bridalGroupId  String?  @map("bridal_group_id") @db.Uuid
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   organization Organization @relation(fields: [organizationId], references: [id])
   professional Member?      @relation("TimeBlockProfessional", fields: [professionalId], references: [id])
+  bridalGroup  BridalGroup? @relation(fields: [bridalGroupId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, professionalId, startsAt], name: "ix_time_blocks_org_prof_starts")
   @@map("time_blocks")
@@ -568,6 +604,7 @@ model ComandaItem {
   productId        String?  @map("product_id") @db.Uuid
   packageId        String?  @map("package_id") @db.Uuid
   appointmentId    String?  @map("appointment_id") @db.Uuid
+  contractId       String?  @map("contract_id") @db.Uuid
   professionalId   String   @map("professional_id") @db.Uuid
   nameSnapshot     String   @map("name_snapshot") @db.VarChar(200)
   quantity         Int      @default(1)
@@ -586,6 +623,7 @@ model ComandaItem {
   package        Package?               @relation(fields: [packageId], references: [id])
   appointment    Appointment?           @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
   professional   Member                 @relation("ComandaItemProfessional", fields: [professionalId], references: [id])
+  contract       Contract?              @relation(fields: [contractId], references: [id])
 
   @@index([comandaId], name: "ix_comanda_items_comanda")
   @@index([organizationId, professionalId], name: "ix_comanda_items_org_professional")
@@ -640,6 +678,7 @@ model CashMovement {
   comandaId      String?  @map("comanda_id") @db.Uuid
   appointmentId  String?  @map("appointment_id") @db.Uuid
   clientId       String?  @map("client_id") @db.Uuid
+  contractId     String?  @map("contract_id") @db.Uuid
   cycle          Int?
   occurredAt     DateTime @default(now()) @map("occurred_at") @db.Timestamptz(6)
   memberId       String?  @map("member_id") @db.Uuid
@@ -650,6 +689,7 @@ model CashMovement {
   comanda      Comanda?     @relation(fields: [comandaId], references: [id])
   appointment  Appointment? @relation(fields: [appointmentId], references: [id])
   client       Client?      @relation(fields: [clientId], references: [id])
+  contract     Contract?    @relation(fields: [contractId], references: [id])
 
   @@index([organizationId, occurredAt], name: "ix_cash_movements_org_occurred")
   @@map("cash_movements")
@@ -703,4 +743,297 @@ model AuditLog {
 
   @@index([organizationId, entityType, entityId], name: "ix_audit_log_org_entity")
   @@map("audit_log")
+}
+
+// ===== Phase 4: Bridal & Contracts =====
+
+model ContractSettings {
+  organizationId            String   @id @map("organization_id") @db.Uuid
+  balanceDueDaysBefore      Int      @default(10) @map("balance_due_days_before")
+  templateBody              String?  @map("template_body") @db.Text
+  cancellationClause        String?  @map("cancellation_clause") @db.Text
+  alertDepositUnpaidDays    Int      @default(3) @map("alert_deposit_unpaid_days")
+  alertNotAcceptedDays      Int      @default(3) @map("alert_not_accepted_days")
+  alertCompanionDepositDays Int      @default(15) @map("alert_companion_deposit_days")
+  scheduleDayStart          DateTime @default(dbgenerated("'06:00'")) @map("schedule_day_start") @db.Time(6)
+  scheduleDayEnd            DateTime @default(dbgenerated("'20:00'")) @map("schedule_day_end") @db.Time(6)
+  updatedBy                 String?  @map("updated_by") @db.Uuid
+  createdAt                 DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  updatedByMember Member?      @relation("ContractSettingsUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("contract_settings")
+}
+
+model BridalGroup {
+  id                  String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId      String    @map("organization_id") @db.Uuid
+  name                String    @db.VarChar(160)
+  eventDate           DateTime  @map("event_date") @db.Date
+  readyBy             DateTime? @map("ready_by") @db.Timestamptz(6)
+  locationKind        String    @default("studio") @map("location_kind") @db.VarChar(10)
+  locationAddress     String?   @map("location_address") @db.Text
+  travelMinutesBefore Int       @default(0) @map("travel_minutes_before")
+  travelMinutesAfter  Int       @default(0) @map("travel_minutes_after")
+  status              String    @default("active") @db.VarChar(12)
+  notes               String?   @db.Text
+  cancelledAt         DateTime? @map("cancelled_at") @db.Timestamptz(6)
+  cancelReason        String?   @map("cancel_reason") @db.Text
+  createdBy           String?   @map("created_by") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization    Organization           @relation(fields: [organizationId], references: [id])
+  createdByMember Member?                @relation("BridalGroupCreatedBy", fields: [createdBy], references: [id])
+  members         BridalGroupMember[]
+  contracts       Contract[]
+  appointments    Appointment[]
+  timeBlocks      TimeBlock[]
+  suggestions     AiScheduleSuggestion[]
+
+  @@index([organizationId, eventDate], name: "ix_bg_org_event")
+  @@map("bridal_groups")
+}
+
+model BridalGroupMember {
+  id                String   @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId    String   @map("organization_id") @db.Uuid
+  groupId           String   @map("group_id") @db.Uuid
+  clientId          String   @map("client_id") @db.Uuid
+  role              String   @db.VarChar(10)
+  relationLabel     String?  @map("relation_label") @db.VarChar(60)
+  coveredByContract Boolean  @default(false) @map("covered_by_contract")
+  sortOrder         Int      @default(0) @map("sort_order")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization  Organization          @relation(fields: [organizationId], references: [id])
+  group         BridalGroup           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  client        Client                @relation(fields: [clientId], references: [id])
+  services      BridalMemberService[]
+  contractItems ContractItem[]
+
+  @@unique([groupId, clientId], name: "uq_bgm_group_client")
+  @@index([organizationId, clientId], name: "ix_bgm_org_client")
+  @@map("bridal_group_members")
+}
+
+model BridalMemberService {
+  id             String   @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  groupMemberId  String   @map("group_member_id") @db.Uuid
+  serviceId      String   @map("service_id") @db.Uuid
+  purpose        String   @default("event") @db.VarChar(10)
+  sortOrder      Int      @default(0) @map("sort_order")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization      @relation(fields: [organizationId], references: [id])
+  member       BridalGroupMember @relation(fields: [groupMemberId], references: [id], onDelete: Cascade)
+  service      Service           @relation(fields: [serviceId], references: [id])
+
+  @@unique([groupMemberId, serviceId, purpose], name: "uq_bms_member_service_purpose")
+  @@map("bridal_member_services")
+}
+
+model ContractSequence {
+  organizationId String @map("organization_id") @db.Uuid
+  year           Int
+  lastValue      Int    @map("last_value")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@id([organizationId, year], name: "pk_contract_sequences")
+  @@map("contract_sequences")
+}
+
+model Contract {
+  id                   String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId       String    @map("organization_id") @db.Uuid
+  code                 String    @db.VarChar(20)
+  bridalGroupId        String    @map("bridal_group_id") @db.Uuid
+  brideClientId        String    @map("bride_client_id") @db.Uuid
+  packageId            String?   @map("package_id") @db.Uuid
+  status               String    @default("draft") @db.VarChar(20)
+  itemsTotal           Decimal   @default(0) @map("items_total") @db.Decimal(12, 2)
+  discountAmount       Decimal   @default(0) @map("discount_amount") @db.Decimal(12, 2)
+  totalAmount          Decimal   @default(0) @map("total_amount") @db.Decimal(12, 2)
+  depositAmount        Decimal   @default(0) @map("deposit_amount") @db.Decimal(12, 2)
+  balanceDueDaysBefore Int       @map("balance_due_days_before")
+  balanceDueDate       DateTime  @map("balance_due_date") @db.Date
+  cancellationPolicy   Json      @map("cancellation_policy") @db.JsonB
+  currentVersion       Int       @default(0) @map("current_version")
+  acceptedVersion      Int?      @map("accepted_version")
+  linkGeneratedAt      DateTime? @map("link_generated_at") @db.Timestamptz(6)
+  acceptedAt           DateTime? @map("accepted_at") @db.Timestamptz(6)
+  cancelledAt          DateTime? @map("cancelled_at") @db.Timestamptz(6)
+  cancelledBy          String?   @map("cancelled_by") @db.Uuid
+  cancelReason         String?   @map("cancel_reason") @db.Text
+  cancelledByParty     String?   @map("cancelled_by_party") @db.VarChar(10)
+  createdBy            String?   @map("created_by") @db.Uuid
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization      Organization          @relation(fields: [organizationId], references: [id])
+  group             BridalGroup           @relation(fields: [bridalGroupId], references: [id])
+  bride             Client                @relation("ContractBride", fields: [brideClientId], references: [id])
+  package           Package?              @relation(fields: [packageId], references: [id])
+  cancelledByMember Member?               @relation("ContractCancelledBy", fields: [cancelledBy], references: [id])
+  createdByMember   Member?               @relation("ContractCreatedBy", fields: [createdBy], references: [id])
+  items             ContractItem[]
+  versions          ContractVersion[]
+  accessTokens      ContractAccessToken[]
+  acceptances       ContractAcceptance[]
+  payments          ContractPayment[]
+  appointments      Appointment[]
+  cashMovements     CashMovement[]
+  comandaItems      ComandaItem[]
+
+  @@unique([organizationId, code], name: "uq_contracts_org_code")
+  @@index([organizationId, status], name: "ix_contracts_org_status")
+  @@map("contracts")
+}
+
+model ContractItem {
+  id                  String   @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId      String   @map("organization_id") @db.Uuid
+  contractId          String   @map("contract_id") @db.Uuid
+  groupMemberId       String   @map("group_member_id") @db.Uuid
+  serviceId           String   @map("service_id") @db.Uuid
+  packageId           String?  @map("package_id") @db.Uuid
+  descriptionSnapshot String   @map("description_snapshot") @db.VarChar(200)
+  quantity            Int      @default(1)
+  unitPrice           Decimal  @map("unit_price") @db.Decimal(12, 2)
+  total               Decimal  @db.Decimal(12, 2)
+  purpose             String   @default("event") @db.VarChar(10)
+  sortOrder           Int      @default(0) @map("sort_order")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization      @relation(fields: [organizationId], references: [id])
+  contract     Contract          @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  member       BridalGroupMember @relation(fields: [groupMemberId], references: [id])
+  service      Service           @relation(fields: [serviceId], references: [id])
+  package      Package?          @relation(fields: [packageId], references: [id])
+
+  @@index([contractId], name: "ix_ci_contract")
+  @@map("contract_items")
+}
+
+model ContractVersion {
+  id             String   @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  contractId     String   @map("contract_id") @db.Uuid
+  version        Int
+  renderedText   String   @map("rendered_text") @db.Text
+  textSha256     String   @map("text_sha256") @db.Char(64)
+  createdBy      String?  @map("created_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization    Organization          @relation(fields: [organizationId], references: [id])
+  contract        Contract              @relation(fields: [contractId], references: [id])
+  createdByMember Member?               @relation("ContractVersionCreatedBy", fields: [createdBy], references: [id])
+  accessTokens    ContractAccessToken[]
+  acceptance      ContractAcceptance?
+
+  @@unique([contractId, version], name: "uq_cv_contract_version")
+  @@map("contract_versions")
+}
+
+model ContractAccessToken {
+  id             String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  contractId     String    @map("contract_id") @db.Uuid
+  versionId      String    @map("version_id") @db.Uuid
+  tokenHash      String    @unique(map: "uq_cat_token_hash") @map("token_hash") @db.Char(64)
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt      DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdBy      String?   @map("created_by") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization    Organization    @relation(fields: [organizationId], references: [id])
+  contract        Contract        @relation(fields: [contractId], references: [id])
+  version         ContractVersion @relation(fields: [versionId], references: [id])
+  createdByMember Member?         @relation("ContractTokenCreatedBy", fields: [createdBy], references: [id])
+
+  @@index([contractId], name: "ix_cat_contract")
+  @@map("contract_access_tokens")
+}
+
+model ContractAcceptance {
+  id             String   @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  contractId     String   @map("contract_id") @db.Uuid
+  versionId      String   @unique(map: "uq_ca_version") @map("version_id") @db.Uuid
+  acceptedName   String   @map("accepted_name") @db.VarChar(255)
+  acceptedCpf    String   @map("accepted_cpf") @db.VarChar(11)
+  acceptedAt     DateTime @default(now()) @map("accepted_at") @db.Timestamptz(6)
+  ip             String   @db.VarChar(45)
+  userAgent      String?  @map("user_agent") @db.Text
+  textSha256     String   @map("text_sha256") @db.Char(64)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization    @relation(fields: [organizationId], references: [id])
+  contract     Contract        @relation(fields: [contractId], references: [id])
+  version      ContractVersion @relation(fields: [versionId], references: [id])
+
+  @@map("contract_acceptances")
+}
+
+model ContractPayment {
+  id                String   @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId    String   @map("organization_id") @db.Uuid
+  contractId        String   @map("contract_id") @db.Uuid
+  kind              String   @db.VarChar(10)
+  method            String   @db.VarChar(20)
+  amount            Decimal  @db.Decimal(12, 2)
+  paidAt            DateTime @default(now()) @map("paid_at") @db.Timestamptz(6)
+  memberId          String?  @map("member_id") @db.Uuid
+  reversesPaymentId String?  @unique(map: "uq_cp_reverses") @map("reverses_payment_id") @db.Uuid
+  note              String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization     @relation(fields: [organizationId], references: [id])
+  contract     Contract         @relation(fields: [contractId], references: [id])
+  member       Member?          @relation("ContractPaymentMember", fields: [memberId], references: [id])
+  reverses     ContractPayment? @relation("ContractPaymentReversal", fields: [reversesPaymentId], references: [id])
+  reversedBy   ContractPayment? @relation("ContractPaymentReversal")
+
+  @@index([organizationId, paidAt], name: "ix_cp_org_paid")
+  @@index([contractId], name: "ix_cp_contract")
+  @@map("contract_payments")
+}
+
+model AiScheduleSuggestion {
+  id             String   @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  groupId        String   @map("group_id") @db.Uuid
+  inputHash      String   @map("input_hash") @db.Char(64)
+  source         String   @db.VarChar(10)
+  model          String?  @db.VarChar(60)
+  proposal       Json     @db.JsonB
+  warnings       Json     @default("[]") @db.JsonB
+  inputTokens    Int?     @map("input_tokens")
+  outputTokens   Int?     @map("output_tokens")
+  createdBy      String?  @map("created_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  group           BridalGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdByMember Member?      @relation("AiScheduleSuggestionCreatedBy", fields: [createdBy], references: [id])
+
+  @@index([organizationId, groupId, inputHash, createdAt], name: "ix_ass_lookup")
+  @@map("ai_schedule_suggestions")
+}
+
+model ContractAlertRun {
+  organizationId String   @map("organization_id") @db.Uuid
+  runDate        DateTime @map("run_date") @db.Date
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@id([organizationId, runDate], name: "pk_contract_alert_runs")
+  @@map("contract_alert_runs")
 }
