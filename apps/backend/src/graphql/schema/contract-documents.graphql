@@ -1,0 +1,11 @@
+# ===== Documentos do contrato (PDF da versão aceita) =====
+
+type ContractPdf {
+  filename: String!
+  base64: String!
+}
+
+extend type Query {
+  # null quando o contrato ainda não possui aceite
+  contractPdf(id: UUID!): ContractPdf
+}
