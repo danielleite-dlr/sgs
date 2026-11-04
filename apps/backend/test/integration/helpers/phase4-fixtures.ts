@@ -7,6 +7,7 @@ import {
   type Phase3World,
 } from './phase3-fixtures';
 import { deletePhase4Rows } from './phase4-cleanup';
+import type { AnthropicLike } from '../../../src/bridal/ai/anthropic-client';
 
 export { gqlAs };
 
@@ -19,10 +20,13 @@ const orgFilter = (prefix: string) =>
   `SELECT id FROM organizations WHERE legal_name LIKE '${prefix}-%'`;
 
 /** Mundo da Fase 3 + pacote de noiva (entrada de 30%). */
-export async function createPhase4World(prefix: string): Promise<Phase4World> {
+export async function createPhase4World(
+  prefix: string,
+  opts: { anthropicClient?: AnthropicLike | null } = {},
+): Promise<Phase4World> {
   // sobras de uma execucao anterior referenciam clientes/servicos; limpar antes do cleanup da Fase 3
   await deletePhase4Rows(orgFilter(prefix));
-  const w = await createPhase3World(prefix);
+  const w = await createPhase3World(prefix, opts);
   const bridalPackageId = (
     await adminPrisma.package.create({
       data: {

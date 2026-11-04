@@ -7,6 +7,7 @@ import { adminPrisma } from '../setup';
 import { TestEmailAdapter } from '../../../src/email/test-email.adapter';
 import { EMAIL_ADAPTER } from '../../../src/email/email.module';
 import { deletePhase3Rows } from './phase3-cleanup';
+import { ANTHROPIC_CLIENT, type AnthropicLike } from '../../../src/bridal/ai/anthropic-client';
 
 export interface Phase3World {
   app: INestApplication;
@@ -97,10 +98,15 @@ async function cleanupRows(prefix: string): Promise<void> {
  * membros por papel (senha password1234), tokens, cliente e catalogo.
  * Nao cria regras de comissao (cada suite cria as suas).
  */
-export async function createPhase3World(prefix: string): Promise<Phase3World> {
+export async function createPhase3World(
+  prefix: string,
+  opts: { anthropicClient?: AnthropicLike | null } = {},
+): Promise<Phase3World> {
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(EMAIL_ADAPTER)
     .useClass(TestEmailAdapter)
+    .overrideProvider(ANTHROPIC_CLIENT)
+    .useValue(opts.anthropicClient ?? null)
     .compile();
   const app = moduleRef.createNestApplication(createFastifyAdapter());
   await app.init();
