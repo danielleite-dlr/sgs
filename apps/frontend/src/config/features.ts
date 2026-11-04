@@ -44,8 +44,8 @@ const FLAGS = {
   contratos: false,
   /** Campanhas de comunicação — `mocks/communication.mock.ts`. */
   campanhas: false,
-  /** Painel de notificações (sino) — backend existe, painel não. */
-  notificacoes: false,
+  /** Painel mínimo do sino (04-04): contador, lista, marcar lida. */
+  notificacoes: true,
   /** Bolha de chat de suporte — UI sem envio. */
   chatSuporte: false,
   /** Seletor de estabelecimento — nome do salão hardcoded no header. */
