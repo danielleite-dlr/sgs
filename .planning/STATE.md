@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 04 (bridal-contracts) — EXECUTING
-Plan: 13 of 16 (Waves 1-4 concluídas: 04-01..04-12)
+Plan: 15 of 16 (Waves 1-5 concluídas: 04-01..04-14)
 Status: Executing Phase 04
 Last activity: 2026-11-04 -- Phase 04 execution started
 
