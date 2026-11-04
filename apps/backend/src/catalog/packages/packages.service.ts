@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { parseMoneyInput, fromCents } from '../../common/money';
 import { TenantContextService } from '../../database/tenant-context.service';
 import { CreatePackageInput, UpdatePackageInput } from './dto/package.input';
 
@@ -12,6 +13,41 @@ type PackagePayload = {
   package: (Record<string, unknown> & { individualSum: string }) | null;
   errors: UserError[];
 };
+
+type DepositResult =
+  | { ok: true; kind: 'fixed' | 'percent' | null; value: string | null }
+  | { ok: false; error: UserError };
+
+const invalidDeposit = (message: string): DepositResult => ({
+  ok: false,
+  error: { code: 'INVALID_DEPOSIT', message, field: 'depositValue' },
+});
+
+/** Entrada do pacote de noiva (D-12): ambos ou nenhum; R$ fixo ou percentual de 0 a 100. */
+function validateDeposit(
+  kind: string | null | undefined,
+  value: string | null | undefined,
+): DepositResult {
+  if ((kind == null) !== (value == null)) {
+    return invalidDeposit('Informe o tipo e o valor da entrada.');
+  }
+  if (kind == null || value == null) return { ok: true, kind: null, value: null };
+  if (kind !== 'fixed' && kind !== 'percent') {
+    return invalidDeposit('O tipo da entrada deve ser fixed ou percent.');
+  }
+  const cents = parseMoneyInput(value);
+  if (cents === null) return invalidDeposit('Valor da entrada inválido.');
+  if (kind === 'percent' && cents > 10000) {
+    return invalidDeposit('A entrada em percentual não pode passar de 100%.');
+  }
+  return { ok: true, kind, value: fromCents(cents) };
+}
+
+/** Decimal -> "30.00" (o GraphQL String de um Decimal perderia os zeros). */
+function withDeposit<T extends { depositValue?: unknown }>(pkg: T): T {
+  const v = pkg.depositValue as { toFixed?: (n: number) => string } | null | undefined;
+  return { ...pkg, depositValue: v && v.toFixed ? v.toFixed(2) : null };
+}
 
 function errorPayload(err: UserError): PackagePayload {
   return { package: null, errors: [err] };
@@ -70,7 +106,7 @@ export class PackagesService {
       });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return pkgs.map((pkg: any) => ({
+      return pkgs.map((pkg: any) => withDeposit({
         ...pkg,
         individualSum: computeIndividualSum(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -101,7 +137,7 @@ export class PackagesService {
 
       if (!pkg) return null;
 
-      return {
+      return withDeposit({
         ...pkg,
         individualSum: computeIndividualSum(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -110,7 +146,7 @@ export class PackagesService {
             service: { basePrice: ps.service.basePrice },
           })),
         ),
-      };
+      });
     });
   }
 
@@ -143,6 +179,9 @@ export class PackagesService {
         });
       }
 
+      const dep = validateDeposit(input.depositKind, input.depositValue);
+      if (!dep.ok) return errorPayload(dep.error);
+
       // Create package
       const pkg = await tx.package.create({
         data: {
@@ -150,6 +189,8 @@ export class PackagesService {
           name: input.name,
           price: input.price,
           validForDays: input.validForDays ?? null,
+          depositKind: dep.kind,
+          depositValue: dep.value,
         },
       });
 
@@ -184,6 +225,16 @@ export class PackagesService {
         return errorPayload({ code: 'NOT_FOUND', message: 'Pacote não encontrado.' });
       }
 
+      // Entrada: ambos ausentes = inalterada; depositKind null explícito limpa os dois
+      let depositData: { depositKind: string | null; depositValue: string | null } | undefined;
+      if (input.depositKind === null) {
+        depositData = { depositKind: null, depositValue: null };
+      } else if (input.depositKind !== undefined || input.depositValue !== undefined) {
+        const dep = validateDeposit(input.depositKind, input.depositValue);
+        if (!dep.ok) return errorPayload(dep.error);
+        depositData = { depositKind: dep.kind, depositValue: dep.value };
+      }
+
       // Update scalar fields
       await tx.package.update({
         where: { id: input.id },
@@ -192,6 +243,7 @@ export class PackagesService {
           price: input.price ?? existing.price,
           validForDays:
             input.validForDays === undefined ? existing.validForDays : input.validForDays,
+          ...(depositData ?? {}),
         },
       });
 
@@ -255,7 +307,7 @@ export class PackagesService {
       });
 
       return {
-        package: { ...pkg, individualSum: '0.00' },
+        package: withDeposit({ ...pkg, individualSum: '0.00' }),
         errors: [] as UserError[],
       };
     });
@@ -278,7 +330,7 @@ export class PackagesService {
 
     if (!pkg) return null;
 
-    return {
+    return withDeposit({
       ...pkg,
       individualSum: computeIndividualSum(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -287,6 +339,6 @@ export class PackagesService {
           service: { basePrice: ps.service.basePrice },
         })),
       ),
-    };
+    });
   }
 }

@@ -1,0 +1,40 @@
+# ===== Configurações do contrato da organização =====
+
+type ContractSettings {
+  balanceDueDaysBefore: Int!
+  templateBody: String!
+  isDefaultTemplate: Boolean!
+  cancellationClause: String!
+  isDefaultClause: Boolean!
+  alertDepositUnpaidDays: Int!
+  alertNotAcceptedDays: Int!
+  alertCompanionDepositDays: Int!
+  scheduleDayStart: String!
+  scheduleDayEnd: String!
+  templateVariables: [String!]!
+  missingVariables: [String!]!
+}
+
+input UpdateContractSettingsInput {
+  balanceDueDaysBefore: Int
+  templateBody: String
+  cancellationClause: String
+  alertDepositUnpaidDays: Int
+  alertNotAcceptedDays: Int
+  alertCompanionDepositDays: Int
+  scheduleDayStart: String
+  scheduleDayEnd: String
+}
+
+type ContractSettingsPayload {
+  settings: ContractSettings
+  errors: [UserError!]!
+}
+
+extend type Query {
+  contractSettings: ContractSettings!
+}
+
+extend type Mutation {
+  updateContractSettings(input: UpdateContractSettingsInput!): ContractSettingsPayload!
+}

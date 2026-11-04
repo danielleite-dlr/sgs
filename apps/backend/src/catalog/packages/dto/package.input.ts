@@ -3,6 +3,7 @@ import {
   IsArray,
   IsInt,
   IsOptional,
+  IsString,
   IsUUID,
   Matches,
   MaxLength,
@@ -39,6 +40,14 @@ export class CreatePackageInput {
   @Min(1)
   validForDays?: number;
 
+  @IsOptional()
+  @IsString()
+  depositKind?: string | null;
+
+  @IsOptional()
+  @IsString()
+  depositValue?: string | null;
+
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })
@@ -65,6 +74,14 @@ export class UpdatePackageInput {
   @IsInt()
   @Min(1)
   validForDays?: number | null;
+
+  @IsOptional()
+  @IsString()
+  depositKind?: string | null;
+
+  @IsOptional()
+  @IsString()
+  depositValue?: string | null;
 
   @IsOptional()
   @IsArray()
