@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { syncContractCoverageTx } from '../bridal/bridal-coverage';
+import { applyPackageToBrideTx } from '../bridal/bridal-package';
 import { prorateUnits } from '../comandas/comanda-items';
 import { recordAudit } from '../common/audit-log';
 import { fromCents, parseMoneyInput, toCents } from '../common/money';
@@ -199,6 +200,34 @@ async function buildItems(
   return planned(covered);
 }
 
+/**
+ * O pacote escolhido no contrato passa a valer para o grupo: grava o package_id
+ * do grupo e adiciona à noiva os serviços do pacote que faltam (nunca remove).
+ * - create: aplica sempre que o contrato tem pacote (`previousPackageId` undefined).
+ * - update: só aplica quando o pacote final do contrato mudou ou o grupo ainda
+ *   não tem pacote — editar só desconto/outros campos não sobrescreve um pacote
+ *   que a usuária escolheu no grupo.
+ * Limpar o pacote no contrato não limpa o grupo nem remove serviços.
+ */
+async function syncGroupPackageTx(
+  tx: TenantPrismaClient,
+  orgId: string,
+  groupId: string,
+  packageId: string | null,
+  previousPackageId?: string | null,
+): Promise<void> {
+  if (!packageId) return;
+  if (previousPackageId !== undefined && packageId === previousPackageId) {
+    const g = await tx.bridalGroup.findUnique({
+      where: { id: groupId },
+      select: { packageId: true },
+    });
+    if (g?.packageId) return;
+  }
+  await tx.bridalGroup.update({ where: { id: groupId }, data: { packageId } });
+  await applyPackageToBrideTx(tx, orgId, groupId, packageId);
+}
+
 @Injectable()
 export class ContractsService {
   constructor(
@@ -309,6 +338,7 @@ export class ContractsService {
           entityId: contract.id,
           metadata: { code, totalCents: totals.totalCents, depositCents: totals.depositCents },
         });
+        await syncGroupPackageTx(tx, orgId, group.id, pkg?.id ?? null);
         await syncContractCoverageTx(tx, orgId, group.id);
         return { contract: await loadContractView(tx, orgId, contract.id), errors: [] };
       });
@@ -434,6 +464,7 @@ export class ContractsService {
           entityId: id,
           metadata: { version: v.version },
         });
+        await syncGroupPackageTx(tx, orgId, current.bridalGroupId, packageId, current.packageId);
         await syncContractCoverageTx(tx, orgId, current.bridalGroupId);
         return { contract: await loadContractView(tx, orgId, id), errors: [] };
       });

@@ -118,6 +118,97 @@ describe('Fase 4 - núcleo do contrato da noiva', () => {
     expect(c.items[0].description).toContain('pacote');
   });
 
+  describe('pacote do contrato vale para o grupo', () => {
+    const groupPackage = async (groupId: string) =>
+      (await adminPrisma.bridalGroup.findUniqueOrThrow({ where: { id: groupId } })).packageId;
+    const brideServices = async (memberId: string) =>
+      adminPrisma.bridalMemberService.findMany({
+        where: { groupMemberId: memberId },
+        select: { serviceId: true, purpose: true },
+      });
+    /** pacote extra só com o serviço B (os pacotes da org são apagados no cleanup da Fase 3). */
+    const packageOnlyB = async () =>
+      (
+        await adminPrisma.package.create({
+          data: {
+            organizationId: w.orgId,
+            name: `p4core-pacote-b-${Date.now()}`,
+            price: '200.00',
+            depositKind: 'percent',
+            depositValue: '30.00',
+            services: { create: [{ serviceId: w.serviceBId, quantity: 1, displayOrder: 0 }] },
+          },
+        })
+      ).id;
+
+    it('criar contrato com pacote grava o pacote no grupo e os serviços na noiva', async () => {
+      const grp = await insertBridalGroupRow(w, { companions: 0, eventDate });
+      expect(await groupPackage(grp.groupId)).toBeNull();
+      const r = await gqlAs(w, w.tokens.admin)(CREATE, {
+        input: { groupId: grp.groupId, packageId: w.bridalPackageId },
+      });
+      expect(r.data.createContract.errors).toEqual([]);
+      expect(r.data.createContract.contract.totalAmount).toBe('500.00');
+      expect(await groupPackage(grp.groupId)).toBe(w.bridalPackageId);
+      const svc = await brideServices(grp.brideMemberId);
+      expect(svc.filter((x) => x.purpose === 'event').map((x) => x.serviceId).sort()).toEqual(
+        [w.serviceId, w.serviceBId].sort(),
+      );
+    });
+
+    it('trocar o pacote no contrato atualiza o grupo e só adiciona; limpar não mexe no grupo', async () => {
+      const g = gqlAs(w, w.tokens.admin);
+      const pkgB = await packageOnlyB();
+      const grp = await insertBridalGroupRow(w, { companions: 0, eventDate });
+      const r = await g(CREATE, { input: { groupId: grp.groupId, packageId: pkgB } });
+      expect(r.data.createContract.errors).toEqual([]);
+      const id = r.data.createContract.contract.id;
+      expect(await groupPackage(grp.groupId)).toBe(pkgB);
+      expect((await brideServices(grp.brideMemberId)).map((x) => x.serviceId)).toEqual([w.serviceBId]);
+
+      const up = await g(UPDATE, { id, input: { packageId: w.bridalPackageId } });
+      expect(up.data.updateContract.errors).toEqual([]);
+      expect(await groupPackage(grp.groupId)).toBe(w.bridalPackageId);
+      const svc = await brideServices(grp.brideMemberId);
+      expect(svc).toHaveLength(2);
+      expect(svc.every((x) => x.purpose === 'event')).toBe(true);
+      expect(svc.map((x) => x.serviceId).sort()).toEqual([w.serviceId, w.serviceBId].sort());
+
+      const clear = await g(UPDATE, { id, input: { packageId: null } });
+      expect(clear.data.updateContract.errors).toEqual([]);
+      expect(clear.data.updateContract.contract.packageId).toBeNull();
+      expect(await groupPackage(grp.groupId)).toBe(w.bridalPackageId);
+      expect(await brideServices(grp.brideMemberId)).toHaveLength(2);
+    });
+
+    it('editar só o desconto não sobrescreve o pacote escolhido no grupo', async () => {
+      const g = gqlAs(w, w.tokens.admin);
+      const pkgB = await packageOnlyB();
+      const grp = await insertBridalGroupRow(w, { companions: 0, eventDate });
+      const r = await g(CREATE, { input: { groupId: grp.groupId, packageId: w.bridalPackageId } });
+      expect(r.data.createContract.errors).toEqual([]);
+      const id = r.data.createContract.contract.id;
+      // a usuária troca o pacote no grupo depois do contrato
+      await adminPrisma.bridalGroup.update({ where: { id: grp.groupId }, data: { packageId: pkgB } });
+
+      const up = await g(UPDATE, { id, input: { discountAmount: '50.00' } });
+      expect(up.data.updateContract.errors).toEqual([]);
+      expect(up.data.updateContract.contract.packageId).toBe(w.bridalPackageId);
+      expect(await groupPackage(grp.groupId)).toBe(pkgB);
+
+      // reenviar o mesmo pacote do contrato também não sobrescreve
+      const same = await g(UPDATE, { id, input: { packageId: w.bridalPackageId } });
+      expect(same.data.updateContract.errors).toEqual([]);
+      expect(await groupPackage(grp.groupId)).toBe(pkgB);
+
+      // com o grupo sem pacote, o pacote do contrato volta a valer
+      await adminPrisma.bridalGroup.update({ where: { id: grp.groupId }, data: { packageId: null } });
+      const fill = await g(UPDATE, { id, input: { discountAmount: '60.00' } });
+      expect(fill.data.updateContract.errors).toEqual([]);
+      expect(await groupPackage(grp.groupId)).toBe(w.bridalPackageId);
+    });
+  });
+
   it('item para acompanhante não coberta e segundo contrato vivo são rejeitados', async () => {
     const g = gqlAs(w, w.tokens.admin);
     const grp = await newGroup();
