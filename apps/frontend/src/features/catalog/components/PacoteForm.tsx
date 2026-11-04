@@ -42,6 +42,22 @@ const schema = z.object({
       }),
     )
     .min(1, 'Adicione ao menos um serviço.'),
+  depositKind: z.enum(['none', 'fixed', 'percent']),
+  depositValue: z.string(),
+}).superRefine((v, ctx) => {
+  if (v.depositKind === 'none') return;
+  const raw = v.depositKind === 'fixed' ? unmaskCurrency(v.depositValue) : v.depositValue.replace(',', '.');
+  const n = raw === '' ? NaN : Number(raw);
+  if (Number.isNaN(n) || n < 0 || (v.depositKind === 'percent' && n > 100)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['depositValue'],
+      message:
+        v.depositKind === 'percent'
+          ? 'O percentual deve ficar entre 0 e 100.'
+          : 'Informe um valor de entrada válido.',
+    });
+  }
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -51,6 +67,8 @@ export interface PacoteFormInitial {
   name: string;
   price: string;
   services: Array<{ serviceId: string; quantity: number }>;
+  depositKind?: 'fixed' | 'percent' | null;
+  depositValue?: string | null;
 }
 
 export interface PacoteFormProps {
@@ -73,8 +91,19 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: initial
-      ? { ...initial, price: formatCurrencyDisplay(initial.price) }
-      : { name: '', price: '', services: [] },
+      ? {
+          name: initial.name,
+          services: initial.services,
+          price: formatCurrencyDisplay(initial.price),
+          depositKind: initial.depositKind ?? 'none',
+          depositValue:
+            initial.depositKind === 'fixed' && initial.depositValue
+              ? formatCurrencyDisplay(initial.depositValue)
+              : initial.depositKind === 'percent' && initial.depositValue
+                ? String(Number(initial.depositValue))
+                : '',
+        }
+      : { name: '', price: '', services: [], depositKind: 'none', depositValue: '' },
   });
 
   // Live computation of individual sum from selected services × quantity
@@ -97,6 +126,13 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
         name: values.name,
         price: unmaskCurrency(values.price),
         services: values.services,
+        depositKind: values.depositKind === 'none' ? null : values.depositKind,
+        depositValue:
+          values.depositKind === 'none'
+            ? null
+            : values.depositKind === 'fixed'
+              ? unmaskCurrency(values.depositValue)
+              : values.depositValue.replace(',', '.'),
       };
       const res = isEdit && initial
         ? await updatePkg({ variables: { input: { id: initial.id, ...payload } } })
@@ -186,6 +222,65 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
           individualSum={individualSum}
           packagePrice={unmaskCurrency(form.watch('price') || '') || '0'}
         />
+
+        {/* Entrada do contrato de noiva (D-12) */}
+        <div className="grid grid-cols-2 gap-sm">
+          <FormField
+            control={form.control}
+            name="depositKind"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="pacote-deposit-kind">Entrada do contrato</FormLabel>
+                <FormControl>
+                  <select
+                    id="pacote-deposit-kind"
+                    {...field}
+                    onChange={(e) => {
+                      field.onChange(e.target.value);
+                      form.setValue('depositValue', '');
+                    }}
+                    className="w-full rounded-md border border-neutral-200 bg-white px-sm py-xs text-sm"
+                  >
+                    <option value="none">Sem entrada</option>
+                    <option value="fixed">Valor fixo (R$)</option>
+                    <option value="percent">Percentual (%)</option>
+                  </select>
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          {form.watch('depositKind') !== 'none' && (
+            <FormField
+              control={form.control}
+              name="depositValue"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="pacote-deposit-value">
+                    {form.watch('depositKind') === 'percent'
+                      ? 'Percentual da entrada'
+                      : 'Valor da entrada'}
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      id="pacote-deposit-value"
+                      {...field}
+                      inputMode={form.watch('depositKind') === 'percent' ? 'decimal' : 'numeric'}
+                      placeholder={form.watch('depositKind') === 'percent' ? '30' : '0,00'}
+                      onChange={(e) =>
+                        field.onChange(
+                          form.watch('depositKind') === 'fixed'
+                            ? maskCurrency(e.target.value)
+                            : e.target.value,
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+        </div>
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>

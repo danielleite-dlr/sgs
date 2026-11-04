@@ -59,14 +59,14 @@ export function PaymentPanel({
   const [dirty, setDirty] = useState(false);
 
   const lines = comanda.payments.map((p) => ({ method: p.method, amount: p.amount }));
-  const base = computePaymentSummary(comanda.total, lines);
+  const base = computePaymentSummary(comanda.owed, lines);
 
   const remainingMasked = maskCurrency(base.remaining.replace('.', ''));
   const shownAmount = dirty ? typed : base.remaining === '0.00' ? '' : remainingMasked;
   const pending = isOpen && canWrite ? parseTyped(shownAmount) : null;
   // Preview em tempo real só quando a pessoa digitou algo (senão "Falta" ficaria sempre zerada).
   const previewLines = dirty && pending ? [...lines, { method, amount: pending }] : lines;
-  const summary = computePaymentSummary(comanda.total, previewLines);
+  const summary = computePaymentSummary(comanda.owed, previewLines);
 
   const changeError =
     summary.error === 'INVALID_CHANGE' || comanda.closeError === 'INVALID_CHANGE';
@@ -79,6 +79,12 @@ export function PaymentPanel({
     isOpen && canWrite && creditCents > 0 && remainingCents > 0 && !hasCreditLine;
 
   const methods = creditCents > 0 || hasCreditLine ? ALL_PAYMENT_METHODS : PAYMENT_METHODS;
+
+  const coveredCents = decimalToCents(comanda.covered);
+  const owedCents = decimalToCents(comanda.owed);
+  const coveredCodes = [
+    ...new Set(comanda.items.map((i) => i.contractCode).filter((c): c is string => !!c)),
+  ].join(', ');
 
   const closeEnabled = comanda.canClose && base.canClose && !busy;
 
@@ -195,9 +201,23 @@ export function PaymentPanel({
           </div>
         )}
 
+        {coveredCents > 0 && (
+          <p
+            data-testid="payment-covered"
+            className="rounded-md bg-primary-50 px-sm py-xs text-sm text-primary-700"
+          >
+            Coberto pelo contrato {coveredCodes}: {brl(comanda.covered)}
+          </p>
+        )}
+        {coveredCents > 0 && owedCents === 0 && (
+          <p data-testid="payment-nothing-due" className="text-sm font-semibold text-neutral-800">
+            Nada a cobrar — coberto pelo contrato
+          </p>
+        )}
+
         <dl className="space-y-xs border-t border-neutral-100 pt-sm text-sm">
           <div className="flex justify-between text-neutral-700">
-            <dt>Total</dt>
+            <dt>{coveredCents > 0 ? 'A pagar' : 'Total'}</dt>
             <dd data-testid="payment-total" className="font-semibold">
               {brl(summary.total)}
             </dd>

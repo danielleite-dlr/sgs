@@ -61,4 +61,15 @@ describe('money', () => {
     expect(s.remaining).toBe('50.00');
     expect(s.canClose).toBe(false);
   });
+  it('a pagar zero (comanda 100% coberta) fecha sem pagamento', () => {
+    const s = computePaymentSummary('0.00', []);
+    expect(s.remaining).toBe('0.00');
+    expect(s.error).toBeNull();
+    expect(s.canClose).toBe(true);
+  });
+  it('a pagar 35 sem pagamentos falta 35', () => {
+    const s = computePaymentSummary('35.00', []);
+    expect(s.remaining).toBe('35.00');
+    expect(s.canClose).toBe(false);
+  });
 });

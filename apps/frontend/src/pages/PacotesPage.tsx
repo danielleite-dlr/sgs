@@ -180,6 +180,8 @@ export function PacotesPage() {
                 id: editTarget.id,
                 name: editTarget.name,
                 price: editTarget.price,
+                depositKind: editTarget.depositKind ?? null,
+                depositValue: editTarget.depositValue ?? null,
                 services: editTarget.services.map((s) => ({
                   serviceId: s.serviceId,
                   quantity: s.quantity,

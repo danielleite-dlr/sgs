@@ -289,6 +289,14 @@ export function ComandaPage() {
                         <div>
                           <p className="text-sm font-semibold text-neutral-800">{item.name}</p>
                           <p className="text-xs text-neutral-600">{item.professional.displayName}</p>
+                          {item.contractCode && (
+                            <span
+                              data-testid={`item-contract-${item.id}`}
+                              className="inline-block rounded bg-primary-50 px-xs text-xs font-semibold text-primary-700"
+                            >
+                              Contrato {item.contractCode}
+                            </span>
+                          )}
                           <p className="text-xs text-neutral-600">
                             {item.quantity}x{' '}
                             {item.listUnitPrice !== item.unitPrice && (
@@ -323,6 +331,18 @@ export function ComandaPage() {
                 <span>Total</span>
                 <span>{brl(comanda.total)}</span>
               </div>
+              {Number(comanda.covered) > 0 && (
+                <div
+                  data-testid="comanda-covered"
+                  className="mt-xs flex justify-between text-sm text-primary-700"
+                >
+                  <span>
+                    Coberto pelo contrato{' '}
+                    {[...new Set(comanda.items.map((i) => i.contractCode).filter(Boolean))].join(', ')}
+                  </span>
+                  <span>- {brl(comanda.covered)}</span>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
