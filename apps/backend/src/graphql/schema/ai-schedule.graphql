@@ -1,0 +1,53 @@
+type AiScheduleItem {
+  personRef: String!
+  groupMemberId: UUID!
+  personLabel: String!
+  role: String!
+  serviceId: UUID!
+  serviceName: String!
+  professionalId: UUID!
+  professionalName: String!
+  startsAt: DateTime!
+  endsAt: DateTime!
+}
+
+type AiScheduleUnscheduled {
+  groupMemberId: UUID!
+  personLabel: String!
+  serviceId: UUID!
+  serviceName: String!
+}
+
+type AiScheduleSuggestion {
+  id: UUID!
+  "claude | heuristic"
+  source: String!
+  model: String
+  cached: Boolean!
+  "NO_API_KEY | LIMIT_REACHED | API_ERROR | INVALID_OUTPUT quando a fonte é a heurística"
+  fallbackReason: String
+  items: [AiScheduleItem!]!
+  unscheduled: [AiScheduleUnscheduled!]!
+  warnings: [String!]!
+  dayStart: DateTime!
+  dayEnd: DateTime!
+  readyBy: DateTime!
+}
+
+type AiScheduleSuggestionPayload {
+  suggestion: AiScheduleSuggestion
+  errors: [UserError!]!
+}
+
+input ConfirmBridalScheduleInput {
+  groupId: UUID!
+  items: [BridalScheduleItemInput!]!
+  deposits: [BridalDepositInput!]
+}
+
+extend type Mutation {
+  "Sugere a agenda do evento (Claude ou heurística). Mutation porque grava e consome cota."
+  suggestBridalSchedule(groupId: UUID!): AiScheduleSuggestionPayload!
+  "Revalida a proposta no servidor e cria os agendamentos pelo fluxo do evento."
+  confirmBridalSchedule(input: ConfirmBridalScheduleInput!): BridalSchedulePayload!
+}
