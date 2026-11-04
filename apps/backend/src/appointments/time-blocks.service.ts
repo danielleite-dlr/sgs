@@ -17,6 +17,9 @@ export const TIME_BLOCK_KINDS = [
   "indisponibilidade",
 ] as const;
 
+/** Bloqueios gerados pelo sistema (grupo de noivas); não são criados/editados à mão. */
+export const SYSTEM_TIME_BLOCK_KINDS = ["deslocamento"] as const;
+
 export interface CreateTimeBlockInput {
   kind: string;
   professionalId?: string | null;
@@ -79,6 +82,13 @@ export class TimeBlocksService {
     const err = (code: string, message: string, field: string) =>
       ({ timeBlock: null, errors: [{ code, message, field }] }) as TimeBlockPayload;
 
+    if ((SYSTEM_TIME_BLOCK_KINDS as readonly string[]).includes(input.kind)) {
+      return err(
+        "SYSTEM_BLOCK",
+        "Bloqueio de deslocamento é gerado pelo grupo de noivas.",
+        "kind",
+      );
+    }
     if (!(TIME_BLOCK_KINDS as readonly string[]).includes(input.kind)) {
       return err("INVALID_KIND", "Tipo de bloqueio inválido.", "kind");
     }
@@ -169,6 +179,18 @@ export class TimeBlocksService {
           timeBlock: null,
           errors: [
             { code: "NOT_FOUND", message: "Bloqueio não encontrado.", field: "id" },
+          ],
+        };
+      }
+      if ((SYSTEM_TIME_BLOCK_KINDS as readonly string[]).includes(found.kind)) {
+        return {
+          timeBlock: null,
+          errors: [
+            {
+              code: "SYSTEM_BLOCK",
+              message: "Bloqueio de deslocamento é gerado pelo grupo de noivas.",
+              field: "id",
+            },
           ],
         };
       }
