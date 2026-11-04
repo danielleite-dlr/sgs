@@ -290,7 +290,6 @@ model Service {
   categoryId             String    @map("category_id") @db.Uuid
   name                   String    @db.VarChar(160)
   basePrice              Decimal   @map("base_price") @db.Decimal(12, 2)
-  costPrice              Decimal   @default(0) @map("cost_price") @db.Decimal(12, 2)
   defaultDurationMinutes Int       @map("default_duration_minutes")
   displayOrder           Int       @default(0) @map("display_order")
   coverImageUrl          String?   @map("cover_image_url") @db.Text

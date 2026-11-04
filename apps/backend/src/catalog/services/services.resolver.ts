@@ -1,5 +1,4 @@
-import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
-import { canSeeCatalogCosts } from '../catalog-costs';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { ServicesService } from './services.service';
 import {
   CurrentTenant,
@@ -16,7 +15,7 @@ import { CreateServiceInput, SoftDeleteServiceInput, UpdateServiceInput } from '
  * All mutations require SERVICE_WRITE permission.
  * TenantContext is resolved from JWT by TenantContextInterceptor (Phase 1).
  */
-@Resolver('Service')
+@Resolver()
 export class ServicesResolver {
   constructor(private readonly svc: ServicesService) {}
 
@@ -60,17 +59,5 @@ export class ServicesResolver {
     @Args('input') input: SoftDeleteServiceInput,
   ) {
     return this.svc.softDelete(t.organizationId, input.id);
-  }
-
-  /** Custo só para ADMIN/MANAGER; vale também para Service aninhado em outros tipos. */
-  @ResolveField('costPrice')
-  costPrice(
-    @Parent() svc: { costPrice?: { toFixed?: (n: number) => string } | string | null },
-    @CurrentTenant() t: TenantContext | null,
-  ): string | null {
-    if (!canSeeCatalogCosts(t?.roleName)) return null;
-    const v = svc.costPrice;
-    if (v == null) return '0.00';
-    return typeof v === 'string' ? Number(v).toFixed(2) : (v.toFixed?.(2) ?? String(v));
   }
 }

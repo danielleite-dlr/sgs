@@ -1,11 +1,16 @@
 import { PERMISSIONS, ROLE_PERMISSIONS } from '../authz/permissions.catalog';
 import { fromCents } from '../common/money';
+import {
+  categoryChain,
+  computeCommission,
+  resolveCommissionRule,
+  type RuleLite,
+} from '../financial/commission-resolver';
 
 /**
  * Custos e lucro do catálogo só aparecem para quem pode editar o catálogo
- * (ADMIN/MANAGER). Os demais papéis leem serviços e pacotes, mas recebem null
- * nesses campos — o Service também chega aninhado em agendamentos e comandas,
- * por isso o corte é no field resolver e não na query.
+ * (ADMIN/MANAGER). Os demais papéis leem pacotes, mas recebem null nesses
+ * campos (corte nos field resolvers).
  */
 export function canSeeCatalogCosts(roleName: string | null | undefined): boolean {
   if (!roleName) return false;
@@ -21,6 +26,35 @@ export function toCents(v: DecimalLike): number {
   return Math.round(parseFloat(v.toString()) * 100);
 }
 
+export interface CostContext {
+  rules: RuleLite[];
+  parents: ReadonlyMap<string, string | null>;
+}
+
+/**
+ * Repasse à profissional de uma linha do pacote = comissão do serviço, pela
+ * mesma regra do fechamento da comanda: serviço > categoria (filha→raiz) >
+ * padrão, sobre o preço cheio, fixo por unidade. Sem profissional definida no
+ * pacote, regras member_service (por profissional) não entram.
+ */
+export function professionalCostCents(
+  ctx: CostContext,
+  line: { quantity: number; service: { id: string; categoryId: string | null; basePrice: DecimalLike } },
+): { cents: number; hasRule: boolean } {
+  const match = resolveCommissionRule(ctx.rules, {
+    kind: 'service',
+    memberId: '',
+    serviceId: line.service.id,
+    categoryChain: categoryChain(line.service.categoryId, ctx.parents),
+  });
+  const c = computeCommission(match, {
+    listUnitCents: toCents(line.service.basePrice),
+    quantity: line.quantity,
+    chargedCents: 0,
+  });
+  return { cents: c.amountCents, hasRule: !c.noRule };
+}
+
 export interface PackageCostSummary {
   totalCost: string;
   profit: string;
@@ -28,16 +62,16 @@ export interface PackageCostSummary {
 }
 
 /**
- * Custo total = soma(custo do serviço × quantidade) + soma(itens de custo).
+ * Custo total = repasses das linhas de serviço + itens de custo.
  * Lucro = preço − custo total; percentual sobre o preço (0.00 se preço 0).
  */
 export function computePackageCosts(input: {
   price: DecimalLike;
-  services: Array<{ quantity: number; service: { costPrice?: DecimalLike } }>;
+  serviceCostCents: number[];
   costItems: Array<{ cost: DecimalLike }>;
 }): PackageCostSummary {
   let costCents = 0;
-  for (const ps of input.services) costCents += toCents(ps.service.costPrice) * ps.quantity;
+  for (const c of input.serviceCostCents) costCents += c;
   for (const ci of input.costItems) costCents += toCents(ci.cost);
   const priceCents = toCents(input.price);
   const profitCents = priceCents - costCents;

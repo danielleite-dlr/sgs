@@ -74,8 +74,6 @@ type Service {
   categoryId: UUID!
   category: Category
   basePrice: String!
-  "Custo do serviço para o salão. null para quem não pode editar o catálogo."
-  costPrice: String
   defaultDurationMinutes: Int!
   displayOrder: Int!
   pricingVariants: [ServicePricingVariant!]!
@@ -110,7 +108,6 @@ input CreateServiceInput {
   name: String!
   categoryId: UUID!
   basePrice: String!
-  costPrice: String
   defaultDurationMinutes: Int!
   pricingVariants: [PricingVariantInput!]
 }
@@ -120,7 +117,6 @@ input UpdateServiceInput {
   name: String
   categoryId: UUID
   basePrice: String
-  costPrice: String
   defaultDurationMinutes: Int
   pricingVariants: [PricingVariantInput!]
 }
@@ -154,7 +150,9 @@ type Package {
   services: [PackageServiceItem!]!
   """
   Custos e lucro do pacote: null para quem não pode editar o catálogo.
-  totalCost = soma(custo do serviço × quantidade) + soma(costItems).
+  totalCost = soma(repasse à profissional de cada serviço) + soma(costItems).
+  O repasse é a comissão do serviço (serviço > categoria > padrão), sobre o
+  preço cheio e por unidade, igual ao fechamento da comanda.
   profitPercent é sobre o preço do pacote.
   """
   costItems: [PackageCostItem!]
@@ -183,6 +181,10 @@ type PackageServiceItem {
   service: Service!
   quantity: Int!
   displayOrder: Int!
+  "Repasse à profissional nesta linha (comissão × quantidade). null para quem não edita o catálogo."
+  professionalCost: String
+  "false quando o serviço não tem comissão (nem por categoria/padrão): repasse conta R$ 0."
+  hasCommissionRule: Boolean
 }
 
 input PackageServiceInput {

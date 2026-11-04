@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { parseMoneyInput, fromCents } from '../../common/money';
 import { TenantContextService } from '../../database/tenant-context.service';
-import { computePackageCosts } from '../catalog-costs';
+import {
+  computePackageCosts,
+  professionalCostCents,
+  type CostContext,
+} from '../catalog-costs';
+import type { RuleLite } from '../../financial/commission-resolver';
 import {
   CreatePackageInput,
   PackageCostItemInput,
@@ -93,9 +98,12 @@ const PACKAGE_INCLUDE = {
  * quem não edita o catálogo).
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toPackageView(pkg: any) {
+function toPackageView(pkg: any, ctx: CostContext) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const services = (pkg.services ?? []) as any[];
+  const services = ((pkg.services ?? []) as any[]).map((ps) => {
+    const pc = professionalCostCents(ctx, ps);
+    return { ...ps, professionalCost: fromCents(pc.cents), hasCommissionRule: pc.hasRule, _costCents: pc.cents };
+  });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const costItems = ((pkg.costItems ?? []) as any[]).map((ci) => ({
     id: ci.id,
@@ -105,6 +113,7 @@ function toPackageView(pkg: any) {
   }));
   return withDeposit({
     ...pkg,
+    services: services.map(({ _costCents, ...rest }) => rest),
     costItems,
     individualSum: computeIndividualSum(
       services.map((ps) => ({
@@ -112,8 +121,36 @@ function toPackageView(pkg: any) {
         service: { basePrice: ps.service.basePrice },
       })),
     ),
-    ...computePackageCosts({ price: pkg.price, services, costItems }),
+    ...computePackageCosts({
+      price: pkg.price,
+      serviceCostCents: services.map((ps) => ps._costCents as number),
+      costItems,
+    }),
   });
+}
+
+/** Comissões ativas + mapa de categorias (filha -> pai) para o repasse. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function loadCostContext(tx: any): Promise<CostContext> {
+  const [ruleRows, cats] = await Promise.all([
+    tx.commissionRule.findMany({ where: { deletedAt: null } }),
+    tx.category.findMany({ select: { id: true, parentId: true } }),
+  ]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rules: RuleLite[] = ruleRows.map((r: any) => ({
+    id: r.id,
+    scopeType: r.scopeType,
+    kind: r.kind,
+    value: r.value.toString(),
+    memberId: r.memberId,
+    serviceId: r.serviceId,
+    categoryId: r.categoryId,
+    productId: r.productId,
+    deletedAt: r.deletedAt,
+  }));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const parents = new Map<string, string | null>(cats.map((c: any) => [c.id, c.parentId]));
+  return { rules, parents };
 }
 
 type CostItemsResult =
@@ -168,7 +205,9 @@ export class PackagesService {
         orderBy: [{ name: 'asc' }],
         include: PACKAGE_INCLUDE,
       });
-      return pkgs.map(toPackageView);
+      const ctx = await loadCostContext(tx);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return pkgs.map((p: any) => toPackageView(p, ctx));
     });
   }
 
@@ -182,7 +221,7 @@ export class PackagesService {
         where: { id, deletedAt: null },
         include: PACKAGE_INCLUDE,
       });
-      return pkg ? toPackageView(pkg) : null;
+      return pkg ? toPackageView(pkg, await loadCostContext(tx)) : null;
     });
   }
 
@@ -381,7 +420,7 @@ export class PackagesService {
       });
 
       return {
-        package: toPackageView({ ...pkg, services: [], costItems: [] }),
+        package: toPackageView({ ...pkg, services: [], costItems: [] }, { rules: [], parents: new Map() }),
         errors: [] as UserError[],
       };
     });
@@ -396,6 +435,6 @@ export class PackagesService {
       where: { id },
       include: PACKAGE_INCLUDE,
     });
-    return pkg ? toPackageView(pkg) : null;
+    return pkg ? toPackageView(pkg, await loadCostContext(tx)) : null;
   }
 }

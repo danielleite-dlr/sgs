@@ -18,6 +18,9 @@ import {
 import { DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { ServicesQuery } from '../api/servicos.api';
+import { CategoriesQuery, type CategoriesQueryResult } from '../api/categorias.api';
+import { CommissionRulesQuery, type CommissionRulesQueryResult } from '../api/comissoes.api';
+import { professionalCost } from '../utils/package-profit';
 import { CreatePackageMutation, UpdatePackageMutation, PackagesQuery } from '../api/pacotes.api';
 import { PackagePriceSummary } from './PackagePriceSummary';
 import { PackageCostSummary } from './PackageCostSummary';
@@ -99,6 +102,21 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
   const { t } = useTranslation();
   const { data: svcData } = useQuery(ServicesQuery);
   const services = useMemo(() => svcData?.services ?? [], [svcData?.services]);
+  // Repasse à profissional = comissão do serviço (mesma regra do fechamento da comanda)
+  const { data: ruleData } = useQuery<CommissionRulesQueryResult>(CommissionRulesQuery);
+  const { data: catData } = useQuery<CategoriesQueryResult>(CategoriesQuery);
+  const rules = useMemo(
+    () => (ruleData?.commissionRules ?? []).filter((r) => r.scopeType !== 'member_service'),
+    [ruleData?.commissionRules],
+  );
+  const parents = useMemo(() => {
+    const m = new Map<string, string | null>();
+    for (const root of catData?.categories ?? []) {
+      m.set(root.id, root.parentId ?? null);
+      for (const c of root.children ?? []) m.set(c.id, c.parentId ?? root.id);
+    }
+    return m;
+  }, [catData?.categories]);
 
   const [createPkg, { loading: creating }] = useMutation(CreatePackageMutation, {
     refetchQueries: [{ query: PackagesQuery }],
@@ -148,24 +166,25 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
       .toFixed(2);
   }, [watched.services, services]);
 
-  // Custo total ao vivo: custo dos serviços × quantidade + itens de custo.
+  // Custo total ao vivo: repasse de cada serviço + outros custos.
   // Sem useMemo: o watch() devolve arrays mutados no lugar e o memo ficaria velho.
+  const serviceCosts = watched.services.map((row: { serviceId: string; quantity: number }) => {
+    const svc = services.find((s: { id: string }) => s.id === row.serviceId) as
+      | { id: string; name: string; categoryId: string; basePrice: string }
+      | undefined;
+    if (!svc) return { name: '', cost: 0, hasRule: true };
+    return { name: svc.name, ...professionalCost(svc, row.quantity, rules, parents) };
+  });
+  const missingCommission = serviceCosts.filter((c) => !c.hasRule && c.name).map((c) => c.name);
   const totalCost = (() => {
-    const svcCost = watched.services.reduce(
-      (sum: number, row: { serviceId: string; quantity: number }) => {
-        const svc = services.find(
-          (s: { id: string; costPrice?: string | null }) => s.id === row.serviceId,
-        );
-        return sum + (svc?.costPrice ? Number(svc.costPrice) * row.quantity : 0);
-      },
-      0,
-    );
+    const svcCost = serviceCosts.reduce((sum, c) => sum + c.cost, 0);
     const extra = (watched.costItems ?? []).reduce((sum: number, c: { cost: string }) => {
       const n = Number(unmaskCurrency(c.cost || ''));
       return sum + (Number.isNaN(n) ? 0 : n);
     }, 0);
     return (svcCost + extra).toFixed(2);
   })();
+  const professionalTotal = serviceCosts.reduce((sum, c) => sum + c.cost, 0);
 
   const isEdit = !!initial;
   const isLoading = creating || updating;
@@ -283,7 +302,8 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
             <div>
               <p className="text-sm font-semibold">Outros custos do pacote</p>
               <p className="text-xs text-neutral-500">
-                Lanche, champagne, assistente… O custo dos serviços vem do cadastro de cada serviço.
+                Lanche, champagne, assistente… O repasse às profissionais vem da comissão de
+                cada serviço.
               </p>
             </div>
             <Button
@@ -339,6 +359,20 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
               </Button>
             </div>
           ))}
+          <p className="text-sm text-neutral-700" data-testid="package-professional-cost">
+            Repasse às profissionais:{' '}
+            <span className="font-semibold">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                professionalTotal,
+              )}
+            </span>
+          </p>
+          {missingCommission.length > 0 && (
+            <p className="text-xs text-warning-500" role="status">
+              Sem comissão cadastrada (conta R$ 0): {missingCommission.join(', ')}. Defina em
+              Catálogo › Serviços.
+            </p>
+          )}
           <PackageCostSummary
             totalCost={totalCost}
             packagePrice={unmaskCurrency(form.watch('price') || '') || '0'}

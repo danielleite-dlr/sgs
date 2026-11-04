@@ -34,6 +34,9 @@ describe('Catalog — Packages', () => {
     await adminPrisma.$executeRawUnsafe(
       `DELETE FROM service_pricing_variants WHERE service_id IN (SELECT id FROM services WHERE name LIKE 'pkg-test-%')`,
     );
+    await adminPrisma.$executeRawUnsafe(
+      `DELETE FROM commission_rules WHERE organization_id IN (SELECT id FROM organizations WHERE legal_name LIKE 'pkg-test-%')`,
+    );
     await adminPrisma.$executeRawUnsafe(`DELETE FROM services WHERE name LIKE 'pkg-test-%'`);
     await adminPrisma.$executeRawUnsafe(`DELETE FROM categories WHERE name LIKE 'pkg-test-%'`);
     await adminPrisma.$executeRawUnsafe(
@@ -120,6 +123,9 @@ describe('Catalog — Packages', () => {
     await adminPrisma.$executeRawUnsafe(`DELETE FROM packages WHERE name LIKE 'pkg-test-%'`);
     await adminPrisma.$executeRawUnsafe(
       `DELETE FROM service_pricing_variants WHERE service_id IN (SELECT id FROM services WHERE name LIKE 'pkg-test-%')`,
+    );
+    await adminPrisma.$executeRawUnsafe(
+      `DELETE FROM commission_rules WHERE organization_id IN (SELECT id FROM organizations WHERE legal_name LIKE 'pkg-test-%')`,
     );
     await adminPrisma.$executeRawUnsafe(`DELETE FROM services WHERE name LIKE 'pkg-test-%'`);
     await adminPrisma.$executeRawUnsafe(`DELETE FROM categories WHERE name LIKE 'pkg-test-%'`);
@@ -331,9 +337,15 @@ describe('Catalog — Packages', () => {
   // -----------------------------------------------------------------------
   // Custos e lucro do pacote (custo do serviço + itens de custo)
   // -----------------------------------------------------------------------
-  it('9. custo do serviço + itens de custo calculam custo total, lucro e %', async () => {
-    await adminPrisma.service.update({ where: { id: svc1Id }, data: { costPrice: '20.00' } });
-    await adminPrisma.service.update({ where: { id: svc3Id }, data: { costPrice: '15.50' } });
+  it('9. repasse (comissão) dos serviços + itens de custo calculam custo total, lucro e %', async () => {
+    // Svc1: comissão fixa do serviço R$ 20; Svc3: sem regra própria -> padrão 25% do preço cheio (60 -> 15)
+    // Regra por profissional (member_service) não entra no custo do pacote.
+    await adminPrisma.commissionRule.createMany({
+      data: [
+        { organizationId: orgAId, scopeType: 'service', serviceId: svc1Id, kind: 'fixed', value: '20' },
+        { organizationId: orgAId, scopeType: 'default', kind: 'percentage', value: '25' },
+      ],
+    });
     const svc = buildService();
     const created = await svc.create(orgAId, {
       name: 'pkg-test-Custos',
@@ -353,11 +365,16 @@ describe('Catalog — Packages', () => {
       profit: string;
       profitPercent: string;
       costItems: Array<{ name: string; cost: string; displayOrder: number }>;
+      services: Array<{ serviceId: string; professionalCost: string; hasCommissionRule: boolean }>;
     };
-    // 20 + 15.50×2 + 30 + 9.99 = 90.99
-    expect(p.totalCost).toBe('90.99');
-    expect(p.profit).toBe('109.01');
-    expect(p.profitPercent).toBe('54.51');
+    // 20 + 15×2 + 30 + 9.99 = 89.99
+    expect(p.totalCost).toBe('89.99');
+    expect(p.profit).toBe('110.01');
+    expect(p.profitPercent).toBe('55.01');
+    expect(p.services.map((l) => [l.serviceId, l.professionalCost, l.hasCommissionRule])).toEqual([
+      [svc1Id, '20.00', true],
+      [svc3Id, '30.00', true],
+    ]);
     expect(p.costItems.map((c) => [c.name, c.cost, c.displayOrder])).toEqual([
       ['Lanche', '30.00', 0],
       ['Champagne', '9.99', 1],
@@ -386,7 +403,8 @@ describe('Catalog — Packages', () => {
     });
     const rp = replaced.package as unknown as { costItems: unknown[]; totalCost: string };
     expect(rp.costItems).toHaveLength(2);
-    expect(rp.totalCost).toBe('15.00');
+    // Svc2 herda a regra padrão do teste 9 (25% de 80 = 20) + 10 + 5
+    expect(rp.totalCost).toBe('35.00');
 
     const cleared = await svc.update(orgAId, { id, costItems: [] });
     expect((cleared.package as unknown as { costItems: unknown[] }).costItems).toHaveLength(0);

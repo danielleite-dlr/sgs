@@ -12,7 +12,6 @@ export const ServicesQuery = gql`
         parentId
       }
       basePrice
-      costPrice
       defaultDurationMinutes
       displayOrder
       coverImageUrl
@@ -36,7 +35,6 @@ export const CreateServiceMutation = gql`
         name
         categoryId
         basePrice
-        costPrice
         defaultDurationMinutes
         pricingVariants {
           id
@@ -64,7 +62,6 @@ export const UpdateServiceMutation = gql`
         name
         categoryId
         basePrice
-        costPrice
         defaultDurationMinutes
         pricingVariants {
           id
@@ -128,8 +125,6 @@ export interface ServiceData {
     parentId: string | null;
   } | null;
   basePrice: string;
-  /** null para quem não pode editar o catálogo. */
-  costPrice?: string | null;
   defaultDurationMinutes: number;
   displayOrder: number;
   coverImageUrl?: string | null;

@@ -88,3 +88,23 @@ export class PackagesResolver {
     return canSeeCatalogCosts(t?.roleName) ? (p.profitPercent ?? null) : null;
   }
 }
+
+/** Repasse por linha do pacote: só ADMIN/MANAGER. */
+@Resolver('PackageServiceItem')
+export class PackageServiceItemResolver {
+  @ResolveField('professionalCost')
+  professionalCost(
+    @Parent() line: { professionalCost?: string | null },
+    @CurrentTenant() t: TenantContext | null,
+  ) {
+    return canSeeCatalogCosts(t?.roleName) ? (line.professionalCost ?? null) : null;
+  }
+
+  @ResolveField('hasCommissionRule')
+  hasCommissionRule(
+    @Parent() line: { hasCommissionRule?: boolean | null },
+    @CurrentTenant() t: TenantContext | null,
+  ) {
+    return canSeeCatalogCosts(t?.roleName) ? (line.hasCommissionRule ?? null) : null;
+  }
+}

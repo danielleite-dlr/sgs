@@ -19,8 +19,9 @@ export const PackagesQuery = gql`
           id
           name
           basePrice
-          costPrice
         }
+        professionalCost
+        hasCommissionRule
       }
       costItems {
         id
@@ -55,8 +56,9 @@ export const CreatePackageMutation = gql`
             id
             name
             basePrice
-            costPrice
           }
+          professionalCost
+          hasCommissionRule
         }
         costItems {
           id
@@ -95,8 +97,9 @@ export const UpdatePackageMutation = gql`
             id
             name
             basePrice
-            costPrice
           }
+          professionalCost
+          hasCommissionRule
         }
         costItems {
           id
@@ -148,8 +151,10 @@ export interface PackageServiceItem {
     id: string;
     name: string;
     basePrice: string;
-    costPrice?: string | null;
   };
+  /** Repasse à profissional (comissão × qtd). null para quem não edita o catálogo. */
+  professionalCost?: string | null;
+  hasCommissionRule?: boolean | null;
 }
 
 export interface PackageCostItem {

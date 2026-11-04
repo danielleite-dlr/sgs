@@ -46,7 +46,6 @@ interface ServiceRow {
   categoryId: string;
   categoryName: string;
   basePrice: string;
-  costPrice: string | null;
   defaultDurationMinutes: number;
   coverImageUrl: string | null;
   variantCount: number;
@@ -102,7 +101,6 @@ export function ServicosPage() {
       categoryId: s.categoryId,
       categoryName: s.category?.name ?? '—',
       basePrice: s.basePrice,
-      costPrice: s.costPrice ?? null,
       defaultDurationMinutes: s.defaultDurationMinutes,
       coverImageUrl: s.coverImageUrl ?? null,
       variantCount: s.pricingVariants?.length ?? 0,
@@ -111,7 +109,6 @@ export function ServicosPage() {
         name: s.name,
         categoryId: s.categoryId,
         basePrice: s.basePrice,
-        costPrice: s.costPrice ?? null,
         defaultDurationMinutes: s.defaultDurationMinutes,
         pricingVariants: (s.pricingVariants ?? []).map((v) => ({
           name: v.name,
@@ -122,7 +119,6 @@ export function ServicosPage() {
       },
     }));
   }, [data]);
-  const showCost = rows.some((r) => r.costPrice != null);
 
   async function handleDelete(row: ServiceRow) {
     const res = await softDelete({ variables: { input: { id: row.id } } });
@@ -196,20 +192,6 @@ export function ServicosPage() {
               </span>
             ),
           },
-          // Custo só chega para quem edita o catálogo (ADMIN/MANAGER)
-          ...(showCost
-            ? [
-                {
-                  key: 'costPrice' as const,
-                  header: 'Custo',
-                  cell: (r: ServiceRow) => (
-                    <span className="text-neutral-500">
-                      {r.costPrice != null ? formatBRL(r.costPrice) : '—'}
-                    </span>
-                  ),
-                },
-              ]
-            : []),
           {
             key: 'duration',
             header: t('catalog.servico.table.duration'),

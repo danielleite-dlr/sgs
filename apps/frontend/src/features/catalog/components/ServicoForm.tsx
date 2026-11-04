@@ -89,17 +89,6 @@ const schema = z.object({
   name: z.string().min(2, 'Digite um nome válido.'),
   categoryId: z.string().min(1, 'Selecione uma categoria.'),
   basePrice: priceSchema,
-  // Custo do serviço para o salão (opcional; vazio = 0)
-  costPrice: z
-    .string()
-    .refine(
-      (v) => {
-        if (!v) return true;
-        const n = Number(unmaskCurrency(v));
-        return !Number.isNaN(n) && n >= 0;
-      },
-      { message: 'Custo inválido.' },
-    ),
   defaultDurationMinutes: z.coerce.number().int().positive('Duração inválida.'),
   pricingVariants: z.array(variantSchema).default([]),
 });
@@ -113,7 +102,6 @@ export interface ServicoFormInitial {
   name: string;
   categoryId: string;
   basePrice: string;
-  costPrice?: string | null;
   defaultDurationMinutes: number;
   pricingVariants: Array<{
     name: string;
@@ -187,7 +175,6 @@ export function ServicoForm({
           name: initial.name,
           categoryId: initial.categoryId,
           basePrice: formatCurrencyDisplay(initial.basePrice),
-          costPrice: initial.costPrice ? formatCurrencyDisplay(initial.costPrice) : '',
           defaultDurationMinutes: initial.defaultDurationMinutes,
           pricingVariants: initial.pricingVariants.map((v) => ({
             name: v.name,
@@ -201,7 +188,6 @@ export function ServicoForm({
           name: '',
           categoryId: '',
           basePrice: '',
-          costPrice: '',
           defaultDurationMinutes: 60,
           pricingVariants: [],
         },
@@ -233,7 +219,6 @@ export function ServicoForm({
         name: values.name,
         categoryId: values.categoryId,
         basePrice: unmaskCurrency(values.basePrice),
-        costPrice: values.costPrice ? unmaskCurrency(values.costPrice) : '0',
         defaultDurationMinutes: values.defaultDurationMinutes,
         pricingVariants: values.pricingVariants.map((v) => ({
           name: v.name,
@@ -421,31 +406,6 @@ export function ServicoForm({
               )}
             />
           </div>
-
-          {/* Custo do serviço para o salão — entra no lucro dos pacotes */}
-          <FormField
-            control={form.control}
-            name="costPrice"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Custo para o salão</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="0,00"
-                    inputMode="numeric"
-                    aria-label="Custo do serviço em reais"
-                    onChange={(e) => field.onChange(maskCurrency(e.target.value))}
-                  />
-                </FormControl>
-                <p className="text-xs text-neutral-500">
-                  Quanto o serviço custa ao salão (profissional, material). Usado
-                  no cálculo de lucro dos pacotes; não aparece para a cliente.
-                </p>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
           {/* Separator before pricing variants section */}
           <Separator />
