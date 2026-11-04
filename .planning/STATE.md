@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 Phase: 04 (bridal-contracts) — EXECUTING
 Plan: 5 of 16 (Wave 1 concluída: 04-01..04-04)
 Status: Executing Phase 04
-Last activity: 2026-11-04 -- Phase 04 execution started
+Last activity: 2026-11-04 -- 04-06 concluído (núcleo do contrato)
 
 Progress: [██████████] 100% (Phase 1 of 5)
 

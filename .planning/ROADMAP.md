@@ -183,7 +183,7 @@ Plans:
 - [x] 04-03-ai-schedule-core-tdd-PLAN.md — TDD: schema da proposta, validador de conflitos e heurística determinística
 - [x] 04-04-frontend-notifications-foundation-PLAN.md — Sino de notificações (D-24), permissões de noivas, páginas-casca e rota pública /aceite
 - [ ] 04-05-backend-bridal-groups-PLAN.md — CRUD de grupos de noivas (noiva + acompanhantes, cobertura, serviços, local)
-- [ ] 04-06-backend-contracts-core-PLAN.md — Entrada no pacote, configurações, contrato com versões/hash, código CT, link de aceite, status derivado
+- [x] 04-06-backend-contracts-core-PLAN.md — Entrada no pacote, configurações, contrato com versões/hash, código CT, link de aceite, status derivado
 - [ ] 04-07-backend-comanda-coverage-dashboard-PLAN.md — Abatimento do contrato na comanda (D-08) e Faturado sem dupla contagem (D-14/D-25)
 - [ ] 04-08-backend-bridal-schedule-PLAN.md — Agenda do evento (agendamentos reais, cobertura, sinal, deslocamento, teste, cancelamento do grupo)
 - [ ] 04-09-public-acceptance-pdf-PLAN.md — Aceite público com rate limit/trustProxy, PDF e página pública
