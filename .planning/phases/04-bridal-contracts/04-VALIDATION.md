@@ -39,7 +39,7 @@ created: 2026-11-03
 
 > Mapa por requisito/comportamento, com os planos que o cobrem (coluna Planos).
 
-| Req / Decisão | Comportamento | Planos | Test Type | Automated Command | File Exists | Status |
+| Req / Decisão | Comportamento | Test Type | Planos | Automated Command | File Exists | Status |
 |---------------|---------------|-----------|--------|-------------------|-------------|--------|
 | CLI-03 | Grupo com noiva + 4 acompanhantes (cliente mínima), 1 noiva por grupo, unicidade de membro | integração | 04-05 | `corepack pnpm --filter @sgs/backend test:integration -- phase4-bridal-group` | ✅ | ✅ green |
 | CLI-03 / D-03 | Evento cria N agendamentos + 1 comanda/pessoa; conflito → `SLOT_TAKEN`; concorrência de 2 grupos | integração | 04-08 | `... test:integration -- phase4-bridal-schedule` | ✅ | ✅ green |
