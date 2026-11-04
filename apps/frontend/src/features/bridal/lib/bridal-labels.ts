@@ -14,6 +14,14 @@ export const GROUP_STATUS_LABEL: Record<string, string> = {
   cancelled: 'Cancelado',
 };
 
+export const CONTRACT_STATUS_LABEL: Record<string, string> = {
+  draft: 'Rascunho',
+  awaiting_acceptance: 'Aguardando aceite',
+  active: 'Ativo',
+  completed: 'Concluído',
+  cancelled: 'Cancelado',
+};
+
 export const PURPOSE_LABEL: Record<string, string> = {
   event: 'Evento',
   trial: 'Teste',

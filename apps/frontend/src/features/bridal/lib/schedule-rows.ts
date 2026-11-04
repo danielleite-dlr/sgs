@@ -1,5 +1,5 @@
 import type { AiScheduleSuggestion } from '../api/ai-schedule.api';
-import type { BridalScheduleItemInput } from '../api/bridal.api';
+import type { BridalDepositInput, BridalScheduleItemInput } from '../api/bridal.api';
 
 export const SALON_TZ = 'America/Sao_Paulo';
 
@@ -11,6 +11,10 @@ export interface ScheduleRow {
   serviceId: string;
   serviceName: string;
   professionalId: string;
+  /** Nome exibido quando a lista de habilitados ainda não carregou. */
+  professionalName?: string;
+  /** Duração planejada (linhas montadas à mão começam sem horário). */
+  durationMinutes?: number;
   /** 'YYYY-MM-DD' no fuso do salão */
   date: string;
   /** 'HH:MM' */
@@ -67,6 +71,7 @@ export function suggestionToRows(s: AiScheduleSuggestion, tz: string = SALON_TZ)
       serviceId: it.serviceId,
       serviceName: it.serviceName,
       professionalId: it.professionalId,
+      professionalName: it.professionalName,
       date: a.date,
       start: a.time,
       end: b.time,
@@ -118,6 +123,29 @@ export function findRowConflicts(rows: ScheduleRow[]): Map<number, number[]> {
         add(i, j);
         add(j, i);
       }
+    }
+  }
+  return out;
+}
+
+export interface DepositDraft {
+  groupMemberId: string;
+  amount: string;
+  method: string;
+}
+
+/** Linhas completas: profissional e horários preenchidos. */
+export function isRowComplete(r: ScheduleRow): boolean {
+  return r.professionalId !== '' && /^\d{2}:\d{2}$/.test(r.start) && /^\d{2}:\d{2}$/.test(r.end);
+}
+
+/** Sinais preenchidos viram input; valores inválidos são ignorados. */
+export function depositsToInput(deposits: DepositDraft[]): BridalDepositInput[] {
+  const out: BridalDepositInput[] = [];
+  for (const d of deposits) {
+    const normalized = d.amount.trim().replace(',', '.');
+    if (normalized && Number(normalized) > 0) {
+      out.push({ groupMemberId: d.groupMemberId, amount: Number(normalized).toFixed(2), method: d.method });
     }
   }
   return out;
