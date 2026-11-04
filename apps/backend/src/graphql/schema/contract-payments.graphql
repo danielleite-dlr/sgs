@@ -1,0 +1,39 @@
+input ContractPaymentLineInput {
+  method: String!
+  amount: String!
+}
+
+input RecordContractPaymentInput {
+  contractId: UUID!
+  lines: [ContractPaymentLineInput!]!
+  note: String
+}
+
+input ReverseContractPaymentInput {
+  paymentId: UUID!
+  reason: String!
+}
+
+input CancelContractInput {
+  contractId: UUID!
+  party: String!
+  reason: String!
+  refundMethod: String
+}
+
+type ContractCancellationPreview {
+  paid: String!
+  retained: String!
+  refund: String!
+  party: String!
+}
+
+extend type Query {
+  contractCancellationPreview(contractId: UUID!, party: String!): ContractCancellationPreview!
+}
+
+extend type Mutation {
+  recordContractPayment(input: RecordContractPaymentInput!): ContractPayload!
+  reverseContractPayment(input: ReverseContractPaymentInput!): ContractPayload!
+  cancelContract(input: CancelContractInput!): ContractPayload!
+}
