@@ -1,0 +1,97 @@
+type BridalGroup {
+  id: UUID!
+  name: String!
+  eventDate: String!
+  readyBy: DateTime
+  locationKind: String!
+  locationAddress: String
+  travelMinutesBefore: Int!
+  travelMinutesAfter: Int!
+  status: String!
+  notes: String
+  cancelReason: String
+  members: [BridalGroupMember!]!
+  contractId: UUID
+  contractCode: String
+  contractStatus: String
+  appointmentCount: Int!
+  createdAt: DateTime!
+}
+
+type BridalGroupMember {
+  id: UUID!
+  clientId: UUID!
+  clientName: String!
+  clientPhone: String
+  role: String!
+  relationLabel: String
+  coveredByContract: Boolean!
+  services: [BridalMemberService!]!
+  hasClosedComanda: Boolean!
+}
+
+type BridalMemberService {
+  id: UUID!
+  serviceId: UUID!
+  serviceName: String!
+  durationMinutes: Int!
+  purpose: String!
+}
+
+input BridalGroupFieldsInput {
+  name: String!
+  eventDate: String!
+  readyBy: DateTime
+  locationKind: String
+  locationAddress: String
+  travelMinutesBefore: Int
+  travelMinutesAfter: Int
+  notes: String
+}
+
+input BridalNewClientInput {
+  fullName: String!
+  phone: String
+}
+
+input BridalMemberServiceInput {
+  serviceId: UUID!
+  purpose: String
+}
+
+input BridalPersonInput {
+  clientId: UUID
+  newClient: BridalNewClientInput
+  relationLabel: String
+  coveredByContract: Boolean
+  services: [BridalMemberServiceInput!]
+}
+
+input CreateBridalGroupInput {
+  group: BridalGroupFieldsInput!
+  bride: BridalPersonInput!
+  companions: [BridalPersonInput!]
+}
+
+type BridalGroupPayload {
+  group: BridalGroup
+  errors: [UserError!]!
+}
+
+extend type Query {
+  "from/to = datas YYYY-MM-DD do evento (inclusivas)"
+  bridalGroups(status: String, from: String, to: String): [BridalGroup!]!
+  bridalGroup(id: UUID!): BridalGroup
+}
+
+extend type Mutation {
+  createBridalGroup(input: CreateBridalGroupInput!): BridalGroupPayload!
+  updateBridalGroup(id: UUID!, input: BridalGroupFieldsInput!): BridalGroupPayload!
+  addBridalGroupMember(groupId: UUID!, person: BridalPersonInput!): BridalGroupPayload!
+  removeBridalGroupMember(memberId: UUID!): BridalGroupPayload!
+  setBridalMemberCoverage(memberId: UUID!, covered: Boolean!): BridalGroupPayload!
+  setBridalMemberServices(
+    memberId: UUID!
+    services: [BridalMemberServiceInput!]!
+  ): BridalGroupPayload!
+}
