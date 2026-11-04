@@ -126,6 +126,11 @@ services:
       # Sem Resend configurado, o link de verificação só sairia no log; a conta
       # nasce verificada e o signup já devolve sessão. Nunca ligar em produção.
       AUTH_SKIP_EMAIL_VERIFICATION: ${AUTH_SKIP_EMAIL_VERIFICATION:-false}
+      # Fase 4 — sem ANTHROPIC_API_KEY a sugestão de agenda usa a heurística
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-5-5}
+      AI_SCHEDULE_DAILY_LIMIT: ${AI_SCHEDULE_DAILY_LIMIT:-20}
+      CONTRACT_ALERTS_SCHEDULER: ${CONTRACT_ALERTS_SCHEDULER:-true}
     ports:
       - "127.0.0.1:${STG_BACKEND_PORT:-3010}:3000"
     depends_on:
