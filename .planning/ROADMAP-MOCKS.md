@@ -215,7 +215,7 @@ Os dois já estão registrados como blockers em `STATE.md` e têm prazo fora da 
 - Alertas de parcela vencida/vencendo — **primeiro uso real do BullMQ**, que hoje está registrado com zero filas.
 - `AI-01`: sugestão de alocação de profissionais via Claude API.
 
-**Flags a ligar:** `noivas`, `contratos`
+**Flags a ligar:** `noivas`, `contratos` — **religadas em 04-15** (telas reais 04-13/04-14).
 **Tamanho:** 4–5 planos (~2,5 semanas).
 
 ---

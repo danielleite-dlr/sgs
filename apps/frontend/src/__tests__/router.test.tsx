@@ -65,7 +65,7 @@ describe('router phase 2', () => {
     }
   });
 
-  it.each(['/financeiro/caixa', '/noivas', '/contratos', '/campanhas', '/relatorios', '/configuracoes'])(
+  it.each(['/financeiro/caixa', '/campanhas', '/relatorios', '/configuracoes'])(
     'does not register mocked route %s',
     (path) => {
       const paths = appRouter.routes
@@ -74,6 +74,13 @@ describe('router phase 2', () => {
       expect(paths).not.toContain(path);
     },
   );
+
+  it.each(['/noivas', '/contratos'])('registers the real route %s (flag ligada em 04-15)', (path) => {
+    const paths = appRouter.routes
+      .flatMap((r) => r.children ?? [])
+      .map((c) => c.path);
+    expect(paths).toContain(path);
+  });
 
   it('public route /login does NOT render AppShell sidebar', () => {
     useAuthStore.setState({

@@ -38,10 +38,10 @@ const FLAGS = {
   relatorios: false,
   /** Configurações — lista de links; nenhum destino existe. */
   configuracoes: false,
-  /** Grupos de noivas — páginas-casca até 04-13 (ligar em 04-15). */
-  noivas: false,
-  /** Contratos de evento — páginas-casca até 04-14 (ligar em 04-15). */
-  contratos: false,
+  /** Grupos de noivas — backend real 04-05/04-08/04-12. */
+  noivas: true,
+  /** Contratos — backend real 04-06/04-09/04-10/04-11. */
+  contratos: true,
   /** Campanhas de comunicação — `mocks/communication.mock.ts`. */
   campanhas: false,
   /** Painel mínimo do sino (04-04): contador, lista, marcar lida. */
