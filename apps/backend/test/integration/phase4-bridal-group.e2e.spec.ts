@@ -13,7 +13,7 @@ import { deletePhase3Rows } from './helpers/phase3-cleanup';
 const PAYLOAD = `
   group {
     id name eventDate readyBy locationKind locationAddress travelMinutesBefore travelMinutesAfter
-    status contractId contractCode contractStatus appointmentCount
+    status contractId contractCode contractStatus appointmentCount packageId packageName
     members {
       id clientId clientName clientPhone role relationLabel coveredByContract hasClosedComanda
       services { id serviceId serviceName durationMinutes purpose }
@@ -263,5 +263,88 @@ describe('Phase 4 - grupos de noivas (CLI-03)', () => {
     expect(upd.data.updateBridalGroup.errors).toEqual([]);
     expect(upd.data.updateBridalGroup.group.locationKind).toBe('external');
     expect(upd.data.updateBridalGroup.group.travelMinutesBefore).toBe(60);
+  });
+
+  describe('pacote contratado no grupo', () => {
+    type Svc = { serviceId: string; purpose: string };
+    const brideServices = (g: { members: { role: string; services: Svc[] }[] }) =>
+      g.members
+        .find((m) => m.role === 'bride')!
+        .services.map((s) => `${s.serviceId}:${s.purpose}`)
+        .sort();
+
+    it('cria grupo com pacote e preenche os serviços da noiva sem duplicar', async () => {
+      const r = await admin()(CREATE, {
+        i: {
+          group: fields({ packageId: w.bridalPackageId }),
+          bride: { clientId: w.clientId, services: [{ serviceId: w.serviceId }] },
+        },
+      });
+      const p = r.data.createBridalGroup;
+      expect(p.errors).toEqual([]);
+      expect(p.group.packageId).toBe(w.bridalPackageId);
+      expect(p.group.packageName).toBe('p4bg-pacote-noiva');
+      expect(brideServices(p.group)).toEqual(
+        [`${w.serviceId}:event`, `${w.serviceBId}:event`].sort(),
+      );
+    });
+
+    it('definir o pacote no update adiciona só os serviços que faltam', async () => {
+      const g = (await createFull()).group;
+      expect(g.packageId).toBeNull();
+      const r = await admin()(UPDATE, { id: g.id, i: fields({ packageId: w.bridalPackageId }) });
+      const p = r.data.updateBridalGroup;
+      expect(p.errors).toEqual([]);
+      expect(p.group.packageName).toBe('p4bg-pacote-noiva');
+      expect(brideServices(p.group)).toEqual(
+        [`${w.serviceId}:event`, `${w.serviceBId}:event`, `${w.serviceBId}:trial`].sort(),
+      );
+    });
+
+    it('rejeita pacote inexistente, excluído ou de outra organização', async () => {
+      const g = (await createFull()).group;
+      const deleted = await adminPrisma.package.create({
+        data: {
+          organizationId: w.orgId,
+          name: 'p4bg-pacote-excluido',
+          price: '100.00',
+          deletedAt: new Date(),
+        },
+      });
+      const foreign = await adminPrisma.package.create({
+        data: { organizationId: w.otherOrgId, name: 'p4bg-pacote-outra-org', price: '100.00' },
+      });
+      try {
+        for (const packageId of [
+          '01900000-0000-7000-8000-000000000000',
+          deleted.id,
+          foreign.id,
+        ]) {
+          const r = await admin()(UPDATE, { id: g.id, i: fields({ packageId }) });
+          const p = r.data.updateBridalGroup;
+          expect(p.group).toBeNull();
+          expect(p.errors[0]).toMatchObject({ code: 'PACKAGE_NOT_FOUND', field: 'packageId' });
+        }
+        const row = await adminPrisma.bridalGroup.findUniqueOrThrow({ where: { id: g.id } });
+        expect(row.packageId).toBeNull();
+      } finally {
+        await adminPrisma.package.deleteMany({ where: { id: { in: [deleted.id, foreign.id] } } });
+      }
+    });
+
+    it('null limpa o pacote (mantendo os serviços) e omitir mantém', async () => {
+      const g = (await createFull()).group;
+      await admin()(UPDATE, { id: g.id, i: fields({ packageId: w.bridalPackageId }) });
+      const kept = (await admin()(UPDATE, { id: g.id, i: fields({ name: 'Outro nome' }) })).data
+        .updateBridalGroup;
+      expect(kept.errors).toEqual([]);
+      expect(kept.group.packageId).toBe(w.bridalPackageId);
+      const cleared = (await admin()(UPDATE, { id: g.id, i: fields({ packageId: null }) })).data
+        .updateBridalGroup;
+      expect(cleared.errors).toEqual([]);
+      expect(cleared.group.packageId).toBeNull();
+      expect(cleared.group.packageName).toBeNull();
+      expect(brideServices(cleared.group)).toHaveLength(3);
+    });
   });
 });

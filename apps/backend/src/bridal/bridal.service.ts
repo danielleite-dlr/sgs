@@ -28,6 +28,8 @@ export interface BridalGroupFieldsInput {
   travelMinutesBefore?: number | null;
   travelMinutesAfter?: number | null;
   notes?: string | null;
+  /** undefined = mantém; null = limpa; string = pacote do catálogo */
+  packageId?: string | null;
 }
 
 export interface BridalMemberServiceInput {
@@ -345,6 +347,62 @@ async function insertMemberTx(
   }
 }
 
+async function validatePackage(
+  tx: TenantPrismaClient,
+  orgId: string,
+  packageId: string,
+): Promise<string> {
+  const pkg = await tx.package.findFirst({
+    where: { id: packageId, organizationId: orgId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!pkg) throw new BridalError('PACKAGE_NOT_FOUND', 'Pacote não encontrado.', 'packageId');
+  return pkg.id;
+}
+
+/**
+ * Adiciona à noiva (como 'event') os serviços do pacote que ela ainda não tem.
+ * Nunca remove serviços; quantity > 1 vira uma linha só (unique por serviço/propósito).
+ * Não aplica MAX_SERVICES_PER_PERSON: a lista vem do catálogo, não de input manual.
+ */
+async function applyPackageToBrideTx(
+  tx: TenantPrismaClient,
+  orgId: string,
+  groupId: string,
+  packageId: string,
+): Promise<void> {
+  const bride = await tx.bridalGroupMember.findFirst({
+    where: { groupId, role: 'bride' },
+    select: { id: true },
+  });
+  if (!bride) return;
+  const pkgServices = await tx.packageService.findMany({
+    where: { packageId, service: { deletedAt: null } },
+    orderBy: { displayOrder: 'asc' },
+    select: { serviceId: true },
+  });
+  const current = await tx.bridalMemberService.findMany({
+    where: { groupMemberId: bride.id },
+    select: { serviceId: true, purpose: true, sortOrder: true },
+  });
+  const hasEvent = new Set(current.filter((c) => c.purpose === 'event').map((c) => c.serviceId));
+  const missing = [...new Set(pkgServices.map((s) => s.serviceId))].filter(
+    (id) => !hasEvent.has(id),
+  );
+  if (missing.length === 0) return;
+  const maxSort = current.reduce((m, c) => Math.max(m, c.sortOrder), -1);
+  await tx.bridalMemberService.createMany({
+    data: missing.map((serviceId, i) => ({
+      organizationId: orgId,
+      groupMemberId: bride.id,
+      serviceId,
+      purpose: 'event',
+      sortOrder: maxSort + 1 + i,
+    })),
+    skipDuplicates: true,
+  });
+}
+
 @Injectable()
 export class BridalService {
   constructor(private readonly tenant: TenantContextService) {}
@@ -378,12 +436,16 @@ export class BridalService {
         );
       }
       const fields = await validateGroupFields(tx, input.group);
+      const packageId = input.group.packageId
+        ? await validatePackage(tx, orgId, input.group.packageId)
+        : null;
       const group = await tx.bridalGroup.create({
-        data: { organizationId: orgId, ...fields, createdBy: memberId },
+        data: { organizationId: orgId, ...fields, packageId, createdBy: memberId },
         select: { id: true },
       });
       const used = new Set<string>();
       await insertMemberTx(tx, orgId, group.id, 'bride', 0, input.bride, used);
+      if (packageId) await applyPackageToBrideTx(tx, orgId, group.id, packageId);
       let order = 1;
       for (const c of companions) {
         await insertMemberTx(tx, orgId, group.id, 'companion', order++, c, used);
@@ -404,15 +466,29 @@ export class BridalService {
       const fields = await validateGroupFields(tx, input);
       const before = await tx.bridalGroup.findFirstOrThrow({
         where: { id },
-        select: { locationKind: true, travelMinutesBefore: true, travelMinutesAfter: true },
+        select: {
+          locationKind: true,
+          travelMinutesBefore: true,
+          travelMinutesAfter: true,
+          packageId: true,
+        },
       });
-      await tx.bridalGroup.update({ where: { id }, data: fields });
+      // packageId tratado à parte para preservar a semântica omitido (mantém) x null (limpa)
+      let packageId = before.packageId;
+      if (input.packageId === null) packageId = null;
+      else if (input.packageId !== undefined) {
+        packageId = await validatePackage(tx, orgId, input.packageId);
+      }
+      await tx.bridalGroup.update({ where: { id }, data: { ...fields, packageId } });
       if (
         before.locationKind !== fields.locationKind ||
         before.travelMinutesBefore !== fields.travelMinutesBefore ||
         before.travelMinutesAfter !== fields.travelMinutesAfter
       ) {
         await rebuildTravelBlocksTx(tx, orgId, memberId, id);
+      }
+      if (packageId && packageId !== before.packageId) {
+        await applyPackageToBrideTx(tx, orgId, id, packageId);
       }
       await syncContractCoverageTx(tx, orgId, id);
       return id;

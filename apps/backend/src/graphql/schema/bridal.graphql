@@ -14,6 +14,9 @@ type BridalGroup {
   contractId: UUID
   contractCode: String
   contractStatus: String
+  "Pacote contratado pela noiva (o nome continua visível mesmo se o pacote for excluído)."
+  packageId: UUID
+  packageName: String
   appointmentCount: Int!
   appointments: [BridalAppointment!]!
   createdAt: DateTime!
@@ -48,6 +51,8 @@ input BridalGroupFieldsInput {
   travelMinutesBefore: Int
   travelMinutesAfter: Int
   notes: String
+  "Pacote contratado. Omitido = mantém o atual; null = sem pacote. Os serviços do pacote entram na noiva."
+  packageId: UUID
 }
 
 input BridalNewClientInput {

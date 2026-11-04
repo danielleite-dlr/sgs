@@ -2,6 +2,7 @@ import type { Prisma } from '@prisma/client';
 
 // 'bride' < 'companion' em ordem alfabética: noiva primeiro, depois por sort_order.
 export const BRIDAL_GROUP_INCLUDE = {
+  package: { select: { id: true, name: true } },
   members: {
     orderBy: [{ role: 'asc' }, { sortOrder: 'asc' }],
     include: {
@@ -55,6 +56,9 @@ export function serializeBridalGroup(row: BridalGroupRow, extras: BridalGroupExt
     contractId: extras.contract?.id ?? null,
     contractCode: extras.contract?.code ?? null,
     contractStatus: extras.contract?.status ?? null,
+    // pacote soft-deleted continua com o nome: é o histórico do que foi contratado
+    packageId: row.packageId,
+    packageName: row.package?.name ?? null,
     appointmentCount: extras.appointmentCount,
     createdAt: row.createdAt,
     appointments: (extras.appointments ?? []).map((a) => ({

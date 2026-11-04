@@ -351,6 +351,7 @@ model Package {
   comandaItems  ComandaItem[]
   contracts     Contract[]
   contractItems ContractItem[]
+  bridalGroups  BridalGroup[]
 
   @@index([organizationId], name: "ix_packages_org")
   @@map("packages")
@@ -800,12 +801,15 @@ model BridalGroup {
   notes               String?   @db.Text
   cancelledAt         DateTime? @map("cancelled_at") @db.Timestamptz(6)
   cancelReason        String?   @map("cancel_reason") @db.Text
+  /// Pacote contratado pela noiva (opcional; soft delete do pacote mantém o vínculo).
+  packageId           String?   @map("package_id") @db.Uuid
   createdBy           String?   @map("created_by") @db.Uuid
   createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   organization    Organization           @relation(fields: [organizationId], references: [id])
   createdByMember Member?                @relation("BridalGroupCreatedBy", fields: [createdBy], references: [id])
+  package         Package?               @relation(fields: [packageId], references: [id], onDelete: SetNull)
   members         BridalGroupMember[]
   contracts       Contract[]
   appointments    Appointment[]
@@ -813,6 +817,7 @@ model BridalGroup {
   suggestions     AiScheduleSuggestion[]
 
   @@index([organizationId, eventDate], name: "ix_bg_org_event")
+  @@index([packageId], name: "ix_bg_package")
   @@map("bridal_groups")
 }
 
