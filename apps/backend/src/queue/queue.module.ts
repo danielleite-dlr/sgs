@@ -19,8 +19,9 @@ import { AppConfigService } from '../config/app-config.service';
           connection: {
             host: url.hostname,
             port: Number(url.port) || 6379,
-            // Valkey 8 is Redis 7.2 binary-compatible; no auth in dev
-            // Production adds password via REDIS_URL credentials
+            // Credenciais opcionais via REDIS_URL (redis://[user]:senha@host:porta)
+            username: url.username ? decodeURIComponent(url.username) : undefined,
+            password: url.password ? decodeURIComponent(url.password) : undefined,
           },
           defaultJobOptions: {
             attempts: 3,
