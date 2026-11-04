@@ -30,7 +30,7 @@
 
 - [x] **CLI-01**: Atendente consegue criar e editar perfil de cliente com CPF, contatos, data de aniversário e observações
 - [x] **CLI-02**: Atendente consegue visualizar histórico completo de atendimentos, produtos consumidos e comandas do cliente
-- [ ] **CLI-03**: Proprietário consegue criar grupo de noivas associando noiva principal + acompanhantes para o mesmo evento
+- [x] **CLI-03**: Proprietário consegue criar grupo de noivas associando noiva principal + acompanhantes para o mesmo evento
 
 ### Agendamento
 
@@ -54,7 +54,7 @@
 ### Contratos / Noivas
 
 - [ ] **CONT-01**: Proprietário consegue criar contrato de evento para grupo de noivas com valor total, parcelamento e datas de vencimento
-- [ ] **CONT-02**: Sistema rastreia status de cada parcela e alerta sobre vencimentos próximos e atrasos
+- [x] **CONT-02**: Sistema rastreia status de cada parcela e alerta sobre vencimentos próximos e atrasos
 - [ ] **CONT-03**: Contrato suporta política de cancelamento configurável com regras de retenção de valor
 
 ### Comunicação
@@ -133,7 +133,7 @@
 | CAT-04 | Phase 2 | Complete |
 | CLI-01 | Phase 2 | Complete |
 | CLI-02 | Phase 2 | Complete |
-| CLI-03 | Phase 4 | Pending |
+| CLI-03 | Phase 4 | Complete |
 | SCHED-01 | Phase 3 | Complete |
 | SCHED-02 | Phase 3 | Complete |
 | SCHED-03 | Phase 3 | Complete |
@@ -145,7 +145,7 @@
 | FIN-02 | Phase 3 | Complete |
 | FIN-03 | Phase 5 | Pending |
 | CONT-01 | Phase 4 | Pending |
-| CONT-02 | Phase 4 | Pending |
+| CONT-02 | Phase 4 | Complete |
 | CONT-03 | Phase 4 | Pending |
 | COMM-01 | Phase 5 | Pending |
 | COMM-02 | Phase 5 | Pending |
