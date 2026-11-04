@@ -118,6 +118,84 @@ describe('Fase 4 - núcleo do contrato da noiva', () => {
     expect(c.items[0].description).toContain('pacote');
   });
 
+  describe('pacote com serviços sem preço avulso', () => {
+    /** cria serviços de preço 0 + pacote; apaga tudo no fim (o afterEach só limpa a Fase 4). */
+    const created = { services: [] as string[], packages: [] as string[], rules: [] as string[] };
+    const zeroService = async (name: string) => {
+      const s = await adminPrisma.service.create({
+        data: {
+          organizationId: w.orgId,
+          categoryId: w.childCategoryId,
+          name: `p4core-${name}-${Date.now()}`,
+          basePrice: '0.00',
+          defaultDurationMinutes: 60,
+        },
+      });
+      created.services.push(s.id);
+      return s.id;
+    };
+    const fixedRule = async (serviceId: string, value: string) => {
+      const r = await adminPrisma.commissionRule.create({
+        data: { organizationId: w.orgId, scopeType: 'service', serviceId, kind: 'fixed', value },
+      });
+      created.rules.push(r.id);
+    };
+    const mkPackage = async (price: string, serviceIds: string[]) => {
+      const p = await adminPrisma.package.create({
+        data: {
+          organizationId: w.orgId,
+          name: `p4core-pacote-zero-${Date.now()}`,
+          price,
+          depositKind: 'percent',
+          depositValue: '30.00',
+          services: {
+            create: serviceIds.map((serviceId, i) => ({ serviceId, quantity: 1, displayOrder: i })),
+          },
+        },
+      });
+      created.packages.push(p.id);
+      return p.id;
+    };
+    const cents = (items: Array<{ total: string }>) => items.map((i) => Math.round(Number(i.total) * 100));
+
+    afterEach(async () => {
+      await deletePhase4Rows(orgFilter);
+      await adminPrisma.commissionRule.deleteMany({ where: { id: { in: created.rules } } });
+      await adminPrisma.packageService.deleteMany({ where: { packageId: { in: created.packages } } });
+      await adminPrisma.package.deleteMany({ where: { id: { in: created.packages } } });
+      await adminPrisma.service.deleteMany({ where: { id: { in: created.services } } });
+      created.services = [];
+      created.packages = [];
+      created.rules = [];
+    });
+
+    it('itens da noiva rateados pelo repasse', async () => {
+      const make = await zeroService('maquiagem');
+      const hair = await zeroService('penteado');
+      await fixedRule(make, '120.00');
+      await fixedRule(hair, '80.00');
+      const pkg = await mkPackage('2800.00', [make, hair]);
+      const grp = await insertBridalGroupRow(w, { companions: 0, eventDate });
+      const r = await gqlAs(w, w.tokens.admin)(CREATE, { input: { groupId: grp.groupId, packageId: pkg } });
+      expect(r.data.createContract.errors).toEqual([]);
+      const items = r.data.createContract.contract.items;
+      expect(items.map((i: { unitPrice: string }) => i.unitPrice)).toEqual(['1680.00', '1120.00']);
+      expect(items.map((i: { total: string }) => i.total)).toEqual(['1680.00', '1120.00']);
+      expect(cents(items).reduce((a, b) => a + b, 0)).toBe(280000);
+    });
+
+    it('sem repasse divide igual, com o resto na última', async () => {
+      const ids = [await zeroService('s1'), await zeroService('s2'), await zeroService('s3')];
+      const pkg = await mkPackage('100.00', ids);
+      const grp = await insertBridalGroupRow(w, { companions: 0, eventDate });
+      const r = await gqlAs(w, w.tokens.admin)(CREATE, { input: { groupId: grp.groupId, packageId: pkg } });
+      expect(r.data.createContract.errors).toEqual([]);
+      const items = r.data.createContract.contract.items;
+      expect(items.map((i: { total: string }) => i.total)).toEqual(['33.33', '33.33', '33.34']);
+      expect(cents(items).reduce((a, b) => a + b, 0)).toBe(10000);
+    });
+  });
+
   describe('pacote do contrato vale para o grupo', () => {
     const groupPackage = async (groupId: string) =>
       (await adminPrisma.bridalGroup.findUniqueOrThrow({ where: { id: groupId } })).packageId;

@@ -3,10 +3,10 @@ import { parseMoneyInput, fromCents } from '../../common/money';
 import { TenantContextService } from '../../database/tenant-context.service';
 import {
   computePackageCosts,
+  loadCostContext,
   professionalCostCents,
   type CostContext,
 } from '../catalog-costs';
-import type { RuleLite } from '../../financial/commission-resolver';
 import {
   CreatePackageInput,
   PackageCostItemInput,
@@ -127,30 +127,6 @@ function toPackageView(pkg: any, ctx: CostContext) {
       costItems,
     }),
   });
-}
-
-/** Comissões ativas + mapa de categorias (filha -> pai) para o repasse. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function loadCostContext(tx: any): Promise<CostContext> {
-  const [ruleRows, cats] = await Promise.all([
-    tx.commissionRule.findMany({ where: { deletedAt: null } }),
-    tx.category.findMany({ select: { id: true, parentId: true } }),
-  ]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rules: RuleLite[] = ruleRows.map((r: any) => ({
-    id: r.id,
-    scopeType: r.scopeType,
-    kind: r.kind,
-    value: r.value.toString(),
-    memberId: r.memberId,
-    serviceId: r.serviceId,
-    categoryId: r.categoryId,
-    productId: r.productId,
-    deletedAt: r.deletedAt,
-  }));
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const parents = new Map<string, string | null>(cats.map((c: any) => [c.id, c.parentId]));
-  return { rules, parents };
 }
 
 type CostItemsResult =

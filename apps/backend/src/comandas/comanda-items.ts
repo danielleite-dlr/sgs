@@ -1,6 +1,11 @@
 import type { Prisma } from '@prisma/client';
 import { fromCents, splitProportional, toCents } from '../common/money';
 import type { TenantPrismaClient } from '../database/types';
+import {
+  loadCostContext,
+  professionalCostCents,
+  type CostContext,
+} from '../catalog/catalog-costs';
 import { professionalServesCategory } from '../identity/member-categories';
 
 /** Erro de regra de negócio da comanda; lançado dentro da transação (ROLLBACK) e traduzido fora. */
@@ -29,6 +34,54 @@ export function prorateUnits(
   packagePriceCents: number,
 ): number[] {
   return splitProportional(listUnitCents, packagePriceCents);
+}
+
+/** Unidade de serviço de um pacote, para o rateio do preço do pacote. */
+export type PackageUnit = {
+  listCents: number;
+  service: {
+    id: string;
+    categoryId: string | null;
+    basePrice: Prisma.Decimal | string | number;
+  };
+};
+
+/**
+ * Pesos do rateio do pacote, nesta ordem:
+ * 1. preço cheio de cada unidade (se algum serviço tem preço avulso);
+ * 2. repasse à profissional (regra de comissão), quando todos têm preço 0;
+ * 3. divisão igual, quando o repasse também é 0 em todas as unidades.
+ */
+export function packageUnitWeights(
+  units: PackageUnit[],
+  ctx: CostContext | null,
+): number[] {
+  if (units.length === 0) return [];
+  if (units.reduce((acc, u) => acc + u.listCents, 0) > 0) {
+    return units.map((u) => u.listCents);
+  }
+  if (ctx) {
+    const costs = units.map(
+      (u) => professionalCostCents(ctx, { quantity: 1, service: u.service }).cents,
+    );
+    if (costs.reduce((acc, c) => acc + c, 0) > 0) return costs;
+  }
+  return units.map(() => 1);
+}
+
+/**
+ * Rateio do preço do pacote entre as unidades (soma exata). Só consulta as
+ * regras de comissão quando nenhum serviço tem preço avulso.
+ */
+export async function prorateServiceUnits(
+  tx: TenantPrismaClient,
+  units: PackageUnit[],
+  packagePriceCents: number,
+): Promise<number[]> {
+  const needsCtx =
+    units.length > 0 && units.reduce((acc, u) => acc + u.listCents, 0) === 0;
+  const ctx = needsCtx ? await loadCostContext(tx) : null;
+  return splitProportional(packageUnitWeights(units, ctx), packagePriceCents);
 }
 
 type ItemInput = Prisma.ComandaItemUncheckedCreateInput;
@@ -241,8 +294,9 @@ export async function expandPackageItems(
     const built = await loadServiceForItem(tx, assignment);
     for (let i = 0; i < line.quantity; i++) units.push({ assignment, built });
   }
-  const charged = prorateUnits(
-    units.map((u) => u.built.listCents),
+  const charged = await prorateServiceUnits(
+    tx,
+    units.map((u) => ({ listCents: u.built.listCents, service: u.built.service })),
     toCents(pkg.price),
   );
   return units.map((u, i) => ({

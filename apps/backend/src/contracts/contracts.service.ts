@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { syncContractCoverageTx } from '../bridal/bridal-coverage';
 import { applyPackageToBrideTx } from '../bridal/bridal-package';
-import { prorateUnits } from '../comandas/comanda-items';
+import { prorateServiceUnits } from '../comandas/comanda-items';
 import { recordAudit } from '../common/audit-log';
 import { fromCents, parseMoneyInput, toCents } from '../common/money';
 import { AppConfigService } from '../config/app-config.service';
@@ -180,8 +180,9 @@ async function buildItems(
     const units = pkg.services.flatMap((ps) =>
       Array.from({ length: ps.quantity }, () => ps.service),
     );
-    const charged = prorateUnits(
-      units.map((s) => toCents(s.basePrice)),
+    const charged = await prorateServiceUnits(
+      tx,
+      units.map((s) => ({ listCents: toCents(s.basePrice), service: s })),
       toCents(pkg.price),
     );
     const brideItems: ItemDraft[] = units.map((s, i) => ({
