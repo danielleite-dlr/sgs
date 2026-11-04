@@ -53,9 +53,9 @@
 
 ### Contratos / Noivas
 
-- [ ] **CONT-01**: Proprietário consegue criar contrato de evento para grupo de noivas com valor total, parcelamento e datas de vencimento
-- [ ] **CONT-02**: Sistema rastreia status de cada parcela e alerta sobre vencimentos próximos e atrasos
-- [ ] **CONT-03**: Contrato suporta política de cancelamento configurável com regras de retenção de valor
+- [x] **CONT-01**: Proprietário consegue criar contrato de evento para grupo de noivas com valor total, parcelamento e datas de vencimento
+- [x] **CONT-02**: Sistema rastreia status de cada parcela e alerta sobre vencimentos próximos e atrasos
+- [x] **CONT-03**: Contrato suporta política de cancelamento configurável com regras de retenção de valor
 
 ### Comunicação
 
@@ -144,9 +144,9 @@
 | FIN-01 | Phase 3 | Complete |
 | FIN-02 | Phase 3 | Complete |
 | FIN-03 | Phase 5 | Pending |
-| CONT-01 | Phase 4 | Pending |
-| CONT-02 | Phase 4 | Pending |
-| CONT-03 | Phase 4 | Pending |
+| CONT-01 | Phase 4 | Complete |
+| CONT-02 | Phase 4 | Complete |
+| CONT-03 | Phase 4 | Complete |
 | COMM-01 | Phase 5 | Pending |
 | COMM-02 | Phase 5 | Pending |
 | AI-01 | Phase 4 | Pending |
