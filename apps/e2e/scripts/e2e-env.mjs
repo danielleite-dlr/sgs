@@ -48,5 +48,9 @@ export function loadE2eEnv() {
     EMAIL_OUTBOX_DIR: OUTBOX_DIR,
     // Nenhum e-mail real sai do E2E.
     RESEND_API_KEY: '',
+    // Fase 4: sem chave => sugestão de agenda por heurística (determinística).
+    ANTHROPIC_API_KEY: '',
+    // Os alertas de contrato são disparados pelo teste (runContractAlertsNow).
+    CONTRACT_ALERTS_SCHEDULER: 'false',
   };
 }

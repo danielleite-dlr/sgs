@@ -29,8 +29,6 @@ describe('feature gating', () => {
       '/financeiro/caixa',
       '/relatorios',
       '/configuracoes/sistema',
-      '/noivas',
-      '/contratos/:id',
       '/campanhas',
       '/profissionais/perfis',
       '/profissionais/ranking',
@@ -39,6 +37,12 @@ describe('feature gating', () => {
       '/agenda?modo=relatorio',
     ]) {
       expect(isPathEnabled(path)).toBe(false);
+    }
+  });
+
+  it('libera noivas e contratos (telas reais, flags ligadas em 04-15)', () => {
+    for (const path of ['/noivas', '/noivas/:id', '/contratos', '/contratos/:id']) {
+      expect(isPathEnabled(path)).toBe(true);
     }
   });
 
