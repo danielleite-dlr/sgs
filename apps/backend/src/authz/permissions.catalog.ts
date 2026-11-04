@@ -55,6 +55,16 @@ export const PERMISSIONS = {
   CREDIT_ADJUST: 'credit.adjust',
   FINANCIAL_READ: 'financial.read',
   COMMISSION_RECORD_READ: 'commissionRecord.read',
+
+  // ===== Phase 4: Bridal & Contracts =====
+  BRIDAL_READ: 'bridal.read',
+  BRIDAL_WRITE: 'bridal.write',
+  BRIDAL_AI_SUGGEST: 'bridal.aiSuggest',
+  CONTRACT_READ: 'contract.read',
+  CONTRACT_WRITE: 'contract.write',
+  CONTRACT_PAYMENT: 'contract.payment',
+  CONTRACT_CANCEL: 'contract.cancel',
+  CONTRACT_SETTINGS: 'contract.settings',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -66,6 +76,7 @@ export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
  * Phase 1: 20260502010000_seed_role_permissions
  * Phase 2: 20260506010000_seed_phase2_permissions
  * Phase 3: 20261101000000_phase3_operations
+ * Phase 4: 20261103000000_phase4_bridal_contracts
  */
 export const ROLE_PERMISSIONS: Record<
   'ADMIN' | 'MANAGER' | 'ATTENDANT' | 'PROFESSIONAL',
@@ -106,6 +117,15 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.CREDIT_ADJUST,
     PERMISSIONS.FINANCIAL_READ,
     PERMISSIONS.COMMISSION_RECORD_READ,
+    // Phase 4 — bridal & contracts
+    PERMISSIONS.BRIDAL_READ,
+    PERMISSIONS.BRIDAL_WRITE,
+    PERMISSIONS.BRIDAL_AI_SUGGEST,
+    PERMISSIONS.CONTRACT_READ,
+    PERMISSIONS.CONTRACT_WRITE,
+    PERMISSIONS.CONTRACT_PAYMENT,
+    PERMISSIONS.CONTRACT_CANCEL,
+    PERMISSIONS.CONTRACT_SETTINGS,
   ],
   MANAGER: [
     // Phase 1
@@ -138,6 +158,14 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.CREDIT_ADJUST,
     PERMISSIONS.FINANCIAL_READ,
     PERMISSIONS.COMMISSION_RECORD_READ,
+    // Phase 4 — bridal & contracts
+    PERMISSIONS.BRIDAL_READ,
+    PERMISSIONS.BRIDAL_WRITE,
+    PERMISSIONS.BRIDAL_AI_SUGGEST,
+    PERMISSIONS.CONTRACT_READ,
+    PERMISSIONS.CONTRACT_WRITE,
+    PERMISSIONS.CONTRACT_PAYMENT,
+    PERMISSIONS.CONTRACT_CANCEL,
   ],
   ATTENDANT: [
     // Phase 1
@@ -158,6 +186,11 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.COMANDA_WRITE,
     PERMISSIONS.COMANDA_CLOSE,
     PERMISSIONS.CREDIT_READ,
+    // Phase 4 — bridal & contracts
+    PERMISSIONS.BRIDAL_READ,
+    PERMISSIONS.BRIDAL_WRITE,
+    PERMISSIONS.CONTRACT_READ,
+    PERMISSIONS.CONTRACT_PAYMENT,
   ],
   PROFESSIONAL: [
     // Phase 1

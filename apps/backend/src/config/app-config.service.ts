@@ -62,6 +62,22 @@ export class AppConfigService {
     return this.config.get('EMAIL_FROM', { infer: true });
   }
 
+  get anthropicApiKey(): string | undefined {
+    return this.config.get('ANTHROPIC_API_KEY', { infer: true });
+  }
+
+  get anthropicModel(): string {
+    return this.config.get('ANTHROPIC_MODEL', { infer: true });
+  }
+
+  get aiScheduleDailyLimit(): number {
+    return this.config.get('AI_SCHEDULE_DAILY_LIMIT', { infer: true });
+  }
+
+  get contractAlertsSchedulerEnabled(): boolean {
+    return this.config.get('CONTRACT_ALERTS_SCHEDULER', { infer: true });
+  }
+
   get frontendUrl(): string {
     return this.config.get('FRONTEND_URL', { infer: true });
   }
