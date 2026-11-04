@@ -1,0 +1,11 @@
+type ContractAlertsRun {
+  ran: Boolean!
+  candidates: Int!
+  created: Int!
+  resolved: Int!
+  emailed: Int!
+}
+
+extend type Mutation {
+  runContractAlertsNow: ContractAlertsRun!
+}
