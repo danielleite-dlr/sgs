@@ -88,6 +88,14 @@ async function loadRow(tx: TenantPrismaClient, orgId: string): Promise<SettingsR
   return rows[0] ?? null;
 }
 
+/** Configuração efetiva (linha da org ou padrões) dentro de uma transação de tenant. */
+export async function loadEffectiveSettings(
+  tx: TenantPrismaClient,
+  orgId: string,
+): Promise<ContractSettingsView> {
+  return toView((await loadRow(tx, orgId)) ?? DEFAULTS);
+}
+
 const timeToDate = (hhmm: string) => new Date(`1970-01-01T${hhmm}:00.000Z`);
 
 function checkInt(v: number, min: number, max: number, field: string): number {
@@ -107,7 +115,7 @@ export class ContractSettingsService {
 
   /** Configuração efetiva (linha da org ou padrões), dentro da transação do chamador. */
   async getEffective(tx: TenantPrismaClient, orgId: string): Promise<ContractSettingsView> {
-    return toView((await loadRow(tx, orgId)) ?? DEFAULTS);
+    return loadEffectiveSettings(tx, orgId);
   }
 
   get(orgId: string): Promise<ContractSettingsView> {
