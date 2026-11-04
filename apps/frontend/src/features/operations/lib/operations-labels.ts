@@ -23,7 +23,15 @@ export const TIME_BLOCK_KINDS = [
     label: 'Indisponibilidade',
     className: 'bg-sky-100 text-sky-900 border-sky-500',
   },
+  {
+    value: 'deslocamento',
+    label: 'Deslocamento',
+    className: 'bg-amber-100 text-amber-900 border-amber-500',
+  },
 ] as const; // D-02
+
+/** Bloqueios criados à mão (deslocamento é gerado pelo grupo de noivas). */
+export const MANUAL_TIME_BLOCK_KINDS = TIME_BLOCK_KINDS.filter((k) => k.value !== 'deslocamento');
 
 export const APPOINTMENT_STATUS_LABELS: Record<string, string> = {
   scheduled: 'Agendado',

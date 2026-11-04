@@ -13,7 +13,7 @@ import {
   type CreateTimeBlockResult,
 } from '../../api/appointments.api';
 import { brDateToIso, maskDateBR, maskTime } from '../../lib/input-masks';
-import { TIME_BLOCK_KINDS } from '../../lib/operations-labels';
+import { MANUAL_TIME_BLOCK_KINDS } from '../../lib/operations-labels';
 import type { ScheduleProfessional } from './types';
 
 interface Props {
@@ -133,7 +133,7 @@ export function TimeBlockDialog({
           Crie uma folga, intervalo, feriado ou indisponibilidade na agenda.
         </DialogDescription>
         <RadioGroup value={kind} onValueChange={pickKind} aria-label="Tipo de bloqueio">
-          {TIME_BLOCK_KINDS.map((k) => (
+          {MANUAL_TIME_BLOCK_KINDS.map((k) => (
             <div key={k.value} className="flex items-center gap-sm">
               <RadioGroupItem
                 id={`block-kind-${k.value}`}
