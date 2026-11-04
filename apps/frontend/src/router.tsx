@@ -31,9 +31,11 @@ import { ComandaListPage } from '@/features/operations/pages/ComandaListPage';
 import { FinanceiroPage } from '@/features/operations/pages/FinanceiroPage';
 import { ComissoesCalculadasPage } from '@/features/operations/pages/ComissoesCalculadasPage';
 // Phase 4 — Bridal / Contracts
-import { BridalGroupsPlaceholder } from '@/features/bridal/pages/BridalGroupsPlaceholder';
-import { ContractsPlaceholder } from '@/features/bridal/pages/ContractsPlaceholder';
-import { ContractDetailPlaceholder } from '@/features/bridal/pages/ContractDetailPlaceholder';
+import { BridalGroupsPage } from '@/features/bridal/pages/BridalGroupsPage';
+import { BridalGroupDetailPage } from '@/features/bridal/pages/BridalGroupDetailPage';
+import { ContractsPage } from '@/features/bridal/pages/ContractsPage';
+import { ContractDetailPage } from '@/features/bridal/pages/ContractDetailPage';
+import { ContractAcceptPage } from '@/features/bridal/public/ContractAcceptPage';
 // Phase 5 — Communication
 import { CampaignsPlaceholder } from '@/features/communication/pages/CampaignsPlaceholder';
 // Sub-páginas financeiras
@@ -68,6 +70,7 @@ import { RelatoriosPage } from '@/pages/RelatoriosPage';
  *     /verificar-email          — Email verification pending
  *     /verificar-email/sucesso  — Email verified success
  *     /convite/:token           — Member invitation acceptance
+ *     /aceite/:orgId/:token     — Aceite público de contrato (sem login, noindex)
  *     /recuperar-senha          — Password recovery (deferred — shows NotFoundPage)
  *     *                         — 404 NotFound
  *
@@ -123,9 +126,10 @@ const PROTECTED_ROUTES: GatedRoute[] = [
   { path: '/configuracoes/sistema',              element: <ConfiguracoesPage /> },
   { path: '/configuracoes/adicionais',           element: <ConfiguracoesPage /> },
   { path: '/relatorios',                         element: <RelatoriosPage /> },
-  { path: '/noivas',                element: <BridalGroupsPlaceholder /> },
-  { path: '/contratos',             element: <ContractsPlaceholder /> },
-  { path: '/contratos/:id',         element: <ContractDetailPlaceholder /> },
+  { path: '/noivas',                element: <BridalGroupsPage /> },
+  { path: '/noivas/:id',            element: <BridalGroupDetailPage /> },
+  { path: '/contratos',             element: <ContractsPage /> },
+  { path: '/contratos/:id',         element: <ContractDetailPage /> },
   { path: '/campanhas',             element: <CampaignsPlaceholder /> },
 ];
 
@@ -183,6 +187,11 @@ export const router = createBrowserRouter([
   {
     path: '/convite/:token',
     element: <InvitationPage />,
+  },
+  {
+    // Aceite público do contrato pelo link enviado à noiva — fora do ProtectedRoute/AppShell
+    path: '/aceite/:orgId/:token',
+    element: <ContractAcceptPage />,
   },
   {
     // Password recovery deferred to post-Phase 1 — links to this route from LoginPage
