@@ -170,7 +170,7 @@ async function validateServices(
   }));
   const seen = new Set<string>();
   for (const s of normalized) {
-    if (s.purpose !== 'event' && s.purpose !== 'test') {
+    if (s.purpose !== 'event' && s.purpose !== 'trial') {
       throw new BridalError('INVALID_PURPOSE', 'Finalidade do serviço inválida.', 'purpose');
     }
     const key = `${s.serviceId}:${s.purpose}`;
