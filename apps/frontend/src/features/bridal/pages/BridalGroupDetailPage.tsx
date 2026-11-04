@@ -117,6 +117,10 @@ export function BridalGroupDetailPage() {
           </dd>
         </div>
         <div>
+          <dt className="text-xs font-semibold text-neutral-700">Pacote contratado</dt>
+          <dd data-testid="bg-detail-package">{group.packageName ?? '—'}</dd>
+        </div>
+        <div>
           <dt className="text-xs font-semibold text-neutral-700">Status</dt>
           <dd className="flex items-center gap-xs">
             {GROUP_STATUS_LABEL[group.status] ?? group.status}

@@ -35,6 +35,8 @@ export function group(p: Partial<BridalGroupData> & { id: string }): BridalGroup
     contractId: null,
     contractCode: null,
     contractStatus: null,
+    packageId: null,
+    packageName: null,
     appointmentCount: 0,
     createdAt: '2026-11-01T12:00:00.000Z',
     members: [],

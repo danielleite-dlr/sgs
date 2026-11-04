@@ -173,7 +173,12 @@ function ContractForm({
         })),
       );
   });
-  const [packageId, setPackageId] = useState<string>(contract?.packageId ?? '');
+  // Novo contrato herda o pacote do grupo (se ainda existir no catálogo); edição usa o do contrato.
+  const [packageId, setPackageId] = useState<string>(() => {
+    if (contract) return contract.packageId ?? '';
+    const fromGroup = group.packageId;
+    return fromGroup && packages.some((p) => p.id === fromGroup) ? fromGroup : '';
+  });
   const [discount, setDiscount] = useState(
     contract && Number(contract.discountAmount) > 0 ? formatCurrencyDisplay(contract.discountAmount) : '',
   );

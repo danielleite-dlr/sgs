@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,8 @@ import {
   type BridalGroupFieldsInput,
   type BridalGroupPayload,
 } from '../api/bridal.api';
+import { ContractPackagesQuery, type ContractPackagesResult } from '../api/contracts.api';
+import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
 import { errorMessage } from '../lib/bridal-labels';
 import { buildPersonInput, emptyPerson, type PersonDraft } from '../lib/person-draft';
 import { fromZoned, toZoned } from '../lib/schedule-rows';
@@ -49,6 +51,7 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
   const [before, setBefore] = useState(String(group?.travelMinutesBefore ?? 0));
   const [after, setAfter] = useState(String(group?.travelMinutesAfter ?? 0));
   const [notes, setNotes] = useState(group?.notes ?? '');
+  const [packageId, setPackageId] = useState(group?.packageId ?? '');
   const [bride, setBride] = useState<PersonDraft>(() => emptyPerson(true));
   const [companions, setCompanions] = useState<PersonDraft[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
@@ -59,6 +62,14 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
     useMutation<{ updateBridalGroup: BridalGroupPayload }>(UpdateBridalGroupMutation);
   const loading = creating || updating;
   const external = locationKind === 'external';
+  // Mesma lista do contrato: pacotes do catálogo não excluídos.
+  const { data: packagesData } = useQuery<ContractPackagesResult>(ContractPackagesQuery, {
+    skip: !open,
+  });
+  const packages = packagesData?.packages ?? [];
+  // Pacote atual excluído do catálogo: mantém a opção para não perder o valor.
+  const missingCurrent =
+    !!group?.packageId && !packages.some((p) => p.id === group.packageId) && packagesData;
 
   function buildGroupFields(): { ok: true; fields: BridalGroupFieldsInput } | { ok: false; errs: string[] } {
     const errs: string[] = [];
@@ -90,6 +101,7 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
         travelMinutesBefore: external ? b : 0,
         travelMinutesAfter: external ? a : 0,
         notes: notes.trim() || null,
+        packageId: packageId || null,
       },
     };
   }
@@ -213,6 +225,32 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
               <option value="studio">No estúdio</option>
               <option value="external">Externo</option>
             </select>
+          </div>
+          <div className="sm:col-span-3">
+            <Label className={LABEL_CLASS} htmlFor="bg-package">
+              Pacote contratado
+            </Label>
+            <select
+              id="bg-package"
+              data-testid="bg-package"
+              aria-describedby="bg-package-help"
+              className="mt-xs w-full rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white"
+              value={packageId}
+              onChange={(e) => setPackageId(e.target.value)}
+            >
+              <option value="">Sem pacote</option>
+              {missingCurrent && group?.packageId && (
+                <option value={group.packageId}>{group.packageName ?? 'Pacote excluído'}</option>
+              )}
+              {packages.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} — R$ {formatCurrencyDisplay(p.price)}
+                </option>
+              ))}
+            </select>
+            <p id="bg-package-help" className="mt-xs text-xs text-neutral-600">
+              Os serviços do pacote entram nos serviços da noiva.
+            </p>
           </div>
           {external && (
             <>

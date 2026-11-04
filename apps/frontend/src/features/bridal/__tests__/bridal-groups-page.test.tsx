@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ServicesQuery } from '@/features/catalog/api/servicos.api';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
 import { BridalGroupsQuery, CreateBridalGroupMutation } from '../api/bridal.api';
+import { ContractPackagesQuery } from '../api/contracts.api';
 import { BridalGroupsPage } from '../pages/BridalGroupsPage';
 import { group, member } from './bridal-fixtures';
 
@@ -31,9 +32,36 @@ const servicesMock: MockedResponse = {
   result: { data: { services: [] } },
 };
 
+const packagesMock: MockedResponse = {
+  request: { query: ContractPackagesQuery },
+  maxUsageCount: 20,
+  result: {
+    data: {
+      packages: [
+        {
+          __typename: 'Package',
+          id: 'p1',
+          name: 'Pacote Ouro',
+          price: '2500.00',
+          depositKind: null,
+          depositValue: null,
+        },
+        {
+          __typename: 'Package',
+          id: 'p2',
+          name: 'Pacote Prata',
+          price: '1800.00',
+          depositKind: null,
+          depositValue: null,
+        },
+      ],
+    },
+  },
+};
+
 function renderPage(extra: MockedResponse[] = []) {
   return render(
-    <MockedProvider mocks={[listMock, servicesMock, ...extra]}>
+    <MockedProvider mocks={[listMock, servicesMock, packagesMock, ...extra]}>
       <MemoryRouter initialEntries={['/noivas']}>
         <Routes>
           <Route path="/noivas" element={<BridalGroupsPage />} />
@@ -118,5 +146,46 @@ describe('BridalGroupsPage', () => {
     await waitFor(() =>
       expect(screen.getByTestId('bg-errors')).toHaveTextContent('Noiva: informe o nome.'),
     );
+  });
+
+  it('escolhe o "Pacote contratado" e envia group.packageId', async () => {
+    useAuthStore.setState({ roleName: 'MANAGER' });
+    let sent: { input: { group: Record<string, unknown> } } | null = null;
+    renderPage([
+      {
+        request: { query: CreateBridalGroupMutation },
+        variableMatcher: (v) => {
+          sent = v as typeof sent;
+          return true;
+        },
+        result: {
+          data: { createBridalGroup: { __typename: 'BridalGroupPayload', group: g1, errors: [] } },
+        },
+      },
+    ]);
+    await screen.findByText('Casamento Ana');
+    fireEvent.click(screen.getByTestId('new-group'));
+    const select = await screen.findByLabelText('Pacote contratado');
+    await screen.findByRole('option', { name: 'Pacote Ouro — R$ 2.500,00' });
+    expect(
+      Array.from((select as HTMLSelectElement).options).map((o) => o.textContent),
+    ).toEqual(['Sem pacote', 'Pacote Ouro — R$ 2.500,00', 'Pacote Prata — R$ 1.800,00']);
+    fireEvent.change(select, { target: { value: 'p1' } });
+    fireEvent.change(screen.getByTestId('bg-name'), { target: { value: 'Casamento Carol' } });
+    fireEvent.change(screen.getByTestId('bg-date'), { target: { value: '2026-12-20' } });
+    fireEvent.change(screen.getByTestId('bride-name'), { target: { value: 'Carol Souza' } });
+    fireEvent.click(screen.getByTestId('bg-submit'));
+    expect(await screen.findByTestId('detail-route')).toBeInTheDocument();
+    expect(sent!.input.group).toEqual({
+      name: 'Casamento Carol',
+      eventDate: '2026-12-20',
+      readyBy: null,
+      locationKind: 'studio',
+      locationAddress: null,
+      travelMinutesBefore: 0,
+      travelMinutesAfter: 0,
+      notes: null,
+      packageId: 'p1',
+    });
   });
 });

@@ -256,6 +256,7 @@ export const ContractGroupQuery = gql`
       eventDate
       status
       contractId
+      packageId
       members {
         id
         clientName
@@ -455,6 +456,7 @@ export interface ContractGroupResult {
     eventDate: string;
     status: string;
     contractId: string | null;
+    packageId: string | null;
     members: ContractGroupMember[];
   } | null;
 }

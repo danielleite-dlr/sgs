@@ -59,6 +59,49 @@ const listMock = (vars: Record<string, unknown>, contracts: unknown[]): MockedRe
   result: { data: { contracts } },
 });
 
+const groupMock = (packageId: string | null = null): MockedResponse => ({
+  request: { query: ContractGroupQuery, variables: { id: 'g1' } },
+  result: {
+    data: {
+      bridalGroup: {
+        __typename: 'BridalGroup',
+        id: 'g1',
+        name: 'Casamento Ana',
+        eventDate: '2030-06-15',
+        status: 'active',
+        contractId: null,
+        packageId,
+        members: [
+          {
+            __typename: 'BridalGroupMember',
+            id: 'm1',
+            clientName: 'Ana Souza',
+            role: 'bride',
+            coveredByContract: true,
+            services: [
+              {
+                __typename: 'BridalMemberService',
+                id: 'ms1',
+                serviceId: 's1',
+                serviceName: 'Maquiagem noiva',
+                purpose: 'event',
+              },
+            ],
+          },
+          {
+            __typename: 'BridalGroupMember',
+            id: 'm2',
+            clientName: 'Carla Mãe',
+            role: 'companion',
+            coveredByContract: false,
+            services: [],
+          },
+        ],
+      },
+    },
+  },
+});
+
 describe('ContractsPage', () => {
   beforeEach(() => {
     useAuthStore.setState({ roleName: 'MANAGER', permissions: [] });
@@ -86,47 +129,7 @@ describe('ContractsPage', () => {
   it('?grupo=<id> abre o formulário do contrato', async () => {
     const mocks: MockedResponse[] = [
       listMock({}, []),
-      {
-        request: { query: ContractGroupQuery, variables: { id: 'g1' } },
-        result: {
-          data: {
-            bridalGroup: {
-              __typename: 'BridalGroup',
-              id: 'g1',
-              name: 'Casamento Ana',
-              eventDate: '2030-06-15',
-              status: 'active',
-              contractId: null,
-              members: [
-                {
-                  __typename: 'BridalGroupMember',
-                  id: 'm1',
-                  clientName: 'Ana Souza',
-                  role: 'bride',
-                  coveredByContract: true,
-                  services: [
-                    {
-                      __typename: 'BridalMemberService',
-                      id: 'ms1',
-                      serviceId: 's1',
-                      serviceName: 'Maquiagem noiva',
-                      purpose: 'event',
-                    },
-                  ],
-                },
-                {
-                  __typename: 'BridalGroupMember',
-                  id: 'm2',
-                  clientName: 'Carla Mãe',
-                  role: 'companion',
-                  coveredByContract: false,
-                  services: [],
-                },
-              ],
-            },
-          },
-        },
-      },
+      groupMock(),
       {
         request: { query: ContractServicesQuery },
         result: {
@@ -146,6 +149,41 @@ describe('ContractsPage', () => {
     expect(within(items).getByText('Maquiagem noiva')).toBeInTheDocument();
     expect(screen.getByTestId('contract-form-total')).toHaveTextContent('R$ 800,00');
     expect(screen.getByTestId('contract-uncovered')).toHaveTextContent('Carla Mãe');
+  });
+
+  it('?grupo=<id> já vem com o pacote do grupo (ou sem pacote se ele foi excluído)', async () => {
+    const pkg = {
+      __typename: 'Package',
+      id: 'p1',
+      name: 'Pacote Ouro',
+      price: '2500.00',
+      depositKind: null,
+      depositValue: null,
+    };
+    const base = (packageId: string | null, packages: unknown[]): MockedResponse[] => [
+      listMock({}, []),
+      groupMock(packageId),
+      {
+        request: { query: ContractServicesQuery },
+        result: {
+          data: {
+            services: [
+              { __typename: 'Service', id: 's1', name: 'Maquiagem noiva', basePrice: '800.00' },
+            ],
+          },
+        },
+      },
+      { request: { query: ContractPackagesQuery }, result: { data: { packages } } },
+      { request: { query: ContractSettingsQuery }, result: { data: { contractSettings: SETTINGS } } },
+    ];
+    const { unmount } = renderPage(base('p1', [pkg]), '/contratos?grupo=g1');
+    await screen.findByTestId('contract-items');
+    expect(screen.getByLabelText('Pacote (opcional)')).toHaveValue('p1');
+    expect(screen.getByText(/Os serviços da noiva entram pelo preço do pacote/)).toBeInTheDocument();
+    unmount();
+    renderPage(base('p-excluido', [pkg]), '/contratos?grupo=g1');
+    await screen.findByTestId('contract-items');
+    expect(screen.getByLabelText('Pacote (opcional)')).toHaveValue('');
   });
 
   it('aba Configurações fica oculta para MANAGER', async () => {

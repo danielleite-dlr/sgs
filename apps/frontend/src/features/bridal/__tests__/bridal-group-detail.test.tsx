@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ServicesQuery } from '@/features/catalog/api/servicos.api';
@@ -31,9 +31,9 @@ const servicesMock: MockedResponse = {
   result: { data: { services: [] } },
 };
 
-function renderPage(extra: MockedResponse[] = []) {
+function renderPage(extra: MockedResponse[] = [], main: MockedResponse = queryMock) {
   return render(
-    <MockedProvider mocks={[queryMock, servicesMock, ...extra]}>
+    <MockedProvider mocks={[main, servicesMock, ...extra]}>
       <MemoryRouter initialEntries={['/noivas/g1']}>
         <Routes>
           <Route path="/noivas/:id" element={<BridalGroupDetailPage />} />
@@ -80,8 +80,11 @@ describe('BridalGroupDetailPage', () => {
       },
     ]);
     fireEvent.click(await screen.findByTestId('coverage-m3'));
-    expect(await screen.findByTestId('members-errors')).toHaveTextContent(
-      'comanda fechada; a cobertura pelo contrato não pode mais ser alterada',
+    // o contêiner aria-live já existe vazio: esperar a resposta da mutation preencher
+    await waitFor(() =>
+      expect(screen.getByTestId('members-errors')).toHaveTextContent(
+        'comanda fechada; a cobertura pelo contrato não pode mais ser alterada',
+      ),
     );
   });
 
@@ -98,5 +101,19 @@ describe('BridalGroupDetailPage', () => {
     await screen.findByTestId('coverage-m3');
     expect(screen.queryByTestId('create-contract')).not.toBeInTheDocument();
     expect(screen.queryByTestId('cancel-group')).not.toBeInTheDocument();
+  });
+
+  it('mostra o pacote contratado (ou "—" sem pacote)', async () => {
+    useAuthStore.setState({ roleName: 'MANAGER' });
+    const { unmount } = renderPage([], {
+      ...queryMock,
+      result: { data: { bridalGroup: { ...g, packageId: 'p1', packageName: 'Pacote Ouro' } } },
+    });
+    const dd = await screen.findByTestId('bg-detail-package');
+    expect(dd).toHaveTextContent('Pacote Ouro');
+    expect(dd.previousElementSibling).toHaveTextContent('Pacote contratado');
+    unmount();
+    renderPage();
+    expect(await screen.findByTestId('bg-detail-package')).toHaveTextContent('—');
   });
 });

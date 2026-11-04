@@ -17,6 +17,8 @@ export const BRIDAL_GROUP_LIST_FIELDS = gql`
     contractId
     contractCode
     contractStatus
+    packageId
+    packageName
     appointmentCount
     createdAt
     members {
@@ -267,6 +269,8 @@ export interface BridalGroupData {
   contractId: string | null;
   contractCode: string | null;
   contractStatus: string | null;
+  packageId: string | null;
+  packageName: string | null;
   appointmentCount: number;
   createdAt: string;
   members: BridalMemberData[];
@@ -308,6 +312,8 @@ export interface BridalGroupFieldsInput {
   travelMinutesBefore?: number;
   travelMinutesAfter?: number;
   notes?: string | null;
+  /** omitido = mantém; null = sem pacote */
+  packageId?: string | null;
 }
 
 export interface CreateBridalGroupInput {
