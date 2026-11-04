@@ -1,8 +1,8 @@
 import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
-import { FastifyAdapter } from '@nestjs/platform-fastify';
 import request from 'supertest';
 import { AppModule } from '../../../src/app.module';
+import { createFastifyAdapter } from '../../../src/http/fastify-adapter';
 import { adminPrisma } from '../setup';
 import { TestEmailAdapter } from '../../../src/email/test-email.adapter';
 import { EMAIL_ADAPTER } from '../../../src/email/email.module';
@@ -102,7 +102,7 @@ export async function createPhase3World(prefix: string): Promise<Phase3World> {
     .overrideProvider(EMAIL_ADAPTER)
     .useClass(TestEmailAdapter)
     .compile();
-  const app = moduleRef.createNestApplication(new FastifyAdapter());
+  const app = moduleRef.createNestApplication(createFastifyAdapter());
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
 
