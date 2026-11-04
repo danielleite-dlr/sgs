@@ -183,6 +183,7 @@ Recent decisions affecting current work:
 | 260929-gta | Automatizar com Playwright os testes de verificacao manual do M1 (Fase 02.1) + job e2e no CI; corrige menu de acoes de /profissionais | 2026-09-29 | e6fda22 | [260929-gta-automatizar-com-playwright-os-testes-de-](./quick/260929-gta-automatizar-com-playwright-os-testes-de-/) |
 | 261103-hmb | Cadastro rapido de cliente dentro do formulario de agendamento (sem sair da agenda) | 2026-11-03 | 64888bf | [261103-hmb-cadastro-rapido-de-cliente-no-agendament](./quick/261103-hmb-cadastro-rapido-de-cliente-no-agendament/) |
 | 261104-hyq | Pacote contratado no grupo de noivas: select no formulario, nome no detalhe, servicos do pacote entram na noiva e contrato novo ja vem com o pacote | 2026-11-04 | 9c9d3ac | [261104-hyq-pacote-contratado-no-grupo-de-noivas](./quick/261104-hyq-pacote-contratado-no-grupo-de-noivas/) |
+| 261104-ix0 | Pacote do contrato vale para o grupo: contrato grava o pacote no grupo e os servicos na noiva (update so quando o pacote muda ou o grupo esta sem pacote), backfill dos grupos existentes e refetch do grupo no dialogo | 2026-11-04 | ee28378 | [261104-ix0-pacote-do-contrato-vale-para-o-grupo](./quick/261104-ix0-pacote-do-contrato-vale-para-o-grupo/) |
 
 ## Session Continuity
 
