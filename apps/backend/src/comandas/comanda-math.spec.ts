@@ -1,4 +1,4 @@
-import { computeComandaTotals, PAYMENT_METHODS } from './comanda-math';
+import { computeComandaTotals, coveredCents, PAYMENT_METHODS } from './comanda-math';
 
 describe('computeComandaTotals', () => {
   it('pix + dinheiro acima do total gera troco', () => {
@@ -62,5 +62,26 @@ describe('computeComandaTotals', () => {
   it('não aceita voucher entre os métodos', () => {
     expect(PAYMENT_METHODS).toHaveLength(6);
     expect((PAYMENT_METHODS as readonly string[]).includes('voucher')).toBe(false);
+  });
+});
+
+describe('cobertura por contrato (D-08)', () => {
+  it('coveredCents soma só itens com contrato', () => {
+    expect(
+      coveredCents([
+        { totalCents: 10000, contractId: 'c1' },
+        { totalCents: 5000, contractId: null },
+      ]),
+    ).toBe(10000);
+  });
+  it('comanda 100% coberta fecha sem pagamento', () => {
+    const t = computeComandaTotals(0, []);
+    expect(t.canClose).toBe(true);
+    expect(t.error).toBeNull();
+  });
+  it('extra não pago continua insuficiente', () => {
+    const t = computeComandaTotals(5000, []);
+    expect(t.error).toBe('INSUFFICIENT_PAYMENT');
+    expect(t.remainingCents).toBe(5000);
   });
 });
