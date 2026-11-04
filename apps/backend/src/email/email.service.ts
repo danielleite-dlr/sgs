@@ -50,4 +50,35 @@ export class EmailService {
       text: `${inviterName} convidou você para ${salonName}. Aceitar: ${link}`,
     });
   }
+
+  async sendContractDigest(
+    to: string,
+    orgName: string,
+    items: { title: string; message: string; href: string }[],
+  ): Promise<void> {
+    const appUrl = this.config.get('FRONTEND_URL', { infer: true });
+    const li = items
+      .map(
+        (i) =>
+          `<li><strong>${escapeHtml(i.title)}</strong><br>${escapeHtml(i.message)}<br>` +
+          `<a href="${escapeHtml(`${appUrl}${i.href}`)}">Abrir</a></li>`,
+      )
+      .join('');
+    const text = items.map((i) => `- ${i.title}: ${i.message} (${appUrl}${i.href})`).join('\n');
+    await this.adapter.send({
+      to,
+      subject: `Pendências de contratos — ${orgName}`,
+      html: `<p>Pendências abertas de contratos em ${escapeHtml(orgName)}:</p><ul>${li}</ul>`,
+      text: `Pendências abertas de contratos em ${orgName}:\n${text}`,
+    });
+  }
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
