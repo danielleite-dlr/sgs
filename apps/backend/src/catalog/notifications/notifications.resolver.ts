@@ -26,6 +26,18 @@ export class NotificationsResolver {
     @CurrentTenant() t: TenantContext,
     @Args('input') input: { id: string },
   ) {
-    return this.svc.markRead(t.organizationId, input.id);
+    return this.svc.markRead(t.organizationId, t.memberId, input.id);
+  }
+
+  @Query('unreadNotificationCount')
+  @RequirePermission(PERMISSIONS.NOTIFICATION_READ)
+  unreadCount(@CurrentTenant() t: TenantContext) {
+    return this.svc.unreadCount(t.organizationId, t.memberId);
+  }
+
+  @Mutation('markAllNotificationsRead')
+  @RequirePermission(PERMISSIONS.NOTIFICATION_READ)
+  markAllRead(@CurrentTenant() t: TenantContext) {
+    return this.svc.markAllRead(t.organizationId, t.memberId);
   }
 }

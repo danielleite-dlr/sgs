@@ -91,10 +91,12 @@ type ProductPayload {
 
 extend type Query {
   notifications(unreadOnly: Boolean): [Notification!]!
+  unreadNotificationCount: Int!
 }
 
 extend type Mutation {
   markNotificationRead(input: MarkReadInput!): Notification!
+  markAllNotificationsRead: Int!
 }
 
 type Notification {

@@ -214,7 +214,7 @@ describe('Catalog — Notifications', () => {
     expect(target!.readAt).toBeNull();
 
     // Mark as read
-    const updated = await svc.markRead(orgAId, target!.id);
+    const updated = await svc.markRead(orgAId, memberAId, target!.id);
     expect(updated.readAt).not.toBeNull();
   });
 
@@ -252,7 +252,7 @@ describe('Catalog — Notifications', () => {
     expect(found).toBeDefined();
 
     // Mark it read
-    await svc.markRead(orgAId, found!.id);
+    await svc.markRead(orgAId, memberAId, found!.id);
 
     // Should no longer appear in unread query
     const afterRead = await svc.list(orgAId, memberAId, true);
@@ -310,7 +310,7 @@ describe('Catalog — Notifications', () => {
     expect(target).toBeDefined();
 
     // Mark as read
-    await svc.markRead(orgAId, target!.id);
+    await svc.markRead(orgAId, memberAId, target!.id);
 
     // Query all (unreadOnly=false) — should include this read notification
     const all = await svc.list(orgAId, memberAId, false);
