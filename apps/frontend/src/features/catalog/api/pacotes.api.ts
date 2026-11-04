@@ -8,6 +8,8 @@ export const PackagesQuery = gql`
       price
       individualSum
       validForDays
+      depositKind
+      depositValue
       coverImageUrl
       services {
         serviceId
@@ -33,6 +35,8 @@ export const CreatePackageMutation = gql`
         name
         price
         individualSum
+        depositKind
+        depositValue
         services {
           serviceId
           quantity
@@ -61,6 +65,8 @@ export const UpdatePackageMutation = gql`
         name
         price
         individualSum
+        depositKind
+        depositValue
         services {
           serviceId
           quantity
@@ -121,6 +127,8 @@ export interface PackageData {
   price: string;
   individualSum: string;
   validForDays?: number | null;
+  depositKind?: 'fixed' | 'percent' | null;
+  depositValue?: string | null;
   coverImageUrl?: string | null;
   services: PackageServiceItem[];
   createdAt: string;

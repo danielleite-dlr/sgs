@@ -52,13 +52,30 @@ function bucketLabel(bucketStart: string, granularity: Granularity): string {
   return granularity === 'month' ? `${m}/${y}` : `${d}/${m}`;
 }
 
-function Kpi({ id, label, hint, value }: { id: string; label: string; hint?: string; value: string }) {
+function Kpi({
+  id,
+  label,
+  hint,
+  value,
+  extra,
+}: {
+  id: string;
+  label: string;
+  hint?: string;
+  value: string;
+  extra?: string;
+}) {
   return (
     <article className="rounded-md border border-neutral-200 bg-white p-md">
       <p className="text-xs text-neutral-500">{label}</p>
       <p className="text-xl font-semibold text-neutral-800" data-testid={id}>
         {value}
       </p>
+      {extra && (
+        <p className="text-xs font-semibold text-primary-700 mt-xs" data-testid={`${id}-extra`}>
+          {extra}
+        </p>
+      )}
       {hint && <p className="text-xs text-neutral-400 mt-xs">{hint}</p>}
     </article>
   );
@@ -147,6 +164,11 @@ export function FinanceiroPage() {
                   label="Faturado"
                   hint="comandas fechadas no período"
                   value={brl(summary.billedTotal)}
+                  extra={
+                    Number(summary.contractBilledTotal) > 0
+                      ? `inclui ${brl(summary.contractBilledTotal)} de contratos`
+                      : undefined
+                  }
                 />
                 <Kpi
                   id="kpi-received"
@@ -243,7 +265,7 @@ export function FinanceiroPage() {
                       <th>Tipo</th>
                       <th>Forma</th>
                       <th>Cliente</th>
-                      <th>Comanda</th>
+                      <th>Origem</th>
                       <th className="text-right">Valor</th>
                     </tr>
                   </thead>
@@ -260,7 +282,7 @@ export function FinanceiroPage() {
                           <td>{KIND_LABELS[mv.kind] ?? mv.kind}</td>
                           <td>{paymentMethodLabel(mv.method)}</td>
                           <td>{mv.clientName ?? '—'}</td>
-                          <td>{mv.comandaCode ?? '—'}</td>
+                          <td>{mv.comandaCode ?? mv.contractCode ?? '—'}</td>
                           <td className={`text-right ${negative ? 'text-error-600' : ''}`}>
                             {brl(mv.amount)}
                           </td>

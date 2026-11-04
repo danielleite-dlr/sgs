@@ -16,6 +16,8 @@ export const COMANDA_FIELDS = gql`
     closedAt
     closeCycle
     total
+    covered
+    owed
     paid
     remaining
     change
@@ -42,6 +44,8 @@ export const COMANDA_FIELDS = gql`
       listUnitPrice
       unitPrice
       total
+      contractId
+      contractCode
     }
     payments {
       id
@@ -230,6 +234,8 @@ export interface ComandaItemData {
   listUnitPrice: string;
   unitPrice: string;
   total: string;
+  contractId?: string | null;
+  contractCode?: string | null;
 }
 
 export interface ComandaPaymentData {
@@ -265,6 +271,10 @@ export interface ComandaData {
   closedAt: string | null;
   closeCycle: number;
   total: string;
+  /** Parte coberta por contrato de noiva (D-08). */
+  covered: string;
+  /** Valor a pagar = total - covered; remaining/change/canClose são sobre ele. */
+  owed: string;
   paid: string;
   remaining: string;
   change: string;

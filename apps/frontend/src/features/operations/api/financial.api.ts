@@ -8,6 +8,7 @@ export const FinancialSummaryQuery = gql`
       timezone
       granularity
       billedTotal
+      contractBilledTotal
       receivedTotal
       closedComandas
       averageTicket
@@ -36,6 +37,7 @@ export const CashMovementsQuery = gql`
       occurredAt
       comandaId
       comandaCode
+      contractCode
       appointmentId
       clientName
       note
@@ -134,6 +136,7 @@ export interface FinancialSummary {
   timezone: string;
   granularity: string;
   billedTotal: string;
+  contractBilledTotal: string;
   receivedTotal: string;
   closedComandas: number;
   averageTicket: string;
@@ -154,6 +157,7 @@ export interface CashMovementEntry {
   occurredAt: string;
   comandaId: string | null;
   comandaCode: string | null;
+  contractCode: string | null;
   appointmentId: string | null;
   clientName: string | null;
   note: string | null;

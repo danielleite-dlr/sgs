@@ -11,6 +11,8 @@ export function makeComanda(over: Partial<ComandaData> = {}): ComandaData {
     closedAt: null,
     closeCycle: 0,
     total: '135.00',
+    covered: '0.00',
+    owed: '135.00',
     paid: '0.00',
     remaining: '135.00',
     change: '0.00',

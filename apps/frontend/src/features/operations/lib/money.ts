@@ -34,6 +34,12 @@ export function sumDecimals(values: string[]): string {
   return centsToDecimal(values.reduce((acc, v) => acc + decimalToCents(v), 0));
 }
 
+/**
+ * Resumo de pagamento. O primeiro argumento é o valor A PAGAR (`comanda.owed` =
+ * total - coberto pelo contrato), não o total bruto — regra ÚNICA da fase 3
+ * (D-07) com cobertura de contrato (D-08), idêntica ao backend. Com `owed = 0`
+ * (comanda 100% coberta) `remaining` é 0 e `canClose` é verdadeiro sem pagamento.
+ */
 export function computePaymentSummary(total: string, payments: PaymentLine[]): PaymentSummary {
   const totalC = decimalToCents(total);
   const paidC = payments.reduce((acc, p) => acc + decimalToCents(p.amount), 0);
