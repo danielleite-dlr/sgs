@@ -36,6 +36,7 @@ import {
   type CreateContractResult,
   type UpdateContractResult,
 } from '../api/contracts.api';
+import { BridalGroupQuery } from '../api/bridal.api';
 import { contractErrorMessage, formatDateOnly } from '../lib/contract-labels';
 
 const brl = (cents: number) => `R$ ${formatCurrencyDisplay(centsToDecimal(cents))}`;
@@ -188,12 +189,16 @@ function ContractForm({
   const [addService, setAddService] = useState('');
   const [error, setError] = useState('');
 
+  // O backend aplica o pacote do contrato no grupo (package_id + serviços da noiva):
+  // refaz o grupo para a página dele não ficar com dados velhos no cache.
+  const groupRefetch = { query: BridalGroupQuery, variables: { id: group.id } };
   const [createContract, { loading: creating }] = useMutation<CreateContractResult>(
     CreateContractMutation,
-    { refetchQueries: [{ query: ContractsQuery }] },
+    { refetchQueries: [{ query: ContractsQuery }, groupRefetch] },
   );
   const [updateContract, { loading: updating }] = useMutation<UpdateContractResult>(
     UpdateContractMutation,
+    { refetchQueries: [groupRefetch] },
   );
 
   const pkg = packages.find((p) => p.id === packageId) ?? null;
