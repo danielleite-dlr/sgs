@@ -66,6 +66,26 @@ describe('ContractAcceptPage', () => {
     expect(button).toBeEnabled();
   });
 
+  it('explica o que falta para habilitar "Aceito" (descrição acessível do botão)', async () => {
+    fetchMock.mockResolvedValueOnce(json(200, CONTRACT));
+    renderPage();
+    await screen.findByText(/CONTRATO DE TESTE/);
+    const button = screen.getByRole('button', { name: 'Aceito' });
+    const all = 'Para aceitar, falta: nome completo, CPF válido e marcar “Li e aceito”.';
+    expect(screen.getByText(all)).toBeInTheDocument();
+    expect(button).toHaveAttribute('aria-describedby', 'accept-missing-hint');
+    expect(button).toHaveAccessibleDescription(all);
+
+    fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: 'Maria da Silva' } });
+    fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
+    expect(button).toHaveAccessibleDescription('Para aceitar, falta: marcar “Li e aceito”.');
+
+    fireEvent.click(screen.getByLabelText('Li e aceito os termos deste contrato'));
+    expect(button).toBeEnabled();
+    expect(screen.queryByText(/Para aceitar, falta/)).not.toBeInTheDocument();
+    expect(button).not.toHaveAttribute('aria-describedby');
+  });
+
   it('envia o aceite com textSha256 e mostra "Contrato aceito" com link do PDF', async () => {
     fetchMock
       .mockResolvedValueOnce(json(200, CONTRACT))

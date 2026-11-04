@@ -80,7 +80,14 @@ export function ContractAcceptPage() {
     if (formError) errorRef.current?.focus();
   }, [formError]);
 
-  const valid = fullName.trim().length >= 3 && validateCpf(cpf) && agreed;
+  const nameOk = fullName.trim().length >= 3;
+  const cpfOk = validateCpf(cpf);
+  const missing: string[] = [];
+  if (!nameOk) missing.push('nome completo');
+  if (!cpfOk) missing.push('CPF válido');
+  if (!agreed) missing.push('marcar “Li e aceito”');
+  const valid = missing.length === 0;
+  const showHint = !valid && !submitting;
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -219,13 +226,28 @@ export function ContractAcceptPage() {
                   {formError}
                 </p>
               )}
-              <Button type="submit" disabled={!valid || submitting}>
+              <Button
+                type="submit"
+                disabled={!valid || submitting}
+                aria-describedby={showHint ? 'accept-missing-hint' : undefined}
+              >
                 Aceito
               </Button>
+              {showHint && (
+                <p id="accept-missing-hint" className="text-sm text-neutral-600">
+                  Para aceitar, falta: {joinPtBr(missing)}.
+                </p>
+              )}
             </form>
           )}
         </>
       )}
     </main>
   );
+}
+
+/** Junta itens em pt-BR: "a", "a e b", "a, b e c". */
+function joinPtBr(items: string[]): string {
+  if (items.length <= 1) return items.join('');
+  return `${items.slice(0, -1).join(', ')} e ${items[items.length - 1]}`;
 }
