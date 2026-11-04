@@ -12,6 +12,7 @@ import {
   type BridalPersonInput,
   type CreateBridalGroupInput,
 } from './bridal.service';
+import type { BridalScheduleInput } from './bridal-schedule';
 
 @Resolver()
 export class BridalResolver {
@@ -50,7 +51,25 @@ export class BridalResolver {
     @Args('id') id: string,
     @Args('input') input: BridalGroupFieldsInput,
   ) {
-    return this.bridal.update(tenant.organizationId, id, input);
+    return this.bridal.update(tenant.organizationId, tenant.memberId, id, input);
+  }
+
+  @Mutation('scheduleBridalEvent')
+  @RequirePermission(PERMISSIONS.BRIDAL_WRITE, PERMISSIONS.APPOINTMENT_WRITE)
+  schedule(
+    @CurrentTenant() tenant: TenantContext,
+    @Args('input') input: BridalScheduleInput,
+  ) {
+    return this.bridal.schedule(tenant.organizationId, tenant.memberId, input);
+  }
+
+  @Mutation('cancelBridalGroup')
+  @RequirePermission(PERMISSIONS.CONTRACT_CANCEL)
+  cancelGroup(
+    @CurrentTenant() tenant: TenantContext,
+    @Args('input') input: { id: string; reason: string },
+  ) {
+    return this.bridal.cancelGroup(tenant.organizationId, tenant.memberId, input);
   }
 
   @Mutation('addBridalGroupMember')

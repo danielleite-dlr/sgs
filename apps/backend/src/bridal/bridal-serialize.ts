@@ -20,7 +20,20 @@ export type BridalGroupRow = Prisma.BridalGroupGetPayload<{
   include: typeof BRIDAL_GROUP_INCLUDE;
 }>;
 
+export const BRIDAL_APPOINTMENT_INCLUDE = {
+  client: { select: { fullName: true } },
+  service: { select: { name: true } },
+  professional: { select: { id: true, displayName: true } },
+  comanda: { select: { status: true } },
+} satisfies Prisma.AppointmentInclude;
+
+export type BridalAppointmentRow = Prisma.AppointmentGetPayload<{
+  include: typeof BRIDAL_APPOINTMENT_INCLUDE;
+}>;
+
 export interface BridalGroupExtras {
+  appointments?: BridalAppointmentRow[];
+  groupMemberIdByClient?: Map<string, string>;
   contract?: { id: string; code: string; status: string } | null;
   appointmentCount: number;
   closedComandaClientIds: Set<string>;
@@ -44,6 +57,21 @@ export function serializeBridalGroup(row: BridalGroupRow, extras: BridalGroupExt
     contractStatus: extras.contract?.status ?? null,
     appointmentCount: extras.appointmentCount,
     createdAt: row.createdAt,
+    appointments: (extras.appointments ?? []).map((a) => ({
+      id: a.id,
+      groupMemberId: extras.groupMemberIdByClient?.get(a.clientId) ?? null,
+      clientName: a.client.fullName,
+      serviceName: a.service.name,
+      professionalId: a.professionalId,
+      professionalName: a.professional.displayName,
+      startsAt: a.startsAt,
+      endsAt: a.endsAt,
+      status: a.status,
+      purpose: a.purpose,
+      covered: a.contractId !== null,
+      comandaId: a.comandaId,
+      comandaStatus: a.comanda?.status ?? null,
+    })),
     members: row.members.map((m) => ({
       id: m.id,
       clientId: m.clientId,
