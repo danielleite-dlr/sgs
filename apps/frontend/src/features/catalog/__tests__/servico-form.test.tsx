@@ -206,7 +206,7 @@ describe('ServicoForm', () => {
     fireEvent.change(screen.getByPlaceholderText(/Ex\.: Corte feminino/i), {
       target: { value: 'Corte feminino' },
     });
-    fireEvent.change(screen.getByPlaceholderText('0,00'), {
+    fireEvent.change(screen.getByLabelText('Preço base em reais'), {
       target: { value: '80.00' },
     });
 

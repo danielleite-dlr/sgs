@@ -48,6 +48,12 @@ export class CreateServiceInput {
   })
   basePrice!: string;
 
+  @IsOptional()
+  @Matches(DECIMAL_REGEX, {
+    message: 'costPrice must be a non-negative decimal with up to 2 decimal places',
+  })
+  costPrice?: string;
+
   @IsInt()
   @Min(1)
   defaultDurationMinutes!: number;
@@ -78,6 +84,12 @@ export class UpdateServiceInput {
     message: 'basePrice must be a non-negative decimal with up to 2 decimal places',
   })
   basePrice?: string;
+
+  @IsOptional()
+  @Matches(DECIMAL_REGEX, {
+    message: 'costPrice must be a non-negative decimal with up to 2 decimal places',
+  })
+  costPrice?: string;
 
   @IsOptional()
   @IsInt()

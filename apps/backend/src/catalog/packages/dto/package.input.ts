@@ -25,6 +25,18 @@ export class PackageServiceInput {
   quantity?: number;
 }
 
+export class PackageCostItemInput {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  name!: string;
+
+  @Matches(DECIMAL_REGEX, {
+    message: 'cost must be a non-negative decimal with up to 2 decimal places',
+  })
+  cost!: string;
+}
+
 export class CreatePackageInput {
   @MinLength(2)
   @MaxLength(160)
@@ -53,6 +65,12 @@ export class CreatePackageInput {
   @ValidateNested({ each: true })
   @Type(() => PackageServiceInput)
   services!: PackageServiceInput[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PackageCostItemInput)
+  costItems?: PackageCostItemInput[];
 }
 
 export class UpdatePackageInput {
@@ -88,6 +106,12 @@ export class UpdatePackageInput {
   @ValidateNested({ each: true })
   @Type(() => PackageServiceInput)
   services?: PackageServiceInput[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PackageCostItemInput)
+  costItems?: PackageCostItemInput[];
 }
 
 export class SoftDeletePackageInput {

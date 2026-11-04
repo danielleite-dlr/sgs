@@ -19,8 +19,18 @@ export const PackagesQuery = gql`
           id
           name
           basePrice
+          costPrice
         }
       }
+      costItems {
+        id
+        name
+        cost
+        displayOrder
+      }
+      totalCost
+      profit
+      profitPercent
       createdAt
       updatedAt
     }
@@ -45,8 +55,18 @@ export const CreatePackageMutation = gql`
             id
             name
             basePrice
+            costPrice
           }
         }
+        costItems {
+          id
+          name
+          cost
+          displayOrder
+        }
+        totalCost
+        profit
+        profitPercent
       }
       errors {
         code
@@ -75,8 +95,18 @@ export const UpdatePackageMutation = gql`
             id
             name
             basePrice
+            costPrice
           }
         }
+        costItems {
+          id
+          name
+          cost
+          displayOrder
+        }
+        totalCost
+        profit
+        profitPercent
       }
       errors {
         code
@@ -118,7 +148,15 @@ export interface PackageServiceItem {
     id: string;
     name: string;
     basePrice: string;
+    costPrice?: string | null;
   };
+}
+
+export interface PackageCostItem {
+  id: string;
+  name: string;
+  cost: string;
+  displayOrder: number;
 }
 
 export interface PackageData {
@@ -131,6 +169,11 @@ export interface PackageData {
   depositValue?: string | null;
   coverImageUrl?: string | null;
   services: PackageServiceItem[];
+  /** Custos/lucro: null para quem não pode editar o catálogo. */
+  costItems?: PackageCostItem[] | null;
+  totalCost?: string | null;
+  profit?: string | null;
+  profitPercent?: string | null;
   createdAt: string;
   updatedAt: string;
 }

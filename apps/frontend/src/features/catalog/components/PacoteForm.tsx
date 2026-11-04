@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { Plus, Trash2 } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery } from '@apollo/client';
@@ -19,6 +20,7 @@ import { toast } from 'sonner';
 import { ServicesQuery } from '../api/servicos.api';
 import { CreatePackageMutation, UpdatePackageMutation, PackagesQuery } from '../api/pacotes.api';
 import { PackagePriceSummary } from './PackagePriceSummary';
+import { PackageCostSummary } from './PackageCostSummary';
 import { PackageServicesPicker } from './PackageServicesPicker';
 import { maskCurrency, unmaskCurrency, formatCurrencyDisplay } from '../utils/currency-mask';
 
@@ -44,6 +46,22 @@ const schema = z.object({
     .min(1, 'Adicione ao menos um serviço.'),
   depositKind: z.enum(['none', 'fixed', 'percent']),
   depositValue: z.string(),
+  // Custos que não são serviços (lanche, champagne, assistente...)
+  costItems: z.array(
+    z.object({
+      name: z.string().trim().min(1, 'Informe o item.').max(120),
+      cost: z
+        .string()
+        .min(1, 'Informe o custo.')
+        .refine(
+          (v) => {
+            const n = Number(unmaskCurrency(v));
+            return !Number.isNaN(n) && n >= 0;
+          },
+          { message: 'Custo inválido.' },
+        ),
+    }),
+  ),
 }).superRefine((v, ctx) => {
   if (v.depositKind === 'none') return;
   const raw = v.depositKind === 'fixed' ? unmaskCurrency(v.depositValue) : v.depositValue.replace(',', '.');
@@ -69,6 +87,7 @@ export interface PacoteFormInitial {
   services: Array<{ serviceId: string; quantity: number }>;
   depositKind?: 'fixed' | 'percent' | null;
   depositValue?: string | null;
+  costItems?: Array<{ name: string; cost: string }>;
 }
 
 export interface PacoteFormProps {
@@ -102,9 +121,21 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
               : initial.depositKind === 'percent' && initial.depositValue
                 ? String(Number(initial.depositValue))
                 : '',
+          costItems: (initial.costItems ?? []).map((c) => ({
+            name: c.name,
+            cost: formatCurrencyDisplay(c.cost),
+          })),
         }
-      : { name: '', price: '', services: [], depositKind: 'none', depositValue: '' },
+      : {
+          name: '',
+          price: '',
+          services: [],
+          depositKind: 'none',
+          depositValue: '',
+          costItems: [],
+        },
   });
+  const costFields = useFieldArray({ control: form.control, name: 'costItems' });
 
   // Live computation of individual sum from selected services × quantity
   const watched = form.watch();
@@ -116,6 +147,25 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
       }, 0)
       .toFixed(2);
   }, [watched.services, services]);
+
+  // Custo total ao vivo: custo dos serviços × quantidade + itens de custo.
+  // Sem useMemo: o watch() devolve arrays mutados no lugar e o memo ficaria velho.
+  const totalCost = (() => {
+    const svcCost = watched.services.reduce(
+      (sum: number, row: { serviceId: string; quantity: number }) => {
+        const svc = services.find(
+          (s: { id: string; costPrice?: string | null }) => s.id === row.serviceId,
+        );
+        return sum + (svc?.costPrice ? Number(svc.costPrice) * row.quantity : 0);
+      },
+      0,
+    );
+    const extra = (watched.costItems ?? []).reduce((sum: number, c: { cost: string }) => {
+      const n = Number(unmaskCurrency(c.cost || ''));
+      return sum + (Number.isNaN(n) ? 0 : n);
+    }, 0);
+    return (svcCost + extra).toFixed(2);
+  })();
 
   const isEdit = !!initial;
   const isLoading = creating || updating;
@@ -133,6 +183,10 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
             : values.depositKind === 'fixed'
               ? unmaskCurrency(values.depositValue)
               : values.depositValue.replace(',', '.'),
+        costItems: values.costItems.map((c) => ({
+          name: c.name.trim(),
+          cost: unmaskCurrency(c.cost),
+        })),
       };
       const res = isEdit && initial
         ? await updatePkg({ variables: { input: { id: initial.id, ...payload } } })
@@ -222,6 +276,74 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
           individualSum={individualSum}
           packagePrice={unmaskCurrency(form.watch('price') || '') || '0'}
         />
+
+        {/* Custos do pacote (só o salão vê) */}
+        <div className="space-y-sm" data-testid="package-cost-items">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold">Outros custos do pacote</p>
+              <p className="text-xs text-neutral-500">
+                Lanche, champagne, assistente… O custo dos serviços vem do cadastro de cada serviço.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => costFields.append({ name: '', cost: '' })}
+            >
+              <Plus className="mr-1 h-4 w-4" aria-hidden="true" />
+              Adicionar custo
+            </Button>
+          </div>
+          {costFields.fields.map((f, i) => (
+            <div key={f.id} className="grid grid-cols-[1fr_8rem_auto] items-start gap-sm">
+              <FormField
+                control={form.control}
+                name={`costItems.${i}.name`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input {...field} placeholder="Ex.: Lanche" aria-label={`Item de custo ${i + 1}`} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`costItems.${i}.cost`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="0,00"
+                        inputMode="numeric"
+                        aria-label={`Custo do item ${i + 1}`}
+                        onChange={(e) => field.onChange(maskCurrency(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={`Remover item de custo ${i + 1}`}
+                onClick={() => costFields.remove(i)}
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          ))}
+          <PackageCostSummary
+            totalCost={totalCost}
+            packagePrice={unmaskCurrency(form.watch('price') || '') || '0'}
+          />
+        </div>
 
         {/* Entrada do contrato de noiva (D-12) */}
         <div className="grid grid-cols-2 gap-sm">

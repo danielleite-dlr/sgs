@@ -26,6 +26,7 @@ import type { DataTableColumn } from '@/components/ui/data-table';
 import { DataTable } from '@/components/ui/data-table';
 import { EntityAvatar } from '@/components/ui/entity-avatar';
 import { PackagePriceSummary } from '@/features/catalog/components/PackagePriceSummary';
+import { PackageCostSummary } from '@/features/catalog/components/PackageCostSummary';
 import { PacoteForm } from '@/features/catalog/components/PacoteForm';
 import type {
   PackageData} from '@/features/catalog/api/pacotes.api';
@@ -65,7 +66,9 @@ export function PacotesPage() {
     setDeleteTarget(null);
   }
 
-  type PacoteColumnKey = 'name' | 'individual' | 'price' | 'items' | 'actions';
+  type PacoteColumnKey = 'name' | 'individual' | 'price' | 'profit' | 'items' | 'actions';
+  // Lucro só chega para quem edita o catálogo (ADMIN/MANAGER)
+  const showProfit = packages.some((p) => p.totalCost != null);
 
   const columns: DataTableColumn<PackageData, PacoteColumnKey>[] = [
     {
@@ -92,6 +95,17 @@ export function PacotesPage() {
         <PackagePriceSummary individualSum={row.individualSum} packagePrice={row.price} />
       ),
     },
+    ...(showProfit
+      ? [
+          {
+            key: 'profit' as const,
+            header: 'Lucro',
+            cell: (row: PackageData) => (
+              <PackageCostSummary totalCost={row.totalCost ?? '0'} packagePrice={row.price} compact />
+            ),
+          },
+        ]
+      : []),
     {
       key: 'items',
       header: t('catalog.pacote.table.items', 'Serviços'),
@@ -182,6 +196,10 @@ export function PacotesPage() {
                 price: editTarget.price,
                 depositKind: editTarget.depositKind ?? null,
                 depositValue: editTarget.depositValue ?? null,
+                costItems: (editTarget.costItems ?? []).map((c) => ({
+                  name: c.name,
+                  cost: c.cost,
+                })),
                 services: editTarget.services.map((s) => ({
                   serviceId: s.serviceId,
                   quantity: s.quantity,

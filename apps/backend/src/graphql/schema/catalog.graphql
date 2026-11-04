@@ -74,6 +74,8 @@ type Service {
   categoryId: UUID!
   category: Category
   basePrice: String!
+  "Custo do serviço para o salão. null para quem não pode editar o catálogo."
+  costPrice: String
   defaultDurationMinutes: Int!
   displayOrder: Int!
   pricingVariants: [ServicePricingVariant!]!
@@ -108,6 +110,7 @@ input CreateServiceInput {
   name: String!
   categoryId: UUID!
   basePrice: String!
+  costPrice: String
   defaultDurationMinutes: Int!
   pricingVariants: [PricingVariantInput!]
 }
@@ -117,6 +120,7 @@ input UpdateServiceInput {
   name: String
   categoryId: UUID
   basePrice: String
+  costPrice: String
   defaultDurationMinutes: Int
   pricingVariants: [PricingVariantInput!]
 }
@@ -148,9 +152,30 @@ type Package {
   depositKind: String
   depositValue: String
   services: [PackageServiceItem!]!
+  """
+  Custos e lucro do pacote: null para quem não pode editar o catálogo.
+  totalCost = soma(custo do serviço × quantidade) + soma(costItems).
+  profitPercent é sobre o preço do pacote.
+  """
+  costItems: [PackageCostItem!]
+  totalCost: String
+  profit: String
+  profitPercent: String
   coverImageUrl: String
   createdAt: DateTime!
   updatedAt: DateTime!
+}
+
+type PackageCostItem {
+  id: UUID!
+  name: String!
+  cost: String!
+  displayOrder: Int!
+}
+
+input PackageCostItemInput {
+  name: String!
+  cost: String!
 }
 
 type PackageServiceItem {
@@ -172,6 +197,7 @@ input CreatePackageInput {
   depositKind: String
   depositValue: String
   services: [PackageServiceInput!]!
+  costItems: [PackageCostItemInput!]
 }
 
 input UpdatePackageInput {
@@ -182,6 +208,7 @@ input UpdatePackageInput {
   depositKind: String
   depositValue: String
   services: [PackageServiceInput!]
+  costItems: [PackageCostItemInput!]
 }
 
 type PackagePayload {

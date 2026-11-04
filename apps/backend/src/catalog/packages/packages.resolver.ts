@@ -1,4 +1,5 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { canSeeCatalogCosts } from '../catalog-costs';
 import { PackagesService } from './packages.service';
 import {
   CurrentTenant,
@@ -23,7 +24,7 @@ import {
  * because schema-first resolvers don't use code-first @ResolveField decorators.
  * The service populates it on every loadFull() call.
  */
-@Resolver()
+@Resolver('Package')
 export class PackagesResolver {
   constructor(private readonly svc: PackagesService) {}
 
@@ -64,5 +65,26 @@ export class PackagesResolver {
     @Args('input') input: SoftDeletePackageInput,
   ) {
     return this.svc.softDelete(t.organizationId, input.id);
+  }
+
+  // Custos e lucro só para ADMIN/MANAGER (o service sempre calcula).
+  @ResolveField('costItems')
+  costItems(@Parent() p: { costItems?: unknown[] }, @CurrentTenant() t: TenantContext | null) {
+    return canSeeCatalogCosts(t?.roleName) ? (p.costItems ?? []) : null;
+  }
+
+  @ResolveField('totalCost')
+  totalCost(@Parent() p: { totalCost?: string }, @CurrentTenant() t: TenantContext | null) {
+    return canSeeCatalogCosts(t?.roleName) ? (p.totalCost ?? null) : null;
+  }
+
+  @ResolveField('profit')
+  profit(@Parent() p: { profit?: string }, @CurrentTenant() t: TenantContext | null) {
+    return canSeeCatalogCosts(t?.roleName) ? (p.profit ?? null) : null;
+  }
+
+  @ResolveField('profitPercent')
+  profitPercent(@Parent() p: { profitPercent?: string }, @CurrentTenant() t: TenantContext | null) {
+    return canSeeCatalogCosts(t?.roleName) ? (p.profitPercent ?? null) : null;
   }
 }

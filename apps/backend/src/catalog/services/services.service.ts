@@ -100,6 +100,7 @@ export class ServicesService {
           categoryId: input.categoryId,
           name: input.name,
           basePrice: input.basePrice,
+          costPrice: input.costPrice ?? '0',
           defaultDurationMinutes: input.defaultDurationMinutes,
           displayOrder: nextOrder,
         },
@@ -168,6 +169,7 @@ export class ServicesService {
           name: input.name ?? existing.name,
           categoryId: input.categoryId ?? existing.categoryId,
           basePrice: input.basePrice ?? existing.basePrice,
+          costPrice: input.costPrice ?? existing.costPrice,
           defaultDurationMinutes:
             input.defaultDurationMinutes ?? existing.defaultDurationMinutes,
         },

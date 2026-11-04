@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { parseMoneyInput, fromCents } from '../../common/money';
 import { TenantContextService } from '../../database/tenant-context.service';
-import { CreatePackageInput, UpdatePackageInput } from './dto/package.input';
+import { computePackageCosts } from '../catalog-costs';
+import {
+  CreatePackageInput,
+  PackageCostItemInput,
+  UpdatePackageInput,
+} from './dto/package.input';
 
 export interface UserError {
   code: string;
@@ -74,6 +79,70 @@ function computeIndividualSum(
   return result.toFixed(2);
 }
 
+const PACKAGE_INCLUDE = {
+  services: {
+    orderBy: [{ displayOrder: 'asc' as const }],
+    include: { service: true },
+  },
+  costItems: { orderBy: [{ displayOrder: 'asc' as const }] },
+};
+
+/**
+ * Pacote carregado com PACKAGE_INCLUDE -> objeto GraphQL: individualSum,
+ * entrada formatada e custos/lucro (o resolver de campo esconde os custos de
+ * quem não edita o catálogo).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toPackageView(pkg: any) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const services = (pkg.services ?? []) as any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const costItems = ((pkg.costItems ?? []) as any[]).map((ci) => ({
+    id: ci.id,
+    name: ci.name,
+    cost: fromCents(Math.round(parseFloat(ci.cost.toString()) * 100)),
+    displayOrder: ci.displayOrder,
+  }));
+  return withDeposit({
+    ...pkg,
+    costItems,
+    individualSum: computeIndividualSum(
+      services.map((ps) => ({
+        quantity: ps.quantity,
+        service: { basePrice: ps.service.basePrice },
+      })),
+    ),
+    ...computePackageCosts({ price: pkg.price, services, costItems }),
+  });
+}
+
+type CostItemsResult =
+  | { ok: true; rows: Array<{ name: string; cost: string }> }
+  | { ok: false; error: UserError };
+
+/** Itens de custo: nome 1–120 caracteres, custo decimal >= 0. */
+function validateCostItems(items: PackageCostItemInput[]): CostItemsResult {
+  const rows: Array<{ name: string; cost: string }> = [];
+  for (const item of items) {
+    const name = (item.name ?? '').trim();
+    if (name.length === 0 || name.length > 120) {
+      return {
+        ok: false,
+        error: { code: 'INVALID_COST_ITEM', message: 'Informe o nome do item de custo.', field: 'costItems' },
+      };
+    }
+    const cents = parseMoneyInput(item.cost);
+    if (cents === null) {
+      return {
+        ok: false,
+        error: { code: 'INVALID_COST_ITEM', message: `Custo inválido em "${name}".`, field: 'costItems' },
+      };
+    }
+    rows.push({ name, cost: fromCents(cents) });
+  }
+  return { ok: true, rows };
+}
+
 /**
  * PackagesService — fixed-composition service bundles with own price (CAT-02).
  *
@@ -97,25 +166,9 @@ export class PackagesService {
       const pkgs = await tx.package.findMany({
         where: { deletedAt: null },
         orderBy: [{ name: 'asc' }],
-        include: {
-          services: {
-            orderBy: [{ displayOrder: 'asc' }],
-            include: { service: true },
-          },
-        },
+        include: PACKAGE_INCLUDE,
       });
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return pkgs.map((pkg: any) => withDeposit({
-        ...pkg,
-        individualSum: computeIndividualSum(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          pkg.services.map((ps: any) => ({
-            quantity: ps.quantity,
-            service: { basePrice: ps.service.basePrice },
-          })),
-        ),
-      }));
+      return pkgs.map(toPackageView);
     });
   }
 
@@ -127,26 +180,9 @@ export class PackagesService {
     return this.tenant.runWithTenant(orgId, async (tx) => {
       const pkg = await tx.package.findFirst({
         where: { id, deletedAt: null },
-        include: {
-          services: {
-            orderBy: [{ displayOrder: 'asc' }],
-            include: { service: true },
-          },
-        },
+        include: PACKAGE_INCLUDE,
       });
-
-      if (!pkg) return null;
-
-      return withDeposit({
-        ...pkg,
-        individualSum: computeIndividualSum(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (pkg as any).services.map((ps: any) => ({
-            quantity: ps.quantity,
-            service: { basePrice: ps.service.basePrice },
-          })),
-        ),
-      });
+      return pkg ? toPackageView(pkg) : null;
     });
   }
 
@@ -182,6 +218,9 @@ export class PackagesService {
       const dep = validateDeposit(input.depositKind, input.depositValue);
       if (!dep.ok) return errorPayload(dep.error);
 
+      const costs = validateCostItems(input.costItems ?? []);
+      if (!costs.ok) return errorPayload(costs.error);
+
       // Create package
       const pkg = await tx.package.create({
         data: {
@@ -203,6 +242,18 @@ export class PackagesService {
           displayOrder: i,
         })),
       });
+
+      if (costs.rows.length > 0) {
+        await tx.packageCostItem.createMany({
+          data: costs.rows.map((c, i) => ({
+            organizationId: orgId,
+            packageId: pkg.id,
+            name: c.name,
+            cost: c.cost,
+            displayOrder: i,
+          })),
+        });
+      }
 
       return {
         package: await this.loadFull(tx, pkg.id),
@@ -233,6 +284,13 @@ export class PackagesService {
         const dep = validateDeposit(input.depositKind, input.depositValue);
         if (!dep.ok) return errorPayload(dep.error);
         depositData = { depositKind: dep.kind, depositValue: dep.value };
+      }
+
+      let costRows: Array<{ name: string; cost: string }> | undefined;
+      if (input.costItems !== undefined && input.costItems !== null) {
+        const costs = validateCostItems(input.costItems);
+        if (!costs.ok) return errorPayload(costs.error);
+        costRows = costs.rows;
       }
 
       // Update scalar fields
@@ -281,6 +339,22 @@ export class PackagesService {
         });
       }
 
+      // Substitui os itens de custo quando enviados (lista vazia limpa)
+      if (costRows !== undefined) {
+        await tx.packageCostItem.deleteMany({ where: { packageId: input.id } });
+        if (costRows.length > 0) {
+          await tx.packageCostItem.createMany({
+            data: costRows.map((c, i) => ({
+              organizationId: orgId,
+              packageId: input.id,
+              name: c.name,
+              cost: c.cost,
+              displayOrder: i,
+            })),
+          });
+        }
+      }
+
       return {
         package: await this.loadFull(tx, input.id),
         errors: [] as UserError[],
@@ -307,7 +381,7 @@ export class PackagesService {
       });
 
       return {
-        package: withDeposit({ ...pkg, individualSum: '0.00' }),
+        package: toPackageView({ ...pkg, services: [], costItems: [] }),
         errors: [] as UserError[],
       };
     });
@@ -320,25 +394,8 @@ export class PackagesService {
   private async loadFull(tx: any, id: string) {
     const pkg = await tx.package.findUnique({
       where: { id },
-      include: {
-        services: {
-          orderBy: [{ displayOrder: 'asc' }],
-          include: { service: true },
-        },
-      },
+      include: PACKAGE_INCLUDE,
     });
-
-    if (!pkg) return null;
-
-    return withDeposit({
-      ...pkg,
-      individualSum: computeIndividualSum(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (pkg as any).services.map((ps: any) => ({
-          quantity: ps.quantity,
-          service: { basePrice: ps.service.basePrice },
-        })),
-      ),
-    });
+    return pkg ? toPackageView(pkg) : null;
   }
 }

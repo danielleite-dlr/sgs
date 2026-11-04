@@ -327,4 +327,95 @@ describe('Catalog — Packages', () => {
     const found = list.find((p) => p.id === created.package!.id);
     expect(found).toBeUndefined();
   });
+
+  // -----------------------------------------------------------------------
+  // Custos e lucro do pacote (custo do serviço + itens de custo)
+  // -----------------------------------------------------------------------
+  it('9. custo do serviço + itens de custo calculam custo total, lucro e %', async () => {
+    await adminPrisma.service.update({ where: { id: svc1Id }, data: { costPrice: '20.00' } });
+    await adminPrisma.service.update({ where: { id: svc3Id }, data: { costPrice: '15.50' } });
+    const svc = buildService();
+    const created = await svc.create(orgAId, {
+      name: 'pkg-test-Custos',
+      price: '200.00',
+      services: [
+        { serviceId: svc1Id, quantity: 1 },
+        { serviceId: svc3Id, quantity: 2 },
+      ],
+      costItems: [
+        { name: 'Lanche', cost: '30' },
+        { name: ' Champagne ', cost: '9.99' },
+      ],
+    });
+    expect(created.errors).toHaveLength(0);
+    const p = created.package as unknown as {
+      totalCost: string;
+      profit: string;
+      profitPercent: string;
+      costItems: Array<{ name: string; cost: string; displayOrder: number }>;
+    };
+    // 20 + 15.50×2 + 30 + 9.99 = 90.99
+    expect(p.totalCost).toBe('90.99');
+    expect(p.profit).toBe('109.01');
+    expect(p.profitPercent).toBe('54.51');
+    expect(p.costItems.map((c) => [c.name, c.cost, c.displayOrder])).toEqual([
+      ['Lanche', '30.00', 0],
+      ['Champagne', '9.99', 1],
+    ]);
+  });
+
+  it('10. update substitui itens de custo; lista vazia limpa; omitido mantém', async () => {
+    const svc = buildService();
+    const created = await svc.create(orgAId, {
+      name: 'pkg-test-CustosUpd',
+      price: '100.00',
+      services: [{ serviceId: svc2Id, quantity: 1 }],
+      costItems: [{ name: 'Assistente', cost: '50' }],
+    });
+    const id = created.package!.id as string;
+
+    const keep = await svc.update(orgAId, { id, name: 'pkg-test-CustosUpd2' });
+    expect((keep.package as unknown as { costItems: unknown[] }).costItems).toHaveLength(1);
+
+    const replaced = await svc.update(orgAId, {
+      id,
+      costItems: [
+        { name: 'Lanche', cost: '10' },
+        { name: 'Champagne', cost: '5' },
+      ],
+    });
+    const rp = replaced.package as unknown as { costItems: unknown[]; totalCost: string };
+    expect(rp.costItems).toHaveLength(2);
+    expect(rp.totalCost).toBe('15.00');
+
+    const cleared = await svc.update(orgAId, { id, costItems: [] });
+    expect((cleared.package as unknown as { costItems: unknown[] }).costItems).toHaveLength(0);
+  });
+
+  it('11. item de custo inválido retorna INVALID_COST_ITEM e não grava nada', async () => {
+    const svc = buildService();
+    const bad = await svc.create(orgAId, {
+      name: 'pkg-test-CustoRuim',
+      price: '100.00',
+      services: [{ serviceId: svc2Id, quantity: 1 }],
+      costItems: [{ name: '   ', cost: '10' }],
+    });
+    expect(bad.errors[0].code).toBe('INVALID_COST_ITEM');
+    const list = await svc.list(orgAId);
+    expect(list.find((p) => p.name === 'pkg-test-CustoRuim')).toBeUndefined();
+  });
+
+  it('12. itens de custo de A não aparecem para B (RLS)', async () => {
+    const countAs = (orgId: string) =>
+      appPrisma.$transaction(async (tx) => {
+        await tx.$executeRawUnsafe(`SELECT set_config('app.current_organization', '${orgId}', true)`);
+        const rows = await tx.$queryRawUnsafe<Array<{ n: bigint }>>(
+          `SELECT count(*)::bigint AS n FROM package_cost_items`,
+        );
+        return Number(rows[0].n);
+      });
+    expect(await countAs(orgAId)).toBeGreaterThan(0);
+    expect(await countAs(orgBId)).toBe(0);
+  });
 });
+
