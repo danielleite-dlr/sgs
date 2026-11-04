@@ -1,7 +1,7 @@
 import { fromCents } from '../common/money';
 import type { TenantPrismaClient } from '../database/types';
 
-export type CashKind = 'deposit_in' | 'payment_in' | 'change_out' | 'reversal';
+export type CashKind = 'deposit_in' | 'payment_in' | 'change_out' | 'reversal' | 'contract_in' | 'contract_refund';
 export type CashMethod = 'cash' | 'pix' | 'credit_card' | 'debit_card' | 'transfer';
 
 /**
@@ -19,6 +19,7 @@ export async function recordCashMovement(
     comandaId?: string | null;
     appointmentId?: string | null;
     clientId?: string | null;
+    contractId?: string | null;
     cycle?: number | null;
     memberId?: string | null;
     occurredAt?: Date;
@@ -35,6 +36,7 @@ export async function recordCashMovement(
       comandaId: a.comandaId ?? null,
       appointmentId: a.appointmentId ?? null,
       clientId: a.clientId ?? null,
+      contractId: a.contractId ?? null,
       cycle: a.cycle ?? null,
       memberId: a.memberId ?? null,
       occurredAt: a.occurredAt ?? new Date(),
