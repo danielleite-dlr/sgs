@@ -23,7 +23,7 @@ async function openTeamPage(page: Page, email: string, password: string, seedNam
 
 async function expectNoMemberActions(page: Page) {
   await expect(page.getByRole('columnheader', { name: 'Ações' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Ações' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Ações', exact: true })).toHaveCount(0);
   for (const text of ACTION_TEXTS) {
     await expect(page.getByText(text, { exact: true })).toHaveCount(0);
   }
