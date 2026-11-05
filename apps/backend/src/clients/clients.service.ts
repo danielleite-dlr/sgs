@@ -4,6 +4,41 @@ import { TenantContextService } from '../database/tenant-context.service';
 import { validateCpf, normalizeCpf } from './cpf.util';
 import { CreateClientInput, UpdateClientInput } from './dto/client.input';
 
+/** Normalizadores dos campos de contratante (D-08): vazio vira null. */
+const RG_RE = /^[0-9Xx.\-\s]{5,20}$/;
+const PHONE_RE = /^[\d\s()+\-]{8,30}$/;
+
+function emptyToNull(v: string | null | undefined): string | null {
+  const t = v?.trim();
+  return t ? t : null;
+}
+
+function normalizeCep(v: string | null | undefined): string | null {
+  const t = emptyToNull(v);
+  if (!t) return null;
+  const digits = t.replace(/\D/g, '');
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+}
+
+type ExtraFields = Pick<CreateClientInput, 'rg' | 'postalCode' | 'phone2' | 'phone3'>;
+
+/** Valida os campos extras; devolve o primeiro erro ou null. */
+function validateExtras(input: ExtraFields) {
+  if (input.rg && !RG_RE.test(input.rg)) {
+    return errPayload('RG_INVALID', 'RG inválido.', 'rg');
+  }
+  if (input.postalCode && !/^\d{5}-?\d{3}$/.test(input.postalCode)) {
+    return errPayload('POSTAL_CODE_INVALID', 'CEP inválido.', 'postalCode');
+  }
+  for (const f of ['phone2', 'phone3'] as const) {
+    const v = input[f];
+    if (v && !PHONE_RE.test(v)) {
+      return errPayload('PHONE_INVALID', 'Telefone inválido.', f);
+    }
+  }
+  return null;
+}
+
 export interface UserError {
   code: string;
   message: string;
@@ -109,6 +144,8 @@ export class ClientsService {
     if (input.cpf && !validateCpf(input.cpf)) {
       return errPayload('CPF_INVALID', 'CPF inválido. Verifique os números.', 'cpf');
     }
+    const extrasError = validateExtras(input);
+    if (extrasError) return extrasError;
 
     return this.tenant.runWithTenant(orgId, async (tx) => {
       const client = await tx.client.create({
@@ -120,6 +157,10 @@ export class ClientsService {
           cpf: input.cpf ? normalizeCpf(input.cpf) : null,
           birthDate: input.birthDate ? new Date(input.birthDate) : null,
           address: input.address ?? null,
+          rg: emptyToNull(input.rg)?.toUpperCase() ?? null,
+          postalCode: normalizeCep(input.postalCode),
+          phone2: emptyToNull(input.phone2),
+          phone3: emptyToNull(input.phone3),
           notes: input.notes ?? null,
         },
       });
@@ -131,6 +172,8 @@ export class ClientsService {
     if (input.cpf && !validateCpf(input.cpf)) {
       return errPayload('CPF_INVALID', 'CPF inválido.', 'cpf');
     }
+    const extrasError = validateExtras(input);
+    if (extrasError) return extrasError;
 
     return this.tenant.runWithTenant(orgId, async (tx) => {
       const existing = await tx.client.findFirst({
@@ -172,6 +215,18 @@ export class ClientsService {
               : existing.birthDate,
           address:
             input.address !== undefined ? input.address : existing.address,
+          rg:
+            input.rg !== undefined
+              ? emptyToNull(input.rg)?.toUpperCase() ?? null
+              : existing.rg,
+          postalCode:
+            input.postalCode !== undefined
+              ? normalizeCep(input.postalCode)
+              : existing.postalCode,
+          phone2:
+            input.phone2 !== undefined ? emptyToNull(input.phone2) : existing.phone2,
+          phone3:
+            input.phone3 !== undefined ? emptyToNull(input.phone3) : existing.phone3,
           notes: input.notes !== undefined ? input.notes : existing.notes,
           version: { increment: 1 },
         },

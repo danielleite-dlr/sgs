@@ -435,5 +435,44 @@ describe('Catalog — Packages', () => {
     expect(await countAs(orgAId)).toBeGreaterThan(0);
     expect(await countAs(orgBId)).toBe(0);
   });
+
+  it('13. descrição para contrato: cria, atualiza, mantém quando omitida e limpa com null', async () => {
+    const svc = buildService();
+    const created = await svc.create(orgAId, {
+      name: 'pkg-test-Contrato',
+      price: '100.00',
+      contractDescription: '  Maquiagem e penteado  ',
+      services: [{ serviceId: svc1Id, quantity: 1 }],
+    });
+    expect(created.errors).toHaveLength(0);
+    expect(created.package!.contractDescription).toBe('Maquiagem e penteado');
+
+    const kept = await svc.update(orgAId, { id: created.package!.id, name: 'pkg-test-Contrato' });
+    expect(kept.package!.contractDescription).toBe('Maquiagem e penteado');
+
+    const changed = await svc.update(orgAId, {
+      id: created.package!.id,
+      contractDescription: 'Novo texto',
+    });
+    expect(changed.package!.contractDescription).toBe('Novo texto');
+
+    const cleared = await svc.update(orgAId, {
+      id: created.package!.id,
+      contractDescription: null,
+    });
+    expect(cleared.package!.contractDescription).toBeNull();
+  });
+
+  it('14. descrição para contrato com 2001 caracteres é rejeitada', async () => {
+    const svc = buildService();
+    const r = await svc.create(orgAId, {
+      name: 'pkg-test-DescLonga',
+      price: '100.00',
+      contractDescription: 'a'.repeat(2001),
+      services: [{ serviceId: svc1Id, quantity: 1 }],
+    });
+    expect(r.errors[0].field).toBe('contractDescription');
+    expect(r.package).toBeNull();
+  });
 });
 

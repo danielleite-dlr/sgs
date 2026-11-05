@@ -255,4 +255,58 @@ describe('ClientsService — CRUD', () => {
     );
     expect(orgAClients).toHaveLength(0);
   });
+
+  // -----------------------------------------------------------------------
+  // Fase 04.1: RG, CEP, celulares 2 e 3
+  // -----------------------------------------------------------------------
+  it('04.1-a. create com rg/cep/phone2 normaliza o CEP e devolve os campos', async () => {
+    const r = await service.create(orgAId, {
+      fullName: 'cli-test-Contratante',
+      phone: '(11) 90000-1111',
+      rg: '12.345.678-9',
+      postalCode: '06083290',
+      phone2: '(11) 91111-2222',
+      phone3: '(11) 92222-3333',
+    });
+    expect(r.errors).toHaveLength(0);
+    expect(r.client!.rg).toBe('12.345.678-9');
+    expect(r.client!.postalCode).toBe('06083-290');
+    expect(r.client!.phone2).toBe('(11) 91111-2222');
+    expect(r.client!.phone3).toBe('(11) 92222-3333');
+  });
+
+  it('04.1-b. update com string vazia limpa phone3 e mantém o que foi omitido', async () => {
+    const created = await service.create(orgAId, {
+      fullName: 'cli-test-Limpa',
+      phone: '(11) 90000-2222',
+      phone2: '(11) 91111-2222',
+      phone3: '(11) 92222-3333',
+    });
+    const r = await service.update(orgAId, { id: created.client!.id, phone3: '' });
+    expect(r.errors).toHaveLength(0);
+    expect(r.client!.phone3).toBeNull();
+    expect(r.client!.phone2).toBe('(11) 91111-2222');
+  });
+
+  it('04.1-c. CEP inválido devolve erro de validação', async () => {
+    const r = await service.create(orgAId, {
+      fullName: 'cli-test-CepRuim',
+      phone: '(11) 90000-3333',
+      postalCode: '123',
+    });
+    expect(r.client).toBeNull();
+    expect(r.errors[0].field).toBe('postalCode');
+  });
+
+  it('04.1-d. o RG não vai para audit_logs.metadata', async () => {
+    await service.create(orgAId, {
+      fullName: 'cli-test-Lgpd',
+      phone: '(11) 90000-4444',
+      rg: '98.765.432-1',
+    });
+    const rows = await adminPrisma.$queryRawUnsafe<Array<{ n: bigint }>>(
+      `SELECT count(*)::bigint AS n FROM audit_logs WHERE organization_id = '${orgAId}'::uuid AND metadata::text LIKE '%98.765.432-1%'`,
+    );
+    expect(Number(rows[0].n)).toBe(0);
+  });
 });
