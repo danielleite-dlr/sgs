@@ -3,6 +3,48 @@
  * Backend: GET/POST /public/contracts/:orgId/:token[/accept|/pdf].
  */
 
+export interface ContractSnapshot {
+  format: 2;
+  code: string;
+  kind: 'noiva' | 'debutante';
+  generatedOn: string;
+  studio: {
+    name: string;
+    cnpj: string;
+    address: string;
+    representative: string;
+    representativeRg: string;
+    forumCity: string;
+    forumUf: string;
+  };
+  letterhead: { sha256: string; mimeType: string } | null;
+  texts: { title: string; intro: string; parties: string; trialNote: string; clauses: string };
+  contractor: {
+    name: string;
+    cpf: string;
+    rg: string;
+    address: string;
+    postalCode: string;
+    email: string;
+    phone1: string;
+    phone2: string;
+    phone3: string;
+  };
+  debutanteName: string | null;
+  event: { date: string; time: string; locationName: string; serviceAddress: string };
+  budget: {
+    package: { name: string; description: string | null; cents: number } | null;
+    extras: { label: string; cents: number }[];
+    discount: { label: string; cents: number } | null;
+    totalCents: number;
+  };
+  payment: {
+    mode: 'sinal' | 'sinal_parcelado' | 'a_vista';
+    installments: { seq: number; dueDate: string; cents: number }[];
+    balanceDueDaysBefore: number | null;
+  };
+}
+
 export interface PublicContract {
   orgName: string;
   code: string;
@@ -15,6 +57,8 @@ export interface PublicContract {
   acceptedName: string | null;
   isCurrentVersion: boolean;
   expiresAt: string;
+  /** Snapshot estruturado (null em versões legadas, exibidas como texto corrido). */
+  snapshot: ContractSnapshot | null;
 }
 
 export interface AcceptBody {
