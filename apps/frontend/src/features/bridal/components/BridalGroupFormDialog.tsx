@@ -6,12 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import {
   CreateBridalGroupMutation,
   UpdateBridalGroupMutation,
@@ -21,7 +16,7 @@ import {
 } from '../api/bridal.api';
 import { ContractPackagesQuery, type ContractPackagesResult } from '../api/contracts.api';
 import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
-import { errorMessage } from '../lib/bridal-labels';
+import { EVENT_KIND_LABEL, errorMessage } from '../lib/bridal-labels';
 import { buildPersonInput, emptyPerson, type PersonDraft } from '../lib/person-draft';
 import { fromZoned, toZoned } from '../lib/schedule-rows';
 import { BridalPersonFields } from './BridalPersonFields';
@@ -37,6 +32,19 @@ interface Props {
   onSaved: (group: BridalGroupData) => void;
 }
 
+function initialResponsible(g?: BridalGroupData): PersonDraft {
+  const base = emptyPerson(false);
+  if (g?.responsibleClientId) {
+    return {
+      ...base,
+      mode: 'existing',
+      clientId: g.responsibleClientId,
+      clientName: g.responsibleName ?? '',
+    };
+  }
+  return base;
+}
+
 function readyByToTime(g?: BridalGroupData): string {
   return g?.readyBy ? toZoned(g.readyBy).time : '';
 }
@@ -47,6 +55,10 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
   const [eventDate, setEventDate] = useState(group?.eventDate.slice(0, 10) ?? '');
   const [readyTime, setReadyTime] = useState(readyByToTime(group));
   const [locationKind, setLocationKind] = useState(group?.locationKind ?? 'studio');
+  const [eventKind, setEventKind] = useState<'noiva' | 'debutante'>(group?.eventKind ?? 'noiva');
+  const [eventTime, setEventTime] = useState(group?.eventTime ?? '');
+  const [locationName, setLocationName] = useState(group?.locationName ?? '');
+  const [responsible, setResponsible] = useState<PersonDraft>(() => initialResponsible(group));
   const [address, setAddress] = useState(group?.locationAddress ?? '');
   const [before, setBefore] = useState(String(group?.travelMinutesBefore ?? 0));
   const [after, setAfter] = useState(String(group?.travelMinutesAfter ?? 0));
@@ -56,12 +68,16 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
   const [companions, setCompanions] = useState<PersonDraft[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
 
-  const [createGroup, { loading: creating }] =
-    useMutation<{ createBridalGroup: BridalGroupPayload }>(CreateBridalGroupMutation);
-  const [updateGroup, { loading: updating }] =
-    useMutation<{ updateBridalGroup: BridalGroupPayload }>(UpdateBridalGroupMutation);
+  const [createGroup, { loading: creating }] = useMutation<{
+    createBridalGroup: BridalGroupPayload;
+  }>(CreateBridalGroupMutation);
+  const [updateGroup, { loading: updating }] = useMutation<{
+    updateBridalGroup: BridalGroupPayload;
+  }>(UpdateBridalGroupMutation);
   const loading = creating || updating;
   const external = locationKind === 'external';
+  const debutante = eventKind === 'debutante';
+  const personLabel = debutante ? 'Debutante' : 'Noiva';
   // Mesma lista do contrato: pacotes do catálogo não excluídos.
   const { data: packagesData } = useQuery<ContractPackagesResult>(ContractPackagesQuery, {
     skip: !open,
@@ -71,11 +87,16 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
   const missingCurrent =
     !!group?.packageId && !packages.some((p) => p.id === group.packageId) && packagesData;
 
-  function buildGroupFields(): { ok: true; fields: BridalGroupFieldsInput } | { ok: false; errs: string[] } {
+  function buildGroupFields():
+    | { ok: true; fields: BridalGroupFieldsInput }
+    | { ok: false; errs: string[] } {
     const errs: string[] = [];
     if (name.trim().length < 2) errs.push('Informe o nome do grupo.');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) errs.push('Informe a data do evento.');
     if (readyTime && !/^\d{2}:\d{2}$/.test(readyTime)) errs.push('Horário "pronta até" inválido.');
+    if (eventTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(eventTime)) {
+      errs.push('Horário do evento inválido.');
+    }
     if (external && address.trim().length < 3) errs.push('Informe o endereço do evento externo.');
     const b = Number(before);
     const a = Number(after);
@@ -89,6 +110,19 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
         }
       }
     }
+    // Responsável (só debutante, opcional aqui; o gate do contrato cobra).
+    let responsibleFields: Partial<BridalGroupFieldsInput> = {};
+    if (debutante) {
+      if (responsible.mode === 'existing') {
+        if (responsible.clientId) responsibleFields = { responsibleClientId: responsible.clientId };
+      } else if (responsible.newName.trim()) {
+        const r = buildPersonInput(responsible, 'Responsável');
+        if (!r.ok) errs.push(r.error);
+        else if (r.input.newClient) responsibleFields = { newResponsible: r.input.newClient };
+      }
+    } else if (editing) {
+      responsibleFields = { responsibleClientId: null };
+    }
     if (errs.length > 0) return { ok: false, errs };
     return {
       ok: true,
@@ -97,7 +131,11 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
         eventDate,
         readyBy: readyTime ? fromZoned(eventDate, readyTime).toISOString() : null,
         locationKind,
-        locationAddress: external ? address.trim() : null,
+        locationAddress: address.trim() || null,
+        locationName: locationName.trim() || null,
+        eventKind,
+        eventTime: eventTime || null,
+        ...responsibleFields,
         travelMinutesBefore: external ? b : 0,
         travelMinutesAfter: external ? a : 0,
         notes: notes.trim() || null,
@@ -115,7 +153,9 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
     }
     try {
       if (editing && group) {
-        const res = await updateGroup({ variables: { id: group.id, input: g.fields } });
+        const res = await updateGroup({
+          variables: { id: group.id, input: g.fields },
+        });
         const p = res.data?.updateBridalGroup;
         if (p?.errors.length) {
           setErrors(p.errors.map(errorMessage));
@@ -128,7 +168,7 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
         }
         return;
       }
-      const brideRes = buildPersonInput(bride, 'Noiva');
+      const brideRes = buildPersonInput(bride, personLabel);
       if (!brideRes.ok) {
         setErrors([brideRes.error]);
         return;
@@ -143,7 +183,9 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
         comps.push(r.input);
       }
       const res = await createGroup({
-        variables: { input: { group: g.fields, bride: brideRes.input, companions: comps } },
+        variables: {
+          input: { group: g.fields, bride: brideRes.input, companions: comps },
+        },
       });
       const p = res.data?.createBridalGroup;
       if (p?.errors.length) {
@@ -151,7 +193,7 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
         return;
       }
       if (p?.group) {
-        toast.success('Grupo de noivas criado.');
+        toast.success(debutante ? 'Grupo de debutante criado.' : 'Grupo de noivas criado.');
         onSaved(p.group);
         onOpenChange(false);
       }
@@ -164,15 +206,38 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[720px] max-h-[90vh] overflow-y-auto">
         <DialogTitle className="text-base font-bold text-neutral-800">
-          {editing ? 'Editar grupo' : 'Novo grupo de noivas'}
+          {editing
+            ? 'Editar grupo'
+            : debutante
+              ? 'Novo grupo de debutante'
+              : 'Novo grupo de noivas'}
         </DialogTitle>
         <DialogDescription className="text-sm text-neutral-600">
           {editing
             ? 'Altere a data, o local e o deslocamento do evento.'
-            : 'Cadastre a noiva, as acompanhantes e os serviços planejados de cada uma.'}
+            : debutante
+              ? 'Cadastre a debutante, a responsável, as acompanhantes e os serviços planejados de cada uma.'
+              : 'Cadastre a noiva, as acompanhantes e os serviços planejados de cada uma.'}
         </DialogDescription>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-sm">
+          <fieldset className="sm:col-span-3">
+            <legend className={LABEL_CLASS}>Tipo de evento</legend>
+            <div className="mt-xs flex gap-md">
+              {(['noiva', 'debutante'] as const).map((k) => (
+                <label key={k} className="flex items-center gap-xs text-sm">
+                  <input
+                    type="radio"
+                    name="bg-event-kind"
+                    checked={eventKind === k}
+                    onChange={() => setEventKind(k)}
+                    data-testid={`bg-kind-${k}`}
+                  />
+                  {EVENT_KIND_LABEL[k]}
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <div className="sm:col-span-3">
             <Label className={LABEL_CLASS} htmlFor="bg-name">
               Nome do grupo
@@ -197,6 +262,23 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
             />
+          </div>
+          <div>
+            <Label className={LABEL_CLASS} htmlFor="group-event-time">
+              Horário do evento
+            </Label>
+            <Input
+              id="group-event-time"
+              data-testid="group-event-time"
+              type="time"
+              aria-describedby="group-event-time-help"
+              className="mt-xs"
+              value={eventTime}
+              onChange={(e) => setEventTime(e.target.value)}
+            />
+            <p id="group-event-time-help" className="mt-xs text-xs text-neutral-600">
+              Hora da cerimônia/festa. &quot;Pronta até&quot; continua separado.
+            </p>
           </div>
           <div>
             <Label className={LABEL_CLASS} htmlFor="bg-ready">
@@ -252,20 +334,34 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
               Os serviços do pacote entram nos serviços da noiva.
             </p>
           </div>
+          <div className="sm:col-span-3">
+            <Label className={LABEL_CLASS} htmlFor="group-location-name">
+              Nome do local
+            </Label>
+            <Input
+              id="group-location-name"
+              data-testid="group-location-name"
+              className="mt-xs"
+              placeholder={external ? undefined : 'Em branco = dados do studio'}
+              value={locationName}
+              onChange={(e) => setLocationName(e.target.value)}
+            />
+          </div>
+          <div className="sm:col-span-3">
+            <Label className={LABEL_CLASS} htmlFor="group-location-address">
+              Endereço do atendimento
+            </Label>
+            <Input
+              id="group-location-address"
+              data-testid="group-location-address"
+              className="mt-xs"
+              placeholder={external ? undefined : 'Em branco = dados do studio'}
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+            />
+          </div>
           {external && (
             <>
-              <div className="sm:col-span-3">
-                <Label className={LABEL_CLASS} htmlFor="bg-address">
-                  Endereço
-                </Label>
-                <Input
-                  id="bg-address"
-                  data-testid="bg-address"
-                  className="mt-xs"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                />
-              </div>
               <div>
                 <Label className={LABEL_CLASS} htmlFor="bg-before">
                   Deslocamento antes (min)
@@ -309,9 +405,27 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
           </div>
         </div>
 
+        {debutante && (
+          <div className="space-y-xs">
+            <BridalPersonFields
+              idPrefix="responsible"
+              title="Responsável (contratante)"
+              value={responsible}
+              onChange={setResponsible}
+              compact
+            />
+            <p className="text-xs text-neutral-600">A responsável é quem assina o contrato.</p>
+          </div>
+        )}
+
         {!editing && (
           <div className="space-y-sm">
-            <BridalPersonFields idPrefix="bride" title="Noiva" value={bride} onChange={setBride} />
+            <BridalPersonFields
+              idPrefix="bride"
+              title={personLabel}
+              value={bride}
+              onChange={setBride}
+            />
             {companions.map((c, i) => (
               <BridalPersonFields
                 key={i}

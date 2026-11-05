@@ -27,6 +27,11 @@ export function group(p: Partial<BridalGroupData> & { id: string }): BridalGroup
     readyBy: null,
     locationKind: 'studio',
     locationAddress: null,
+    locationName: null,
+    eventKind: 'noiva',
+    responsibleClientId: null,
+    responsibleName: null,
+    eventTime: null,
     travelMinutesBefore: 0,
     travelMinutesAfter: 0,
     status: 'active',
@@ -43,4 +48,17 @@ export function group(p: Partial<BridalGroupData> & { id: string }): BridalGroup
     appointments: [],
     ...p,
   };
+}
+
+/** Grupo de debutante com responsável, horário e local preenchidos. */
+export function debutanteGroup(p: Partial<BridalGroupData> & { id: string }) {
+  return group({
+    eventKind: 'debutante',
+    responsibleClientId: 'resp-1',
+    responsibleName: 'Marta Souza',
+    eventTime: '19:30',
+    locationName: 'Salão Aurora',
+    locationAddress: 'Rua das Flores, 100',
+    ...p,
+  });
 }
