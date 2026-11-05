@@ -14,6 +14,7 @@ const PAYLOAD = `
   group {
     id name eventDate readyBy locationKind locationAddress travelMinutesBefore travelMinutesAfter
     status contractId contractCode contractStatus appointmentCount packageId packageName
+    locationName eventKind eventTime responsibleClientId responsibleName
     members {
       id clientId clientName clientPhone role relationLabel coveredByContract hasClosedComanda
       services { id serviceId serviceName durationMinutes purpose }
@@ -345,6 +346,80 @@ describe('Phase 4 - grupos de noivas (CLI-03)', () => {
       expect(cleared.group.packageId).toBeNull();
       expect(cleared.group.packageName).toBeNull();
       expect(brideServices(cleared.group)).toHaveLength(3);
+    });
+  });
+
+  describe('fase 04.1: tipo, responsável, horário e local do atendimento', () => {
+    const create = async (group: Record<string, unknown>) =>
+      (await admin()(CREATE, { i: { group: fields(group), bride: { clientId: w.clientId } } })).data
+        .createBridalGroup;
+
+    it('noiva no estúdio sem local assume nome e endereço do studio', async () => {
+      await adminPrisma.contractSettings.upsert({
+        where: { organizationId: w.orgId },
+        create: {
+          organizationId: w.orgId,
+          studioName: 'Studio JS Teste',
+          studioAddress: 'Rua das Flores, 10',
+        },
+        update: { studioName: 'Studio JS Teste', studioAddress: 'Rua das Flores, 10' },
+      });
+      const p = await create({ eventTime: '16:30' });
+      expect(p.errors).toEqual([]);
+      expect(p.group.eventKind).toBe('noiva');
+      expect(p.group.eventTime).toBe('16:30');
+      expect(p.group.locationName).toBe('Studio JS Teste');
+      expect(p.group.locationAddress).toBe('Rua das Flores, 10');
+      expect(p.group.responsibleClientId).toBeNull();
+    });
+
+    it('debutante com responsável cadastrada na hora', async () => {
+      const p = await create({
+        eventKind: 'debutante',
+        newResponsible: { fullName: 'p4bg-mae', phone: '11988887777' },
+      });
+      expect(p.errors).toEqual([]);
+      expect(p.group.eventKind).toBe('debutante');
+      expect(p.group.responsibleName).toBe('p4bg-mae');
+      expect(p.group.responsibleClientId).toBeTruthy();
+    });
+
+    it('responsável igual à debutante é recusada', async () => {
+      const p = await create({ eventKind: 'debutante', responsibleClientId: w.clientId });
+      expect(p.errors[0].code).toBe('RESPONSIBLE_IS_DEBUTANTE');
+      expect(p.group).toBeNull();
+    });
+
+    it('responsável inexistente, horário e tipo inválidos', async () => {
+      const nf = await create({
+        eventKind: 'debutante',
+        responsibleClientId: '00000000-0000-4000-8000-000000000000',
+      });
+      expect(nf.errors[0].code).toBe('RESPONSIBLE_NOT_FOUND');
+      const t = await create({ eventTime: '25:00' });
+      expect(t.errors[0].code).toBe('INVALID_EVENT_TIME');
+      const k = await create({ eventKind: 'formatura' });
+      expect(k.errors[0].code).toBe('INVALID_EVENT_KIND');
+    });
+
+    it('update para noiva zera a responsável; omitido mantém', async () => {
+      const g = (
+        await create({
+          eventKind: 'debutante',
+          newResponsible: { fullName: 'p4bg-mae2', phone: '11988886666' },
+        })
+      ).group;
+      const kept = await admin()(UPDATE, { id: g.id, i: fields({ notes: 'x' }) });
+      expect(kept.data.updateBridalGroup.group.responsibleName).toBe('p4bg-mae2');
+      const upd = await admin()(UPDATE, { id: g.id, i: fields({ eventKind: 'noiva' }) });
+      expect(upd.data.updateBridalGroup.errors).toEqual([]);
+      expect(upd.data.updateBridalGroup.group.eventKind).toBe('noiva');
+      expect(upd.data.updateBridalGroup.group.responsibleClientId).toBeNull();
+    });
+
+    it('externo sem endereço continua com erro', async () => {
+      const p = await create({ locationKind: 'external' });
+      expect(p.errors[0].code).toBe('ADDRESS_REQUIRED');
     });
   });
 });

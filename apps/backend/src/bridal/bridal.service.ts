@@ -31,6 +31,15 @@ export interface BridalGroupFieldsInput {
   notes?: string | null;
   /** undefined = mantém; null = limpa; string = pacote do catálogo */
   packageId?: string | null;
+  /** noiva (padrão) | debutante; omitido no update = mantém */
+  eventKind?: string | null;
+  /** Só debutante. undefined = mantém; null = remove */
+  responsibleClientId?: string | null;
+  /** Cadastra a responsável na hora (só debutante) */
+  newResponsible?: { fullName: string; phone?: string | null } | null;
+  /** HH:MM; vazio = sem horário */
+  eventTime?: string | null;
+  locationName?: string | null;
 }
 
 export interface BridalMemberServiceInput {
@@ -64,6 +73,8 @@ export interface BridalGroupPayload {
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+const EVENT_KINDS = ['noiva', 'debutante'];
 const MAX_PEOPLE = 15;
 const MAX_SERVICES_PER_PERSON = 10;
 const MAX_TRAVEL_MINUTES = 240;
@@ -101,11 +112,16 @@ interface ValidatedFields {
   travelMinutesBefore: number;
   travelMinutesAfter: number;
   notes: string | null;
+  eventKind: string;
+  eventTime: string | null;
+  locationName: string | null;
 }
 
 async function validateGroupFields(
   tx: TenantPrismaClient,
+  orgId: string,
   input: BridalGroupFieldsInput,
+  currentKind: string = 'noiva',
 ): Promise<ValidatedFields> {
   const name = input.name?.trim() ?? '';
   if (name.length < 2 || name.length > 160) {
@@ -118,7 +134,36 @@ async function validateGroupFields(
   if (locationKind !== 'studio' && locationKind !== 'external') {
     throw new BridalError('INVALID_LOCATION', 'Local do evento inválido.', 'locationKind');
   }
-  const address = input.locationAddress?.trim() || null;
+  const eventKind = input.eventKind ?? currentKind;
+  if (!EVENT_KINDS.includes(eventKind)) {
+    throw new BridalError('INVALID_EVENT_KIND', 'Tipo de evento inválido.', 'eventKind');
+  }
+  const eventTime = input.eventTime?.trim() || null;
+  if (eventTime && !TIME_RE.test(eventTime)) {
+    throw new BridalError(
+      'INVALID_EVENT_TIME',
+      'Horário do evento inválido (use HH:MM).',
+      'eventTime',
+    );
+  }
+  let locationName = input.locationName?.trim() || null;
+  if (locationName && locationName.length > 160) {
+    throw new BridalError(
+      'INVALID_LOCATION_NAME',
+      'Nome do local muito longo (máx. 160).',
+      'locationName',
+    );
+  }
+  let address = input.locationAddress?.trim() || null;
+  if (locationKind === 'studio' && (!locationName || !address)) {
+    // D-11: no estúdio, vazio assume os dados do studio das configurações
+    const settings = await tx.contractSettings.findUnique({
+      where: { organizationId: orgId },
+      select: { studioName: true, studioAddress: true },
+    });
+    locationName = locationName ?? settings?.studioName?.trim() ?? null;
+    address = address ?? settings?.studioAddress?.trim() ?? null;
+  }
   if (locationKind === 'external' && !address) {
     throw new BridalError(
       'ADDRESS_REQUIRED',
@@ -165,11 +210,64 @@ async function validateGroupFields(
     eventDate: new Date(`${input.eventDate}T00:00:00.000Z`),
     readyBy,
     locationKind,
-    locationAddress: locationKind === 'external' ? address : null,
+    locationAddress: address,
     travelMinutesBefore: before,
     travelMinutesAfter: after,
     notes: input.notes?.trim() || null,
+    eventKind,
+    eventTime,
+    locationName,
   };
+}
+
+/**
+ * Responsável da debutante (D-04): cliente existente ou cadastro rápido.
+ * Devolve undefined quando não há alteração (update com campo omitido).
+ */
+async function resolveResponsibleTx(
+  tx: TenantPrismaClient,
+  orgId: string,
+  input: BridalGroupFieldsInput,
+  eventKind: string,
+  brideClientId: string | null,
+): Promise<string | null | undefined> {
+  if (eventKind !== 'debutante') return null;
+  let id: string | null | undefined;
+  if (input.newResponsible) {
+    if (input.responsibleClientId) {
+      throw new BridalError(
+        'CLIENT_REQUIRED',
+        'Escolha uma cliente ou cadastre uma nova.',
+        'responsibleClientId',
+      );
+    }
+    id = await resolvePersonClientTx(tx, orgId, { newClient: input.newResponsible });
+  } else if (input.responsibleClientId) {
+    const found = await tx.client.findFirst({
+      where: { id: input.responsibleClientId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!found) {
+      throw new BridalError(
+        'RESPONSIBLE_NOT_FOUND',
+        'Responsável não encontrada.',
+        'responsibleClientId',
+      );
+    }
+    id = found.id;
+  } else if (input.responsibleClientId === null) {
+    id = null;
+  } else {
+    return undefined;
+  }
+  if (id && brideClientId && id === brideClientId) {
+    throw new BridalError(
+      'RESPONSIBLE_IS_DEBUTANTE',
+      'A responsável deve ser outra pessoa.',
+      'responsibleClientId',
+    );
+  }
+  return id;
 }
 
 async function validateServices(
@@ -393,7 +491,7 @@ export class BridalService {
           'companions',
         );
       }
-      const fields = await validateGroupFields(tx, input.group);
+      const fields = await validateGroupFields(tx, orgId, input.group);
       const packageId = input.group.packageId
         ? await validatePackage(tx, orgId, input.group.packageId)
         : null;
@@ -403,6 +501,23 @@ export class BridalService {
       });
       const used = new Set<string>();
       await insertMemberTx(tx, orgId, group.id, 'bride', 0, input.bride, used);
+      const bride = await tx.bridalGroupMember.findFirstOrThrow({
+        where: { groupId: group.id, role: 'bride' },
+        select: { clientId: true },
+      });
+      const responsibleId = await resolveResponsibleTx(
+        tx,
+        orgId,
+        input.group,
+        fields.eventKind,
+        bride.clientId,
+      );
+      if (responsibleId) {
+        await tx.bridalGroup.update({
+          where: { id: group.id },
+          data: { responsibleClientId: responsibleId },
+        });
+      }
       if (packageId) await applyPackageToBrideTx(tx, orgId, group.id, packageId);
       let order = 1;
       for (const c of companions) {
@@ -421,7 +536,22 @@ export class BridalService {
     // Se eventDate mudar com contrato vivo, só o grupo é atualizado; o 04-06 recalcula o prazo do saldo.
     return this.write(orgId, async (tx) => {
       await requireActiveGroup(tx, id);
-      const fields = await validateGroupFields(tx, input);
+      const current = await tx.bridalGroup.findFirstOrThrow({
+        where: { id },
+        select: { eventKind: true },
+      });
+      const fields = await validateGroupFields(tx, orgId, input, current.eventKind);
+      const bride = await tx.bridalGroupMember.findFirst({
+        where: { groupId: id, role: 'bride' },
+        select: { clientId: true },
+      });
+      const responsibleId = await resolveResponsibleTx(
+        tx,
+        orgId,
+        input,
+        fields.eventKind,
+        bride?.clientId ?? null,
+      );
       const before = await tx.bridalGroup.findFirstOrThrow({
         where: { id },
         select: {
@@ -437,7 +567,14 @@ export class BridalService {
       else if (input.packageId !== undefined) {
         packageId = await validatePackage(tx, orgId, input.packageId);
       }
-      await tx.bridalGroup.update({ where: { id }, data: { ...fields, packageId } });
+      await tx.bridalGroup.update({
+        where: { id },
+        data: {
+          ...fields,
+          packageId,
+          ...(responsibleId !== undefined ? { responsibleClientId: responsibleId } : {}),
+        },
+      });
       if (
         before.locationKind !== fields.locationKind ||
         before.travelMinutesBefore !== fields.travelMinutesBefore ||
