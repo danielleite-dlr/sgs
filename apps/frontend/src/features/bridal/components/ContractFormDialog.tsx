@@ -266,6 +266,11 @@ function ContractForm({
   // Parcela única acompanha o valor do sinal até a usuária mexer nela.
   const [followDeposit, setFollowDeposit] = useState(!contract);
   const [deposit, setDeposit] = useState(contract ? formatCurrencyDisplay(contract.depositAmount) : '');
+  // Enquanto não for manual, o sinal segue o valor de entrada do pacote escolhido.
+  // Contrato existente com sinal salvo abre como manual (mantém o depositAmount).
+  const [depositManual, setDepositManual] = useState(
+    () => !!contract && typedToCents(formatCurrencyDisplay(contract.depositAmount)) > 0,
+  );
   const [days, setDays] = useState(contract ? String(contract.balanceDueDaysBefore) : '');
   const [addMember, setAddMember] = useState('');
   const [addService, setAddService] = useState('');
@@ -302,7 +307,14 @@ function ContractForm({
     suggestedDeposit = Math.round((total * Number(pkg.depositValue)) / 100);
   }
   const aVista = paymentMode === 'a_vista';
-  const depositCents = aVista ? total : deposit ? typedToCents(deposit) : suggestedDeposit;
+  const depositCents = aVista ? total : depositManual ? typedToCents(deposit) : suggestedDeposit;
+  const depositDisplay = aVista
+    ? formatCurrencyDisplay(centsToDecimal(total))
+    : depositManual
+      ? deposit
+      : suggestedDeposit > 0
+        ? formatCurrencyDisplay(centsToDecimal(suggestedDeposit))
+        : '';
   const parcelado = paymentMode === 'sinal_parcelado';
   const resolvedRows: InstallmentRow[] =
     !parcelado || followDeposit
@@ -428,6 +440,8 @@ function ContractForm({
           disabled={!!contract}
           onChange={(e) => {
             setPackageId(e.target.value);
+            setDepositManual(false);
+            setDeposit('');
             resetInstallments();
           }}
           className="mt-xs w-full rounded-md border border-neutral-200 bg-white px-sm py-xs text-sm"
@@ -606,11 +620,30 @@ function ContractForm({
             id="contract-deposit"
             className="mt-xs"
             inputMode="numeric"
-            placeholder={suggestedDeposit > 0 ? formatCurrencyDisplay(centsToDecimal(suggestedDeposit)) : '0,00'}
+            placeholder="0,00"
             readOnly={aVista}
-            value={aVista ? formatCurrencyDisplay(centsToDecimal(total)) : deposit}
-            onChange={(e) => setDeposit(maskCurrency(e.target.value))}
+            value={depositDisplay}
+            onChange={(e) => {
+              setDeposit(maskCurrency(e.target.value));
+              setDepositManual(true);
+            }}
+            onBlur={() => {
+              if (!aVista && depositManual && !deposit) setDepositManual(false);
+            }}
           />
+          {!aVista && depositManual && suggestedDeposit > 0 && depositCents !== suggestedDeposit && (
+            <button
+              type="button"
+              data-testid="contract-deposit-reset"
+              className="mt-xs text-xs text-primary-600 underline-offset-2 hover:underline"
+              onClick={() => {
+                setDepositManual(false);
+                setDeposit('');
+              }}
+            >
+              Usar valor do pacote (R$ {formatCurrencyDisplay(centsToDecimal(suggestedDeposit))})
+            </button>
+          )}
         </div>
         <div>
           <Label htmlFor="contract-days" className="text-xs font-semibold text-neutral-700">

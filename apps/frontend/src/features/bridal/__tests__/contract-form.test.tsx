@@ -111,7 +111,7 @@ function renderCreate(captured: Captured, errors: unknown[] = []) {
   );
 }
 
-function renderEdit(contract: ContractData, captured: Captured) {
+function renderEdit(contract: ContractData, captured: Captured, packages: unknown[] = []) {
   const mock: MockedResponse = {
     request: { query: UpdateContractMutation },
     variableMatcher: (vars: Vars) => {
@@ -129,7 +129,13 @@ function renderEdit(contract: ContractData, captured: Captured) {
     },
   };
   return render(
-    <MockedProvider mocks={[...BASE_MOCKS, mock]}>
+    <MockedProvider
+      mocks={[
+        ...BASE_MOCKS.filter((m) => m.request.query !== ContractPackagesQuery),
+        { request: { query: ContractPackagesQuery }, result: { data: { packages } } },
+        mock,
+      ]}
+    >
       <MemoryRouter>
         <ContractFormDialog open onOpenChange={() => undefined} contract={contract} />
       </MemoryRouter>
@@ -376,6 +382,107 @@ describe('ContractFormDialog — novo contrato sem grupo', () => {
     expect(input.packageId).toBe('p1');
     expect(input.items).toBeUndefined();
     expect(input.newGroup).toMatchObject({ eventDate: '2030-06-15' });
+  });
+});
+
+const PKGS = [
+  { __typename: 'Package', id: 'p-fixo', name: 'Pacote Fixo', price: '2500.00', depositKind: 'fixed', depositValue: '500.00' },
+  { __typename: 'Package', id: 'p-pct', name: 'Pacote Pct', price: '2000.00', depositKind: 'percent', depositValue: '30' },
+  { __typename: 'Package', id: 'p-sem', name: 'Pacote Sem', price: '1000.00', depositKind: null, depositValue: null },
+];
+
+async function openNew(captured: Captured) {
+  renderNew(captured, PKGS);
+  await screen.findByTestId('new-contract-fields');
+  await screen.findByRole('option', { name: /Pacote Fixo/ });
+  fillText('nc-bride-name', 'Ana Souza');
+  fillText('nc-date', '2030-06-15');
+}
+const pick = (id: string) =>
+  fireEvent.change(screen.getByLabelText('Pacote (opcional)'), { target: { value: id } });
+const sinal = () => screen.getByLabelText('Valor do sinal (R$)');
+
+describe('ContractFormDialog — sinal pré-preenchido pelo pacote', () => {
+  beforeEach(() => {
+    useAuthStore.setState({ roleName: 'MANAGER', permissions: [] });
+  });
+
+  it('pacote fixo preenche o campo, o resumo e a parcela única', async () => {
+    const captured: Captured = { vars: null };
+    await openNew(captured);
+    pick('p-fixo');
+    expect(sinal()).toHaveValue('500,00');
+    expect(within(screen.getByTestId('contract-summary')).getAllByText('R$ 500,00').length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByTestId('contract-submit'));
+    await waitFor(() => expect(captured.vars).not.toBeNull());
+    const input = (captured.vars as Vars).input as Vars;
+    expect(input.depositAmount).toBe('500.00');
+    expect(input.installments).toEqual([{ dueDate: todayIso(), amount: '500.00' }]);
+  });
+
+  it('pacote em % recalcula quando o desconto muda', async () => {
+    await openNew({ vars: null });
+    pick('p-pct');
+    expect(sinal()).toHaveValue('600,00');
+    typeMoney('Desconto (R$)', '50000');
+    expect(sinal()).toHaveValue('450,00');
+  });
+
+  it('trocar de pacote troca o valor; sem entrada fica vazio', async () => {
+    await openNew({ vars: null });
+    pick('p-fixo');
+    expect(sinal()).toHaveValue('500,00');
+    pick('p-pct');
+    expect(sinal()).toHaveValue('600,00');
+    pick('p-sem');
+    expect(sinal()).toHaveValue('');
+    expect(sinal()).toHaveAttribute('placeholder', '0,00');
+  });
+
+  it('valor digitado não é sobrescrito e o botão restaura o do pacote', async () => {
+    const captured: Captured = { vars: null };
+    await openNew(captured);
+    pick('p-pct');
+    typeMoney('Valor do sinal (R$)', '70000');
+    expect(sinal()).toHaveValue('700,00');
+    typeMoney('Desconto (R$)', '50000');
+    expect(sinal()).toHaveValue('700,00');
+    fireEvent.click(screen.getByTestId('contract-submit'));
+    await waitFor(() => expect(captured.vars).not.toBeNull());
+    expect(((captured.vars as Vars).input as Vars).depositAmount).toBe('700.00');
+    fireEvent.click(screen.getByTestId('contract-deposit-reset'));
+    expect(sinal()).toHaveValue('450,00');
+    expect(screen.queryByTestId('contract-deposit-reset')).not.toBeInTheDocument();
+  });
+
+  it('limpar o campo e sair volta ao valor do pacote', async () => {
+    await openNew({ vars: null });
+    pick('p-fixo');
+    typeMoney('Valor do sinal (R$)', '');
+    fireEvent.blur(sinal());
+    expect(sinal()).toHaveValue('500,00');
+  });
+
+  it('rascunho mantém o sinal salvo ao abrir', async () => {
+    const captured: Captured = { vars: null };
+    renderEdit(makePackageContract(), captured, [
+      { __typename: 'Package', id: 'p1', name: 'Pacote Ouro', price: '2500.00', depositKind: 'fixed', depositValue: '999.00' },
+    ]);
+    await screen.findByTestId('contract-items');
+    expect(sinal()).toHaveValue('400,00');
+    fireEvent.click(screen.getByTestId('contract-submit'));
+    await waitFor(() => expect(captured.vars).not.toBeNull());
+    expect(((captured.vars as Vars).input as Vars).depositAmount).toBe('400.00');
+  });
+
+  it('à vista continua readOnly com o total e Sinal volta ao pacote', async () => {
+    await openNew({ vars: null });
+    pick('p-fixo');
+    fireEvent.click(screen.getByLabelText('À vista'));
+    expect(sinal()).toHaveValue('2.500,00');
+    expect(sinal()).toHaveAttribute('readonly');
+    fireEvent.click(screen.getByLabelText('Sinal'));
+    expect(sinal()).toHaveValue('500,00');
   });
 });
 
