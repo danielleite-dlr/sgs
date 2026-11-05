@@ -9,26 +9,11 @@ import {
   ContractServicesQuery,
   ContractSettingsQuery,
   ContractsQuery,
-  UpdateContractSettingsMutation,
 } from '../api/contracts.api';
 import { ContractsPage } from '../pages/ContractsPage';
-import { makeContract, withTypenames } from './contract-fixtures';
+import { makeContract, makeSettings, withTypenames } from './contract-fixtures';
 
-const SETTINGS = {
-  __typename: 'ContractSettings',
-  balanceDueDaysBefore: 7,
-  templateBody: 'Contrato de {{noiva}}',
-  isDefaultTemplate: true,
-  cancellationClause: 'Cláusula padrão de cancelamento do estúdio.',
-  isDefaultClause: true,
-  alertDepositUnpaidDays: 3,
-  alertNotAcceptedDays: 5,
-  alertCompanionDepositDays: 30,
-  scheduleDayStart: '08:00',
-  scheduleDayEnd: '20:00',
-  templateVariables: ['noiva', 'total'],
-  missingVariables: [],
-};
+const SETTINGS = makeSettings();
 
 const LATE = makeContract({
   id: 'ct-late',
@@ -135,13 +120,24 @@ describe('ContractsPage', () => {
         result: {
           data: {
             services: [
-              { __typename: 'Service', id: 's1', name: 'Maquiagem noiva', basePrice: '800.00' },
+              {
+                __typename: 'Service',
+                id: 's1',
+                name: 'Maquiagem noiva',
+                basePrice: '800.00',
+              },
             ],
           },
         },
       },
-      { request: { query: ContractPackagesQuery }, result: { data: { packages: [] } } },
-      { request: { query: ContractSettingsQuery }, result: { data: { contractSettings: SETTINGS } } },
+      {
+        request: { query: ContractPackagesQuery },
+        result: { data: { packages: [] } },
+      },
+      {
+        request: { query: ContractSettingsQuery },
+        result: { data: { contractSettings: SETTINGS } },
+      },
     ];
     renderPage(mocks, '/contratos?grupo=g1');
     expect(await screen.findByTestId('contract-form')).toBeInTheDocument();
@@ -168,18 +164,31 @@ describe('ContractsPage', () => {
         result: {
           data: {
             services: [
-              { __typename: 'Service', id: 's1', name: 'Maquiagem noiva', basePrice: '800.00' },
+              {
+                __typename: 'Service',
+                id: 's1',
+                name: 'Maquiagem noiva',
+                basePrice: '800.00',
+              },
             ],
           },
         },
       },
-      { request: { query: ContractPackagesQuery }, result: { data: { packages } } },
-      { request: { query: ContractSettingsQuery }, result: { data: { contractSettings: SETTINGS } } },
+      {
+        request: { query: ContractPackagesQuery },
+        result: { data: { packages } },
+      },
+      {
+        request: { query: ContractSettingsQuery },
+        result: { data: { contractSettings: SETTINGS } },
+      },
     ];
     const { unmount } = renderPage(base('p1', [pkg]), '/contratos?grupo=g1');
     await screen.findByTestId('contract-items');
     expect(screen.getByLabelText('Pacote (opcional)')).toHaveValue('p1');
-    expect(screen.getByText(/Os serviços da noiva entram pelo preço do pacote/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Os serviços da noiva entram pelo preço do pacote/),
+    ).toBeInTheDocument();
     unmount();
     renderPage(base('p-excluido', [pkg]), '/contratos?grupo=g1');
     await screen.findByTestId('contract-items');
@@ -192,54 +201,20 @@ describe('ContractsPage', () => {
     expect(screen.queryByRole('tab', { name: 'Configurações' })).not.toBeInTheDocument();
   });
 
-  it('ADMIN salva modelo com {{foo}} e vê a mensagem de variável desconhecida', async () => {
+  it('ADMIN abre Configurações e vê dados do studio, prazos e textos', async () => {
     useAuthStore.setState({ roleName: 'ADMIN', permissions: [] });
-    const mocks: MockedResponse[] = [
+    renderPage([
       listMock({}, []),
-      { request: { query: ContractSettingsQuery }, result: { data: { contractSettings: SETTINGS } } },
       {
-        request: {
-          query: UpdateContractSettingsMutation,
-          variables: {
-            input: {
-              balanceDueDaysBefore: 7,
-              alertDepositUnpaidDays: 3,
-              alertNotAcceptedDays: 5,
-              alertCompanionDepositDays: 30,
-              scheduleDayStart: '08:00',
-              scheduleDayEnd: '20:00',
-              templateBody: 'Contrato {{foo}}',
-            },
-          },
-        },
-        result: {
-          data: {
-            updateContractSettings: {
-              __typename: 'ContractSettingsPayload',
-              settings: null,
-              errors: [
-                {
-                  __typename: 'UserError',
-                  code: 'UNKNOWN_TEMPLATE_VARIABLE',
-                  message: 'Variáveis desconhecidas no modelo: {{foo}}.',
-                  field: 'templateBody',
-                },
-              ],
-            },
-          },
-        },
+        request: { query: ContractSettingsQuery },
+        result: { data: { contractSettings: SETTINGS } },
       },
-    ];
-    renderPage(mocks);
+    ]);
     const tab = await screen.findByRole('tab', { name: 'Configurações' });
     fireEvent.mouseDown(tab, { button: 0 });
     fireEvent.click(tab);
-    const textarea = await screen.findByLabelText('Texto do modelo');
-    expect(screen.getByRole('button', { name: 'Restaurar modelo padrão' })).toBeInTheDocument();
-    fireEvent.change(textarea, { target: { value: 'Contrato {{foo}}' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar configurações' }));
-    expect(await screen.findByTestId('settings-error')).toHaveTextContent(
-      'Variáveis desconhecidas no modelo: {{foo}}.',
-    );
+    expect(await screen.findByText('Dados do studio')).toBeInTheDocument();
+    expect(screen.getByLabelText('Prazo para desistência (dias)')).toHaveValue(7);
+    expect(screen.getByLabelText('Obs. dos testes')).toBeInTheDocument();
   });
 });

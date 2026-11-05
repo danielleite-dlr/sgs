@@ -143,8 +143,6 @@ export const GenerateContractLinkMutation = gql`
 
 const SETTINGS_FIELDS = `
   balanceDueDaysBefore
-  templateBody
-  isDefaultTemplate
   cancellationClause
   isDefaultClause
   alertDepositUnpaidDays
@@ -152,8 +150,47 @@ const SETTINGS_FIELDS = `
   alertCompanionDepositDays
   scheduleDayStart
   scheduleDayEnd
-  templateVariables
-  missingVariables
+  studio {
+    name
+    cnpj
+    address
+    representative
+    representativeRg
+    forumCity
+    forumUf
+  }
+  withdrawalNoticeDays
+  texts {
+    title
+    intro
+    parties
+    trialNote
+    clauses
+  }
+  textsDefault {
+    title
+    intro
+    parties
+    trialNote
+    clauses
+  }
+  defaultTexts {
+    title
+    intro
+    parties
+    trialNote
+    clauses
+  }
+  textVariables
+  letterhead {
+    sha256
+    mimeType
+    width
+    height
+    sizeBytes
+    originalFilename
+    uploadedAt
+  }
 `;
 
 export const ContractSettingsQuery = gql`
@@ -167,6 +204,36 @@ export const ContractSettingsQuery = gql`
 export const UpdateContractSettingsMutation = gql`
   mutation UpdateContractSettings($input: UpdateContractSettingsInput!) {
     updateContractSettings(input: $input) {
+      settings {
+        ${SETTINGS_FIELDS}
+      }
+      errors {
+        code
+        message
+        field
+      }
+    }
+  }
+`;
+
+export const UploadContractLetterheadMutation = gql`
+  mutation UploadContractLetterhead($input: UploadContractLetterheadInput!) {
+    uploadContractLetterhead(input: $input) {
+      settings {
+        ${SETTINGS_FIELDS}
+      }
+      errors {
+        code
+        message
+        field
+      }
+    }
+  }
+`;
+
+export const RemoveContractLetterheadMutation = gql`
+  mutation RemoveContractLetterhead {
+    removeContractLetterhead {
       settings {
         ${SETTINGS_FIELDS}
       }
@@ -415,16 +482,43 @@ export interface CancelContractResult {
   cancelContract: ContractPayloadResult;
 }
 export interface ContractCancellationPreviewResult {
-  contractCancellationPreview: { paid: string; retained: string; refund: string; party: string };
+  contractCancellationPreview: {
+    paid: string;
+    retained: string;
+    refund: string;
+    party: string;
+  };
 }
 export interface ContractPdfResult {
   contractPdf: { filename: string; base64: string } | null;
 }
 
+export type ContractTextSection = 'title' | 'intro' | 'parties' | 'trialNote' | 'clauses';
+export type ContractTextsData = Record<ContractTextSection, string>;
+export type ContractTextsDefaultFlags = Record<ContractTextSection, boolean>;
+
+export interface ContractStudioData {
+  name: string;
+  cnpj: string;
+  address: string;
+  representative: string;
+  representativeRg: string;
+  forumCity: string;
+  forumUf: string;
+}
+
+export interface ContractLetterheadData {
+  sha256: string;
+  mimeType: string;
+  width: number;
+  height: number;
+  sizeBytes: number;
+  originalFilename: string;
+  uploadedAt: string;
+}
+
 export interface ContractSettingsData {
   balanceDueDaysBefore: number;
-  templateBody: string;
-  isDefaultTemplate: boolean;
   cancellationClause: string;
   isDefaultClause: boolean;
   alertDepositUnpaidDays: number;
@@ -432,14 +526,35 @@ export interface ContractSettingsData {
   alertCompanionDepositDays: number;
   scheduleDayStart: string;
   scheduleDayEnd: string;
-  templateVariables: string[];
-  missingVariables: string[];
+  studio: ContractStudioData;
+  withdrawalNoticeDays: number;
+  texts: ContractTextsData;
+  textsDefault: ContractTextsDefaultFlags;
+  defaultTexts: ContractTextsData;
+  textVariables: string[];
+  letterhead: ContractLetterheadData | null;
 }
 export interface ContractSettingsResult {
   contractSettings: ContractSettingsData;
 }
 export interface UpdateContractSettingsResult {
-  updateContractSettings: { settings: ContractSettingsData | null; errors: UserError[] };
+  updateContractSettings: {
+    settings: ContractSettingsData | null;
+    errors: UserError[];
+  };
+}
+
+export interface UploadContractLetterheadResult {
+  uploadContractLetterhead: {
+    settings: ContractSettingsData | null;
+    errors: UserError[];
+  };
+}
+export interface RemoveContractLetterheadResult {
+  removeContractLetterhead: {
+    settings: ContractSettingsData | null;
+    errors: UserError[];
+  };
 }
 
 export interface ContractGroupMember {
@@ -447,7 +562,12 @@ export interface ContractGroupMember {
   clientName: string;
   role: string;
   coveredByContract: boolean;
-  services: Array<{ id: string; serviceId: string; serviceName: string; purpose: string }>;
+  services: Array<{
+    id: string;
+    serviceId: string;
+    serviceName: string;
+    purpose: string;
+  }>;
 }
 export interface ContractGroupResult {
   bridalGroup: {
