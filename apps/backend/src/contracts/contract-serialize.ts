@@ -3,12 +3,15 @@ import type { Prisma } from '@prisma/client';
 import { fromCents, toCents } from '../common/money';
 import type { TenantPrismaClient } from '../database/types';
 import { loadEffectiveSettings } from './contract-settings.service';
-import { computeContractStatus } from './domain/contract-math';
+import { allocateInstallments, computeContractStatus } from './domain/contract-math';
 import { maskCpf } from './domain/contract-template';
 
 export const CONTRACT_INCLUDE = {
-  group: { select: { name: true, eventDate: true } },
+  group: { select: { name: true, eventDate: true, eventKind: true } },
   bride: { select: { fullName: true } },
+  contractor: { select: { fullName: true } },
+  package: { select: { name: true } },
+  installments: { orderBy: { seq: 'asc' } },
   items: {
     orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     include: { member: { include: { client: { select: { fullName: true } } } } },
@@ -32,7 +35,7 @@ const money = (v: Prisma.Decimal | string | number) => fromCents(toCents(v));
 const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 
 /** Data local (YYYY-MM-DD) de um instante no fuso da organização. */
-function localDate(d: Date, timezone: string): string {
+export function localDate(d: Date, timezone: string): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: timezone,
     year: 'numeric',
@@ -53,6 +56,11 @@ function serialize(c: ContractRow, timezone: string, today: string, depositUnpai
     depositReferenceDate: localDate(c.acceptedAt ?? c.createdAt, timezone),
     depositUnpaidDays,
   });
+  const installments = allocateInstallments(
+    c.installments.map((i) => ({ seq: i.seq, dueDate: isoDate(i.dueDate), cents: toCents(i.amount) })),
+    st.paidCents,
+    today,
+  );
   const reversedIds = new Set(c.payments.map((p) => p.reversesPaymentId).filter(Boolean));
   const version = c.versions[0];
   const token = c.accessTokens[0];
@@ -66,6 +74,21 @@ function serialize(c: ContractRow, timezone: string, today: string, depositUnpai
     eventDate: isoDate(c.group.eventDate),
     brideClientId: c.brideClientId,
     brideName: c.bride.fullName,
+    eventKind: c.group.eventKind,
+    contractorClientId: c.contractorClientId ?? c.brideClientId,
+    contractorName: c.contractor?.fullName ?? c.bride.fullName,
+    paymentMode: c.paymentMode,
+    discountDescription: c.discountDescription,
+    packageName: c.package?.name ?? null,
+    installments: installments.map((i) => ({
+      seq: i.seq,
+      dueDate: i.dueDate,
+      amount: fromCents(i.cents),
+      paidAmount: fromCents(i.paidCents),
+      pendingAmount: fromCents(i.pendingCents),
+      state: i.state,
+      overdue: i.overdue,
+    })),
     packageId: c.packageId,
     itemsTotal: money(c.itemsTotal),
     discountAmount: money(c.discountAmount),
@@ -81,7 +104,7 @@ function serialize(c: ContractRow, timezone: string, today: string, depositUnpai
     daysToBalanceDue: st.daysToBalanceDue,
     balanceDueSoon: st.balanceDueSoon,
     balanceOverdue: st.balanceOverdue,
-    depositOverdue: st.depositOverdue,
+    depositOverdue: c.paymentMode === 'a_vista' ? false : st.depositOverdue,
     cancellationPolicy: c.cancellationPolicy,
     currentVersion: c.currentVersion,
     acceptedVersion: c.acceptedVersion,
@@ -112,6 +135,7 @@ function serialize(c: ContractRow, timezone: string, today: string, depositUnpai
       unitPrice: money(it.unitPrice),
       total: money(it.total),
       purpose: it.purpose,
+      isPackageItem: it.packageId != null,
     })),
     payments: c.payments.map((p) => ({
       id: p.id,

@@ -14,6 +14,7 @@ import { renderContractVersionTx } from './contract-render';
 import {
   loadContractView,
   loadContractViews,
+  localDate,
   type ContractView,
 } from './contract-serialize';
 import { loadEffectiveSettings } from './contract-settings.service';
@@ -22,6 +23,7 @@ import {
   balanceDueDate,
   computeContractTotals,
   computeDepositCents,
+  validateInstallments,
   type DepositKind,
 } from './domain/contract-math';
 import { ACCESS_TOKEN_TTL_DAYS, newAccessToken } from './domain/contract-token';
@@ -32,6 +34,13 @@ export interface ContractItemInput {
   unitPrice?: string | null;
   quantity?: number | null;
   purpose?: string | null;
+  /** true = do pacote; false = adicional; omitido = preserva o vínculo do item existente. */
+  packageItem?: boolean | null;
+}
+
+export interface InstallmentInput {
+  dueDate: string;
+  amount: string;
 }
 
 export interface CreateContractInput {
@@ -41,6 +50,9 @@ export interface CreateContractInput {
   discountAmount?: string | null;
   depositAmount?: string | null;
   balanceDueDaysBefore?: number | null;
+  paymentMode?: string | null;
+  discountDescription?: string | null;
+  installments?: InstallmentInput[] | null;
 }
 
 export type UpdateContractInput = Omit<CreateContractInput, 'groupId'>;
@@ -63,6 +75,13 @@ interface ItemDraft {
   quantity: number;
   unitCents: number;
   purpose: 'event' | 'trial';
+}
+
+interface ExistingItem {
+  groupMemberId: string;
+  serviceId: string;
+  packageId: string | null;
+  purpose: string;
 }
 
 type GroupWithMembers = NonNullable<Awaited<ReturnType<typeof loadGroup>>>;
@@ -107,6 +126,7 @@ async function buildItems(
   group: GroupWithMembers,
   items: ContractItemInput[] | null | undefined,
   packageId: string | null,
+  existingItems: ExistingItem[] = [],
 ): Promise<ItemDraft[]> {
   const covered = group.members.filter((m) => m.coveredByContract);
 
@@ -117,6 +137,7 @@ async function buildItems(
       where: { id: { in: serviceIds }, deletedAt: null },
     });
     const byId = new Map(services.map((s) => [s.id, s]));
+    const pool = [...existingItems];
     return items.map((it) => {
       const member = group.members.find((m) => m.id === it.groupMemberId);
       if (!member) {
@@ -141,10 +162,42 @@ async function buildItems(
       if (purpose !== 'event' && purpose !== 'trial') {
         throw new ContractError('INVALID_PURPOSE', 'Finalidade inválida.', 'items');
       }
+      // vínculo com o pacote: true/false explícitos; omitido preserva o item existente
+      const idx = pool.findIndex(
+        (e) =>
+          e.groupMemberId === member.id &&
+          e.serviceId === service.id &&
+          e.purpose === purpose &&
+          (it.packageItem === false ? e.packageId == null : e.packageId != null),
+      );
+      const fallbackIdx =
+        idx >= 0
+          ? idx
+          : pool.findIndex(
+              (e) =>
+                e.groupMemberId === member.id && e.serviceId === service.id && e.purpose === purpose,
+            );
+      const matched = fallbackIdx >= 0 ? pool.splice(fallbackIdx, 1)[0] : null;
+      let itemPackageId: string | null;
+      if (it.packageItem === true) {
+        if (!packageId) {
+          throw new ContractError(
+            'PACKAGE_ITEM_WITHOUT_PACKAGE',
+            'Item marcado como do pacote, mas o contrato não tem pacote.',
+            'items',
+          );
+        }
+        itemPackageId = packageId;
+      } else if (it.packageItem === false) {
+        itemPackageId = null;
+      } else {
+        // preserva só se o vínculo antigo ainda é o pacote final do contrato
+        itemPackageId = matched?.packageId && matched.packageId === packageId ? packageId : null;
+      }
       return {
         groupMemberId: member.id,
         serviceId: service.id,
-        packageId: null,
+        packageId: itemPackageId,
         description: service.name,
         quantity,
         unitCents: parseCents(it.unitPrice, 'items', toCents(service.basePrice)) as number,
@@ -199,6 +252,99 @@ async function buildItems(
 
   // 3. serviços planejados de todas as pessoas cobertas
   return planned(covered);
+}
+
+function parseDiscountDescription(v: string | null | undefined): string | null | undefined {
+  if (v === undefined) return undefined;
+  const t = (v ?? '').trim();
+  if (t.length > 120) {
+    throw new ContractError(
+      'INVALID_DISCOUNT_DESCRIPTION',
+      'Descrição do desconto muito longa (máx. 120).',
+      'discountDescription',
+    );
+  }
+  return t === '' ? null : t;
+}
+
+interface ResolvedInstallments {
+  mode: string;
+  depositCents: number;
+  installments: { dueDate: string; cents: number }[];
+}
+
+/**
+ * Forma de pagamento + parcelas do sinal (D-07, D-12). `current` = estado atual
+ * do contrato no update (null no create).
+ */
+function resolveInstallments(args: {
+  inputMode: string | null | undefined;
+  inputInstallments: InstallmentInput[] | null | undefined;
+  current: { paymentMode: string; installments: { dueDate: string; cents: number }[] } | null;
+  totalCents: number;
+  depositCents: number;
+  /** sinal informado pela usuária (confere a soma das parcelas ±1 centavo); null = vale a soma. */
+  explicitDepositCents: number | null;
+  today: string;
+}): ResolvedInstallments {
+  const { current, totalCents, today } = args;
+  const mode = args.inputMode ?? current?.paymentMode ?? 'sinal';
+  const firstDue = current?.installments[0]?.dueDate ?? today;
+  const parsed = args.inputInstallments
+    ? args.inputInstallments.map((i) => ({
+        dueDate: i.dueDate,
+        cents: parseCents(i.amount, 'installments', 0) as number,
+      }))
+    : null;
+
+  if (mode === 'a_vista') {
+    const list = parsed ?? [{ dueDate: firstDue, cents: totalCents }];
+    validateInstallments(mode, list, totalCents, totalCents);
+    return { mode, depositCents: totalCents, installments: list };
+  }
+  if (parsed) {
+    const sum = parsed.reduce((a, i) => a + i.cents, 0);
+    validateInstallments(mode, parsed, args.explicitDepositCents ?? sum, totalCents);
+    return { mode, depositCents: sum, installments: parsed };
+  }
+  if (mode === 'sinal') {
+    return {
+      mode,
+      depositCents: args.depositCents,
+      installments: args.depositCents > 0 ? [{ dueDate: firstDue, cents: args.depositCents }] : [],
+    };
+  }
+  // sinal_parcelado sem parcelas novas: mantém as atuais se ainda fecham com o sinal
+  const kept = current?.installments ?? [];
+  validateInstallments(mode, kept, args.depositCents, totalCents);
+  return { mode, depositCents: args.depositCents, installments: kept };
+}
+
+async function orgToday(tx: TenantPrismaClient, orgId: string): Promise<string> {
+  const org = await tx.organization.findUnique({
+    where: { id: orgId },
+    select: { timezone: true },
+  });
+  return localDate(new Date(), org?.timezone ?? 'America/Sao_Paulo');
+}
+
+async function replaceInstallmentsTx(
+  tx: TenantPrismaClient,
+  orgId: string,
+  contractId: string,
+  list: { dueDate: string; cents: number }[],
+): Promise<void> {
+  await tx.contractDepositInstallment.deleteMany({ where: { contractId } });
+  if (list.length === 0) return;
+  await tx.contractDepositInstallment.createMany({
+    data: list.map((i, idx) => ({
+      organizationId: orgId,
+      contractId,
+      seq: idx + 1,
+      amount: fromCents(i.cents),
+      dueDate: new Date(`${i.dueDate}T00:00:00.000Z`),
+    })),
+  });
 }
 
 /**
@@ -275,7 +421,7 @@ export class ContractsService {
           throw new ContractError('PACKAGE_NOT_FOUND', 'Pacote não encontrado.', 'packageId');
         }
 
-        const drafts = await buildItems(tx, group, input.items, pkg?.id ?? null);
+        const drafts = await buildItems(tx, group, input.items, pkg?.id ?? null, []);
         if (drafts.length === 0) {
           throw new ContractError('ITEMS_REQUIRED', 'Adicione ao menos um item.', 'items');
         }
@@ -290,7 +436,22 @@ export class ContractsService {
             pkg?.depositValue?.toString() ?? null,
             totalCents,
           );
-        const totals = computeContractTotals({ itemsCents, discountCents, depositCents });
+        const today = await orgToday(tx, orgId);
+        const plan = resolveInstallments({
+          inputMode: input.paymentMode,
+          inputInstallments: input.installments,
+          current: null,
+          totalCents,
+          depositCents,
+          explicitDepositCents: explicitDeposit,
+          today,
+        });
+        const totals = computeContractTotals({
+          itemsCents,
+          discountCents,
+          depositCents: plan.depositCents,
+        });
+        const discountDescription = parseDiscountDescription(input.discountDescription) ?? null;
 
         const settings = await loadEffectiveSettings(tx, orgId);
         const days = checkDays(input.balanceDueDaysBefore ?? settings.balanceDueDaysBefore);
@@ -304,6 +465,10 @@ export class ContractsService {
             code,
             bridalGroupId: group.id,
             brideClientId: bride.clientId,
+            contractorClientId:
+              group.eventKind === 'debutante' ? group.responsibleClientId : null,
+            paymentMode: plan.mode,
+            discountDescription,
             packageId: pkg?.id ?? null,
             status: 'draft',
             itemsTotal: fromCents(totals.itemsTotalCents),
@@ -330,6 +495,7 @@ export class ContractsService {
             },
           },
         });
+        await replaceInstallmentsTx(tx, orgId, contract.id, plan.installments);
         await renderContractVersionTx(tx, orgId, contract.id, memberId);
         await recordAudit(tx, {
           orgId,
@@ -380,15 +546,18 @@ export class ContractsService {
           }
         }
 
+        const existing = await tx.contractItem.findMany({
+          where: { contractId: id },
+          orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+        });
         let itemsCents: number[];
         let drafts: ItemDraft[] | null = null;
         if (input.items && input.items.length > 0) {
-          drafts = await buildItems(tx, group, input.items, null);
+          drafts = await buildItems(tx, group, input.items, packageId, existing);
           itemsCents = drafts.map((d) => d.unitCents * d.quantity);
         } else if (input.items) {
           throw new ContractError('ITEMS_REQUIRED', 'Adicione ao menos um item.', 'items');
         } else {
-          const existing = await tx.contractItem.findMany({ where: { contractId: id } });
           itemsCents = existing.map((e) => toCents(e.total));
         }
 
@@ -397,12 +566,34 @@ export class ContractsService {
           'discountAmount',
           toCents(current.discountAmount),
         ) as number;
-        const depositCents = parseCents(
-          input.depositAmount,
-          'depositAmount',
-          toCents(current.depositAmount),
-        ) as number;
-        const totals = computeContractTotals({ itemsCents, discountCents, depositCents });
+        const explicitDeposit = parseCents(input.depositAmount, 'depositAmount', null);
+        const depositCents = explicitDeposit ?? toCents(current.depositAmount);
+        const { totalCents } = computeContractTotals({ itemsCents, discountCents, depositCents: 0 });
+        const currentInstallments = await tx.contractDepositInstallment.findMany({
+          where: { contractId: id },
+          orderBy: { seq: 'asc' },
+        });
+        const plan = resolveInstallments({
+          inputMode: input.paymentMode,
+          inputInstallments: input.installments,
+          current: {
+            paymentMode: current.paymentMode,
+            installments: currentInstallments.map((i) => ({
+              dueDate: i.dueDate.toISOString().slice(0, 10),
+              cents: toCents(i.amount),
+            })),
+          },
+          totalCents,
+          depositCents,
+          explicitDepositCents: explicitDeposit,
+          today: await orgToday(tx, orgId),
+        });
+        const totals = computeContractTotals({
+          itemsCents,
+          discountCents,
+          depositCents: plan.depositCents,
+        });
+        const discountDescription = parseDiscountDescription(input.discountDescription);
 
         const paid = await tx.contractPayment.aggregate({
           where: { contractId: id },
@@ -443,6 +634,10 @@ export class ContractsService {
           where: { id },
           data: {
             packageId,
+            paymentMode: plan.mode,
+            ...(discountDescription !== undefined ? { discountDescription } : {}),
+            contractorClientId:
+              group.eventKind === 'debutante' ? group.responsibleClientId : null,
             itemsTotal: fromCents(totals.itemsTotalCents),
             discountAmount: fromCents(discountCents),
             totalAmount: fromCents(totals.totalCents),
@@ -452,6 +647,7 @@ export class ContractsService {
             status: locked.status === 'draft' ? 'draft' : 'awaiting_acceptance',
           },
         });
+        await replaceInstallmentsTx(tx, orgId, id, plan.installments);
         const v = await renderContractVersionTx(tx, orgId, id, memberId);
         await tx.contractAccessToken.updateMany({
           where: { contractId: id, revokedAt: null },

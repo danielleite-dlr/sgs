@@ -106,6 +106,22 @@ extend type Mutation {
 
 # ===== Contrato da noiva =====
 
+type ContractInstallment {
+  seq: Int!
+  dueDate: String!
+  amount: String!
+  paidAmount: String!
+  pendingAmount: String!
+  "paid | partial | open"
+  state: String!
+  overdue: Boolean!
+}
+
+input ContractInstallmentInput {
+  dueDate: String!
+  amount: String!
+}
+
 type Contract {
   id: UUID!
   code: String!
@@ -113,8 +129,15 @@ type Contract {
   groupId: UUID!
   groupName: String!
   eventDate: String!
+  eventKind: String!
   brideClientId: UUID!
   brideName: String!
+  contractorClientId: UUID!
+  contractorName: String!
+  paymentMode: String!
+  discountDescription: String
+  installments: [ContractInstallment!]!
+  packageName: String
   packageId: UUID
   itemsTotal: String!
   discountAmount: String!
@@ -160,6 +183,7 @@ type ContractItem {
   unitPrice: String!
   total: String!
   purpose: String!
+  isPackageItem: Boolean!
 }
 
 type ContractPaymentView {
@@ -189,6 +213,8 @@ input ContractItemInput {
   unitPrice: String
   quantity: Int
   purpose: String
+  "true = do pacote; false = adicional; omitido no update = mantém o vínculo do item existente"
+  packageItem: Boolean
 }
 
 input CreateContractInput {
@@ -198,6 +224,10 @@ input CreateContractInput {
   discountAmount: String
   depositAmount: String
   balanceDueDaysBefore: Int
+  "sinal | sinal_parcelado | a_vista"
+  paymentMode: String
+  discountDescription: String
+  installments: [ContractInstallmentInput!]
 }
 
 input UpdateContractInput {
@@ -206,6 +236,10 @@ input UpdateContractInput {
   discountAmount: String
   depositAmount: String
   balanceDueDaysBefore: Int
+  "sinal | sinal_parcelado | a_vista"
+  paymentMode: String
+  discountDescription: String
+  installments: [ContractInstallmentInput!]
 }
 
 type ContractPayload {

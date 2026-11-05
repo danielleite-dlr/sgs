@@ -525,3 +525,206 @@ describe('Fase 4 - núcleo do contrato da noiva', () => {
     expect(list.data.contracts).toEqual([]);
   });
 });
+
+const FIELDS2 = `id totalAmount depositAmount paymentMode discountDescription eventKind
+  contractorClientId contractorName brideName packageName depositOverdue
+  installments { seq dueDate amount paidAmount pendingAmount state overdue }
+  items { groupMemberId serviceId unitPrice quantity purpose isPackageItem }`;
+const CREATE2 = `mutation($input: CreateContractInput!) {
+  createContract(input: $input) { contract { ${FIELDS2} } errors { code message field } }
+}`;
+const UPDATE2 = `mutation($id: UUID!, $input: UpdateContractInput!) {
+  updateContract(id: $id, input: $input) { contract { ${FIELDS2} } errors { code message field } }
+}`;
+const PAY2 = `mutation($input: RecordContractPaymentInput!) {
+  recordContractPayment(input: $input) { contract { ${FIELDS2} } errors { code message field } }
+}`;
+const REVERSE2 = `mutation($input: ReverseContractPaymentInput!) {
+  reverseContractPayment(input: $input) { contract { ${FIELDS2} } errors { code message field } }
+}`;
+
+describe('Fase 4.1 - forma de pagamento, parcelas e itens do pacote', () => {
+  let w: Phase4World;
+  const orgFilter = `SELECT id FROM organizations WHERE legal_name LIKE 'p41core-%'`;
+  const eventDate = localDay(60);
+
+  beforeAll(async () => {
+    w = await createPhase4World('p41core');
+  });
+  afterAll(async () => {
+    await destroyPhase4World(w);
+  });
+  afterEach(async () => {
+    await deletePhase4Rows(orgFilter);
+  });
+
+  const adm = () => gqlAs(w, w.tokens.admin);
+  type Item = { groupMemberId: string; serviceId: string; unitPrice: string; purpose: string; isPackageItem: boolean };
+  const asInput = (items: Item[]) =>
+    items.map((i) => ({
+      groupMemberId: i.groupMemberId,
+      serviceId: i.serviceId,
+      unitPrice: i.unitPrice,
+      purpose: i.purpose,
+    }));
+
+  async function packageContract() {
+    const grp = await insertBridalGroupRow(w, { companions: 0, eventDate });
+    const r = await adm()(CREATE2, { input: { groupId: grp.groupId, packageId: w.bridalPackageId } });
+    expect(r.data.createContract.errors).toEqual([]);
+    return { grp, c: r.data.createContract.contract };
+  }
+
+  it('(a) editar só o desconto reenviando itens sem packageItem mantém o pacote', async () => {
+    const { grp, c } = await packageContract();
+    expect(c.items.length).toBeGreaterThan(0);
+    expect(c.items.every((i: Item) => i.isPackageItem)).toBe(true);
+    expect(c.packageName).toBeTruthy();
+    const r = await adm()(UPDATE2, {
+      id: c.id,
+      input: { discountAmount: '10.00', items: asInput(c.items) },
+    });
+    expect(r.data.updateContract.errors).toEqual([]);
+    const u = r.data.updateContract.contract;
+    expect(u.items.every((i: Item) => i.isPackageItem)).toBe(true);
+    expect(u.totalAmount).toBe('490.00');
+    expect(grp.groupId).toBeTruthy();
+  });
+
+  it('(b)(c) packageItem false tira só aquele item; item novo sem flag é adicional', async () => {
+    const { grp, c } = await packageContract();
+    const items = asInput(c.items) as Record<string, unknown>[];
+    items[0].packageItem = false;
+    items.push({ groupMemberId: grp.brideMemberId, serviceId: w.serviceId, unitPrice: '50.00', purpose: 'trial' });
+    const r = await adm()(UPDATE2, { id: c.id, input: { items } });
+    expect(r.data.updateContract.errors).toEqual([]);
+    const u = r.data.updateContract.contract;
+    expect(u.items).toHaveLength(c.items.length + 1);
+    expect(u.items.filter((i: Item) => !i.isPackageItem)).toHaveLength(2);
+    expect(u.items.filter((i: Item) => i.isPackageItem)).toHaveLength(c.items.length - 1);
+  });
+
+  it('(d) sinal parcelado: soma conferida com tolerância de 1 centavo', async () => {
+    const grp = await insertBridalGroupRow(w, { companions: 0, eventDate });
+    const base = {
+      groupId: grp.groupId,
+      paymentMode: 'sinal_parcelado',
+      depositAmount: '500.00',
+      items: [{ groupMemberId: grp.brideMemberId, serviceId: w.serviceId, unitPrice: '2000.00' }],
+    };
+    const inst = (a: string, b: string) => [
+      { dueDate: localDay(5), amount: a },
+      { dueDate: localDay(20), amount: b },
+    ];
+    const ok = await adm()(CREATE2, { input: { ...base, installments: inst('300.00', '200.00') } });
+    expect(ok.data.createContract.errors).toEqual([]);
+    expect(ok.data.createContract.contract.installments).toHaveLength(2);
+    expect(ok.data.createContract.contract.depositAmount).toBe('500.00');
+
+    await deletePhase4Rows(orgFilter);
+    const g2 = await insertBridalGroupRow(w, { companions: 0, eventDate });
+    const b2 = { ...base, groupId: g2.groupId, items: [{ ...base.items[0], groupMemberId: g2.brideMemberId }] };
+    const bad = await adm()(CREATE2, { input: { ...b2, installments: inst('300.00', '199.98') } });
+    expect(bad.data.createContract.errors[0].code).toBe('INSTALLMENTS_SUM_MISMATCH');
+    const tol = await adm()(CREATE2, { input: { ...b2, installments: inst('300.00', '199.99') } });
+    expect(tol.data.createContract.errors).toEqual([]);
+    expect(tol.data.createContract.contract.depositAmount).toBe('499.99');
+  });
+
+  it('(e) à vista: entrada = total com 1 parcela', async () => {
+    const grp = await insertBridalGroupRow(w, { companions: 0, eventDate });
+    const r = await adm()(CREATE2, {
+      input: {
+        groupId: grp.groupId,
+        paymentMode: 'a_vista',
+        items: [{ groupMemberId: grp.brideMemberId, serviceId: w.serviceId, unitPrice: '1000.00' }],
+      },
+    });
+    expect(r.data.createContract.errors).toEqual([]);
+    const c = r.data.createContract.contract;
+    expect(c.depositAmount).toBe(c.totalAmount);
+    expect(c.installments).toHaveLength(1);
+    expect(c.installments[0].amount).toBe(c.totalAmount);
+    expect(c.depositOverdue).toBe(false);
+  });
+
+  it('(f)(g) sinal sem parcelas gera 1 parcela de hoje; sinal 0 não gera; desconto descrito persiste', async () => {
+    const g1 = await insertBridalGroupRow(w, { companions: 0, eventDate });
+    const r = await adm()(CREATE2, {
+      input: {
+        groupId: g1.groupId,
+        depositAmount: '300.00',
+        discountAmount: '100.00',
+        discountDescription: ' 10% OFF ',
+        items: [{ groupMemberId: g1.brideMemberId, serviceId: w.serviceId, unitPrice: '1000.00' }],
+      },
+    });
+    expect(r.data.createContract.errors).toEqual([]);
+    const c = r.data.createContract.contract;
+    expect(c.paymentMode).toBe('sinal');
+    expect(c.discountDescription).toBe('10% OFF');
+    expect(c.installments).toHaveLength(1);
+    expect(c.installments[0]).toMatchObject({ amount: '300.00', dueDate: localDay(0), state: 'open' });
+
+    const z = await adm()(UPDATE2, { id: c.id, input: { depositAmount: '0' } });
+    expect(z.data.updateContract.errors).toEqual([]);
+    expect(z.data.updateContract.contract.installments).toEqual([]);
+    expect(z.data.updateContract.contract.discountDescription).toBe('10% OFF');
+  });
+
+  it('(h) packageItem true sem pacote é recusado', async () => {
+    const grp = await insertBridalGroupRow(w, { companions: 0, eventDate });
+    const r = await adm()(CREATE2, {
+      input: {
+        groupId: grp.groupId,
+        items: [
+          { groupMemberId: grp.brideMemberId, serviceId: w.serviceId, unitPrice: '100.00', packageItem: true },
+        ],
+      },
+    });
+    expect(r.data.createContract.errors[0].code).toBe('PACKAGE_ITEM_WITHOUT_PACKAGE');
+  });
+
+  it('parcelas: situação derivada após pagamento e estorno; contratante = responsável da debutante', async () => {
+    const seed = await insertBridalGroupRow(w, { companions: 1, eventDate });
+    const grp = await insertBridalGroupRow(w, {
+      companions: 0,
+      eventDate,
+      eventKind: 'debutante',
+      responsibleClientId: seed.companionClientIds.length ? seed.brideClientId : null,
+    });
+    const r = await adm()(CREATE2, {
+      input: {
+        groupId: grp.groupId,
+        paymentMode: 'sinal_parcelado',
+        items: [{ groupMemberId: grp.brideMemberId, serviceId: w.serviceId, unitPrice: '2000.00' }],
+        installments: [
+          { dueDate: localDay(-3), amount: '300.00' },
+          { dueDate: localDay(20), amount: '200.00' },
+        ],
+      },
+    });
+    expect(r.data.createContract.errors).toEqual([]);
+    const c = r.data.createContract.contract;
+    expect(c.eventKind).toBe('debutante');
+    expect(c.contractorClientId).toBe(seed.brideClientId);
+    expect(c.contractorName).not.toBe(c.brideName);
+    expect(c.installments[0]).toMatchObject({ state: 'open', overdue: true });
+
+    const paid = await adm()(PAY2, {
+      input: { contractId: c.id, lines: [{ method: 'pix', amount: '300.00' }] },
+    });
+    expect(paid.data.recordContractPayment.errors).toEqual([]);
+    const p = paid.data.recordContractPayment.contract;
+    expect(p.installments[0].state).toBe('paid');
+    expect(p.installments[1].state).toBe('open');
+
+    const payments = await adminPrisma.contractPayment.findMany({ where: { contractId: c.id } });
+    const rev = await adm()(REVERSE2, {
+      input: { paymentId: payments[0].id, reason: 'teste' },
+    });
+    expect(rev.data.reverseContractPayment.errors).toEqual([]);
+    const back = rev.data.reverseContractPayment.contract;
+    expect(back.installments[0]).toMatchObject({ state: 'open', overdue: true });
+  });
+});
