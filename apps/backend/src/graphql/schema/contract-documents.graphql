@@ -9,3 +9,36 @@ extend type Query {
   # null quando o contrato ainda não possui aceite
   contractPdf(id: UUID!): ContractPdf
 }
+
+# ===== Prévia do contrato (quick 261105-d6k) =====
+
+"""
+Dados do formulário de contrato para a prévia. Exatamente um entre contractId,
+groupId e newGroup. Com contractId (rascunho/edição), os dados do input sobrepõem
+os do contrato.
+"""
+input ContractPreviewInput {
+  contractId: UUID
+  groupId: UUID
+  newGroup: NewContractGroupInput
+  packageId: UUID
+  items: [ContractItemInput!]
+  discountAmount: String
+  depositAmount: String
+  balanceDueDaysBefore: Int
+  "sinal | sinal_parcelado | a_vista"
+  paymentMode: String
+  discountDescription: String
+  installments: [ContractInstallmentInput!]
+}
+
+type ContractPreviewPdf {
+  filename: String
+  base64: String
+  errors: [UserError!]!
+}
+
+extend type Query {
+  # Somente leitura: monta o PDF do contrato com os dados do formulário e não grava nada.
+  contractPreviewPdf(input: ContractPreviewInput!): ContractPreviewPdf!
+}

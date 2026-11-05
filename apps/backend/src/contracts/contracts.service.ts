@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { syncContractCoverageTx } from "../bridal/bridal-coverage";
 import { applyPackageToBrideTx } from "../bridal/bridal-package";
@@ -19,7 +20,10 @@ import {
   type ContractUserError,
 } from "./contract-errors";
 import { lockContract } from "./contract-lock";
+import { loadLetterheadTx } from "./contract-letterhead.service";
+import type { ContractSnapshot } from "./domain/contract-snapshot";
 import {
+  buildLiveSnapshotTx,
   loadReadinessInputTx,
   refreshContractVersionTx,
   renderContractVersionTx,
@@ -96,6 +100,34 @@ export type UpdateContractInput = Omit<
   CreateContractInput,
   "groupId" | "newGroup"
 >;
+
+/** Prévia: as formas do create (groupId/newGroup) ou a edição de um rascunho (contractId). */
+export interface ContractPreviewInput extends CreateContractInput {
+  /** Exclusivo com groupId/newGroup; os dados do input sobrepõem o contrato. */
+  contractId?: string | null;
+}
+
+export interface ContractPreviewData {
+  snapshot: ContractSnapshot;
+  letterhead: Buffer | null;
+  orgName: string;
+}
+
+export type ContractPreviewResult =
+  | ContractPreviewData
+  | { errors: ContractUserError[] };
+
+/** Código que aparece no snapshot da prévia (não consome número). */
+export const PREVIEW_CODE = "PRÉVIA";
+
+type TxMode = "commit" | "preview";
+
+/** Erro sentinela: carrega o resultado da prévia para fora e força o rollback. */
+class PreviewRollback extends Error {
+  constructor(readonly result: ContractPreviewData) {
+    super("contract-preview-rollback");
+  }
+}
 
 export interface ContractPayload {
   contract: ContractView | null;
@@ -541,233 +573,245 @@ export class ContractsService {
   ): Promise<ContractPayload> {
     try {
       return await this.tenant.runWithTenant(orgId, async (tx) => {
-        if (!!input.groupId === !!input.newGroup) {
-          throw new ContractError(
-            "GROUP_REQUIRED",
-            "Informe o grupo ou os dados da noiva para o contrato.",
-            "groupId",
-          );
-        }
-        const ng = input.newGroup ?? null;
-        let groupId = input.groupId as string;
-        if (ng) {
-          groupId = await createBridalGroupTx(tx, orgId, memberId, {
-            group: {
-              name: await this.autoGroupName(tx, ng),
-              eventDate: ng.eventDate,
-              eventKind: ng.eventKind,
-              eventTime: ng.eventTime,
-              readyBy: ng.readyBy,
-              locationKind: ng.locationKind,
-              locationAddress: ng.locationAddress,
-              locationName: ng.locationName,
-              notes: ng.notes,
-              responsibleClientId: ng.responsibleClientId,
-              newResponsible: ng.newResponsible,
-              // pacote: aplicado por syncGroupPackageTx no fim, para não aplicar duas vezes
-            },
-            bride: { ...ng.bride, coveredByContract: true },
-            companions: [],
-          });
-        }
-        const group = await loadGroup(tx, groupId);
-        if (!group)
-          throw new ContractError(
-            "GROUP_NOT_FOUND",
-            "Grupo não encontrado.",
-            "groupId",
-          );
-        if (group.status !== "active") {
-          throw new ContractError(
-            "GROUP_NOT_ACTIVE",
-            "O grupo não está ativo.",
-            "groupId",
-          );
-        }
-        const live = await tx.contract.findFirst({
-          where: { bridalGroupId: group.id, status: { not: "cancelled" } },
-          select: { id: true },
-        });
-        if (live) {
-          throw new ContractError(
-            "GROUP_HAS_CONTRACT",
-            "Este grupo já possui um contrato ativo.",
-            "groupId",
-          );
-        }
-        const bride = group.members.find((m) => m.role === "bride");
-        if (!bride)
-          throw new ContractError(
-            "MEMBER_NOT_FOUND",
-            "Grupo sem noiva.",
-            "groupId",
-          );
-
-        const pkg = input.packageId
-          ? await tx.package.findFirst({
-              where: { id: input.packageId, deletedAt: null },
-            })
-          : null;
-        if (input.packageId && !pkg) {
-          throw new ContractError(
-            "PACKAGE_NOT_FOUND",
-            "Pacote não encontrado.",
-            "packageId",
-          );
-        }
-
-        const drafts = await buildItems(
-          tx,
-          group,
-          input.items,
-          pkg?.id ?? null,
-          [],
-        );
-        if (drafts.length === 0) {
-          throw new ContractError(
-            "ITEMS_REQUIRED",
-            "Adicione ao menos um item.",
-            "items",
-          );
-        }
-        const itemsCents = drafts.map((d) => d.unitCents * d.quantity);
-        const discountCents = parseCents(
-          input.discountAmount,
-          "discountAmount",
-          0,
-        ) as number;
-        const { totalCents } = computeContractTotals({
-          itemsCents,
-          discountCents,
-          depositCents: 0,
-        });
-        const explicitDeposit = parseCents(
-          input.depositAmount,
-          "depositAmount",
-          null,
-        );
-        const depositCents =
-          explicitDeposit ??
-          computeDepositCents(
-            (pkg?.depositKind as DepositKind | null) ?? null,
-            pkg?.depositValue?.toString() ?? null,
-            totalCents,
-          );
-        const today = await orgToday(tx, orgId);
-        const plan = resolveInstallments({
-          inputMode: input.paymentMode,
-          inputInstallments: input.installments,
-          current: null,
-          totalCents,
-          depositCents,
-          explicitDepositCents: explicitDeposit,
-          today,
-        });
-        const totals = computeContractTotals({
-          itemsCents,
-          discountCents,
-          depositCents: plan.depositCents,
-        });
-        const discountDescription =
-          parseDiscountDescription(input.discountDescription) ?? null;
-
-        const settings = await loadEffectiveSettings(tx, orgId);
-        const days = checkDays(
-          input.balanceDueDaysBefore ?? settings.balanceDueDaysBefore,
-        );
-        const eventDate = group.eventDate.toISOString().slice(0, 10);
-        const dueDate = balanceDueDate(eventDate, days);
-        const code = await nextContractCode(
-          tx,
-          orgId,
-          group.eventDate.getUTCFullYear(),
-        );
-
-        const contract = await tx.contract.create({
-          data: {
-            organizationId: orgId,
-            code,
-            bridalGroupId: group.id,
-            brideClientId: bride.clientId,
-            contractorClientId:
-              group.eventKind === "debutante"
-                ? group.responsibleClientId
-                : null,
-            paymentMode: plan.mode,
-            discountDescription,
-            packageId: pkg?.id ?? null,
-            status: "draft",
-            itemsTotal: fromCents(totals.itemsTotalCents),
-            discountAmount: fromCents(discountCents),
-            totalAmount: fromCents(totals.totalCents),
-            depositAmount: fromCents(totals.depositCents),
-            balanceDueDaysBefore: days,
-            balanceDueDate: new Date(`${dueDate}T00:00:00.000Z`),
-            cancellationPolicy: buildPolicySnapshot(
-              settings.cancellationClause,
-            ),
-            createdBy: memberId,
-            items: {
-              create: drafts.map((d, i) => ({
-                organizationId: orgId,
-                groupMemberId: d.groupMemberId,
-                serviceId: d.serviceId,
-                packageId: d.packageId,
-                descriptionSnapshot: d.description.slice(0, 200),
-                quantity: d.quantity,
-                unitPrice: fromCents(d.unitCents),
-                total: fromCents(d.unitCents * d.quantity),
-                purpose: d.purpose,
-                sortOrder: i,
-              })),
-            },
-          },
-        });
-        await replaceInstallmentsTx(tx, orgId, contract.id, plan.installments);
-        await renderContractVersionTx(tx, orgId, contract.id, memberId);
-        await recordAudit(tx, {
-          orgId,
-          actorMemberId: memberId,
-          action: "contract.create",
-          entityType: "contract",
-          entityId: contract.id,
-          metadata: {
-            code,
-            totalCents: totals.totalCents,
-            depositCents: totals.depositCents,
-            ...(ng ? { groupCreated: true } : {}),
-          },
-        });
-        if (ng && !pkg) {
-          // sem pacote: a noiva ganha os serviços planejados dos itens (agenda do evento)
-          const seen = new Set<string>();
-          const rows: { serviceId: string; purpose: string }[] = [];
-          for (const d of drafts) {
-            const k = `${d.serviceId}|${d.purpose}`;
-            if (seen.has(k)) continue;
-            seen.add(k);
-            rows.push({ serviceId: d.serviceId, purpose: d.purpose });
-          }
-          await tx.bridalMemberService.createMany({
-            data: rows.map((r, i) => ({
-              organizationId: orgId,
-              groupMemberId: bride.id,
-              serviceId: r.serviceId,
-              purpose: r.purpose,
-              sortOrder: i,
-            })),
-          });
-        }
-        await syncGroupPackageTx(tx, orgId, group.id, pkg?.id ?? null);
-        await syncContractCoverageTx(tx, orgId, group.id);
-        return {
-          contract: await loadContractView(tx, orgId, contract.id),
-          errors: [],
-        };
+        const id = await this.createTx(tx, orgId, memberId, input);
+        return { contract: await loadContractView(tx, orgId, id), errors: [] };
       });
     } catch (e) {
       return this.fail(e);
     }
+  }
+
+  /**
+   * Corpo do create (grava tudo no `tx`). `mode: 'preview'` = mesma regra, mas sem
+   * consumir número de contrato, sem exigir itens e sem auditoria; quem chama desfaz
+   * a transação (ver preview()).
+   */
+  private async createTx(
+    tx: TenantPrismaClient,
+    orgId: string,
+    memberId: string,
+    input: CreateContractInput,
+    mode: TxMode = "commit",
+  ): Promise<string> {
+    if (!!input.groupId === !!input.newGroup) {
+      throw new ContractError(
+        "GROUP_REQUIRED",
+        "Informe o grupo ou os dados da noiva para o contrato.",
+        "groupId",
+      );
+    }
+    const ng = input.newGroup ?? null;
+    let groupId = input.groupId as string;
+    if (ng) {
+      groupId = await createBridalGroupTx(tx, orgId, memberId, {
+        group: {
+          name: await this.autoGroupName(tx, ng),
+          eventDate: ng.eventDate,
+          eventKind: ng.eventKind,
+          eventTime: ng.eventTime,
+          readyBy: ng.readyBy,
+          locationKind: ng.locationKind,
+          locationAddress: ng.locationAddress,
+          locationName: ng.locationName,
+          notes: ng.notes,
+          responsibleClientId: ng.responsibleClientId,
+          newResponsible: ng.newResponsible,
+          // pacote: aplicado por syncGroupPackageTx no fim, para não aplicar duas vezes
+        },
+        bride: { ...ng.bride, coveredByContract: true },
+        companions: [],
+      });
+    }
+    const group = await loadGroup(tx, groupId);
+    if (!group)
+      throw new ContractError(
+        "GROUP_NOT_FOUND",
+        "Grupo não encontrado.",
+        "groupId",
+      );
+    if (group.status !== "active") {
+      throw new ContractError(
+        "GROUP_NOT_ACTIVE",
+        "O grupo não está ativo.",
+        "groupId",
+      );
+    }
+    const live = await tx.contract.findFirst({
+      where: { bridalGroupId: group.id, status: { not: "cancelled" } },
+      select: { id: true },
+    });
+    if (live) {
+      throw new ContractError(
+        "GROUP_HAS_CONTRACT",
+        "Este grupo já possui um contrato ativo.",
+        "groupId",
+      );
+    }
+    const bride = group.members.find((m) => m.role === "bride");
+    if (!bride)
+      throw new ContractError(
+        "MEMBER_NOT_FOUND",
+        "Grupo sem noiva.",
+        "groupId",
+      );
+
+    const pkg = input.packageId
+      ? await tx.package.findFirst({
+          where: { id: input.packageId, deletedAt: null },
+        })
+      : null;
+    if (input.packageId && !pkg) {
+      throw new ContractError(
+        "PACKAGE_NOT_FOUND",
+        "Pacote não encontrado.",
+        "packageId",
+      );
+    }
+
+    const drafts = await buildItems(
+      tx,
+      group,
+      input.items,
+      pkg?.id ?? null,
+      [],
+    );
+    if (drafts.length === 0 && mode === "commit") {
+      throw new ContractError(
+        "ITEMS_REQUIRED",
+        "Adicione ao menos um item.",
+        "items",
+      );
+    }
+    const itemsCents = drafts.map((d) => d.unitCents * d.quantity);
+    const discountCents = parseCents(
+      input.discountAmount,
+      "discountAmount",
+      0,
+    ) as number;
+    const { totalCents } = computeContractTotals({
+      itemsCents,
+      discountCents,
+      depositCents: 0,
+    });
+    const explicitDeposit = parseCents(
+      input.depositAmount,
+      "depositAmount",
+      null,
+    );
+    const depositCents =
+      explicitDeposit ??
+      computeDepositCents(
+        (pkg?.depositKind as DepositKind | null) ?? null,
+        pkg?.depositValue?.toString() ?? null,
+        totalCents,
+      );
+    const today = await orgToday(tx, orgId);
+    const plan = resolveInstallments({
+      inputMode: input.paymentMode,
+      inputInstallments: input.installments,
+      current: null,
+      totalCents,
+      depositCents,
+      explicitDepositCents: explicitDeposit,
+      today,
+    });
+    const totals = computeContractTotals({
+      itemsCents,
+      discountCents,
+      depositCents: plan.depositCents,
+    });
+    const discountDescription =
+      parseDiscountDescription(input.discountDescription) ?? null;
+
+    const settings = await loadEffectiveSettings(tx, orgId);
+    const days = checkDays(
+      input.balanceDueDaysBefore ?? settings.balanceDueDaysBefore,
+    );
+    const eventDate = group.eventDate.toISOString().slice(0, 10);
+    const dueDate = balanceDueDate(eventDate, days);
+    // Prévia: código descartável (o UPSERT em contract_sequences travaria a linha da
+    // org/ano até o fim da transação e serializaria com criações reais).
+    const code =
+      mode === "preview"
+        ? `PRV-${randomBytes(6).toString("hex")}`
+        : await nextContractCode(tx, orgId, group.eventDate.getUTCFullYear());
+
+    const contract = await tx.contract.create({
+      data: {
+        organizationId: orgId,
+        code,
+        bridalGroupId: group.id,
+        brideClientId: bride.clientId,
+        contractorClientId:
+          group.eventKind === "debutante" ? group.responsibleClientId : null,
+        paymentMode: plan.mode,
+        discountDescription,
+        packageId: pkg?.id ?? null,
+        status: "draft",
+        itemsTotal: fromCents(totals.itemsTotalCents),
+        discountAmount: fromCents(discountCents),
+        totalAmount: fromCents(totals.totalCents),
+        depositAmount: fromCents(totals.depositCents),
+        balanceDueDaysBefore: days,
+        balanceDueDate: new Date(`${dueDate}T00:00:00.000Z`),
+        cancellationPolicy: buildPolicySnapshot(settings.cancellationClause),
+        createdBy: memberId,
+        items: {
+          create: drafts.map((d, i) => ({
+            organizationId: orgId,
+            groupMemberId: d.groupMemberId,
+            serviceId: d.serviceId,
+            packageId: d.packageId,
+            descriptionSnapshot: d.description.slice(0, 200),
+            quantity: d.quantity,
+            unitPrice: fromCents(d.unitCents),
+            total: fromCents(d.unitCents * d.quantity),
+            purpose: d.purpose,
+            sortOrder: i,
+          })),
+        },
+      },
+    });
+    await replaceInstallmentsTx(tx, orgId, contract.id, plan.installments);
+    await renderContractVersionTx(tx, orgId, contract.id, memberId);
+    if (mode === "commit") {
+      await recordAudit(tx, {
+        orgId,
+        actorMemberId: memberId,
+        action: "contract.create",
+        entityType: "contract",
+        entityId: contract.id,
+        metadata: {
+          code,
+          totalCents: totals.totalCents,
+          depositCents: totals.depositCents,
+          ...(ng ? { groupCreated: true } : {}),
+        },
+      });
+    }
+    if (ng && !pkg) {
+      // sem pacote: a noiva ganha os serviços planejados dos itens (agenda do evento)
+      const seen = new Set<string>();
+      const rows: { serviceId: string; purpose: string }[] = [];
+      for (const d of drafts) {
+        const k = `${d.serviceId}|${d.purpose}`;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        rows.push({ serviceId: d.serviceId, purpose: d.purpose });
+      }
+      await tx.bridalMemberService.createMany({
+        data: rows.map((r, i) => ({
+          organizationId: orgId,
+          groupMemberId: bride.id,
+          serviceId: r.serviceId,
+          purpose: r.purpose,
+          sortOrder: i,
+        })),
+      });
+    }
+    await syncGroupPackageTx(tx, orgId, group.id, pkg?.id ?? null);
+    await syncContractCoverageTx(tx, orgId, group.id);
+    return contract.id;
   }
 
   async update(
@@ -778,198 +822,272 @@ export class ContractsService {
   ): Promise<ContractPayload> {
     try {
       return await this.tenant.runWithTenant(orgId, async (tx) => {
-        const locked = await lockContract(tx, id);
-        if (!EDITABLE.includes(locked.status)) {
-          throw new ContractError(
-            "CONTRACT_NOT_EDITABLE",
-            "Este contrato não pode mais ser editado.",
-            "id",
-          );
-        }
-        const current = await tx.contract.findUniqueOrThrow({ where: { id } });
-        const group = await loadGroup(tx, current.bridalGroupId);
-        if (!group)
-          throw new ContractError(
-            "GROUP_NOT_FOUND",
-            "Grupo não encontrado.",
-            "groupId",
-          );
-
-        let packageId = current.packageId;
-        let pkg: Awaited<ReturnType<typeof tx.package.findFirst>> = null;
-        if (input.packageId !== undefined) {
-          packageId = input.packageId;
-          if (packageId) {
-            pkg = await tx.package.findFirst({
-              where: { id: packageId, deletedAt: null },
-            });
-            if (!pkg) {
-              throw new ContractError(
-                "PACKAGE_NOT_FOUND",
-                "Pacote não encontrado.",
-                "packageId",
-              );
-            }
-          }
-        }
-
-        const existing = await tx.contractItem.findMany({
-          where: { contractId: id },
-          orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-        });
-        let itemsCents: number[];
-        let drafts: ItemDraft[] | null = null;
-        if (input.items && input.items.length > 0) {
-          drafts = await buildItems(
-            tx,
-            group,
-            input.items,
-            packageId,
-            existing,
-          );
-          itemsCents = drafts.map((d) => d.unitCents * d.quantity);
-        } else if (input.items) {
-          throw new ContractError(
-            "ITEMS_REQUIRED",
-            "Adicione ao menos um item.",
-            "items",
-          );
-        } else {
-          itemsCents = existing.map((e) => toCents(e.total));
-        }
-
-        const discountCents = parseCents(
-          input.discountAmount,
-          "discountAmount",
-          toCents(current.discountAmount),
-        ) as number;
-        const explicitDeposit = parseCents(
-          input.depositAmount,
-          "depositAmount",
-          null,
-        );
-        const depositCents = explicitDeposit ?? toCents(current.depositAmount);
-        const { totalCents } = computeContractTotals({
-          itemsCents,
-          discountCents,
-          depositCents: 0,
-        });
-        const currentInstallments =
-          await tx.contractDepositInstallment.findMany({
-            where: { contractId: id },
-            orderBy: { seq: "asc" },
-          });
-        const plan = resolveInstallments({
-          inputMode: input.paymentMode,
-          inputInstallments: input.installments,
-          current: {
-            paymentMode: current.paymentMode,
-            installments: currentInstallments.map((i) => ({
-              dueDate: i.dueDate.toISOString().slice(0, 10),
-              cents: toCents(i.amount),
-            })),
-          },
-          totalCents,
-          depositCents,
-          explicitDepositCents: explicitDeposit,
-          today: await orgToday(tx, orgId),
-        });
-        const totals = computeContractTotals({
-          itemsCents,
-          discountCents,
-          depositCents: plan.depositCents,
-        });
-        const discountDescription = parseDiscountDescription(
-          input.discountDescription,
-        );
-
-        const paid = await tx.contractPayment.aggregate({
-          where: { contractId: id },
-          _sum: { amount: true },
-        });
-        const paidCents = toCents(paid._sum.amount ?? 0);
-        if (totals.totalCents < paidCents) {
-          throw new ContractError(
-            "TOTAL_BELOW_PAID",
-            "O novo total é menor que o valor já pago.",
-            "discountAmount",
-          );
-        }
-
-        const days = checkDays(
-          input.balanceDueDaysBefore ?? current.balanceDueDaysBefore,
-        );
-        // sempre a partir da data atual do evento (o evento pode ter sido remarcado)
-        const dueDate = balanceDueDate(
-          group.eventDate.toISOString().slice(0, 10),
-          days,
-        );
-
-        if (drafts) {
-          await tx.contractItem.deleteMany({ where: { contractId: id } });
-          await tx.contractItem.createMany({
-            data: drafts.map((d, i) => ({
-              organizationId: orgId,
-              contractId: id,
-              groupMemberId: d.groupMemberId,
-              serviceId: d.serviceId,
-              packageId: d.packageId,
-              descriptionSnapshot: d.description.slice(0, 200),
-              quantity: d.quantity,
-              unitPrice: fromCents(d.unitCents),
-              total: fromCents(d.unitCents * d.quantity),
-              purpose: d.purpose,
-              sortOrder: i,
-            })),
-          });
-        }
-        await tx.contract.update({
-          where: { id },
-          data: {
-            packageId,
-            paymentMode: plan.mode,
-            ...(discountDescription !== undefined
-              ? { discountDescription }
-              : {}),
-            contractorClientId:
-              group.eventKind === "debutante"
-                ? group.responsibleClientId
-                : null,
-            itemsTotal: fromCents(totals.itemsTotalCents),
-            discountAmount: fromCents(discountCents),
-            totalAmount: fromCents(totals.totalCents),
-            depositAmount: fromCents(totals.depositCents),
-            balanceDueDaysBefore: days,
-            balanceDueDate: new Date(`${dueDate}T00:00:00.000Z`),
-            status: locked.status === "draft" ? "draft" : "awaiting_acceptance",
-          },
-        });
-        await replaceInstallmentsTx(tx, orgId, id, plan.installments);
-        const v = await renderContractVersionTx(tx, orgId, id, memberId);
-        await tx.contractAccessToken.updateMany({
-          where: { contractId: id, revokedAt: null },
-          data: { revokedAt: new Date() },
-        });
-        await recordAudit(tx, {
-          orgId,
-          actorMemberId: memberId,
-          action: "contract.update",
-          entityType: "contract",
-          entityId: id,
-          metadata: { version: v.version },
-        });
-        await syncGroupPackageTx(
-          tx,
-          orgId,
-          current.bridalGroupId,
-          packageId,
-          current.packageId,
-        );
-        await syncContractCoverageTx(tx, orgId, current.bridalGroupId);
+        await this.updateTx(tx, orgId, memberId, id, input);
         return { contract: await loadContractView(tx, orgId, id), errors: [] };
       });
     } catch (e) {
       return this.fail(e);
+    }
+  }
+
+  /** Corpo do update (grava tudo no `tx`). `mode: 'preview'`: aceita itens vazios e não audita. */
+  private async updateTx(
+    tx: TenantPrismaClient,
+    orgId: string,
+    memberId: string,
+    id: string,
+    input: UpdateContractInput,
+    mode: TxMode = "commit",
+  ): Promise<string> {
+    const locked = await lockContract(tx, id);
+    if (!EDITABLE.includes(locked.status)) {
+      throw new ContractError(
+        "CONTRACT_NOT_EDITABLE",
+        "Este contrato não pode mais ser editado.",
+        "id",
+      );
+    }
+    const current = await tx.contract.findUniqueOrThrow({ where: { id } });
+    const group = await loadGroup(tx, current.bridalGroupId);
+    if (!group)
+      throw new ContractError(
+        "GROUP_NOT_FOUND",
+        "Grupo não encontrado.",
+        "groupId",
+      );
+
+    let packageId = current.packageId;
+    let pkg: Awaited<ReturnType<typeof tx.package.findFirst>> = null;
+    if (input.packageId !== undefined) {
+      packageId = input.packageId;
+      if (packageId) {
+        pkg = await tx.package.findFirst({
+          where: { id: packageId, deletedAt: null },
+        });
+        if (!pkg) {
+          throw new ContractError(
+            "PACKAGE_NOT_FOUND",
+            "Pacote não encontrado.",
+            "packageId",
+          );
+        }
+      }
+    }
+
+    const existing = await tx.contractItem.findMany({
+      where: { contractId: id },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    });
+    let itemsCents: number[];
+    let drafts: ItemDraft[] | null = null;
+    if (input.items && input.items.length > 0) {
+      drafts = await buildItems(tx, group, input.items, packageId, existing);
+      itemsCents = drafts.map((d) => d.unitCents * d.quantity);
+    } else if (input.items && mode === "preview") {
+      drafts = [];
+      itemsCents = [];
+    } else if (input.items) {
+      throw new ContractError(
+        "ITEMS_REQUIRED",
+        "Adicione ao menos um item.",
+        "items",
+      );
+    } else {
+      itemsCents = existing.map((e) => toCents(e.total));
+    }
+
+    const discountCents = parseCents(
+      input.discountAmount,
+      "discountAmount",
+      toCents(current.discountAmount),
+    ) as number;
+    const explicitDeposit = parseCents(
+      input.depositAmount,
+      "depositAmount",
+      null,
+    );
+    const depositCents = explicitDeposit ?? toCents(current.depositAmount);
+    const { totalCents } = computeContractTotals({
+      itemsCents,
+      discountCents,
+      depositCents: 0,
+    });
+    const currentInstallments = await tx.contractDepositInstallment.findMany({
+      where: { contractId: id },
+      orderBy: { seq: "asc" },
+    });
+    const plan = resolveInstallments({
+      inputMode: input.paymentMode,
+      inputInstallments: input.installments,
+      current: {
+        paymentMode: current.paymentMode,
+        installments: currentInstallments.map((i) => ({
+          dueDate: i.dueDate.toISOString().slice(0, 10),
+          cents: toCents(i.amount),
+        })),
+      },
+      totalCents,
+      depositCents,
+      explicitDepositCents: explicitDeposit,
+      today: await orgToday(tx, orgId),
+    });
+    const totals = computeContractTotals({
+      itemsCents,
+      discountCents,
+      depositCents: plan.depositCents,
+    });
+    const discountDescription = parseDiscountDescription(
+      input.discountDescription,
+    );
+
+    const paid = await tx.contractPayment.aggregate({
+      where: { contractId: id },
+      _sum: { amount: true },
+    });
+    const paidCents = toCents(paid._sum.amount ?? 0);
+    if (totals.totalCents < paidCents) {
+      throw new ContractError(
+        "TOTAL_BELOW_PAID",
+        "O novo total é menor que o valor já pago.",
+        "discountAmount",
+      );
+    }
+
+    const days = checkDays(
+      input.balanceDueDaysBefore ?? current.balanceDueDaysBefore,
+    );
+    // sempre a partir da data atual do evento (o evento pode ter sido remarcado)
+    const dueDate = balanceDueDate(
+      group.eventDate.toISOString().slice(0, 10),
+      days,
+    );
+
+    if (drafts) {
+      await tx.contractItem.deleteMany({ where: { contractId: id } });
+      await tx.contractItem.createMany({
+        data: drafts.map((d, i) => ({
+          organizationId: orgId,
+          contractId: id,
+          groupMemberId: d.groupMemberId,
+          serviceId: d.serviceId,
+          packageId: d.packageId,
+          descriptionSnapshot: d.description.slice(0, 200),
+          quantity: d.quantity,
+          unitPrice: fromCents(d.unitCents),
+          total: fromCents(d.unitCents * d.quantity),
+          purpose: d.purpose,
+          sortOrder: i,
+        })),
+      });
+    }
+    await tx.contract.update({
+      where: { id },
+      data: {
+        packageId,
+        paymentMode: plan.mode,
+        ...(discountDescription !== undefined ? { discountDescription } : {}),
+        contractorClientId:
+          group.eventKind === "debutante" ? group.responsibleClientId : null,
+        itemsTotal: fromCents(totals.itemsTotalCents),
+        discountAmount: fromCents(discountCents),
+        totalAmount: fromCents(totals.totalCents),
+        depositAmount: fromCents(totals.depositCents),
+        balanceDueDaysBefore: days,
+        balanceDueDate: new Date(`${dueDate}T00:00:00.000Z`),
+        status: locked.status === "draft" ? "draft" : "awaiting_acceptance",
+      },
+    });
+    await replaceInstallmentsTx(tx, orgId, id, plan.installments);
+    const v = await renderContractVersionTx(tx, orgId, id, memberId);
+    await tx.contractAccessToken.updateMany({
+      where: { contractId: id, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    if (mode === "commit") {
+      await recordAudit(tx, {
+        orgId,
+        actorMemberId: memberId,
+        action: "contract.update",
+        entityType: "contract",
+        entityId: id,
+        metadata: { version: v.version },
+      });
+    }
+    await syncGroupPackageTx(
+      tx,
+      orgId,
+      current.bridalGroupId,
+      packageId,
+      current.packageId,
+    );
+    await syncContractCoverageTx(tx, orgId, current.bridalGroupId);
+    return id;
+  }
+
+  /**
+   * Prévia (quick 261105-d6k): roda o MESMO createTx/updateTx dentro de runWithTenant,
+   * monta o snapshot e lança PreviewRollback — o Prisma desfaz a transação inteira.
+   * Seguro porque todos os efeitos de create/update ficam no `tx` (grupo, cliente nova,
+   * itens, parcelas, versões, cobertura); nada sai da transação (sem e-mail, fila ou
+   * eventos). O código do contrato é descartável e a auditoria é pulada.
+   */
+  async preview(
+    orgId: string,
+    memberId: string,
+    input: ContractPreviewInput,
+  ): Promise<ContractPreviewResult> {
+    try {
+      const targets = [input.contractId, input.groupId, input.newGroup].filter(
+        (v) => v != null && v !== "",
+      ).length;
+      if (targets !== 1) {
+        throw new ContractError(
+          "GROUP_REQUIRED",
+          "Informe o grupo ou os dados da noiva para o contrato.",
+          "groupId",
+        );
+      }
+      await this.tenant.runWithTenant(orgId, async (tx) => {
+        const id = input.contractId
+          ? await this.updateTx(
+              tx,
+              orgId,
+              memberId,
+              input.contractId,
+              {
+                packageId: input.packageId,
+                items: input.items,
+                discountAmount: input.discountAmount,
+                depositAmount: input.depositAmount,
+                balanceDueDaysBefore: input.balanceDueDaysBefore,
+                paymentMode: input.paymentMode,
+                discountDescription: input.discountDescription,
+                installments: input.installments,
+              },
+              "preview",
+            )
+          : await this.createTx(tx, orgId, memberId, input, "preview");
+        const live = await buildLiveSnapshotTx(tx, orgId, id);
+        const letterhead = live.snapshot.letterhead
+          ? ((await loadLetterheadTx(tx, live.snapshot.letterhead.sha256))
+              ?.data ?? null)
+          : null;
+        const org = await tx.organization.findUnique({
+          where: { id: orgId },
+          select: { tradeName: true },
+        });
+        throw new PreviewRollback({
+          snapshot: { ...live.snapshot, code: PREVIEW_CODE },
+          letterhead,
+          orgName: org?.tradeName ?? "",
+        });
+      });
+      throw new Error("contract preview: transaction finished without result");
+    } catch (e) {
+      if (e instanceof PreviewRollback) return e.result;
+      const m = mapContractError(e) ?? mapBridalError(e);
+      if (m) return { errors: [m] };
+      throw e;
     }
   }
 
