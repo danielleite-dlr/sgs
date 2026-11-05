@@ -24,11 +24,17 @@ export interface StructuredOpts {
 
 const PARAGRAPH_GAP = 4;
 
-function title(doc: PDFKit.PDFDocument, text: string, width: number, probe: LayoutProbe): void {
+function title(
+  doc: PDFKit.PDFDocument,
+  text: string,
+  width: number,
+  probe: LayoutProbe,
+  align: 'left' | 'center' = 'center',
+): void {
   const left = doc.page.margins.left;
   ensureSpace(doc, 24);
   doc.font('Helvetica-Bold').fontSize(11);
-  doc.text(toWinAnsi(text), left, doc.y, { width, align: 'center' });
+  doc.text(toWinAnsi(text), left, doc.y, { width, align });
   doc.moveDown(0.4);
   doc.x = left;
   track(doc, probe);
@@ -88,6 +94,13 @@ function contractorRows(s: ContractSnapshot): TableRow[] {
   ];
 }
 
+const EXTRA_PREFIX = 'Serviço Adicional:';
+function boldExtraLabel(label: string): string {
+  return label.startsWith(EXTRA_PREFIX)
+    ? `**${EXTRA_PREFIX}**${label.slice(EXTRA_PREFIX.length)}`
+    : label;
+}
+
 function budgetRows(s: ContractSnapshot): TableRow[] {
   const rows: TableRow[] = [];
   const b = s.budget;
@@ -96,30 +109,24 @@ function budgetRows(s: ContractSnapshot): TableRow[] {
       cells: [
         {
           text: `**Pacote contratado:** ${b.package.name}`,
-          subText: b.package.description ? `Descrição: ${b.package.description}` : undefined,
+          subText: b.package.description ? `**Descrição:** ${b.package.description}` : undefined,
         },
-        { text: formatBRL(b.package.cents), align: 'right' },
+        { text: formatBRL(b.package.cents) },
       ],
     });
   }
   for (const e of b.extras) {
     rows.push({
-      cells: [{ text: e.label }, { text: formatBRL(e.cents), align: 'right' }],
+      cells: [{ text: boldExtraLabel(e.label) }, { text: formatBRL(e.cents) }],
     });
   }
   if (b.discount) {
     rows.push({
-      cells: [
-        { text: b.discount.label },
-        { text: `- ${formatBRL(b.discount.cents)}`, align: 'right' },
-      ],
+      cells: [{ text: b.discount.label }, { text: `- ${formatBRL(b.discount.cents)}` }],
     });
   }
   rows.push({
-    cells: [
-      { text: '**Total de serviços**' },
-      { text: `**Total: ${formatBRL(b.totalCents)}**`, align: 'right' },
-    ],
+    cells: [{ text: '**Total de serviços**' }, { text: `**Total: ${formatBRL(b.totalCents)}**` }],
   });
   return rows;
 }
@@ -143,13 +150,17 @@ function paymentRows(s: ContractSnapshot): TableRow[] {
           ? 'SINAL'
           : `SINAL ${i.seq}/${installments.length}`;
     rows.push({
-      cells: [{ text: label }, { text: formatDateBR(i.dueDate) }, { text: formatBRL(i.cents) }],
+      cells: [
+        { text: label, bold: true },
+        { text: formatDateBR(i.dueDate) },
+        { text: formatBRL(i.cents) },
+      ],
     });
   }
   if (mode !== 'a_vista') {
     rows.push({
       cells: [
-        { text: 'RESTANTE PAGAMENTO' },
+        { text: 'RESTANTE PAGAMENTO', bold: true },
         {
           text: `Até ${balanceDueDaysBefore ?? 0} dias antes do evento`,
           colspan: 2,
@@ -273,7 +284,7 @@ export function renderStructuredContract(
   probe.sectionPage.header = 1;
 
   const t = s.texts;
-  title(doc, t.title.toUpperCase(), width, probe);
+  title(doc, t.title.toUpperCase(), width, probe, 'left');
   drawRichParagraph(doc, t.intro, { width, probe });
   doc.moveDown(0.3);
   for (const p of splitParagraphs(t.parties)) {
