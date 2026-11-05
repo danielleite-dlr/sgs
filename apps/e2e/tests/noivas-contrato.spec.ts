@@ -4,6 +4,7 @@ import { brl, createProfessional, ownerToken } from '../support/phase3';
 import {
   addDaysYmd,
   contractBilledToday,
+  completeContractData,
   createBridalPackage,
   extractAcceptLink,
   firstWednesdayFromNow,
@@ -100,6 +101,8 @@ test.describe('Fase 4: pacote -> grupo de noivas -> contrato -> aceite público 
     await expect(page.getByText('Entrada pendente')).toBeVisible();
 
     // ---- link de aceite ----
+    // gate D-09: dados da contratante, horário do evento e studio completos
+    await completeContractData(token, { groupId });
     await page.getByTestId('contract-generate-link').click();
     acceptUrl = await extractAcceptLink(page);
     expect(acceptUrl).toContain(`/aceite/${seed.orgId}/`);

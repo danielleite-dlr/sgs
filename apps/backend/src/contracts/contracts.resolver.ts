@@ -38,6 +38,12 @@ export class ContractsResolver {
     return this.contracts.get(tenant.organizationId, id);
   }
 
+  @Query('contractReadiness')
+  @RequirePermission(PERMISSIONS.CONTRACT_READ)
+  readiness(@CurrentTenant() tenant: TenantContext, @Args('id') id: string) {
+    return this.contracts.readiness(tenant.organizationId, id);
+  }
+
   @Mutation('createContract')
   @RequirePermission(PERMISSIONS.CONTRACT_WRITE)
   create(@CurrentTenant() tenant: TenantContext, @Args('input') input: CreateContractInput) {

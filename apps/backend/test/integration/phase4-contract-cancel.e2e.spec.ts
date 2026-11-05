@@ -5,6 +5,8 @@ import {
   destroyPhase4World,
   gqlAs,
   insertBridalGroupRow,
+  makeContractReady,
+  attachPackage,
   insertContractRow,
   type Phase4World,
 } from './helpers/phase4-fixtures';
@@ -69,6 +71,7 @@ describe('Fase 4 - cancelamento do contrato com acerto (CONT-03)', () => {
   /** Grupo agendado (noiva coberta + 1 acompanhante avulsa) com contrato e 2.400 pagos. */
   async function setup() {
     const g = await insertBridalGroupRow(w, { companions: 1, eventDate: eventDay });
+    await makeContractReady(w, g);
     const sch = await adm()(SCHEDULE, {
       input: {
         groupId: g.groupId,
@@ -100,6 +103,7 @@ describe('Fase 4 - cancelamento do contrato com acerto (CONT-03)', () => {
     });
     expect(c.data.createContract.errors).toEqual([]);
     const contractId = c.data.createContract.contract.id as string;
+    await attachPackage(w, contractId);
     const link = await adm()(LINK, { id: contractId });
     const token = (link.data.generateContractLink.url as string).split('/').pop() as string;
     const p = await adm()(PAY, {

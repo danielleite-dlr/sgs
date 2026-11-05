@@ -124,6 +124,7 @@ function serialize(c: ContractRow, timezone: string, today: string, depositUnpai
       : null,
     currentText: version?.renderedText ?? '',
     currentTextSha256: version?.textSha256 ?? '',
+    currentSnapshotFormat: version?.snapshotFormat ?? 1,
     items: c.items.map((it) => ({
       id: it.id,
       groupMemberId: it.groupMemberId,

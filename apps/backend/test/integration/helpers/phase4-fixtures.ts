@@ -262,3 +262,56 @@ export async function insertLetterheadRow(
   });
   return { id: row.id };
 }
+
+/** Dados do studio completos (gate D-09, fase 04.1). */
+export async function completeStudioSettings(w: Phase3World): Promise<void> {
+  const studio = {
+    studioName: 'Studio Teste',
+    studioCnpj: '48.562.103/0001-71',
+    studioAddress: 'Rua do Studio, 1 – Osasco/SP',
+    studioRepresentative: 'Dona Teste',
+    studioRepresentativeRg: '11.111.111-1',
+    forumCity: 'Osasco',
+    forumUf: 'SP',
+  };
+  await adminPrisma.contractSettings.upsert({
+    where: { organizationId: w.orgId },
+    create: { organizationId: w.orgId, ...studio },
+    update: studio,
+  });
+}
+
+/**
+ * Deixa um grupo/contrato apto a gerar o link (gate D-09, fase 04.1): contratante com CPF,
+ * endereço e dois celulares, horário do evento e dados completos do studio.
+ */
+export async function makeContractReady(
+  w: Phase3World,
+  grp: { groupId: string; brideClientId: string },
+): Promise<void> {
+  await adminPrisma.client.update({
+    where: { id: grp.brideClientId },
+    data: {
+      cpf: COMPLETE_CLIENT.cpf,
+      rg: COMPLETE_CLIENT.rg,
+      postalCode: COMPLETE_CLIENT.postalCode,
+      address: COMPLETE_CLIENT.address,
+      phone: COMPLETE_CLIENT.phone,
+      phone2: COMPLETE_CLIENT.phone2,
+      email: COMPLETE_CLIENT.email,
+    },
+  });
+  await adminPrisma.bridalGroup.update({
+    where: { id: grp.groupId },
+    data: { eventTime: '16:00' },
+  });
+  await completeStudioSettings(w);
+}
+
+/** Vincula o pacote do mundo ao contrato (gate D-09 exige pacote); itens existentes seguem como extras. */
+export async function attachPackage(w: Phase4World, contractId: string): Promise<void> {
+  await adminPrisma.contract.update({
+    where: { id: contractId },
+    data: { packageId: w.bridalPackageId },
+  });
+}

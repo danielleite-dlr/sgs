@@ -10,7 +10,16 @@ import type { TenantPrismaClient } from '../database/types';
 import { nextContractCode } from './contract-code';
 import { ContractError, mapContractError, type ContractUserError } from './contract-errors';
 import { lockContract } from './contract-lock';
-import { renderContractVersionTx } from './contract-render';
+import {
+  loadReadinessInputTx,
+  refreshContractVersionTx,
+  renderContractVersionTx,
+} from './contract-render';
+import {
+  formatMissingMessage,
+  missingRequiredFields,
+  type MissingField,
+} from './domain/contract-required-fields';
 import {
   loadContractView,
   loadContractViews,
@@ -688,8 +697,14 @@ export class ContractsService {
             'id',
           );
         }
+        const missing = missingRequiredFields(await loadReadinessInputTx(tx, orgId, id));
+        if (missing.length > 0) {
+          throw new ContractError('CONTRACT_INCOMPLETE', formatMissingMessage(missing), 'missing');
+        }
+        // D-18: versão legada ou desatualizada ganha versão nova no layout novo.
+        const refreshed = await refreshContractVersionTx(tx, orgId, id, memberId);
         const version = await tx.contractVersion.findUniqueOrThrow({
-          where: { uq_cv_contract_version: { contractId: id, version: locked.current_version } },
+          where: { uq_cv_contract_version: { contractId: id, version: refreshed.version } },
         });
         await tx.contractAccessToken.updateMany({
           where: { contractId: id, revokedAt: null },
@@ -717,7 +732,7 @@ export class ContractsService {
           action: 'contract.link.generate',
           entityType: 'contract',
           entityId: id,
-          metadata: { version: locked.current_version },
+          metadata: { version: refreshed.version },
         });
         return {
           url: `${this.config.frontendUrl.replace(/\/+$/, '')}/aceite/${orgId}/${token}`,
@@ -731,6 +746,13 @@ export class ContractsService {
       if (m) return { url: null, expiresAt: null, contract: null, errors: [m] };
       throw e;
     }
+  }
+
+  readiness(orgId: string, id: string): Promise<{ ready: boolean; missing: MissingField[] }> {
+    return this.tenant.runWithTenant(orgId, async (tx) => {
+      const missing = missingRequiredFields(await loadReadinessInputTx(tx, orgId, id));
+      return { ready: missing.length === 0, missing };
+    });
   }
 
   get(orgId: string, id: string): Promise<ContractView | null> {

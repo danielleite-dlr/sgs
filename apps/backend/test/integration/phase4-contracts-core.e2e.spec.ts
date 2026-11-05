@@ -5,6 +5,8 @@ import {
   destroyPhase4World,
   gqlAs,
   insertBridalGroupRow,
+  makeContractReady,
+  attachPackage,
   insertContractRow,
   type Phase4World,
 } from './helpers/phase4-fixtures';
@@ -47,12 +49,15 @@ describe('Fase 4 - núcleo do contrato da noiva', () => {
     await deletePhase4Rows(orgFilter);
   });
 
-  const newGroup = () =>
-    insertBridalGroupRow(w, {
+  const newGroup = async () => {
+    const grp = await insertBridalGroupRow(w, {
       companions: 4,
       covered: [true, true, false, false, false],
       eventDate,
     });
+    await makeContractReady(w, grp);
+    return grp;
+  };
 
   it('cria contrato de R$ 8.000 com desconto, entrada e prazo = evento - 10 dias', async () => {
     const g = gqlAs(w, w.tokens.admin);
@@ -97,9 +102,8 @@ describe('Fase 4 - núcleo do contrato da noiva', () => {
     // texto e hash
     expect(c.currentText).not.toContain('{{');
     expect(c.currentText).toContain('R$');
-    expect(c.currentTextSha256).toBe(
-      createHash('sha256').update(c.currentText).digest('hex'),
-    );
+    // Formato 2: o hash é do snapshot estruturado, não do texto corrido.
+    expect(c.currentTextSha256).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it('cria a partir do pacote sem itens: itens da noiva rateados e entrada de 30%', async () => {
@@ -326,9 +330,11 @@ describe('Fase 4 - núcleo do contrato da noiva', () => {
       input: {
         groupId: grp.groupId,
         items: [{ groupMemberId: grp.brideMemberId, serviceId: w.serviceId, unitPrice: '1000.00' }],
+        depositAmount: '300.00',
       },
     });
     const id = created.data.createContract.contract.id;
+    await attachPackage(w, id);
 
     const l = await g(LINK, { id });
     expect(l.data.generateContractLink.errors).toEqual([]);
@@ -354,14 +360,15 @@ describe('Fase 4 - núcleo do contrato da noiva', () => {
     const up = await g(UPDATE, { id, input: { discountAmount: '100.00' } });
     expect(up.data.updateContract.errors).toEqual([]);
     const c = up.data.updateContract.contract;
-    expect(c.currentVersion).toBe(2);
+    // v1 (criação) + v2 (link: pacote vinculado depois da criação) + v3 (edição)
+    expect(c.currentVersion).toBe(3);
     expect(c.totalAmount).toBe('900.00');
     expect(c.status).toBe('awaiting_acceptance');
     expect(c.needsAcceptance).toBe(true);
     const after = await adminPrisma.contractAccessToken.findMany({ where: { contractId: id } });
     expect(after[0].revokedAt).not.toBeNull();
     const versions = await adminPrisma.contractVersion.count({ where: { contractId: id } });
-    expect(versions).toBe(2);
+    expect(versions).toBe(3);
 
     // novo link revoga o anterior e o antigo token deixa de ser o aberto
     const l2 = await g(LINK, { id });
