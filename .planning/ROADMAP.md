@@ -211,7 +211,7 @@ Plans:
 
 **Requirements**: CONT-01, CONT-02, CONT-03 (refinamento)
 **Depends on:** Phase 4
-**Plans:** 15/17 plans executed
+**Plans:** 16/17 plans executed
 
 Plans:
 - [x] 04.1-01-database-schema-seed-PLAN.md — Migration única (campos novos, parcelas do sinal, papel timbrado por hash, snapshot, RLS, backfill D-18) + seed do Studio JS pelo id da org
@@ -229,7 +229,7 @@ Plans:
 - [x] 04.1-13-backend-acceptance-pdf-wiring-PLAN.md — Aceite/página pública com snapshot, CPF da contratante, PDF desde o rascunho, nome do arquivo, backfill testado
 - [x] 04.1-14-frontend-contract-form-detail-PLAN.md — Formulário com sinal/parcelado/à vista, detalhe com parcelas, pendências do link e PDF
 - [x] 04.1-15-frontend-public-accept-page-PLAN.md — Página pública com o contrato estruturado, legível no celular
-- [ ] 04.1-16-e2e-verification-PLAN.md — RLS/RBAC das tabelas novas, E2E noiva (sinal parcelado) e debutante (à vista), gate completo, VALIDATION.md
+- [x] 04.1-16-e2e-verification-PLAN.md — RLS/RBAC das tabelas novas, E2E noiva (sinal parcelado) e debutante (à vista), gate completo, VALIDATION.md
 - [ ] 04.1-17-deploy-human-verification-PLAN.md — Push + deploy staging + CI, conferência do seed e verificação humana do PDF vs. gerador do Studio
 
 ### Phase 5: Communication & Launch
