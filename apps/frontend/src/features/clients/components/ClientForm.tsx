@@ -33,6 +33,8 @@ import type {
   UserError,
 } from '../api/clients.api';
 import { formatCpf, unformatCpf, validateCpf } from '../utils/cpf';
+import { maskRg, maskCep } from '../utils/masks';
+import { maskBrPhone } from '@/features/identity/member-validation';
 import { CpfDuplicateAlert } from './CpfDuplicateAlert';
 import type { DuplicateClient } from './CpfDuplicateAlert';
 
@@ -48,6 +50,10 @@ const schema = z
     cpf: z.string().optional().or(z.literal('')),
     birthDate: z.string().optional().or(z.literal('')),
     address: z.string().optional().or(z.literal('')),
+    rg: z.string().optional().or(z.literal('')),
+    postalCode: z.string().optional().or(z.literal('')),
+    phone2: z.string().optional().or(z.literal('')),
+    phone3: z.string().optional().or(z.literal('')),
     notes: z.string().optional().or(z.literal('')),
   })
   .superRefine((val, ctx) => {
@@ -59,6 +65,22 @@ const schema = z
         code: z.ZodIssueCode.custom,
         message: 'Informe pelo menos um telefone ou e-mail.',
         path: ['phone'],
+      });
+    }
+    // RG: 9 caracteres (8 dígitos + dígito/X) quando preenchido
+    if (val.rg && val.rg.length > 0 && !/^\d{8}[\dX]$/.test(val.rg.replace(/[^0-9X]/g, ''))) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'RG inválido.',
+        path: ['rg'],
+      });
+    }
+    // CEP: 8 dígitos quando preenchido
+    if (val.postalCode && val.postalCode.length > 0 && val.postalCode.replace(/\D/g, '').length !== 8) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'CEP inválido.',
+        path: ['postalCode'],
       });
     }
     // CPF checksum validation when provided
@@ -109,6 +131,10 @@ export function ClientForm({ initial }: ClientFormProps) {
         ? new Date(initial.birthDate).toISOString().slice(0, 10)
         : '',
       address: initial?.address ?? '',
+      rg: initial?.rg ? maskRg(initial.rg) : '',
+      postalCode: initial?.postalCode ? maskCep(initial.postalCode) : '',
+      phone2: initial?.phone2 ?? '',
+      phone3: initial?.phone3 ?? '',
       notes: initial?.notes ?? '',
     },
     mode: 'onBlur',
@@ -158,6 +184,14 @@ export function ClientForm({ initial }: ClientFormProps) {
       form.setError('cpf', { message: t('clients.validation.cpfInvalid') });
       return;
     }
+    if (first.code === 'RG_INVALID') {
+      form.setError('rg', { message: t('clients.validation.rgInvalid') });
+      return;
+    }
+    if (first.code === 'POSTAL_CODE_INVALID') {
+      form.setError('postalCode', { message: t('clients.validation.postalCodeInvalid') });
+      return;
+    }
     if (first.field) {
       form.setError(first.field as keyof FormValues, { message: first.message });
     } else {
@@ -181,6 +215,10 @@ export function ClientForm({ initial }: ClientFormProps) {
               cpf: cpfDigits || null,
               birthDate: values.birthDate || null,
               address: values.address || null,
+              rg: values.rg || null,
+              postalCode: values.postalCode || null,
+              phone2: values.phone2 || null,
+              phone3: values.phone3 || null,
               notes: values.notes || null,
             },
           },
@@ -202,6 +240,10 @@ export function ClientForm({ initial }: ClientFormProps) {
               cpf: cpfDigits || null,
               birthDate: values.birthDate || null,
               address: values.address || null,
+              ...(values.rg ? { rg: values.rg } : {}),
+              ...(values.postalCode ? { postalCode: values.postalCode } : {}),
+              ...(values.phone2 ? { phone2: values.phone2 } : {}),
+              ...(values.phone3 ? { phone3: values.phone3 } : {}),
               notes: values.notes || null,
             },
           },
@@ -280,7 +322,9 @@ export function ClientForm({ initial }: ClientFormProps) {
                     <FormControl>
                       <Input
                         {...field}
+                        onChange={(e) => field.onChange(maskBrPhone(e.target.value))}
                         type="tel"
+                        inputMode="numeric"
                         placeholder={t('clients.form.phonePlaceholder')}
                       />
                     </FormControl>
@@ -366,6 +410,87 @@ export function ClientForm({ initial }: ClientFormProps) {
                 </FormItem>
               )}
             />
+
+            {/* RG + CEP + Celular 2 + Celular 3 (2-column grid) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+              <FormField
+                control={form.control}
+                name="rg"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('clients.fields.rg')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        onChange={(e) => field.onChange(maskRg(e.target.value))}
+                        placeholder="00.000.000-0"
+                        autoComplete="off"
+                        maxLength={12}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="postalCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('clients.fields.postalCode')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        onChange={(e) => field.onChange(maskCep(e.target.value))}
+                        placeholder="00000-000"
+                        inputMode="numeric"
+                        autoComplete="postal-code"
+                        maxLength={9}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone2"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('clients.fields.phone2')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        onChange={(e) => field.onChange(maskBrPhone(e.target.value))}
+                        type="tel"
+                        inputMode="numeric"
+                        placeholder={t('clients.form.phonePlaceholder')}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone3"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('clients.fields.phone3')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        onChange={(e) => field.onChange(maskBrPhone(e.target.value))}
+                        type="tel"
+                        inputMode="numeric"
+                        placeholder={t('clients.form.phonePlaceholder')}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {/* Notes (textarea) */}
             <FormField

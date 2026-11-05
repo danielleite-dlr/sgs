@@ -13,6 +13,10 @@ export const ClientsListQuery = gql`
         cpf
         birthDate
         address
+        rg
+        postalCode
+        phone2
+        phone3
         notes
         createdAt
         updatedAt
@@ -32,6 +36,10 @@ export const ClientByIdQuery = gql`
       cpf
       birthDate
       address
+      rg
+      postalCode
+      phone2
+      phone3
       notes
       createdAt
       updatedAt
@@ -77,6 +85,10 @@ export const CreateClientMutation = gql`
         cpf
         birthDate
         address
+        rg
+        postalCode
+        phone2
+        phone3
         notes
       }
       errors {
@@ -99,6 +111,10 @@ export const UpdateClientMutation = gql`
         cpf
         birthDate
         address
+        rg
+        postalCode
+        phone2
+        phone3
         notes
       }
       errors {
@@ -156,6 +172,10 @@ export interface ClientData {
   cpf: string | null;
   birthDate: string | null;
   address: string | null;
+  rg: string | null;
+  postalCode: string | null;
+  phone2: string | null;
+  phone3: string | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;

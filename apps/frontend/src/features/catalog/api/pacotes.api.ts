@@ -10,6 +10,7 @@ export const PackagesQuery = gql`
       validForDays
       depositKind
       depositValue
+      contractDescription
       coverImageUrl
       services {
         serviceId
@@ -48,6 +49,7 @@ export const CreatePackageMutation = gql`
         individualSum
         depositKind
         depositValue
+        contractDescription
         services {
           serviceId
           quantity
@@ -89,6 +91,7 @@ export const UpdatePackageMutation = gql`
         individualSum
         depositKind
         depositValue
+        contractDescription
         services {
           serviceId
           quantity
@@ -172,6 +175,7 @@ export interface PackageData {
   validForDays?: number | null;
   depositKind?: 'fixed' | 'percent' | null;
   depositValue?: string | null;
+  contractDescription?: string | null;
   coverImageUrl?: string | null;
   services: PackageServiceItem[];
   /** Custos/lucro: null para quem não pode editar o catálogo. */
