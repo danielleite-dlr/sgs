@@ -17,7 +17,11 @@ describe('contractFileName', () => {
     );
   });
   it('nome vazio vira SEM_NOME', () => {
-    expect(contractFileName('noiva', '   ', '2026-12-20', 'X')).toBe('NOIVA_SEM_NOME_20-12-2026_X.pdf');
-    expect(contractFileName('noiva', '!!!', '2026-12-20', '')).toBe('NOIVA_SEM_NOME_20-12-2026_SEM_PACOTE.pdf');
+    expect(contractFileName('noiva', '   ', '2026-12-20', 'X')).toBe(
+      'NOIVA_SEM_NOME_20-12-2026_X.pdf',
+    );
+    expect(contractFileName('noiva', '!!!', '2026-12-20', '')).toBe(
+      'NOIVA_SEM_NOME_20-12-2026_SEM_PACOTE.pdf',
+    );
   });
 });

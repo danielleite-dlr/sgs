@@ -32,8 +32,15 @@ const norm = (s: string): string => s.replace(/\s+/g, ' ').trim();
 
 describe('DEFAULT_CONTRACT_TEXTS', () => {
   it('tem as 5 seções', () => {
-    expect([...CONTRACT_TEXT_SECTIONS]).toEqual(['title', 'intro', 'parties', 'trialNote', 'clauses']);
-    for (const s of CONTRACT_TEXT_SECTIONS) expect(DEFAULT_CONTRACT_TEXTS[s].length).toBeGreaterThan(0);
+    expect([...CONTRACT_TEXT_SECTIONS]).toEqual([
+      'title',
+      'intro',
+      'parties',
+      'trialNote',
+      'clauses',
+    ]);
+    for (const s of CONTRACT_TEXT_SECTIONS)
+      expect(DEFAULT_CONTRACT_TEXTS[s].length).toBeGreaterThan(0);
   });
 
   it('título literal', () => {
@@ -52,7 +59,8 @@ describe('DEFAULT_CONTRACT_TEXTS', () => {
   });
 
   it('todas as variáveis usadas nos textos padrão são conhecidas', () => {
-    for (const s of CONTRACT_TEXT_SECTIONS) expect(findUnknownVariables(DEFAULT_CONTRACT_TEXTS[s])).toEqual([]);
+    for (const s of CONTRACT_TEXT_SECTIONS)
+      expect(findUnknownVariables(DEFAULT_CONTRACT_TEXTS[s])).toEqual([]);
     expect(CONTRACT_TEXT_VARIABLES).toHaveLength(10);
   });
 
@@ -107,7 +115,9 @@ describe('conferência literal com a REFERENCE (W1)', () => {
   });
 
   it('clauses (Página 2)', () => {
-    const start = lines.findIndex((l) => l.startsWith('**II. Do objeto do contrato e do Orçamento:**'));
+    const start = lines.findIndex((l) =>
+      l.startsWith('**II. Do objeto do contrato e do Orçamento:**'),
+    );
     const end = lines.findIndex((l, i) => i > start && l.startsWith('"{cidade}'));
     expect(start).toBeGreaterThan(-1);
     expect(end).toBeGreaterThan(start);
@@ -122,10 +132,17 @@ describe('conferência literal com a REFERENCE (W1)', () => {
 
 describe('renderContractText', () => {
   it('remove asteriscos dos valores', () => {
-    expect(renderContractText('{{studio_nome}} x', { ...varsStudioJs, studio_nome: 'A**B' })).toBe('AB x');
+    expect(
+      renderContractText('{{studio_nome}} x', {
+        ...varsStudioJs,
+        studio_nome: 'A**B',
+      }),
+    ).toBe('AB x');
   });
   it('aceita espaços dentro das chaves', () => {
-    expect(renderContractText('{{ studio_nome }}', varsStudioJs)).toBe('Studio Jéssica Seixas Beauty');
+    expect(renderContractText('{{ studio_nome }}', varsStudioJs)).toBe(
+      'Studio Jéssica Seixas Beauty',
+    );
   });
   it('variável desconhecida lança RangeError', () => {
     expect(() => renderContractText('{{foo}}', varsStudioJs)).toThrow(RangeError);
@@ -149,7 +166,10 @@ describe('validateContractTexts', () => {
     ]);
   });
   it('texto vazio', () => {
-    expect(validateContractTexts({ title: '   ' })[0]).toMatchObject({ section: 'title', code: 'TEXT_EMPTY' });
+    expect(validateContractTexts({ title: '   ' })[0]).toMatchObject({
+      section: 'title',
+      code: 'TEXT_EMPTY',
+    });
   });
   it('null/omitido = sem issue', () => {
     expect(validateContractTexts({ title: null, clauses: undefined })).toEqual([]);
