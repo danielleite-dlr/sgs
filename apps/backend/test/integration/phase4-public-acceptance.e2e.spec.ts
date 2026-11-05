@@ -6,10 +6,14 @@ import {
   destroyPhase4World,
   gqlAs,
   insertBridalGroupRow,
+  insertContractRow,
+  completeStudioSettings,
+  COMPLETE_CLIENT,
   makeContractReady,
   attachPackage,
   type Phase4World,
 } from './helpers/phase4-fixtures';
+import { hashToken } from '../../src/contracts/domain/contract-token';
 import { deletePhase4Rows } from './helpers/phase4-cleanup';
 
 const VALID_CPF = '529.982.247-25';
@@ -167,6 +171,89 @@ describe('Fase 4 - aceite público do contrato', () => {
     expect(audit).toBe(1);
   });
 
+  it('view devolve o snapshot formato 2 com orçamento; versão legada devolve snapshot nulo', async () => {
+    const s = await setup();
+    const r = await view(s.token);
+    expect(r.body.snapshot.format).toBe(2);
+    expect(r.body.snapshot.budget).toBeDefined();
+    expect(r.body.snapshot.budget.package).not.toBeNull();
+    const ok = await accept(s.token, {
+      fullName: 'Maria da Silva',
+      cpf: VALID_CPF,
+      accepted: true,
+      textSha256: r.body.textSha256,
+    });
+    expect(ok.status).toBe(201);
+
+    // legado: segunda versão inserida com snapshot_format = 1
+    const g2 = await insertBridalGroupRow(w, { companions: 0, eventDate: '2030-07-15' });
+    const c2 = await insertContractRow(w, {
+      groupId: g2.groupId,
+      brideClientId: g2.brideClientId,
+      totalAmount: '1000.00',
+      depositAmount: '300.00',
+      status: 'awaiting_acceptance',
+    });
+    const v = await adminPrisma.contractVersion.findFirstOrThrow({
+      where: { contractId: c2.contractId },
+    });
+    expect(v.snapshotFormat).toBe(1);
+    const token2 = 'legacy-token-' + randomUUID().replace(/-/g, '');
+    await adminPrisma.contractAccessToken.create({
+      data: {
+        organizationId: w.orgId,
+        contractId: c2.contractId,
+        versionId: v.id,
+        tokenHash: hashToken(token2),
+        expiresAt: new Date(Date.now() + 86_400_000),
+      },
+    });
+    const lv = await view(token2);
+    expect(lv.status).toBe(200);
+    expect(lv.body.snapshot).toBeNull();
+    expect(lv.body.text.length).toBeGreaterThan(0);
+  });
+
+  it('debutante: CPF da debutante dá CPF_MISMATCH e o da responsável é aceito (D-10)', async () => {
+    const g = gqlAs(w, w.tokens.admin);
+    const resp = await adminPrisma.client.create({
+      data: { organizationId: w.orgId, fullName: 'p4acc-responsavel', ...COMPLETE_CLIENT },
+    });
+    const grp = await insertBridalGroupRow(w, {
+      companions: 0,
+      eventDate: '2030-06-15',
+      eventKind: 'debutante',
+      responsibleClientId: resp.id,
+      eventTime: '20:00',
+    });
+    await completeStudioSettings(w);
+    await adminPrisma.client.update({
+      where: { id: grp.brideClientId },
+      data: { cpf: '168.995.350-09' },
+    });
+    const created = await g(CREATE, {
+      input: { groupId: grp.groupId, packageId: w.bridalPackageId },
+    });
+    expect(created.data.createContract.errors).toEqual([]);
+    const id = created.data.createContract.contract.id as string;
+    const link = await g(LINK, { id });
+    expect(link.data.generateContractLink.errors).toEqual([]);
+    const token = (link.data.generateContractLink.url as string).split('/').pop() as string;
+    const hash = (await view(token)).body.textSha256;
+    const body = { fullName: 'Mãe da Debutante', accepted: true, textSha256: hash };
+
+    const wrong = await accept(token, { ...body, cpf: '168.995.350-09' });
+    expect(wrong.status).toBe(422);
+    expect(wrong.body.code).toBe('CPF_MISMATCH');
+    expect(wrong.body.message).toBe('O CPF não confere com o da contratante.');
+
+    const ok = await accept(token, { ...body, cpf: COMPLETE_CLIENT.cpf });
+    expect(ok.status).toBe(201);
+
+    const pdf = await g(PDF, { id });
+    expect(pdf.data.contractPdf.filename).toMatch(/^DEBUTANTE_.+\.pdf$/);
+  });
+
   it('rejeita CPF diferente do cadastrado da noiva', async () => {
     const s = await setup();
     await adminPrisma.client.update({
@@ -206,8 +293,13 @@ describe('Fase 4 - aceite público do contrato', () => {
     const s = await setup();
     const pdfUrl = `/public/contracts/${w.orgId}/${s.token}/pdf`;
     expect((await http().get(pdfUrl).set('X-Forwarded-For', freshIp())).status).toBe(404);
-    const none = await s.g(PDF, { id: s.id });
-    expect(none.data.contractPdf).toBeNull();
+    // D-19: o dono baixa o rascunho antes do aceite (com aviso); o link público não.
+    const draft = await s.g(PDF, { id: s.id });
+    expect(draft.errors).toBeUndefined();
+    expect(draft.data.contractPdf.filename).toMatch(/^NOIVA_.+\.pdf$/);
+    expect(
+      Buffer.from(draft.data.contractPdf.base64, 'base64').subarray(0, 5).toString(),
+    ).toBe('%PDF-');
 
     await accept(s.token, {
       fullName: 'Maria da Silva',
@@ -227,12 +319,12 @@ describe('Fase 4 - aceite público do contrato', () => {
       });
     expect(r.status).toBe(200);
     expect(r.headers['content-type']).toContain('application/pdf');
-    expect(r.headers['content-disposition']).toContain(`contrato-${s.code}.pdf`);
+    expect(r.headers['content-disposition']).toMatch(/filename="NOIVA_[A-Z0-9_-]+\.pdf"/);
     expect((r.body as Buffer).subarray(0, 5).toString()).toBe('%PDF-');
 
     const owner = await s.g(PDF, { id: s.id });
     expect(owner.errors).toBeUndefined();
-    expect(owner.data.contractPdf.filename).toBe(`contrato-${s.code}.pdf`);
+    expect(owner.data.contractPdf.filename).toMatch(/^NOIVA_.+\.pdf$/);
     expect(Buffer.from(owner.data.contractPdf.base64, 'base64').subarray(0, 5).toString()).toBe(
       '%PDF-',
     );

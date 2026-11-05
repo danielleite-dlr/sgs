@@ -74,6 +74,32 @@ describe('Fase 4 - pagamentos do contrato (CONT-01)', () => {
     expect(mov[0].amount.toString()).toBe('2400');
   });
 
+  it('contrato de debutante: o caixa recebe a responsável como cliente (D-10)', async () => {
+    const resp = await adminPrisma.client.create({
+      data: { organizationId: w.orgId, fullName: 'p4cpay-responsavel' },
+    });
+    const g = await insertBridalGroupRow(w, {
+      eventDate: localDay(60),
+      eventKind: 'debutante',
+      responsibleClientId: resp.id,
+    });
+    const c = await insertContractRow(w, {
+      groupId: g.groupId,
+      brideClientId: g.brideClientId,
+      contractorClientId: resp.id,
+      totalAmount: '8000.00',
+      depositAmount: '2400.00',
+      status: 'active',
+    });
+    const r = await pay(c.contractId, [{ method: 'pix', amount: '2400.00' }]);
+    expect(r.data.recordContractPayment.errors).toEqual([]);
+    const mov = await adminPrisma.cashMovement.findFirstOrThrow({
+      where: { contractId: c.contractId },
+    });
+    expect(mov.clientId).toBe(resp.id);
+    expect(mov.clientId).not.toBe(g.brideClientId);
+  });
+
   it('restante parcial em dinheiro e depois em duas linhas quita o contrato; excesso é rejeitado', async () => {
     const c = await newContract();
     await pay(c.contractId, [{ method: 'pix', amount: '2400.00' }]);

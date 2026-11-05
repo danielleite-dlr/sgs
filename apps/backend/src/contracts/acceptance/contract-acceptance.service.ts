@@ -5,6 +5,9 @@ import { recordAudit } from '../../common/audit-log';
 import { isUuid, TenantContextService } from '../../database/tenant-context.service';
 import type { TenantPrismaClient } from '../../database/types';
 import { lockContract } from '../contract-lock';
+import { buildLiveSnapshotTx } from '../contract-render';
+import { loadLetterheadTx } from '../contract-letterhead.service';
+import { contractFileName } from '../domain/contract-file-name';
 import type { ContractSnapshot } from '../domain/contract-snapshot';
 import { maskCpf } from '../domain/contract-template';
 import { hashToken } from '../domain/contract-token';
@@ -29,6 +32,8 @@ export interface PublicContractView {
   eventDate: string;
   version: number;
   text: string;
+  /** Snapshot estruturado da versão (formato 2); null nas versões legadas. */
+  snapshot: ContractSnapshot | null;
   textSha256: string;
   accepted: boolean;
   acceptedAt: string | null;
@@ -67,9 +72,12 @@ interface TokenRow {
   current_version: number;
   bridal_group_id: string;
   bride_client_id: string;
+  contractor_client_id: string;
   version: number;
   rendered_text: string;
   text_sha256: string;
+  snapshot: unknown;
+  snapshot_format: number;
 }
 
 export function userError(status: HttpStatus, code: string, message: string): HttpException {
@@ -106,7 +114,9 @@ export class ContractAcceptanceService {
     }
     const rows = await tx.$queryRaw<TokenRow[]>`
       SELECT t.version_id, t.expires_at, c.id AS contract_id, c.code, c.current_version,
-             c.bridal_group_id, c.bride_client_id, v.version, v.rendered_text, v.text_sha256
+             c.bridal_group_id, c.bride_client_id,
+             COALESCE(c.contractor_client_id, c.bride_client_id) AS contractor_client_id,
+             v.version, v.rendered_text, v.text_sha256, v.snapshot, v.snapshot_format
         FROM contract_access_tokens t
         JOIN contracts c ON c.id = t.contract_id
         JOIN contract_versions v ON v.id = t.version_id
@@ -146,6 +156,7 @@ export class ContractAcceptanceService {
         eventDate: await this.eventDate(tx, t.bridal_group_id),
         version: t.version,
         text: t.rendered_text,
+        snapshot: t.snapshot_format === 2 ? (t.snapshot as ContractSnapshot) : null,
         textSha256: t.text_sha256,
         accepted: !!acc,
         acceptedAt: acc ? acc.acceptedAt.toISOString() : null,
@@ -200,16 +211,16 @@ export class ContractAcceptanceService {
         if (existing) {
           throw userError(HttpStatus.CONFLICT, 'ALREADY_ACCEPTED', 'Este contrato já foi aceito.');
         }
-        const bride = await tx.client.findUnique({
-          where: { id: t.bride_client_id },
+        const contractor = await tx.client.findUnique({
+          where: { id: t.contractor_client_id },
           select: { cpf: true },
         });
-        const registered = bride?.cpf ? normalizeCpf(bride.cpf) : '';
+        const registered = contractor?.cpf ? normalizeCpf(contractor.cpf) : '';
         if (registered && registered !== cpf) {
           throw userError(
             HttpStatus.UNPROCESSABLE_ENTITY,
             'CPF_MISMATCH',
-            'O CPF informado não confere com o cadastro da contratante.',
+            'O CPF não confere com o da contratante.',
           );
         }
         const acceptance = await tx.contractAcceptance.create({
@@ -261,26 +272,64 @@ export class ContractAcceptanceService {
     });
   }
 
-  /** Dados do PDF para o dono: versão aceita do contrato (null se nunca aceito). */
+  /**
+   * Dados do PDF para o dono (D-19): versão aceita, quando houver; senão o rascunho
+   * montado ao vivo, com o aviso de documento não aceito. Nada é gravado.
+   */
   async pdfDataForOwner(orgId: string, contractId: string): Promise<ContractPdfData | null> {
     return this.tenant.runWithTenant(orgId, async (tx) => {
       const c = await tx.contract.findUnique({
         where: { id: contractId },
-        select: { acceptedVersion: true, currentVersion: true },
+        select: { code: true, acceptedVersion: true, currentVersion: true },
       });
-      if (!c || c.acceptedVersion == null) return null;
-      const v = await tx.contractVersion.findUnique({
-        where: { uq_cv_contract_version: { contractId, version: c.acceptedVersion } },
-        select: { id: true },
-      });
-      if (!v) return null;
-      const data = await this.buildPdfData(tx, orgId, contractId, v.id);
-      if (!data) return null;
-      if (c.acceptedVersion !== c.currentVersion) {
-        data.notice = `Versão aceita v${c.acceptedVersion}. O contrato possui alterações posteriores ainda não aceitas.`;
+      if (!c) return null;
+      if (c.acceptedVersion != null) {
+        const v = await tx.contractVersion.findUnique({
+          where: { uq_cv_contract_version: { contractId, version: c.acceptedVersion } },
+          select: { id: true },
+        });
+        if (v) {
+          const data = await this.buildPdfData(tx, orgId, contractId, v.id);
+          if (data) {
+            if (c.acceptedVersion !== c.currentVersion) {
+              data.notice = `Versão aceita v${c.acceptedVersion}. O contrato possui alterações posteriores ainda não aceitas.`;
+            }
+            return data;
+          }
+        }
       }
-      return data;
+      const live = await buildLiveSnapshotTx(tx, orgId, contractId);
+      const org = await this.orgInfo(tx, orgId);
+      const letterhead = await this.letterheadFor(tx, live.snapshot);
+      return {
+        orgName: org.name,
+        code: c.code,
+        text: live.plainText,
+        version: c.currentVersion,
+        notice: 'Aguardando aceite digital — documento não aceito',
+        acceptance: null,
+        snapshot: live.snapshot,
+        letterhead,
+        fileName: this.fileNameFor(live.snapshot),
+      };
     });
+  }
+
+  private async letterheadFor(
+    tx: TenantPrismaClient,
+    snapshot: ContractSnapshot,
+  ): Promise<Buffer | null> {
+    if (!snapshot.letterhead) return null;
+    return (await loadLetterheadTx(tx, snapshot.letterhead.sha256))?.data ?? null;
+  }
+
+  private fileNameFor(s: ContractSnapshot): string {
+    return contractFileName(
+      s.kind,
+      s.kind === 'debutante' ? (s.debutanteName ?? s.contractor.name) : s.contractor.name,
+      s.event.date,
+      s.budget.package?.name ?? null,
+    );
   }
 
   private async buildPdfData(
@@ -297,12 +346,17 @@ export class ContractAcceptanceService {
     if (!v || !contract) return null;
     const org = await this.orgInfo(tx, orgId);
     const acc = await tx.contractAcceptance.findUnique({ where: { versionId } });
+    const snapshot = v.snapshotFormat === 2 ? (v.snapshot as unknown as ContractSnapshot) : null;
     return {
       orgName: org.name,
       code: contract.code,
       text: v.renderedText,
       version: v.version,
       notice: null,
+      snapshot,
+      // Papel timbrado pelo hash gravado na versão: trocar o arquivo depois não altera o aceito (D-18).
+      letterhead: snapshot ? await this.letterheadFor(tx, snapshot) : null,
+      fileName: snapshot ? this.fileNameFor(snapshot) : `contrato-${contract.code}.pdf`,
       acceptance: acc
         ? {
             name: acc.acceptedName,

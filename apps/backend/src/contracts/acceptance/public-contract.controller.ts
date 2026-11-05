@@ -75,7 +75,7 @@ export class PublicContractController {
     const data = await this.acceptance.pdfDataForToken(orgId, token);
     const buffer = await this.pdf.render(data);
     void res.header('Content-Type', 'application/pdf');
-    void res.header('Content-Disposition', `attachment; filename="contrato-${data.code}.pdf"`);
+    void res.header('Content-Disposition', `attachment; filename="${data.fileName ?? `contrato-${data.code}.pdf`}"`);
     return buffer;
   }
 }
