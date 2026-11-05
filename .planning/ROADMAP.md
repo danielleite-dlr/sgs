@@ -199,6 +199,23 @@ Plans:
 
 ---
 
+### Phase 04.1: Layout e regras do contrato (modelo Studio JS) (INSERTED)
+
+**Goal:** O contrato de evento segue o layout e as regras do modelo do Studio JS (referência em `phases/04.1-.../04.1-REFERENCE-modelo-studio-js.md`): PDF em 2 páginas com tabelas Contratante / Orçamento / Forma de pagamento, logo de fundo, cláusulas I–VIII, local e data e linhas de assinatura, mais o bloco de aceite digital do SGS; tipo Noiva/Debutante; dados da contratante (RG, CEP, celulares 1–3, endereço), horário do evento, nome do local e endereço do atendimento; serviços adicionais e desconto com descrição; pagamento à vista ou sinal parcelado com vencimentos e alertas; dados do studio, logo e modelo configuráveis por salão.
+
+**Decisões do usuário (2026-11-04):**
+- Assinatura: mantém o aceite por link do SGS (D-15). O PDF ganha as linhas de assinatura e o bloco de aceite digital. ZapSign fora de escopo.
+- Sinal parcelado: parcelas do sinal com valor e vencimento próprios, controladas pelo sistema (soma = sinal) e com alerta de vencida/vencendo. Estende D-10/D-11; o restante continua com pagamentos livres até X dias antes.
+- Configurável por salão: dados do studio (razão/nome, CNPJ, endereço, representante + RG, cidade do foro) e logo de fundo nas Configurações de contrato; cláusulas I–VIII viram o modelo padrão editável (D-16), pré-preenchido com os dados do Studio JS.
+- Debutante entra agora: grupo/contrato com tipo Noiva ou Debutante; na debutante, a responsável é a contratante e o nome da debutante aparece à parte.
+
+**Requirements**: CONT-01, CONT-02, CONT-03 (refinamento)
+**Depends on:** Phase 4
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 04.1 to break down)
+
 ### Phase 5: Communication & Launch
 
 **Goal:** Comunicação com clientes está automatizada via WhatsApp oficial, previsão financeira está disponível, e o sistema atende os critérios de qualidade e observabilidade necessários para operar em produção com 250+ organizações.
