@@ -211,7 +211,7 @@ Plans:
 
 **Requirements**: CONT-01, CONT-02, CONT-03 (refinamento)
 **Depends on:** Phase 4
-**Plans:** 7/17 plans executed
+**Plans:** 11/17 plans executed
 
 Plans:
 - [x] 04.1-01-database-schema-seed-PLAN.md — Migration única (campos novos, parcelas do sinal, papel timbrado por hash, snapshot, RLS, backfill D-18) + seed do Studio JS pelo id da org
@@ -221,11 +221,11 @@ Plans:
 - [x] 04.1-05-backend-settings-letterhead-PLAN.md — Dados do studio, textos editáveis com restaurar padrão, upload do papel timbrado, bodyLimit
 - [x] 04.1-06-pdf-structured-layout-PLAN.md — PDF pdfkit no layout do Studio JS (tabelas, fundo 0,8, margens, aviso pré-aceite, aceite), legado intacto
 - [x] 04.1-07-backend-installment-alerts-PLAN.md — Alertas de parcela vencendo/vencida no job diário, à vista, dedupe por parcela
-- [ ] 04.1-08-backend-contracts-core-PLAN.md — Forma de pagamento + parcelas do sinal, desconto descrito, contratante, correção packageItem (D-05; omitido preserva), parcelas com situação derivada no detalhe
+- [x] 04.1-08-backend-contracts-core-PLAN.md — Forma de pagamento + parcelas do sinal, desconto descrito, contratante, correção packageItem (D-05; omitido preserva), parcelas com situação derivada no detalhe
 - [ ] 04.1-09-backend-snapshot-version-gate-PLAN.md — Versão com snapshot estruturado + hash, contractReadiness/CONTRACT_INCOMPLETE (inclui DEPOSIT_ZERO e STUDIO_DATA), versão nova ao gerar link (D-18 sob demanda)
-- [ ] 04.1-10-frontend-client-package-forms-PLAN.md — Ficha da cliente (RG, CEP, celulares) e descrição do pacote no catálogo
-- [ ] 04.1-11-frontend-bridal-group-form-PLAN.md — Grupo de noiva/debutante com responsável, horário, nome e endereço do local
-- [ ] 04.1-12-frontend-contract-settings-PLAN.md — Configurações: studio, prazos, textos por seção e papel timbrado
+- [x] 04.1-10-frontend-client-package-forms-PLAN.md — Ficha da cliente (RG, CEP, celulares) e descrição do pacote no catálogo
+- [x] 04.1-11-frontend-bridal-group-form-PLAN.md — Grupo de noiva/debutante com responsável, horário, nome e endereço do local
+- [x] 04.1-12-frontend-contract-settings-PLAN.md — Configurações: studio, prazos, textos por seção e papel timbrado
 - [ ] 04.1-13-backend-acceptance-pdf-wiring-PLAN.md — Aceite/página pública com snapshot, CPF da contratante, PDF desde o rascunho, nome do arquivo, backfill testado
 - [ ] 04.1-14-frontend-contract-form-detail-PLAN.md — Formulário com sinal/parcelado/à vista, detalhe com parcelas, pendências do link e PDF
 - [ ] 04.1-15-frontend-public-accept-page-PLAN.md — Página pública com o contrato estruturado, legível no celular
