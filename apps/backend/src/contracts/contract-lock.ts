@@ -8,6 +8,8 @@ export type LockedContract = {
   status: string;
   bridal_group_id: string;
   bride_client_id: string;
+  /** NULL = a contratante é a noiva (bride_client_id). */
+  contractor_client_id: string | null;
   total_amount: Prisma.Decimal;
   deposit_amount: Prisma.Decimal;
   current_version: number;
@@ -21,7 +23,7 @@ export async function lockContract(
   contractId: string,
 ): Promise<LockedContract> {
   const rows = await tx.$queryRaw<LockedContract[]>`
-    SELECT id, code, status, bridal_group_id, bride_client_id, total_amount, deposit_amount,
+    SELECT id, code, status, bridal_group_id, bride_client_id, contractor_client_id, total_amount, deposit_amount,
            current_version, accepted_version, balance_due_date
       FROM contracts WHERE id = ${contractId}::uuid FOR UPDATE`;
   const c = rows[0];

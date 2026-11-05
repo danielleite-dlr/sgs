@@ -21,6 +21,6 @@ export class ContractDocumentsResolver {
     const data = await this.acceptance.pdfDataForOwner(tenant.organizationId, id);
     if (!data) return null;
     const buffer = await this.pdf.render(data);
-    return { filename: `contrato-${data.code}.pdf`, base64: buffer.toString('base64') };
+    return { filename: data.fileName ?? `contrato-${data.code}.pdf`, base64: buffer.toString('base64') };
   }
 }

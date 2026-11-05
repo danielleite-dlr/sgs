@@ -98,7 +98,7 @@ export async function recordContractPaymentsTx(
       method: l.method,
       amountCents: l.cents,
       contractId,
-      clientId: c.bride_client_id,
+      clientId: c.contractor_client_id ?? c.bride_client_id,
       memberId,
       occurredAt: now,
       note: c.code,
@@ -162,7 +162,7 @@ export async function reverseContractPaymentTx(
     method: pay.method as CashMethod,
     amountCents: -cents,
     contractId: pay.contractId,
-    clientId: c.bride_client_id,
+    clientId: c.contractor_client_id ?? c.bride_client_id,
     memberId,
     note: why,
   });
@@ -247,7 +247,7 @@ export async function cancelContractTx(
       method: a.refundMethod,
       amountCents: -refundCents,
       contractId: a.contractId,
-      clientId: c.bride_client_id,
+      clientId: c.contractor_client_id ?? c.bride_client_id,
       memberId,
       note: reason,
     });
