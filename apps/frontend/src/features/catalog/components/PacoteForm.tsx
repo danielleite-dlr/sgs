@@ -7,6 +7,7 @@ import { useMutation, useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Form,
   FormControl,
@@ -49,6 +50,7 @@ const schema = z.object({
     .min(1, 'Adicione ao menos um serviço.'),
   depositKind: z.enum(['none', 'fixed', 'percent']),
   depositValue: z.string(),
+  contractDescription: z.string().max(2000, 'Use no máximo 2000 caracteres.'),
   // Custos que não são serviços (lanche, champagne, assistente...)
   costItems: z.array(
     z.object({
@@ -90,6 +92,7 @@ export interface PacoteFormInitial {
   services: Array<{ serviceId: string; quantity: number }>;
   depositKind?: 'fixed' | 'percent' | null;
   depositValue?: string | null;
+  contractDescription?: string | null;
   costItems?: Array<{ name: string; cost: string }>;
 }
 
@@ -139,6 +142,7 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
               : initial.depositKind === 'percent' && initial.depositValue
                 ? String(Number(initial.depositValue))
                 : '',
+          contractDescription: initial.contractDescription ?? '',
           costItems: (initial.costItems ?? []).map((c) => ({
             name: c.name,
             cost: formatCurrencyDisplay(c.cost),
@@ -150,6 +154,7 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
           services: [],
           depositKind: 'none',
           depositValue: '',
+          contractDescription: '',
           costItems: [],
         },
   });
@@ -202,6 +207,7 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
             : values.depositKind === 'fixed'
               ? unmaskCurrency(values.depositValue)
               : values.depositValue.replace(',', '.'),
+        contractDescription: values.contractDescription.trim() || null,
         costItems: values.costItems.map((c) => ({
           name: c.name.trim(),
           cost: unmaskCurrency(c.cost),
@@ -437,6 +443,33 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
             />
           )}
         </div>
+
+        {/* Descrição para contrato (D-06) */}
+        <FormField
+          control={form.control}
+          name="contractDescription"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="pacote-contract-description">Descrição para contrato</FormLabel>
+              <FormControl>
+                <Textarea
+                  id="pacote-contract-description"
+                  {...field}
+                  rows={3}
+                  maxLength={2000}
+                  aria-describedby="pacote-contract-description-help"
+                />
+              </FormControl>
+              <div className="flex justify-between gap-sm text-xs text-neutral-500">
+                <p id="pacote-contract-description-help">
+                  Aparece abaixo do nome do pacote no orçamento do contrato.
+                </p>
+                <span aria-live="polite">{(field.value ?? '').length}/2000</span>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>

@@ -196,6 +196,7 @@ export function PacotesPage() {
                 price: editTarget.price,
                 depositKind: editTarget.depositKind ?? null,
                 depositValue: editTarget.depositValue ?? null,
+                contractDescription: editTarget.contractDescription ?? null,
                 costItems: (editTarget.costItems ?? []).map((c) => ({
                   name: c.name,
                   cost: c.cost,
