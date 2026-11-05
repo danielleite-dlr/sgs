@@ -33,6 +33,41 @@ const RANGE_ERRORS: Record<string, ContractUserError> = {
     message: 'Valores negativos não são permitidos.',
     field: null,
   },
+  PAYMENT_MODE_INVALID: {
+    code: 'PAYMENT_MODE_INVALID',
+    message: 'Forma de pagamento inválida.',
+    field: 'paymentMode',
+  },
+  INSTALLMENTS_REQUIRED: {
+    code: 'INSTALLMENTS_REQUIRED',
+    message: 'Informe ao menos uma parcela do sinal.',
+    field: 'installments',
+  },
+  INSTALLMENTS_COUNT_INVALID: {
+    code: 'INSTALLMENTS_COUNT_INVALID',
+    message: 'Quantidade de parcelas inválida para a forma de pagamento.',
+    field: 'installments',
+  },
+  INSTALLMENT_INVALID: {
+    code: 'INSTALLMENT_INVALID',
+    message: 'Toda parcela precisa de valor maior que zero e data.',
+    field: 'installments',
+  },
+  INSTALLMENTS_SUM_MISMATCH: {
+    code: 'INSTALLMENTS_SUM_MISMATCH',
+    message: 'A soma das parcelas deve ser igual ao valor do sinal.',
+    field: 'installments',
+  },
+  A_VISTA_MUST_EQUAL_TOTAL: {
+    code: 'A_VISTA_MUST_EQUAL_TOTAL',
+    message: 'No pagamento à vista, a entrada é o valor total.',
+    field: 'depositAmount',
+  },
+  SNAPSHOT_TOTAL_MISMATCH: {
+    code: 'SNAPSHOT_TOTAL_MISMATCH',
+    message: 'Os valores do orçamento não fecham com o total do contrato.',
+    field: null,
+  },
 };
 
 const GROUP_HAS_CONTRACT: ContractUserError = {
