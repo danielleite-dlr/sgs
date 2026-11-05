@@ -211,12 +211,12 @@ Plans:
 
 **Requirements**: CONT-01, CONT-02, CONT-03 (refinamento)
 **Depends on:** Phase 4
-**Plans:** 17 plans (8 waves)
+**Plans:** 3/17 plans executed
 
 Plans:
-- [ ] 04.1-01-database-schema-seed-PLAN.md — Migration única (campos novos, parcelas do sinal, papel timbrado por hash, snapshot, RLS, backfill D-18) + seed do Studio JS pelo id da org
-- [ ] 04.1-02-contract-texts-tdd-PLAN.md — TDD: textos padrão do Studio JS com variáveis, negrito, WinAnsi, data por extenso, nome do arquivo
-- [ ] 04.1-03-snapshot-installments-tdd-PLAN.md — TDD: snapshot canônico + hash, orçamento pacote/adicionais, alocação e validação das parcelas, gate D-09
+- [x] 04.1-01-database-schema-seed-PLAN.md — Migration única (campos novos, parcelas do sinal, papel timbrado por hash, snapshot, RLS, backfill D-18) + seed do Studio JS pelo id da org
+- [x] 04.1-02-contract-texts-tdd-PLAN.md — TDD: textos padrão do Studio JS com variáveis, negrito, WinAnsi, data por extenso, nome do arquivo
+- [x] 04.1-03-snapshot-installments-tdd-PLAN.md — TDD: snapshot canônico + hash, orçamento pacote/adicionais, alocação e validação das parcelas, gate D-09
 - [ ] 04.1-04-backend-client-package-group-fields-PLAN.md — RG/CEP/celulares da cliente, descrição do pacote, tipo/responsável/horário/local do grupo
 - [ ] 04.1-05-backend-settings-letterhead-PLAN.md — Dados do studio, textos editáveis com restaurar padrão, upload do papel timbrado, bodyLimit
 - [ ] 04.1-06-pdf-structured-layout-PLAN.md — PDF pdfkit no layout do Studio JS (tabelas, fundo 0,8, margens, aviso pré-aceite, aceite), legado intacto
