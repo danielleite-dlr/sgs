@@ -1,4 +1,5 @@
-import type { Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { expect, type Page } from '@playwright/test';
 import { API_URL, expectNoUserErrors, gql } from './graphql';
 import { spDate } from './phase3';
 import type { SeedState } from './seed-state';
@@ -39,7 +40,7 @@ export function firstWednesdayFromNow(minDays: number): string {
 export async function createBridalPackage(
   seed: SeedState,
   token: string,
-  opts: { price: string; depositPercent: string; name?: string },
+  opts: { price: string; depositPercent: string; name?: string; contractDescription?: string },
 ): Promise<{ id: string; name: string }> {
   const name = opts.name ?? `Pacote Noiva ${Date.now().toString(36)}`;
   const data = await gql<{
@@ -54,6 +55,7 @@ export async function createBridalPackage(
         price: opts.price,
         depositKind: 'percent',
         depositValue: opts.depositPercent,
+        ...(opts.contractDescription ? { contractDescription: opts.contractDescription } : {}),
         services: [{ serviceId: seed.phase3.serviceId, quantity: 1 }],
       },
     },
@@ -272,4 +274,126 @@ export async function completeContractData(
     { token },
   );
   expectNoUserErrors(settings.updateContractSettings, 'updateContractSettings (studio)');
+}
+
+/** Papel timbrado da fase 04.1 (PNG de referência do studio). */
+export const LETTERHEAD_PNG = new URL(
+  '../../../.planning/phases/04.1-layout-e-regras-do-contrato-modelo-studio-js/04.1-papel-timbrado-studio-js.png',
+  import.meta.url,
+).pathname;
+
+/** Dados do studio nas configurações do contrato (parte do gate D-09). */
+export async function setStudioSettings(token: string): Promise<void> {
+  const settings = await gql<{ updateContractSettings: { errors: never[] } }>(
+    `mutation($i: UpdateContractSettingsInput!) {
+      updateContractSettings(input: $i) { errors { code message } }
+    }`,
+    {
+      i: {
+        studio: {
+          name: 'Studio E2E',
+          cnpj: '48562103000171',
+          address: 'Rua E2E, 1',
+          representative: 'Dona E2E',
+          representativeRg: '11.111.111-1',
+          forumCity: 'Osasco',
+          forumUf: 'SP',
+        },
+      },
+    },
+    { token },
+  );
+  expectNoUserErrors(settings.updateContractSettings, 'updateContractSettings (studio)');
+}
+
+/** Envia o papel timbrado pelo GraphQL (base64), como a tela de configurações faz. */
+export async function uploadLetterhead(token: string, filePath: string): Promise<void> {
+  const data = await gql<{ uploadContractLetterhead: { errors: never[] } }>(
+    `mutation($input: UploadContractLetterheadInput!) {
+      uploadContractLetterhead(input: $input) { errors { code message } }
+    }`,
+    {
+      input: {
+        filename: 'timbrado.png',
+        mimeType: 'image/png',
+        base64: readFileSync(filePath).toString('base64'),
+      },
+    },
+    { token },
+  );
+  expectNoUserErrors(data.uploadContractLetterhead, 'uploadContractLetterhead');
+}
+
+/** Clientes do grupo: noiva/debutante e a responsável (debutante). */
+export async function groupClientIds(
+  token: string,
+  groupId: string,
+): Promise<{ brideClientId: string; responsibleClientId: string | null }> {
+  const data = await gql<{
+    bridalGroup: {
+      responsibleClientId: string | null;
+      members: { clientId: string; role: string }[];
+    };
+  }>(
+    `query($id: UUID!) { bridalGroup(id: $id) { responsibleClientId members { clientId role } } }`,
+    { id: groupId },
+    { token },
+  );
+  const bride = data.bridalGroup.members.find((m) => m.role === 'bride');
+  if (!bride) throw new Error('Grupo sem noiva/debutante');
+  return {
+    brideClientId: bride.clientId,
+    responsibleClientId: data.bridalGroup.responsibleClientId,
+  };
+}
+
+export interface ClientContractData {
+  cpf: string;
+  rg?: string;
+  postalCode?: string;
+  address: string;
+  phone: string;
+  phone2?: string;
+}
+
+/** Completa a ficha da cliente pelo GraphQL (atalho para quem não é o foco do teste). */
+export async function updateClientContractData(
+  token: string,
+  clientId: string,
+  d: ClientContractData,
+): Promise<void> {
+  const res = await gql<{ updateClient: { errors: never[] } }>(
+    `mutation($input: UpdateClientInput!) {
+      updateClient(input: $input) { errors { code message } }
+    }`,
+    { input: { id: clientId, ...d } },
+    { token },
+  );
+  expectNoUserErrors(res.updateClient, 'updateClient (dados do contrato)');
+}
+
+/** Preenche pela UI a ficha de edição da cliente (/clientes/:id/editar) e salva. */
+export async function fillClientContractFields(
+  page: Page,
+  clientId: string,
+  d: { cpf?: string; rg?: string; postalCode?: string; address?: string; phone?: string; phone2?: string },
+): Promise<void> {
+  await page.goto(`/clientes/${clientId}/editar`);
+  await expect(page.getByLabel('CPF')).toBeVisible();
+  if (d.cpf) await page.getByLabel('CPF').fill(d.cpf);
+  if (d.rg) await page.getByLabel('RG', { exact: true }).fill(d.rg);
+  if (d.postalCode) await page.getByLabel('CEP').fill(d.postalCode);
+  if (d.address) await page.getByLabel('Endereço').fill(d.address);
+  if (d.phone) await page.getByLabel('Celular 1').fill(d.phone);
+  if (d.phone2) await page.getByLabel('Celular 2').fill(d.phone2);
+  await page.getByRole('button', { name: 'Salvar alterações' }).click();
+  await page.waitForURL((url) => !url.pathname.endsWith('/editar'));
+}
+
+/** Lê o conteúdo de um download do Playwright. */
+export async function readDownload(download: import('@playwright/test').Download): Promise<Buffer> {
+  const stream = await download.createReadStream();
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) chunks.push(chunk as Buffer);
+  return Buffer.concat(chunks);
 }
