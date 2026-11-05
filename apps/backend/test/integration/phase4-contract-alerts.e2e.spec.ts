@@ -52,6 +52,8 @@ describe('Phase 4 - alertas automáticos de contrato (CONT-02)', () => {
     acceptedAt?: string;
     linkGeneratedAt?: string;
     eventDate?: string;
+    paymentMode?: 'sinal' | 'sinal_parcelado' | 'a_vista';
+    installments?: { seq: number; amount: string; dueDate: string }[];
   }) {
     const g = await insertBridalGroupRow(w, { eventDate: o.eventDate ?? '2030-08-01' });
     const c = await insertContractRow(w, {
@@ -61,6 +63,8 @@ describe('Phase 4 - alertas automáticos de contrato (CONT-02)', () => {
       depositAmount: '2400.00',
       status: o.status ?? 'active',
       balanceDueDate: o.balanceDueDate,
+      paymentMode: o.paymentMode,
+      installments: o.installments,
     });
     await adminPrisma.contract.update({
       where: { id: c.contractId },
@@ -166,6 +170,70 @@ describe('Phase 4 - alertas automáticos de contrato (CONT-02)', () => {
     expect(r.candidates).toBe(2);
     expect((await rows(dep.contractId)).map((n) => n.kind)).toContain('contract_deposit_unpaid');
     expect((await rows(naw.contractId)).map((n) => n.kind)).toContain('contract_not_accepted');
+  });
+
+  it('parcela do sinal vencida: ADMIN/MANAGER, dedupe, nova data gera novo alerta, pagamento resolve, e-mail', async () => {
+    const c = await mkContract({
+      balanceDueDate: '2030-09-01',
+      eventDate: '2030-09-10',
+      acceptedAt: '2030-06-01T12:00:00.000Z',
+      paymentMode: 'sinal_parcelado',
+      installments: [
+        { seq: 1, amount: '200.00', dueDate: '2030-06-09' },
+        { seq: 2, amount: '200.00', dueDate: '2030-07-20' },
+      ],
+    });
+    const r = await svc.runForOrg(w.orgId, NOW);
+    expect(r).toMatchObject({ ran: true, candidates: 1, created: 2 });
+    const list = await rows(c.contractId);
+    expect(list.map((n) => n.kind)).toEqual([
+      'contract_installment_overdue',
+      'contract_installment_overdue',
+    ]);
+    expect(list.map((n) => n.memberId).sort()).toEqual([w.members.admin, w.members.manager].sort());
+    expect(
+      await adminPrisma.notification.count({
+        where: { organizationId: w.orgId, memberId: { in: [w.members.attendant, w.members.proA] } },
+      }),
+    ).toBe(0);
+    expect(mail.all.some((m) => (m.text ?? '').includes('Parcela do sinal vencida'))).toBe(true);
+
+    // mesmo dia: não roda; dia seguinte: mesmo estado, sem duplicar
+    expect(await svc.runForOrg(w.orgId, NOW)).toMatchObject({ ran: false, created: 0 });
+    expect(await svc.runForOrg(w.orgId, new Date(NOW.getTime() + DAY))).toMatchObject({
+      candidates: 1,
+      created: 0,
+    });
+
+    // mudar o vencimento => novo estado, novo alerta
+    await adminPrisma.contractDepositInstallment.updateMany({
+      where: { contractId: c.contractId, seq: 1 },
+      data: { dueDate: new Date('2030-06-08T00:00:00.000Z') },
+    });
+    const r3 = await svc.runForOrg(w.orgId, new Date(NOW.getTime() + 2 * DAY));
+    expect(r3).toMatchObject({ candidates: 1, created: 2, resolved: 2 });
+
+    // pagamento cobrindo a parcela => nada novo, alerta resolvido
+    await pay(c.contractId, '200.00');
+    const r4 = await svc.runForOrg(w.orgId, new Date(NOW.getTime() + 3 * DAY));
+    expect(r4).toMatchObject({ candidates: 0, created: 0, resolved: 2 });
+  });
+
+  it('pagamento à vista vencido não gera alertas do restante', async () => {
+    const c = await mkContract({
+      balanceDueDate: '2030-06-01',
+      eventDate: '2030-06-20',
+      acceptedAt: '2030-06-01T12:00:00.000Z',
+      paymentMode: 'a_vista',
+      installments: [{ seq: 1, amount: '8000.00', dueDate: '2030-06-09' }],
+    });
+    await svc.runForOrg(w.orgId, NOW);
+    const list = await rows(c.contractId);
+    expect(list.map((n) => n.kind)).toEqual([
+      'contract_installment_overdue',
+      'contract_installment_overdue',
+    ]);
+    expect((list[0].payload as { title: string }).title).toBe('Pagamento à vista vencido');
   });
 
   it('sinal de acompanhante avulsa pendente perto do evento', async () => {
