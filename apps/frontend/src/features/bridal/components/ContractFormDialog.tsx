@@ -229,7 +229,7 @@ function ContractForm({
   );
   const [updateContract, { loading: updating }] = useMutation<UpdateContractResult>(
     UpdateContractMutation,
-    { refetchQueries: [groupRefetch] },
+    { refetchQueries: [groupRefetch, 'ContractReadiness'] },
   );
 
   const pkg = packages.find((p) => p.id === packageId) ?? null;

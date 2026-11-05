@@ -7,12 +7,13 @@ import {
   CancelContractMutation,
   ContractCancellationPreviewQuery,
   ContractQuery,
+  ContractReadinessQuery,
   GenerateContractLinkMutation,
   RecordContractPaymentMutation,
   type ContractData,
 } from '../api/contracts.api';
 import { ContractDetailPage } from '../pages/ContractDetailPage';
-import { makeContract, withTypenames } from './contract-fixtures';
+import { makeContract, makePackageContract, withTypenames } from './contract-fixtures';
 
 const PAYMENTS = [
   {
@@ -46,8 +47,28 @@ const CONTRACT = makeContract({
   acceptance: null,
 });
 
-function renderPage(contract: ContractData, extra: MockedResponse[] = []) {
+const readinessMock = (
+  missing: Array<{ code: string; label: string; target: string; targetId: string | null }> = [],
+): MockedResponse => ({
+  request: { query: ContractReadinessQuery, variables: { id: 'ct1' } },
+  result: {
+    data: {
+      contractReadiness: {
+        __typename: 'ContractReadiness',
+        ready: missing.length === 0,
+        missing: missing.map((m) => ({ __typename: 'ContractMissingField', ...m })),
+      },
+    },
+  },
+});
+
+function renderPage(
+  contract: ContractData,
+  extra: MockedResponse[] = [],
+  readiness: MockedResponse = readinessMock(),
+) {
   const mocks: MockedResponse[] = [
+    readiness,
     {
       request: { query: ContractQuery, variables: { id: 'ct1' } },
       result: { data: { contract: withTypenames(contract) } },
@@ -214,5 +235,56 @@ describe('ContractDetailPage', () => {
     renderPage(CONTRACT);
     await screen.findByTestId('contract-payments');
     expect(screen.getAllByRole('button', { name: /Estornar pagamento/ })).toHaveLength(2);
+  });
+
+  it('mostra as parcelas com Paga e Vencida', async () => {
+    renderPage(makePackageContract());
+    const card = await screen.findByTestId('contract-installments');
+    expect(within(card).getByText('Sinal parcelado', { exact: false })).toBeInTheDocument();
+    expect(within(card).getByText('Paga')).toBeInTheDocument();
+    expect(within(card).getByText('Vencida')).toBeInTheDocument();
+    expect(within(card).getByText('SINAL 1/2')).toBeInTheDocument();
+    expect(within(card).getByText(/até 7 dias antes do evento \(08\/06\/2030\)/)).toBeInTheDocument();
+  });
+
+  it('com pendências, Gerar link fica desabilitado e lista os atalhos', async () => {
+    renderPage(
+      CONTRACT,
+      [],
+      readinessMock([
+        { code: 'CLIENT_CPF', label: 'CPF da contratante', target: 'client', targetId: 'c1' },
+        { code: 'STUDIO_CNPJ', label: 'CNPJ do estúdio', target: 'settings', targetId: null },
+      ]),
+    );
+    const box = await screen.findByTestId('contract-missing');
+    expect(within(box).getByText('CPF da contratante')).toBeInTheDocument();
+    expect(within(box).getByText('CNPJ do estúdio')).toBeInTheDocument();
+    expect(within(box).getByRole('link', { name: 'Editar cliente' })).toHaveAttribute(
+      'href',
+      '/clientes/c1/editar',
+    );
+    expect(within(box).getByRole('link', { name: 'Abrir configurações' })).toHaveAttribute(
+      'href',
+      '/contratos?aba=configuracoes',
+    );
+    expect(screen.getByTestId('contract-generate-link')).toBeDisabled();
+  });
+
+  it('sem pendências, Gerar link fica habilitado', async () => {
+    renderPage(CONTRACT);
+    const btn = await screen.findByTestId('contract-generate-link');
+    await waitFor(() => expect(btn).toBeEnabled());
+    expect(screen.queryByTestId('contract-missing')).not.toBeInTheDocument();
+  });
+
+  it('rascunho oferece Baixar PDF (não aceito)', async () => {
+    renderPage(makePackageContract());
+    expect(await screen.findByRole('button', { name: 'Baixar PDF (não aceito)' })).toBeInTheDocument();
+  });
+
+  it('debutante mostra "Debutante:"', async () => {
+    renderPage(makeContract({ eventKind: 'debutante', contractorName: 'Mãe da Bia' }));
+    expect(await screen.findByText('Debutante:', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('Mãe da Bia')).toBeInTheDocument();
   });
 });

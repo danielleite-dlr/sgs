@@ -134,7 +134,7 @@ export function ContractsPage() {
           Você não tem acesso aos contratos.
         </p>
       ) : canSettings ? (
-        <Tabs defaultValue="contracts">
+        <Tabs defaultValue={params.get('aba') === 'configuracoes' ? 'settings' : 'contracts'}>
           <TabsList>
             <TabsTrigger value="contracts">Contratos</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
