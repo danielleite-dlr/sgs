@@ -7,9 +7,15 @@ import {
   Matches,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 
 const PHONE = /^[\d\s()+\-]{8,30}$/;
+const RG = /^[0-9Xx.\-\s]{5,20}$/;
+const CEP = /^\d{5}-?\d{3}$/;
+
+/** Valida só quando há valor; string vazia limpa o campo. */
+const filled = (_: unknown, v: unknown) => v !== undefined && v !== null && v !== '';
 
 export class CreateClientInput {
   @IsString()
@@ -38,6 +44,22 @@ export class CreateClientInput {
   @IsString()
   @MaxLength(500)
   address?: string;
+
+  @ValidateIf(filled)
+  @Matches(RG, { message: 'RG inválido.' })
+  rg?: string;
+
+  @ValidateIf(filled)
+  @Matches(CEP, { message: 'CEP inválido.' })
+  postalCode?: string;
+
+  @ValidateIf(filled)
+  @Matches(PHONE, { message: 'Telefone inválido.' })
+  phone2?: string;
+
+  @ValidateIf(filled)
+  @Matches(PHONE, { message: 'Telefone inválido.' })
+  phone3?: string;
 
   @IsOptional()
   @IsString()
@@ -76,6 +98,22 @@ export class UpdateClientInput {
   @IsString()
   @MaxLength(500)
   address?: string;
+
+  @ValidateIf(filled)
+  @Matches(RG, { message: 'RG inválido.' })
+  rg?: string;
+
+  @ValidateIf(filled)
+  @Matches(CEP, { message: 'CEP inválido.' })
+  postalCode?: string;
+
+  @ValidateIf(filled)
+  @Matches(PHONE, { message: 'Telefone inválido.' })
+  phone2?: string;
+
+  @ValidateIf(filled)
+  @Matches(PHONE, { message: 'Telefone inválido.' })
+  phone3?: string;
 
   @IsOptional()
   @IsString()

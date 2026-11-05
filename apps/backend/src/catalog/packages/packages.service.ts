@@ -59,6 +59,24 @@ function withDeposit<T extends { depositValue?: unknown }>(pkg: T): T {
   return { ...pkg, depositValue: v && v.toFixed ? v.toFixed(2) : null };
 }
 
+/** Descrição para contrato: trim, vazio vira null, até 2000 caracteres. */
+function normalizeContractDescription(
+  v: string | null | undefined,
+): { ok: true; value: string | null } | { ok: false; error: UserError } {
+  const t = v?.trim() ?? '';
+  if (t.length > 2000) {
+    return {
+      ok: false,
+      error: {
+        code: 'INVALID_CONTRACT_DESCRIPTION',
+        message: 'A descrição para contrato pode ter até 2000 caracteres.',
+        field: 'contractDescription',
+      },
+    };
+  }
+  return { ok: true, value: t || null };
+}
+
 function errorPayload(err: UserError): PackagePayload {
   return { package: null, errors: [err] };
 }
@@ -236,6 +254,9 @@ export class PackagesService {
       const costs = validateCostItems(input.costItems ?? []);
       if (!costs.ok) return errorPayload(costs.error);
 
+      const desc = normalizeContractDescription(input.contractDescription);
+      if (!desc.ok) return errorPayload(desc.error);
+
       // Create package
       const pkg = await tx.package.create({
         data: {
@@ -245,6 +266,7 @@ export class PackagesService {
           validForDays: input.validForDays ?? null,
           depositKind: dep.kind,
           depositValue: dep.value,
+          contractDescription: desc.value,
         },
       });
 
@@ -308,6 +330,13 @@ export class PackagesService {
         costRows = costs.rows;
       }
 
+      let descData: { contractDescription: string | null } | undefined;
+      if (input.contractDescription !== undefined) {
+        const desc = normalizeContractDescription(input.contractDescription);
+        if (!desc.ok) return errorPayload(desc.error);
+        descData = { contractDescription: desc.value };
+      }
+
       // Update scalar fields
       await tx.package.update({
         where: { id: input.id },
@@ -317,6 +346,7 @@ export class PackagesService {
           validForDays:
             input.validForDays === undefined ? existing.validForDays : input.validForDays,
           ...(depositData ?? {}),
+          ...(descData ?? {}),
         },
       });
 

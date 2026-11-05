@@ -4,7 +4,15 @@ type BridalGroup {
   eventDate: String!
   readyBy: DateTime
   locationKind: String!
+  "Endereço do atendimento"
   locationAddress: String
+  locationName: String
+  "noiva | debutante"
+  eventKind: String!
+  responsibleClientId: UUID
+  responsibleName: String
+  "HH:MM (cerimônia/festa); separado de readyBy"
+  eventTime: String
   travelMinutesBefore: Int!
   travelMinutesAfter: Int!
   status: String!
@@ -47,7 +55,17 @@ input BridalGroupFieldsInput {
   eventDate: String!
   readyBy: DateTime
   locationKind: String
+  "Endereço do atendimento; no estúdio, vazio assume o endereço das configurações do contrato"
   locationAddress: String
+  "Nome do local; no estúdio, vazio assume o nome do studio das configurações"
+  locationName: String
+  "noiva (padrão) | debutante. Omitido no update = mantém"
+  eventKind: String
+  "Responsável (só debutante). Omitido = mantém; null = remove"
+  responsibleClientId: UUID
+  newResponsible: BridalNewClientInput
+  "HH:MM; vazio = sem horário"
+  eventTime: String
   travelMinutesBefore: Int
   travelMinutesAfter: Int
   notes: String

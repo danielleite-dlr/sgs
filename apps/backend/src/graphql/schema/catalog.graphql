@@ -147,6 +147,8 @@ type Package {
   validForDays: Int
   depositKind: String
   depositValue: String
+  "Texto exibido abaixo do pacote no orçamento do contrato"
+  contractDescription: String
   services: [PackageServiceItem!]!
   """
   Custos e lucro do pacote: null para quem não pode editar o catálogo.
@@ -198,6 +200,7 @@ input CreatePackageInput {
   validForDays: Int
   depositKind: String
   depositValue: String
+  contractDescription: String
   services: [PackageServiceInput!]!
   costItems: [PackageCostItemInput!]
 }
@@ -209,6 +212,8 @@ input UpdatePackageInput {
   validForDays: Int
   depositKind: String
   depositValue: String
+  "Omitido mantém; null ou vazio limpa"
+  contractDescription: String
   services: [PackageServiceInput!]
   costItems: [PackageCostItemInput!]
 }

@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client';
 // 'bride' < 'companion' em ordem alfabética: noiva primeiro, depois por sort_order.
 export const BRIDAL_GROUP_INCLUDE = {
   package: { select: { id: true, name: true } },
+  responsible: { select: { fullName: true } },
   members: {
     orderBy: [{ role: 'asc' }, { sortOrder: 'asc' }],
     include: {
@@ -48,6 +49,11 @@ export function serializeBridalGroup(row: BridalGroupRow, extras: BridalGroupExt
     readyBy: row.readyBy,
     locationKind: row.locationKind,
     locationAddress: row.locationAddress,
+    locationName: row.locationName,
+    eventKind: row.eventKind,
+    eventTime: row.eventTime,
+    responsibleClientId: row.responsibleClientId,
+    responsibleName: row.responsible?.fullName ?? null,
     travelMinutesBefore: row.travelMinutesBefore,
     travelMinutesAfter: row.travelMinutesAfter,
     status: row.status,

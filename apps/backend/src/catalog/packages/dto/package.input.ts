@@ -60,6 +60,11 @@ export class CreatePackageInput {
   @IsString()
   depositValue?: string | null;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  contractDescription?: string | null;
+
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })
@@ -100,6 +105,11 @@ export class UpdatePackageInput {
   @IsOptional()
   @IsString()
   depositValue?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  contractDescription?: string | null;
 
   @IsOptional()
   @IsArray()
