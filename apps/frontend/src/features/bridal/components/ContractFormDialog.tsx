@@ -46,6 +46,13 @@ import {
   type InstallmentRow,
   type PaymentModeValue,
 } from './InstallmentsEditor';
+import { NewContractEventFields } from './NewContractEventFields';
+import {
+  BRIDE_DRAFT_ID,
+  buildNewGroupInput,
+  emptyNewContract,
+  newContractBrideName,
+} from '../lib/new-contract';
 
 const brl = (cents: number) => `R$ ${formatCurrencyDisplay(centsToDecimal(cents))}`;
 
@@ -105,7 +112,9 @@ export function ContractFormDialog({ open, onOpenChange, groupId, contract }: Co
   const packages = useQuery<ContractPackagesResult>(ContractPackagesQuery, { skip: !open });
   const settings = useQuery<ContractSettingsResult>(ContractSettingsQuery, { skip: !open });
 
-  const ready = !!group.data?.bridalGroup && !!services.data && !!packages.data;
+  // Sem grupo e sem contrato: "Novo contrato" que cria o grupo da noiva junto.
+  const isNew = !contract && !gid;
+  const ready = (isNew || !!group.data?.bridalGroup) && !!services.data && !!packages.data;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -115,7 +124,9 @@ export function ContractFormDialog({ open, onOpenChange, groupId, contract }: Co
           <DialogDescription>
             {contract
               ? 'Editar gera nova versão e exige novo aceite da noiva.'
-              : 'Monte os itens por pessoa, o desconto, a entrada e o prazo do restante.'}
+              : isNew
+                ? 'Informe a cliente e a data do evento, depois monte os itens, o desconto, a entrada e o prazo do restante.'
+                : 'Monte os itens por pessoa, o desconto, a entrada e o prazo do restante.'}
           </DialogDescription>
         </DialogHeader>
         {!ready ? (
@@ -124,7 +135,7 @@ export function ContractFormDialog({ open, onOpenChange, groupId, contract }: Co
           </p>
         ) : (
           <ContractForm
-            group={group.data!.bridalGroup!}
+            group={isNew ? null : group.data!.bridalGroup!}
             services={services.data!.services}
             packages={packages.data!.packages}
             defaultDays={settings.data?.contractSettings.balanceDueDaysBefore}
@@ -138,14 +149,15 @@ export function ContractFormDialog({ open, onOpenChange, groupId, contract }: Co
 }
 
 function ContractForm({
-  group,
+  group: groupProp,
   services,
   packages,
   defaultDays,
   contract,
   onClose,
 }: {
-  group: NonNullable<ContractGroupResult['bridalGroup']>;
+  /** null = novo contrato sem grupo (o grupo nasce junto, com a noiva/debutante). */
+  group: NonNullable<ContractGroupResult['bridalGroup']> | null;
   services: ContractServicesResult['services'];
   packages: ContractPackagesResult['packages'];
   defaultDays?: number;
@@ -153,6 +165,34 @@ function ContractForm({
   onClose: () => void;
 }) {
   const navigate = useNavigate();
+  const isNew = !contract && !groupProp;
+  const [nc, setNc] = useState(emptyNewContract);
+  const brideName = newContractBrideName(nc);
+  const brideFallback = nc.eventKind === 'debutante' ? 'Debutante' : 'Noiva';
+  // Grupo-rascunho: só a noiva/debutante, coberta pelo contrato.
+  const group = useMemo<NonNullable<ContractGroupResult['bridalGroup']>>(
+    () =>
+      groupProp ?? {
+        id: '',
+        name: '',
+        eventDate: nc.eventDate,
+        status: 'active',
+        contractId: null,
+        packageId: null,
+        members: [
+          {
+            id: BRIDE_DRAFT_ID,
+            clientName: brideName || brideFallback,
+            role: 'bride',
+            coveredByContract: true,
+            services: [],
+          },
+        ],
+      },
+    [groupProp, nc.eventDate, brideName, brideFallback],
+  );
+  const personOf = (i: ItemRow) =>
+    i.groupMemberId === BRIDE_DRAFT_ID ? brideName || brideFallback : i.personName;
   const priceByService = useMemo(
     () => new Map(services.map((s) => [s.id, s.basePrice])),
     [services],
@@ -225,7 +265,7 @@ function ContractForm({
   const groupRefetch = { query: BridalGroupQuery, variables: { id: group.id } };
   const [createContract, { loading: creating }] = useMutation<CreateContractResult>(
     CreateContractMutation,
-    { refetchQueries: [{ query: ContractsQuery }, groupRefetch] },
+    { refetchQueries: [{ query: ContractsQuery }, ...(group.id ? [groupRefetch] : [])] },
   );
   const [updateContract, { loading: updating }] = useMutation<UpdateContractResult>(
     UpdateContractMutation,
@@ -267,6 +307,7 @@ function ContractForm({
     setPaymentMode(m);
     resetInstallments();
   }
+  const newGroupResult = buildNewGroupInput(nc);
   const daysNum = days !== '' ? Number(days) : (defaultDays ?? 0);
 
   function updateItem(key: string, patch: Partial<ItemRow>) {
@@ -298,7 +339,7 @@ function ContractForm({
   async function submit() {
     setError('');
     const explicitItems = items.map((i) => ({
-      groupMemberId: i.groupMemberId,
+      groupMemberId: i.groupMemberId === BRIDE_DRAFT_ID ? undefined : i.groupMemberId,
       serviceId: i.serviceId,
       unitPrice: unmaskCurrency(i.unitPrice) || '0.00',
       quantity: i.quantity,
@@ -331,10 +372,20 @@ function ContractForm({
         onClose();
         return;
       }
+      let target: Record<string, unknown>;
+      if (isNew) {
+        if (!newGroupResult.ok) {
+          setError(newGroupResult.error);
+          return;
+        }
+        target = { newGroup: newGroupResult.input };
+      } else {
+        target = { groupId: group.id };
+      }
       const res = await createContract({
         variables: {
           input: {
-            groupId: group.id,
+            ...target,
             ...common,
             ...(packageDriven ? {} : { items: explicitItems }),
           },
@@ -354,14 +405,22 @@ function ContractForm({
   }
 
   const busy = creating || updating;
-  const canSubmit = !busy && (packageDriven || items.length > 0) && installmentsError === null;
+  const canSubmit =
+    !busy &&
+    (packageDriven || items.length > 0) &&
+    installmentsError === null &&
+    (!isNew || newGroupResult.ok);
 
   return (
     <div className="space-y-md">
-      <p className="text-sm text-neutral-700">
-        Grupo <span className="font-semibold">{group.name}</span> · evento em{' '}
-        {formatDateOnly(group.eventDate)}
-      </p>
+      {isNew ? (
+        <NewContractEventFields value={nc} onChange={setNc} />
+      ) : (
+        <p className="text-sm text-neutral-700">
+          Grupo <span className="font-semibold">{group.name}</span> · evento em{' '}
+          {formatDateOnly(group.eventDate)}
+        </p>
+      )}
 
       <div>
         <Label htmlFor="contract-package" className="text-xs font-semibold text-neutral-700">
@@ -408,7 +467,7 @@ function ContractForm({
               const bridePackage = packageDriven && i.isBride;
               return (
                 <tr key={i.key} className="border-t border-neutral-100">
-                  <td className="py-xs">{i.personName}</td>
+                  <td className="py-xs">{personOf(i)}</td>
                   <td>
                     {i.description}
                     {i.packageItem && (
@@ -422,7 +481,7 @@ function ContractForm({
                       type="number"
                       min={1}
                       max={99}
-                      aria-label={`Quantidade de ${i.description} para ${i.personName}`}
+                      aria-label={`Quantidade de ${i.description} para ${personOf(i)}`}
                       disabled={bridePackage}
                       value={i.quantity}
                       onChange={(e) =>
@@ -433,7 +492,7 @@ function ContractForm({
                   <td>
                     <Input
                       inputMode="numeric"
-                      aria-label={`Preço de ${i.description} para ${i.personName}`}
+                      aria-label={`Preço de ${i.description} para ${personOf(i)}`}
                       disabled={bridePackage}
                       value={i.unitPrice}
                       onChange={(e) => updateItem(i.key, { unitPrice: maskCurrency(e.target.value) })}
@@ -448,7 +507,7 @@ function ContractForm({
                       variant="ghost"
                       size="icon"
                       disabled={bridePackage}
-                      aria-label={`Remover ${i.description} de ${i.personName}`}
+                      aria-label={`Remover ${i.description} de ${personOf(i)}`}
                       onClick={() => setItems((rows) => rows.filter((r) => r.key !== i.key))}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -620,13 +679,19 @@ function ContractForm({
           <dt>{aVista ? 'À vista' : 'Sinal'}</dt>
           <dd>{brl(depositCents)}</dd>
         </div>
-        {!aVista && (
+        {!aVista && group.eventDate && (
           <div className="flex justify-between">
             <dt>Restante até {dueDate(group.eventDate, daysNum)}</dt>
             <dd>{brl(Math.max(0, total - depositCents))}</dd>
           </div>
         )}
       </dl>
+
+      {isNew && !newGroupResult.ok && (
+        <p className="text-sm text-neutral-600" data-testid="contract-missing">
+          Falta preencher: {newGroupResult.error}
+        </p>
+      )}
 
       {error && (
         <p role="alert" data-testid="contract-form-error" className="text-sm text-error-600">

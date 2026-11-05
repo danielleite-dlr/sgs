@@ -195,6 +195,48 @@ describe('ContractsPage', () => {
     expect(screen.getByLabelText('Pacote (opcional)')).toHaveValue('');
   });
 
+  it('botão Novo contrato abre o formulário sem consultar o grupo', async () => {
+    renderPage([
+      listMock({}, []),
+      {
+        request: { query: ContractServicesQuery },
+        result: { data: { services: [] } },
+      },
+      { request: { query: ContractPackagesQuery }, result: { data: { packages: [] } } },
+      {
+        request: { query: ContractSettingsQuery },
+        result: { data: { contractSettings: SETTINGS } },
+      },
+    ]);
+    fireEvent.click(await screen.findByTestId('new-contract'));
+    expect(await screen.findByTestId('contract-form')).toBeInTheDocument();
+    expect(await screen.findByTestId('new-contract-fields')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Novo contrato' })).toBeInTheDocument();
+  });
+
+  it('?novo=1 abre o formulário novo direto', async () => {
+    renderPage(
+      [
+        listMock({}, []),
+        { request: { query: ContractServicesQuery }, result: { data: { services: [] } } },
+        { request: { query: ContractPackagesQuery }, result: { data: { packages: [] } } },
+        {
+          request: { query: ContractSettingsQuery },
+          result: { data: { contractSettings: SETTINGS } },
+        },
+      ],
+      '/contratos?novo=1',
+    );
+    expect(await screen.findByTestId('new-contract-fields')).toBeInTheDocument();
+  });
+
+  it('sem contract.write não aparece o botão Novo contrato', async () => {
+    useAuthStore.setState({ roleName: 'PROFESSIONAL', permissions: ['contract.read'] });
+    renderPage([listMock({}, [])]);
+    await screen.findByText('Nenhum contrato encontrado.');
+    expect(screen.queryByTestId('new-contract')).not.toBeInTheDocument();
+  });
+
   it('aba Configurações fica oculta para MANAGER', async () => {
     renderPage([listMock({}, [])]);
     await screen.findByText('Nenhum contrato encontrado.');

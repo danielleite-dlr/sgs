@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@apollo/client';
+import { Plus } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +36,7 @@ export function ContractsPage() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const groupParam = params.get('grupo');
+  const newParam = params.get('novo');
   const [filter, setFilter] = useState<(typeof FILTERS)[number]['value']>('all');
   const active = FILTERS.find((f) => f.value === filter)!;
 
@@ -46,6 +48,7 @@ export function ContractsPage() {
   function closeForm() {
     const next = new URLSearchParams(params);
     next.delete('grupo');
+    next.delete('novo');
     setParams(next, { replace: true });
   }
 
@@ -128,7 +131,24 @@ export function ContractsPage() {
 
   return (
     <div>
-      <PageHeader title="Contratos" />
+      <PageHeader
+        title="Contratos"
+        cta={
+          canWrite ? (
+            <Button
+              onClick={() => {
+                const next = new URLSearchParams(params);
+                next.set('novo', '1');
+                setParams(next);
+              }}
+              data-testid="new-contract"
+            >
+              <Plus className="mr-xs h-4 w-4" aria-hidden="true" />
+              Novo contrato
+            </Button>
+          ) : undefined
+        }
+      />
       {!canRead ? (
         <p className="rounded-md border border-neutral-200 bg-white p-md text-sm text-neutral-600">
           Você não tem acesso aos contratos.
@@ -148,6 +168,14 @@ export function ContractsPage() {
         list
       )}
 
+      {canWrite && !groupParam && newParam && (
+        <ContractFormDialog
+          open
+          onOpenChange={(o) => {
+            if (!o) closeForm();
+          }}
+        />
+      )}
       {canWrite && groupParam && (
         <ContractFormDialog
           open

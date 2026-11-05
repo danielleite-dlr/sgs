@@ -264,6 +264,121 @@ describe('ContractFormDialog — forma de pagamento e parcelas', () => {
   });
 });
 
+function renderNew(captured: Captured, packages: unknown[] = []) {
+  const mocks: MockedResponse[] = [
+    ...BASE_MOCKS.filter((m) => m.request.query !== ContractPackagesQuery),
+    { request: { query: ContractPackagesQuery }, result: { data: { packages } } },
+    createMock(captured),
+  ];
+  return render(
+    <MockedProvider mocks={mocks}>
+      <MemoryRouter>
+        <ContractFormDialog open onOpenChange={() => undefined} />
+      </MemoryRouter>
+    </MockedProvider>,
+  );
+}
+
+const fillText = (testId: string, value: string) =>
+  fireEvent.change(screen.getByTestId(testId), { target: { value } });
+
+describe('ContractFormDialog — novo contrato sem grupo', () => {
+  beforeEach(() => {
+    useAuthStore.setState({ roleName: 'MANAGER', permissions: [] });
+  });
+
+  it('sem cliente ou sem data o botão fica desabilitado e mostra o que falta', async () => {
+    renderNew({ vars: null });
+    await screen.findByTestId('new-contract-fields');
+    expect(screen.getByTestId('contract-submit')).toBeDisabled();
+    expect(screen.getByTestId('contract-missing')).toHaveTextContent('Noiva: informe o nome.');
+    fillText('nc-bride-name', 'Ana Souza');
+    expect(screen.getByTestId('contract-missing')).toHaveTextContent('Informe a data do evento.');
+    fillText('nc-date', '2030-06-15');
+    expect(screen.queryByTestId('contract-missing')).not.toBeInTheDocument();
+  });
+
+  it('noiva: envia newGroup sem groupId e itens sem groupMemberId', async () => {
+    const captured: Captured = { vars: null };
+    renderNew(captured);
+    await screen.findByTestId('new-contract-fields');
+    fillText('nc-bride-name', 'Ana Souza');
+    fillText('nc-bride-phone', '11988887777');
+    fillText('nc-date', '2030-06-15');
+    fireEvent.change(screen.getByLabelText('Pessoa'), { target: { value: 'nova-noiva' } });
+    fireEvent.change(screen.getByLabelText('Serviço'), { target: { value: 's1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar' }));
+    const items = screen.getByTestId('contract-items');
+    expect(within(items).getByText('Ana Souza')).toBeInTheDocument();
+    expect(screen.getByTestId('contract-form-total')).toHaveTextContent('R$ 800,00');
+    expect(screen.getByTestId('contract-summary')).toHaveTextContent('Restante até 08/06/2030');
+    typeMoney('Valor do sinal (R$)', '10000');
+    fireEvent.click(screen.getByTestId('contract-submit'));
+    await waitFor(() => expect(captured.vars).not.toBeNull());
+    const input = (captured.vars as Vars).input as Vars;
+    expect(input.groupId).toBeUndefined();
+    expect(input.newGroup).toMatchObject({
+      eventKind: 'noiva',
+      eventDate: '2030-06-15',
+      bride: { newClient: { fullName: 'Ana Souza', phone: expect.any(String) } },
+    });
+    const sent = input.items as Array<Vars>;
+    expect(sent).toHaveLength(1);
+    expect(sent[0].serviceId).toBe('s1');
+    expect(sent[0].groupMemberId).toBeUndefined();
+  });
+
+  it('debutante: pede a responsável e envia newResponsible', async () => {
+    const captured: Captured = { vars: null };
+    renderNew(captured);
+    await screen.findByTestId('new-contract-fields');
+    expect(screen.queryByTestId('nc-responsible-name')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('nc-kind-debutante'));
+    fillText('nc-bride-name', 'Lia Costa');
+    fillText('nc-date', '2030-07-20');
+    expect(screen.getByTestId('contract-missing')).toHaveTextContent('Responsável: informe o nome.');
+    fillText('nc-responsible-name', 'Marta Costa');
+    fireEvent.change(screen.getByLabelText('Pessoa'), { target: { value: 'nova-noiva' } });
+    fireEvent.change(screen.getByLabelText('Serviço'), { target: { value: 's1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar' }));
+    typeMoney('Valor do sinal (R$)', '10000');
+    fireEvent.click(screen.getByTestId('contract-submit'));
+    await waitFor(() => expect(captured.vars).not.toBeNull());
+    const input = (captured.vars as Vars).input as Vars;
+    expect(input.newGroup).toMatchObject({
+      eventKind: 'debutante',
+      bride: { newClient: { fullName: 'Lia Costa' } },
+      newResponsible: { fullName: 'Marta Costa' },
+    });
+  });
+
+  it('com pacote os itens da noiva vêm do pacote e não são enviados', async () => {
+    const captured: Captured = { vars: null };
+    renderNew(captured, [
+      {
+        __typename: 'Package',
+        id: 'p1',
+        name: 'Pacote Ouro',
+        price: '2500.00',
+        depositKind: null,
+        depositValue: null,
+      },
+    ]);
+    await screen.findByTestId('new-contract-fields');
+    fillText('nc-bride-name', 'Ana Souza');
+    fillText('nc-date', '2030-06-15');
+    fireEvent.change(screen.getByLabelText('Pacote (opcional)'), { target: { value: 'p1' } });
+    expect(screen.getByTestId('contract-form-total')).toHaveTextContent('R$ 2.500,00');
+    typeMoney('Valor do sinal (R$)', '10000');
+    fireEvent.click(screen.getByTestId('contract-submit'));
+    await waitFor(() => expect(captured.vars).not.toBeNull());
+    const input = (captured.vars as Vars).input as Vars;
+    expect(input.packageId).toBe('p1');
+    expect(input.items).toBeUndefined();
+    expect(input.newGroup).toMatchObject({ eventDate: '2030-06-15' });
+  });
+});
+
 // Garante que a fixture base continua válida para os demais testes.
 describe('fixtures', () => {
   it('makeContract tem parcelas e itens com isPackageItem', () => {
