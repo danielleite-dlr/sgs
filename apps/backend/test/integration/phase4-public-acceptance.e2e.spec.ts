@@ -6,6 +6,8 @@ import {
   destroyPhase4World,
   gqlAs,
   insertBridalGroupRow,
+  makeContractReady,
+  attachPackage,
   type Phase4World,
 } from './helpers/phase4-fixtures';
 import { deletePhase4Rows } from './helpers/phase4-cleanup';
@@ -48,16 +50,24 @@ describe('Fase 4 - aceite público do contrato', () => {
   async function setup() {
     const g = gqlAs(w, w.tokens.admin);
     const grp = await insertBridalGroupRow(w, { companions: 0, eventDate: '2030-06-15' });
+    await makeContractReady(w, grp);
     const created = await g(CREATE, {
       input: {
         groupId: grp.groupId,
         items: [{ groupMemberId: grp.brideMemberId, serviceId: w.serviceId, unitPrice: '1000.00' }],
+        depositAmount: '300.00',
       },
     });
     const contract = created.data.createContract.contract;
+    await attachPackage(w, contract.id);
     const link = await g(LINK, { id: contract.id });
     const token = (link.data.generateContractLink.url as string).split('/').pop() as string;
-    return { g, grp, id: contract.id as string, code: contract.code as string, hash: contract.currentTextSha256 as string, token };
+    // o link pode ter criado versão nova (D-18): o hash vigente é o da versão corrente
+    const cur = await adminPrisma.contract.findUniqueOrThrow({ where: { id: contract.id } });
+    const ver = await adminPrisma.contractVersion.findFirstOrThrow({
+      where: { contractId: contract.id, version: cur.currentVersion },
+    });
+    return { g, grp, id: contract.id as string, code: contract.code as string, hash: ver.textSha256, token };
   }
 
   const accept = (
@@ -138,7 +148,7 @@ describe('Fase 4 - aceite público do contrato', () => {
 
     const st = await s.g(GET_STATE, { id: s.id });
     expect(st.data.contract.status).toBe('active');
-    expect(st.data.contract.acceptedVersion).toBe(1);
+    expect(st.data.contract.acceptedVersion).toBe(2);
     expect(st.data.contract.needsAcceptance).toBe(false);
 
     const again = await accept(s.token, body);
@@ -187,7 +197,7 @@ describe('Fase 4 - aceite público do contrato', () => {
     const token2 = (link2.data.generateContractLink.url as string).split('/').pop() as string;
     const v2 = await view(token2);
     expect(v2.status).toBe(200);
-    expect(v2.body.version).toBe(2);
+    expect(v2.body.version).toBe(3); // v1 criação, v2 link (pacote vinculado), v3 edição
     expect(v2.body.accepted).toBe(false);
     expect(v2.body.textSha256).not.toBe(s.hash);
   });

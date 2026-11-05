@@ -164,6 +164,8 @@ type Contract {
   acceptance: ContractAcceptanceView
   currentText: String!
   currentTextSha256: String!
+  "1 = legado (texto corrido); 2 = snapshot estruturado"
+  currentSnapshotFormat: Int!
   items: [ContractItem!]!
   payments: [ContractPaymentView!]!
   cancelledAt: DateTime
@@ -254,9 +256,23 @@ type ContractLinkPayload {
   errors: [UserError!]!
 }
 
+type ContractMissingField {
+  code: String!
+  label: String!
+  "client | group | contract | settings"
+  target: String!
+  targetId: UUID
+}
+
+type ContractReadiness {
+  ready: Boolean!
+  missing: [ContractMissingField!]!
+}
+
 extend type Query {
   contracts(status: String, derived: String): [Contract!]!
   contract(id: UUID!): Contract
+  contractReadiness(id: UUID!): ContractReadiness!
 }
 
 extend type Mutation {
