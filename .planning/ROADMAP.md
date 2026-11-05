@@ -211,7 +211,7 @@ Plans:
 
 **Requirements**: CONT-01, CONT-02, CONT-03 (refinamento)
 **Depends on:** Phase 4
-**Plans:** 12/17 plans executed
+**Plans:** 13/17 plans executed
 
 Plans:
 - [x] 04.1-01-database-schema-seed-PLAN.md — Migration única (campos novos, parcelas do sinal, papel timbrado por hash, snapshot, RLS, backfill D-18) + seed do Studio JS pelo id da org
@@ -226,7 +226,7 @@ Plans:
 - [x] 04.1-10-frontend-client-package-forms-PLAN.md — Ficha da cliente (RG, CEP, celulares) e descrição do pacote no catálogo
 - [x] 04.1-11-frontend-bridal-group-form-PLAN.md — Grupo de noiva/debutante com responsável, horário, nome e endereço do local
 - [x] 04.1-12-frontend-contract-settings-PLAN.md — Configurações: studio, prazos, textos por seção e papel timbrado
-- [ ] 04.1-13-backend-acceptance-pdf-wiring-PLAN.md — Aceite/página pública com snapshot, CPF da contratante, PDF desde o rascunho, nome do arquivo, backfill testado
+- [x] 04.1-13-backend-acceptance-pdf-wiring-PLAN.md — Aceite/página pública com snapshot, CPF da contratante, PDF desde o rascunho, nome do arquivo, backfill testado
 - [ ] 04.1-14-frontend-contract-form-detail-PLAN.md — Formulário com sinal/parcelado/à vista, detalhe com parcelas, pendências do link e PDF
 - [ ] 04.1-15-frontend-public-accept-page-PLAN.md — Página pública com o contrato estruturado, legível no celular
 - [ ] 04.1-16-e2e-verification-PLAN.md — RLS/RBAC das tabelas novas, E2E noiva (sinal parcelado) e debutante (à vista), gate completo, VALIDATION.md
