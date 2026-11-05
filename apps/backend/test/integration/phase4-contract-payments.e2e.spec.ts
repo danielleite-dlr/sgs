@@ -185,7 +185,7 @@ describe('Fase 4 - pagamentos do contrato (CONT-01)', () => {
     const id = r.data.recordContractPayment.contract.payments[0].id;
     const rev = await att()(REVERSE, { input: { paymentId: id, reason: 'Tentativa' } });
     expect(rev.errors?.[0].message).toMatch(/permiss|permission|forbidden/i);
-    expect(await adminPrisma.contractPayment.count({ where: { kind: 'reversal' } })).toBe(0);
+    expect(await adminPrisma.contractPayment.count({ where: { kind: 'reversal', organizationId: w.orgId } })).toBe(0);
   });
 
   it('sgs_app não consegue UPDATE nem DELETE no ledger (permission denied)', async () => {
