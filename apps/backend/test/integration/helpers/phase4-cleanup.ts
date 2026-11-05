@@ -21,6 +21,7 @@ export async function deletePhase4Rows(orgFilterSql: string): Promise<void> {
     `DELETE FROM contract_payments WHERE ${org}`,
     `DELETE FROM contract_versions WHERE ${org}`,
     `DELETE FROM contract_items WHERE ${org}`,
+    `DELETE FROM contract_deposit_installments WHERE ${org}`,
     `DELETE FROM contracts WHERE ${org}`,
     `DELETE FROM contract_sequences WHERE ${org}`,
     `DELETE FROM time_blocks WHERE ${org} AND bridal_group_id IS NOT NULL`,
@@ -28,6 +29,7 @@ export async function deletePhase4Rows(orgFilterSql: string): Promise<void> {
     `DELETE FROM bridal_group_members WHERE ${org}`,
     `DELETE FROM bridal_groups WHERE ${org}`,
     `DELETE FROM contract_settings WHERE ${org}`,
+    `DELETE FROM contract_letterheads WHERE ${org}`,
   ];
   for (const sql of statements) {
     await adminPrisma.$executeRawUnsafe(sql);
