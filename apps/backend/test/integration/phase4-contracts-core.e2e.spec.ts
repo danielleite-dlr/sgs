@@ -531,6 +531,197 @@ describe('Fase 4 - núcleo do contrato da noiva', () => {
     const list = await gqlAs(w, w.tokens.otherAdmin)(`{ contracts { id } }`);
     expect(list.data.contracts).toEqual([]);
   });
+
+  describe('novo contrato pela noiva (newGroup)', () => {
+    const PREFIX = 'p4core-nc-';
+    const uniq = () => `${PREFIX}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    const ADD = `mutation($g: UUID!, $p: BridalPersonInput!) {
+      addBridalGroupMember(groupId: $g, person: $p) {
+        group { id members { id role coveredByContract } } errors { code message field }
+      }
+    }`;
+    const counts = async () => ({
+      groups: await adminPrisma.bridalGroup.count({ where: { organizationId: w.orgId } }),
+      clients: await adminPrisma.client.count({ where: { organizationId: w.orgId } }),
+      contracts: await adminPrisma.contract.count({ where: { organizationId: w.orgId } }),
+    });
+
+    afterEach(async () => {
+      await deletePhase4Rows(orgFilter);
+      await adminPrisma.client.deleteMany({
+        where: { organizationId: w.orgId, fullName: { startsWith: PREFIX } },
+      });
+    });
+
+    it('noiva nova + itens sem groupMemberId, sem pacote: grupo, membro e serviços planejados', async () => {
+      const nome = uniq();
+      const r = await gqlAs(w, w.tokens.admin)(CREATE, {
+        input: {
+          newGroup: { eventDate, bride: { newClient: { fullName: nome, phone: '11988887777' } } },
+          items: [
+            { serviceId: w.serviceId, unitPrice: '300.00' },
+            { serviceId: w.serviceBId, unitPrice: '200.00' },
+          ],
+        },
+      });
+      expect(r.errors).toBeUndefined();
+      expect(r.data.createContract.errors).toEqual([]);
+      const c = r.data.createContract.contract;
+      expect(c.status).toBe('draft');
+      expect(c.totalAmount).toBe('500.00');
+      expect(c.items).toHaveLength(2);
+      expect(c.items.every((i: { personName: string }) => i.personName === nome)).toBe(true);
+      const group = await adminPrisma.bridalGroup.findFirstOrThrow({
+        where: { id: c.groupId },
+        include: { members: { include: { services: true } } },
+      });
+      expect(group.status).toBe('active');
+      expect(group.name).toBe(`Noiva ${nome}`);
+      expect(group.eventDate.toISOString().slice(0, 10)).toBe(eventDate);
+      expect(group.members).toHaveLength(1);
+      expect(group.members[0].role).toBe('bride');
+      expect(group.members[0].coveredByContract).toBe(true);
+      expect(group.members[0].services).toHaveLength(2);
+    });
+
+    it('noiva existente + pacote, sem itens: itens rateados e package_id no grupo', async () => {
+      const existing = await adminPrisma.client.create({
+        data: { organizationId: w.orgId, fullName: uniq(), phone: '11977776666' },
+      });
+      const r = await gqlAs(w, w.tokens.admin)(CREATE, {
+        input: {
+          packageId: w.bridalPackageId,
+          newGroup: { eventDate, bride: { clientId: existing.id } },
+        },
+      });
+      expect(r.data.createContract.errors).toEqual([]);
+      const c = r.data.createContract.contract;
+      expect(c.totalAmount).toBe('500.00');
+      const sum = c.items.reduce(
+        (a: number, i: { total: string }) => a + Math.round(Number(i.total) * 100),
+        0,
+      );
+      expect(sum).toBe(50000);
+      expect(
+        c.items.every((i: { packageId: string | null }) => i.packageId === w.bridalPackageId),
+      ).toBe(true);
+      const group = await adminPrisma.bridalGroup.findFirstOrThrow({ where: { id: c.groupId } });
+      expect(group.packageId).toBe(w.bridalPackageId);
+      expect(group.name).toBe(`Noiva ${existing.fullName}`);
+    });
+
+    it('debutante com responsável nova: contratante e nome automático', async () => {
+      const deb = uniq();
+      const resp = uniq();
+      const r = await gqlAs(w, w.tokens.admin)(CREATE, {
+        input: {
+          packageId: w.bridalPackageId,
+          newGroup: {
+            eventKind: 'debutante',
+            eventDate,
+            bride: { newClient: { fullName: deb } },
+            newResponsible: { fullName: resp, phone: '11966665555' },
+          },
+        },
+      });
+      expect(r.data.createContract.errors).toEqual([]);
+      const c = r.data.createContract.contract;
+      const group = await adminPrisma.bridalGroup.findFirstOrThrow({ where: { id: c.groupId } });
+      expect(group.eventKind).toBe('debutante');
+      expect(group.name).toBe(`Debutante ${deb}`);
+      const contract = await adminPrisma.contract.findFirstOrThrow({ where: { id: c.id } });
+      const responsible = await adminPrisma.client.findFirstOrThrow({
+        where: { organizationId: w.orgId, fullName: resp },
+      });
+      expect(contract.contractorClientId).toBe(responsible.id);
+    });
+
+    it('respeita o nome informado (trim)', async () => {
+      const r = await gqlAs(w, w.tokens.admin)(CREATE, {
+        input: {
+          packageId: w.bridalPackageId,
+          newGroup: {
+            eventDate,
+            name: '  Casamento da Ana  ',
+            bride: { newClient: { fullName: uniq() } },
+          },
+        },
+      });
+      expect(r.data.createContract.errors).toEqual([]);
+      const group = await adminPrisma.bridalGroup.findFirstOrThrow({
+        where: { id: r.data.createContract.contract.groupId },
+      });
+      expect(group.name).toBe('Casamento da Ana');
+    });
+
+    it('groupId e newGroup juntos, ou nenhum: GROUP_REQUIRED sem gravar nada', async () => {
+      const g = gqlAs(w, w.tokens.admin);
+      const grp = await insertBridalGroupRow(w, { companions: 0, eventDate });
+      const before = await counts();
+      const both = await g(CREATE, {
+        input: {
+          groupId: grp.groupId,
+          packageId: w.bridalPackageId,
+          newGroup: { eventDate, bride: { newClient: { fullName: uniq() } } },
+        },
+      });
+      expect(both.data.createContract.errors[0]).toMatchObject({
+        code: 'GROUP_REQUIRED',
+        field: 'groupId',
+      });
+      const none = await g(CREATE, { input: { packageId: w.bridalPackageId } });
+      expect(none.data.createContract.errors[0]).toMatchObject({
+        code: 'GROUP_REQUIRED',
+        field: 'groupId',
+      });
+      expect(await counts()).toEqual(before);
+    });
+
+    it('data inválida: INVALID_EVENT_DATE e rollback de grupo, cliente e contrato', async () => {
+      const before = await counts();
+      const r = await gqlAs(w, w.tokens.admin)(CREATE, {
+        input: {
+          packageId: w.bridalPackageId,
+          newGroup: { eventDate: '2026-13-45', bride: { newClient: { fullName: uniq() } } },
+        },
+      });
+      expect(r.data.createContract.contract).toBeNull();
+      expect(r.data.createContract.errors[0].code).toBe('INVALID_EVENT_DATE');
+      expect(await counts()).toEqual(before);
+    });
+
+    it('erro depois de criar o grupo (sem itens) também desfaz tudo', async () => {
+      const before = await counts();
+      const r = await gqlAs(w, w.tokens.admin)(CREATE, {
+        input: { newGroup: { eventDate, bride: { newClient: { fullName: uniq() } } } },
+      });
+      expect(r.data.createContract.errors[0].code).toBe('ITEMS_REQUIRED');
+      expect(await counts()).toEqual(before);
+    });
+
+    it('acompanhante adicionada depois entra sem cobertura e não muda os itens', async () => {
+      const g = gqlAs(w, w.tokens.admin);
+      const r = await g(CREATE, {
+        input: {
+          packageId: w.bridalPackageId,
+          newGroup: { eventDate, bride: { newClient: { fullName: uniq() } } },
+        },
+      });
+      const c = r.data.createContract.contract;
+      const add = await g(ADD, {
+        g: c.groupId,
+        p: { newClient: { fullName: uniq() }, relationLabel: 'Mãe' },
+      });
+      expect(add.data.addBridalGroupMember.errors).toEqual([]);
+      const members = add.data.addBridalGroupMember.group.members;
+      expect(members).toHaveLength(2);
+      expect(
+        members.find((m: { role: string }) => m.role === 'companion').coveredByContract,
+      ).toBe(false);
+      const items = await adminPrisma.contractItem.count({ where: { contractId: c.id } });
+      expect(items).toBe(c.items.length);
+    });
+  });
 });
 
 const FIELDS2 = `id totalAmount depositAmount paymentMode discountDescription eventKind

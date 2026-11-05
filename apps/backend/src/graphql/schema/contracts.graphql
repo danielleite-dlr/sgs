@@ -210,7 +210,8 @@ type ContractAcceptanceView {
 }
 
 input ContractItemInput {
-  groupMemberId: UUID!
+  "Omitido = noiva/debutante do grupo"
+  groupMemberId: UUID
   serviceId: UUID!
   unitPrice: String
   quantity: Int
@@ -219,8 +220,29 @@ input ContractItemInput {
   packageItem: Boolean
 }
 
+"Grupo criado junto com o contrato (Contratos > Novo contrato). Só a noiva/debutante entra; acompanhantes vão depois no grupo."
+input NewContractGroupInput {
+  "noiva (padrão) | debutante"
+  eventKind: String
+  eventDate: String!
+  "Vazio = 'Noiva <nome>' / 'Debutante <nome>'"
+  name: String
+  eventTime: String
+  readyBy: DateTime
+  locationKind: String
+  locationAddress: String
+  locationName: String
+  notes: String
+  bride: BridalPersonInput!
+  "Só debutante"
+  responsibleClientId: UUID
+  newResponsible: BridalNewClientInput
+}
+
 input CreateContractInput {
-  groupId: UUID!
+  "Grupo existente; exclusivo com newGroup"
+  groupId: UUID
+  newGroup: NewContractGroupInput
   packageId: UUID
   items: [ContractItemInput!]
   discountAmount: String

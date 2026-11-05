@@ -1,24 +1,28 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { recordAudit } from '../common/audit-log';
-import { TenantContextService } from '../database/tenant-context.service';
-import type { TenantPrismaClient } from '../database/types';
-import { syncContractCoverageTx } from './bridal-coverage';
-import { applyPackageToBrideTx } from './bridal-package';
+import { BadRequestException, Injectable } from "@nestjs/common";
+import { recordAudit } from "../common/audit-log";
+import { TenantContextService } from "../database/tenant-context.service";
+import type { TenantPrismaClient } from "../database/types";
+import { syncContractCoverageTx } from "./bridal-coverage";
+import { applyPackageToBrideTx } from "./bridal-package";
 import {
   BRIDAL_SCHEDULE_TX_OPTIONS,
   cancelGroupAppointmentsTx,
   createBridalScheduleTx,
   rebuildTravelBlocksTx,
   type BridalScheduleInput,
-} from './bridal-schedule';
-import { resolvePersonClientTx, type BridalPersonRef } from './bridal-clients';
-import { BridalError, mapBridalError, type BridalUserError } from './bridal-errors';
+} from "./bridal-schedule";
+import { resolvePersonClientTx, type BridalPersonRef } from "./bridal-clients";
+import {
+  BridalError,
+  mapBridalError,
+  type BridalUserError,
+} from "./bridal-errors";
 import {
   BRIDAL_APPOINTMENT_INCLUDE,
   BRIDAL_GROUP_INCLUDE,
   serializeBridalGroup,
   type BridalGroupRow,
-} from './bridal-serialize';
+} from "./bridal-serialize";
 
 export interface BridalGroupFieldsInput {
   name: string;
@@ -74,12 +78,17 @@ export interface BridalGroupPayload {
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
-const EVENT_KINDS = ['noiva', 'debutante'];
+const EVENT_KINDS = ["noiva", "debutante"];
 const MAX_PEOPLE = 15;
 const MAX_SERVICES_PER_PERSON = 10;
 const MAX_TRAVEL_MINUTES = 240;
 /** Status de agendamento que "ocupam" o membro (bloqueiam remoção e contam no grupo). */
-const BLOCKING_APPOINTMENT_STATUSES = ['scheduled', 'confirmed', 'in_progress', 'completed'];
+const BLOCKING_APPOINTMENT_STATUSES = [
+  "scheduled",
+  "confirmed",
+  "in_progress",
+  "completed",
+];
 const LIST_LIMIT = 200;
 
 const fail = (e: unknown): BridalGroupPayload => {
@@ -95,11 +104,11 @@ function isValidDate(s: string): boolean {
 }
 
 function localDate(instant: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat('en-CA', {
+  return new Intl.DateTimeFormat("en-CA", {
     timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
   }).format(instant);
 }
 
@@ -121,41 +130,57 @@ async function validateGroupFields(
   tx: TenantPrismaClient,
   orgId: string,
   input: BridalGroupFieldsInput,
-  currentKind: string = 'noiva',
+  currentKind: string = "noiva",
 ): Promise<ValidatedFields> {
-  const name = input.name?.trim() ?? '';
+  const name = input.name?.trim() ?? "";
   if (name.length < 2 || name.length > 160) {
-    throw new BridalError('INVALID_NAME', 'Informe o nome do evento (2 a 160 caracteres).', 'name');
+    throw new BridalError(
+      "INVALID_NAME",
+      "Informe o nome do evento (2 a 160 caracteres).",
+      "name",
+    );
   }
   if (!input.eventDate || !isValidDate(input.eventDate)) {
-    throw new BridalError('INVALID_EVENT_DATE', 'Data do evento inválida.', 'eventDate');
+    throw new BridalError(
+      "INVALID_EVENT_DATE",
+      "Data do evento inválida.",
+      "eventDate",
+    );
   }
-  const locationKind = input.locationKind ?? 'studio';
-  if (locationKind !== 'studio' && locationKind !== 'external') {
-    throw new BridalError('INVALID_LOCATION', 'Local do evento inválido.', 'locationKind');
+  const locationKind = input.locationKind ?? "studio";
+  if (locationKind !== "studio" && locationKind !== "external") {
+    throw new BridalError(
+      "INVALID_LOCATION",
+      "Local do evento inválido.",
+      "locationKind",
+    );
   }
   const eventKind = input.eventKind ?? currentKind;
   if (!EVENT_KINDS.includes(eventKind)) {
-    throw new BridalError('INVALID_EVENT_KIND', 'Tipo de evento inválido.', 'eventKind');
+    throw new BridalError(
+      "INVALID_EVENT_KIND",
+      "Tipo de evento inválido.",
+      "eventKind",
+    );
   }
   const eventTime = input.eventTime?.trim() || null;
   if (eventTime && !TIME_RE.test(eventTime)) {
     throw new BridalError(
-      'INVALID_EVENT_TIME',
-      'Horário do evento inválido (use HH:MM).',
-      'eventTime',
+      "INVALID_EVENT_TIME",
+      "Horário do evento inválido (use HH:MM).",
+      "eventTime",
     );
   }
   let locationName = input.locationName?.trim() || null;
   if (locationName && locationName.length > 160) {
     throw new BridalError(
-      'INVALID_LOCATION_NAME',
-      'Nome do local muito longo (máx. 160).',
-      'locationName',
+      "INVALID_LOCATION_NAME",
+      "Nome do local muito longo (máx. 160).",
+      "locationName",
     );
   }
   let address = input.locationAddress?.trim() || null;
-  if (locationKind === 'studio' && (!locationName || !address)) {
+  if (locationKind === "studio" && (!locationName || !address)) {
     // D-11: no estúdio, vazio assume os dados do studio das configurações
     const settings = await tx.contractSettings.findUnique({
       where: { organizationId: orgId },
@@ -164,28 +189,28 @@ async function validateGroupFields(
     locationName = locationName ?? settings?.studioName?.trim() ?? null;
     address = address ?? settings?.studioAddress?.trim() ?? null;
   }
-  if (locationKind === 'external' && !address) {
+  if (locationKind === "external" && !address) {
     throw new BridalError(
-      'ADDRESS_REQUIRED',
-      'Informe o endereço do local externo.',
-      'locationAddress',
+      "ADDRESS_REQUIRED",
+      "Informe o endereço do local externo.",
+      "locationAddress",
     );
   }
   let before = input.travelMinutesBefore ?? 0;
   let after = input.travelMinutesAfter ?? 0;
   for (const [v, field] of [
-    [before, 'travelMinutesBefore'],
-    [after, 'travelMinutesAfter'],
+    [before, "travelMinutesBefore"],
+    [after, "travelMinutesAfter"],
   ] as const) {
     if (!Number.isInteger(v) || v < 0 || v > MAX_TRAVEL_MINUTES) {
       throw new BridalError(
-        'INVALID_TRAVEL',
+        "INVALID_TRAVEL",
         `O deslocamento deve ficar entre 0 e ${MAX_TRAVEL_MINUTES} minutos.`,
         field,
       );
     }
   }
-  if (locationKind === 'studio') {
+  if (locationKind === "studio") {
     before = 0;
     after = 0;
   }
@@ -193,15 +218,21 @@ async function validateGroupFields(
   if (input.readyBy) {
     readyBy = new Date(input.readyBy);
     if (Number.isNaN(readyBy.getTime())) {
-      throw new BridalError('READY_BY_OUTSIDE_EVENT_DAY', 'Horário "pronta até" inválido.', 'readyBy');
+      throw new BridalError(
+        "READY_BY_OUTSIDE_EVENT_DAY",
+        'Horário "pronta até" inválido.',
+        "readyBy",
+      );
     }
-    const rows = await tx.$queryRaw<{ timezone: string }[]>`SELECT timezone FROM organizations LIMIT 1`;
-    const tz = rows[0]?.timezone ?? 'America/Sao_Paulo';
+    const rows = await tx.$queryRaw<
+      { timezone: string }[]
+    >`SELECT timezone FROM organizations LIMIT 1`;
+    const tz = rows[0]?.timezone ?? "America/Sao_Paulo";
     if (localDate(readyBy, tz) !== input.eventDate) {
       throw new BridalError(
-        'READY_BY_OUTSIDE_EVENT_DAY',
+        "READY_BY_OUTSIDE_EVENT_DAY",
         'O horário "pronta até" deve ser no dia do evento.',
-        'readyBy',
+        "readyBy",
       );
     }
   }
@@ -231,17 +262,19 @@ async function resolveResponsibleTx(
   eventKind: string,
   brideClientId: string | null,
 ): Promise<string | null | undefined> {
-  if (eventKind !== 'debutante') return null;
+  if (eventKind !== "debutante") return null;
   let id: string | null | undefined;
   if (input.newResponsible) {
     if (input.responsibleClientId) {
       throw new BridalError(
-        'CLIENT_REQUIRED',
-        'Escolha uma cliente ou cadastre uma nova.',
-        'responsibleClientId',
+        "CLIENT_REQUIRED",
+        "Escolha uma cliente ou cadastre uma nova.",
+        "responsibleClientId",
       );
     }
-    id = await resolvePersonClientTx(tx, orgId, { newClient: input.newResponsible });
+    id = await resolvePersonClientTx(tx, orgId, {
+      newClient: input.newResponsible,
+    });
   } else if (input.responsibleClientId) {
     const found = await tx.client.findFirst({
       where: { id: input.responsibleClientId, deletedAt: null },
@@ -249,9 +282,9 @@ async function resolveResponsibleTx(
     });
     if (!found) {
       throw new BridalError(
-        'RESPONSIBLE_NOT_FOUND',
-        'Responsável não encontrada.',
-        'responsibleClientId',
+        "RESPONSIBLE_NOT_FOUND",
+        "Responsável não encontrada.",
+        "responsibleClientId",
       );
     }
     id = found.id;
@@ -262,9 +295,9 @@ async function resolveResponsibleTx(
   }
   if (id && brideClientId && id === brideClientId) {
     throw new BridalError(
-      'RESPONSIBLE_IS_DEBUTANTE',
-      'A responsável deve ser outra pessoa.',
-      'responsibleClientId',
+      "RESPONSIBLE_IS_DEBUTANTE",
+      "A responsável deve ser outra pessoa.",
+      "responsibleClientId",
     );
   }
   return id;
@@ -276,38 +309,58 @@ async function validateServices(
 ): Promise<{ serviceId: string; purpose: string }[]> {
   if (services.length > MAX_SERVICES_PER_PERSON) {
     throw new BridalError(
-      'TOO_MANY_SERVICES',
+      "TOO_MANY_SERVICES",
       `Máximo de ${MAX_SERVICES_PER_PERSON} serviços por pessoa.`,
-      'services',
+      "services",
     );
   }
   const normalized = services.map((s) => ({
     serviceId: s.serviceId,
-    purpose: s.purpose ?? 'event',
+    purpose: s.purpose ?? "event",
   }));
   const seen = new Set<string>();
   for (const s of normalized) {
-    if (s.purpose !== 'event' && s.purpose !== 'trial') {
-      throw new BridalError('INVALID_PURPOSE', 'Finalidade do serviço inválida.', 'purpose');
+    if (s.purpose !== "event" && s.purpose !== "trial") {
+      throw new BridalError(
+        "INVALID_PURPOSE",
+        "Finalidade do serviço inválida.",
+        "purpose",
+      );
     }
     const key = `${s.serviceId}:${s.purpose}`;
     if (seen.has(key)) {
-      throw new BridalError('DUPLICATE_SERVICE', 'Serviço repetido para a mesma pessoa.', 'services');
+      throw new BridalError(
+        "DUPLICATE_SERVICE",
+        "Serviço repetido para a mesma pessoa.",
+        "services",
+      );
     }
     seen.add(key);
   }
   const ids = [...new Set(normalized.map((s) => s.serviceId))];
   if (ids.length > 0) {
-    const found = await tx.service.count({ where: { id: { in: ids }, deletedAt: null } });
+    const found = await tx.service.count({
+      where: { id: { in: ids }, deletedAt: null },
+    });
     if (found !== ids.length) {
-      throw new BridalError('SERVICE_NOT_FOUND', 'Serviço não encontrado.', 'services');
+      throw new BridalError(
+        "SERVICE_NOT_FOUND",
+        "Serviço não encontrado.",
+        "services",
+      );
     }
   }
   return normalized;
 }
 
-async function loadGroupRow(tx: TenantPrismaClient, id: string): Promise<BridalGroupRow | null> {
-  return tx.bridalGroup.findFirst({ where: { id }, include: BRIDAL_GROUP_INCLUDE });
+async function loadGroupRow(
+  tx: TenantPrismaClient,
+  id: string,
+): Promise<BridalGroupRow | null> {
+  return tx.bridalGroup.findFirst({
+    where: { id },
+    include: BRIDAL_GROUP_INCLUDE,
+  });
 }
 
 async function buildViews(
@@ -317,7 +370,7 @@ async function buildViews(
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
   const contracts = await tx.contract.findMany({
-    where: { bridalGroupId: { in: ids }, status: { not: 'cancelled' } },
+    where: { bridalGroupId: { in: ids }, status: { not: "cancelled" } },
     select: { id: true, code: true, status: true, bridalGroupId: true },
   });
   const appts = await tx.appointment.findMany({
@@ -328,20 +381,22 @@ async function buildViews(
     select: { bridalGroupId: true },
   });
   const closed = await tx.appointment.findMany({
-    where: { bridalGroupId: { in: ids }, comanda: { status: 'closed' } },
+    where: { bridalGroupId: { in: ids }, comanda: { status: "closed" } },
     select: { bridalGroupId: true, clientId: true },
   });
   const details = await tx.appointment.findMany({
     where: { bridalGroupId: { in: ids } },
     include: BRIDAL_APPOINTMENT_INCLUDE,
-    orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
+    orderBy: [{ startsAt: "asc" }, { id: "asc" }],
     take: 1000,
   });
   return rows.map((row) => {
     const contract = contracts.find((c) => c.bridalGroupId === row.id) ?? null;
     return serializeBridalGroup(row, {
       appointments: details.filter((a) => a.bridalGroupId === row.id),
-      groupMemberIdByClient: new Map(row.members.map((m) => [m.clientId, m.id])),
+      groupMemberIdByClient: new Map(
+        row.members.map((m) => [m.clientId, m.id]),
+      ),
       contract,
       appointmentCount: appts.filter((a) => a.bridalGroupId === row.id).length,
       closedComandaClientIds: new Set(
@@ -351,9 +406,12 @@ async function buildViews(
   });
 }
 
-async function viewOf(tx: TenantPrismaClient, id: string): Promise<BridalGroupView> {
+async function viewOf(
+  tx: TenantPrismaClient,
+  id: string,
+): Promise<BridalGroupView> {
   const row = await loadGroupRow(tx, id);
-  if (!row) throw new BridalError('NOT_FOUND', 'Grupo não encontrado.', 'id');
+  if (!row) throw new BridalError("NOT_FOUND", "Grupo não encontrado.", "id");
   return (await buildViews(tx, [row]))[0];
 }
 
@@ -362,9 +420,9 @@ async function requireActiveGroup(tx: TenantPrismaClient, id: string) {
     where: { id },
     select: { id: true, status: true, eventDate: true },
   });
-  if (!g) throw new BridalError('NOT_FOUND', 'Grupo não encontrado.', 'id');
-  if (g.status !== 'active') {
-    throw new BridalError('GROUP_NOT_ACTIVE', 'O grupo não está ativo.', 'id');
+  if (!g) throw new BridalError("NOT_FOUND", "Grupo não encontrado.", "id");
+  if (g.status !== "active") {
+    throw new BridalError("GROUP_NOT_ACTIVE", "O grupo não está ativo.", "id");
   }
   return g;
 }
@@ -372,15 +430,32 @@ async function requireActiveGroup(tx: TenantPrismaClient, id: string) {
 async function requireMember(tx: TenantPrismaClient, memberId: string) {
   const m = await tx.bridalGroupMember.findFirst({
     where: { id: memberId },
-    select: { id: true, groupId: true, clientId: true, role: true, coveredByContract: true },
+    select: {
+      id: true,
+      groupId: true,
+      clientId: true,
+      role: true,
+      coveredByContract: true,
+    },
   });
-  if (!m) throw new BridalError('NOT_FOUND', 'Pessoa do grupo não encontrada.', 'memberId');
+  if (!m)
+    throw new BridalError(
+      "NOT_FOUND",
+      "Pessoa do grupo não encontrada.",
+      "memberId",
+    );
   return m;
 }
 
-async function hasLiveContractItems(tx: TenantPrismaClient, memberId: string): Promise<boolean> {
+async function hasLiveContractItems(
+  tx: TenantPrismaClient,
+  memberId: string,
+): Promise<boolean> {
   const n = await tx.contractItem.count({
-    where: { groupMemberId: memberId, contract: { status: { not: 'cancelled' } } },
+    where: {
+      groupMemberId: memberId,
+      contract: { status: { not: "cancelled" } },
+    },
   });
   return n > 0;
 }
@@ -391,7 +466,7 @@ async function hasClosedComanda(
   clientId: string,
 ): Promise<boolean> {
   const a = await tx.appointment.findFirst({
-    where: { bridalGroupId: groupId, clientId, comanda: { status: 'closed' } },
+    where: { bridalGroupId: groupId, clientId, comanda: { status: "closed" } },
     select: { id: true },
   });
   return !!a;
@@ -401,7 +476,7 @@ async function insertMemberTx(
   tx: TenantPrismaClient,
   orgId: string,
   groupId: string,
-  role: 'bride' | 'companion',
+  role: "bride" | "companion",
   sortOrder: number,
   person: BridalPersonInput,
   usedClients: Set<string>,
@@ -410,15 +485,19 @@ async function insertMemberTx(
   const clientId = await resolvePersonClientTx(tx, orgId, person);
   if (usedClients.has(clientId)) {
     throw new BridalError(
-      'MEMBER_ALREADY_IN_GROUP',
-      'Esta cliente já faz parte do grupo.',
-      'clientId',
+      "MEMBER_ALREADY_IN_GROUP",
+      "Esta cliente já faz parte do grupo.",
+      "clientId",
     );
   }
   usedClients.add(clientId);
   const relationLabel = person.relationLabel?.trim() || null;
   if (relationLabel && relationLabel.length > 60) {
-    throw new BridalError('INVALID_RELATION', 'Relação muito longa (máx. 60).', 'relationLabel');
+    throw new BridalError(
+      "INVALID_RELATION",
+      "Relação muito longa (máx. 60).",
+      "relationLabel",
+    );
   }
   const member = await tx.bridalGroupMember.create({
     data: {
@@ -428,7 +507,7 @@ async function insertMemberTx(
       role,
       relationLabel,
       // D-07: noiva coberta por padrão; madrinha paga avulso.
-      coveredByContract: person.coveredByContract ?? role === 'bride',
+      coveredByContract: person.coveredByContract ?? role === "bride",
       sortOrder,
     },
     select: { id: true },
@@ -455,8 +534,63 @@ async function validatePackage(
     where: { id: packageId, organizationId: orgId, deletedAt: null },
     select: { id: true },
   });
-  if (!pkg) throw new BridalError('PACKAGE_NOT_FOUND', 'Pacote não encontrado.', 'packageId');
+  if (!pkg)
+    throw new BridalError(
+      "PACKAGE_NOT_FOUND",
+      "Pacote não encontrado.",
+      "packageId",
+    );
   return pkg.id;
+}
+
+/** Cria grupo + noiva (+ acompanhantes) dentro da transação do chamador; devolve o id do grupo. */
+export async function createBridalGroupTx(
+  tx: TenantPrismaClient,
+  orgId: string,
+  memberId: string,
+  input: CreateBridalGroupInput,
+): Promise<string> {
+  const companions = input.companions ?? [];
+  if (1 + companions.length > MAX_PEOPLE) {
+    throw new BridalError(
+      "TOO_MANY_PEOPLE",
+      `Máximo de ${MAX_PEOPLE} pessoas por grupo.`,
+      "companions",
+    );
+  }
+  const fields = await validateGroupFields(tx, orgId, input.group);
+  const packageId = input.group.packageId
+    ? await validatePackage(tx, orgId, input.group.packageId)
+    : null;
+  const group = await tx.bridalGroup.create({
+    data: { organizationId: orgId, ...fields, packageId, createdBy: memberId },
+    select: { id: true },
+  });
+  const used = new Set<string>();
+  await insertMemberTx(tx, orgId, group.id, "bride", 0, input.bride, used);
+  const bride = await tx.bridalGroupMember.findFirstOrThrow({
+    where: { groupId: group.id, role: "bride" },
+    select: { clientId: true },
+  });
+  const responsibleId = await resolveResponsibleTx(
+    tx,
+    orgId,
+    input.group,
+    fields.eventKind,
+    bride.clientId,
+  );
+  if (responsibleId) {
+    await tx.bridalGroup.update({
+      where: { id: group.id },
+      data: { responsibleClientId: responsibleId },
+    });
+  }
+  if (packageId) await applyPackageToBrideTx(tx, orgId, group.id, packageId);
+  let order = 1;
+  for (const c of companions) {
+    await insertMemberTx(tx, orgId, group.id, "companion", order++, c, used);
+  }
+  return group.id;
 }
 
 @Injectable()
@@ -482,49 +616,9 @@ export class BridalService {
     memberId: string,
     input: CreateBridalGroupInput,
   ): Promise<BridalGroupPayload> {
-    return this.write(orgId, async (tx) => {
-      const companions = input.companions ?? [];
-      if (1 + companions.length > MAX_PEOPLE) {
-        throw new BridalError(
-          'TOO_MANY_PEOPLE',
-          `Máximo de ${MAX_PEOPLE} pessoas por grupo.`,
-          'companions',
-        );
-      }
-      const fields = await validateGroupFields(tx, orgId, input.group);
-      const packageId = input.group.packageId
-        ? await validatePackage(tx, orgId, input.group.packageId)
-        : null;
-      const group = await tx.bridalGroup.create({
-        data: { organizationId: orgId, ...fields, packageId, createdBy: memberId },
-        select: { id: true },
-      });
-      const used = new Set<string>();
-      await insertMemberTx(tx, orgId, group.id, 'bride', 0, input.bride, used);
-      const bride = await tx.bridalGroupMember.findFirstOrThrow({
-        where: { groupId: group.id, role: 'bride' },
-        select: { clientId: true },
-      });
-      const responsibleId = await resolveResponsibleTx(
-        tx,
-        orgId,
-        input.group,
-        fields.eventKind,
-        bride.clientId,
-      );
-      if (responsibleId) {
-        await tx.bridalGroup.update({
-          where: { id: group.id },
-          data: { responsibleClientId: responsibleId },
-        });
-      }
-      if (packageId) await applyPackageToBrideTx(tx, orgId, group.id, packageId);
-      let order = 1;
-      for (const c of companions) {
-        await insertMemberTx(tx, orgId, group.id, 'companion', order++, c, used);
-      }
-      return group.id;
-    });
+    return this.write(orgId, (tx) =>
+      createBridalGroupTx(tx, orgId, memberId, input),
+    );
   }
 
   update(
@@ -540,9 +634,14 @@ export class BridalService {
         where: { id },
         select: { eventKind: true },
       });
-      const fields = await validateGroupFields(tx, orgId, input, current.eventKind);
+      const fields = await validateGroupFields(
+        tx,
+        orgId,
+        input,
+        current.eventKind,
+      );
       const bride = await tx.bridalGroupMember.findFirst({
-        where: { groupId: id, role: 'bride' },
+        where: { groupId: id, role: "bride" },
         select: { clientId: true },
       });
       const responsibleId = await resolveResponsibleTx(
@@ -572,7 +671,9 @@ export class BridalService {
         data: {
           ...fields,
           packageId,
-          ...(responsibleId !== undefined ? { responsibleClientId: responsibleId } : {}),
+          ...(responsibleId !== undefined
+            ? { responsibleClientId: responsibleId }
+            : {}),
         },
       });
       if (
@@ -603,14 +704,14 @@ export class BridalService {
       });
       if (existing.length + 1 > MAX_PEOPLE) {
         throw new BridalError(
-          'TOO_MANY_PEOPLE',
+          "TOO_MANY_PEOPLE",
           `Máximo de ${MAX_PEOPLE} pessoas por grupo.`,
-          'groupId',
+          "groupId",
         );
       }
       const used = new Set(existing.map((m) => m.clientId));
       const next = existing.reduce((mx, m) => Math.max(mx, m.sortOrder), 0) + 1;
-      await insertMemberTx(tx, orgId, groupId, 'companion', next, person, used);
+      await insertMemberTx(tx, orgId, groupId, "companion", next, person, used);
       return groupId;
     });
   }
@@ -619,8 +720,12 @@ export class BridalService {
     return this.write(orgId, async (tx) => {
       const m = await requireMember(tx, memberId);
       await requireActiveGroup(tx, m.groupId);
-      if (m.role === 'bride') {
-        throw new BridalError('CANNOT_REMOVE_BRIDE', 'A noiva não pode ser removida do grupo.', 'memberId');
+      if (m.role === "bride") {
+        throw new BridalError(
+          "CANNOT_REMOVE_BRIDE",
+          "A noiva não pode ser removida do grupo.",
+          "memberId",
+        );
       }
       const appt = await tx.appointment.findFirst({
         where: {
@@ -632,16 +737,16 @@ export class BridalService {
       });
       if (appt) {
         throw new BridalError(
-          'MEMBER_HAS_APPOINTMENTS',
-          'Esta pessoa já tem agendamentos no grupo. Cancele-os primeiro.',
-          'memberId',
+          "MEMBER_HAS_APPOINTMENTS",
+          "Esta pessoa já tem agendamentos no grupo. Cancele-os primeiro.",
+          "memberId",
         );
       }
       if (await hasLiveContractItems(tx, memberId)) {
         throw new BridalError(
-          'MEMBER_IN_CONTRACT',
-          'Remova os itens desta pessoa do contrato primeiro.',
-          'memberId',
+          "MEMBER_IN_CONTRACT",
+          "Remova os itens desta pessoa do contrato primeiro.",
+          "memberId",
         );
       }
       await tx.bridalGroupMember.delete({ where: { id: memberId } });
@@ -661,16 +766,16 @@ export class BridalService {
         // D-25: comanda do grupo já fechada trava a cobertura.
         if (await hasClosedComanda(tx, m.groupId, m.clientId)) {
           throw new BridalError(
-            'COVERAGE_LOCKED',
-            'A comanda desta pessoa já foi fechada; a cobertura não pode mudar.',
-            'memberId',
+            "COVERAGE_LOCKED",
+            "A comanda desta pessoa já foi fechada; a cobertura não pode mudar.",
+            "memberId",
           );
         }
         if (!covered && (await hasLiveContractItems(tx, memberId))) {
           throw new BridalError(
-            'MEMBER_IN_CONTRACT',
-            'Remova os itens desta pessoa do contrato primeiro.',
-            'memberId',
+            "MEMBER_IN_CONTRACT",
+            "Remova os itens desta pessoa do contrato primeiro.",
+            "memberId",
           );
         }
         await tx.bridalGroupMember.update({
@@ -692,7 +797,9 @@ export class BridalService {
       const m = await requireMember(tx, memberId);
       await requireActiveGroup(tx, m.groupId);
       const valid = await validateServices(tx, services);
-      await tx.bridalMemberService.deleteMany({ where: { groupMemberId: memberId } });
+      await tx.bridalMemberService.deleteMany({
+        where: { groupMemberId: memberId },
+      });
       if (valid.length > 0) {
         await tx.bridalMemberService.createMany({
           data: valid.map((s, i) => ({
@@ -718,9 +825,18 @@ export class BridalService {
       return await this.tenant.runWithTenant(
         orgId,
         async (tx) => {
-          const { appointmentIds } = await createBridalScheduleTx(tx, orgId, memberId, input);
+          const { appointmentIds } = await createBridalScheduleTx(
+            tx,
+            orgId,
+            memberId,
+            input,
+          );
           await syncContractCoverageTx(tx, orgId, input.groupId);
-          return { group: await viewOf(tx, input.groupId), appointmentIds, errors: [] };
+          return {
+            group: await viewOf(tx, input.groupId),
+            appointmentIds,
+            errors: [],
+          };
         },
         BRIDAL_SCHEDULE_TX_OPTIONS,
       );
@@ -737,12 +853,16 @@ export class BridalService {
     memberId: string,
     input: { id: string; reason: string },
   ): Promise<BridalGroupPayload> {
-    const reason = (input.reason ?? '').trim();
+    const reason = (input.reason ?? "").trim();
     if (reason.length < 3) {
       return {
         group: null,
         errors: [
-          { code: 'REASON_REQUIRED', message: 'Informe o motivo do cancelamento.', field: 'reason' },
+          {
+            code: "REASON_REQUIRED",
+            message: "Informe o motivo do cancelamento.",
+            field: "reason",
+          },
         ],
       };
     }
@@ -752,29 +872,38 @@ export class BridalService {
         async (tx) => {
           await requireActiveGroup(tx, input.id);
           const live = await tx.contract.findFirst({
-            where: { bridalGroupId: input.id, status: { not: 'cancelled' } },
+            where: { bridalGroupId: input.id, status: { not: "cancelled" } },
             select: { id: true },
           });
           if (live) {
             throw new BridalError(
-              'CANCEL_CONTRACT_FIRST',
-              'Cancele o contrato antes de cancelar o grupo.',
-              'id',
+              "CANCEL_CONTRACT_FIRST",
+              "Cancele o contrato antes de cancelar o grupo.",
+              "id",
             );
           }
-          const cancelled = await cancelGroupAppointmentsTx(tx, orgId, memberId, {
-            groupId: input.id,
-            reason,
-          });
+          const cancelled = await cancelGroupAppointmentsTx(
+            tx,
+            orgId,
+            memberId,
+            {
+              groupId: input.id,
+              reason,
+            },
+          );
           await tx.bridalGroup.update({
             where: { id: input.id },
-            data: { status: 'cancelled', cancelledAt: new Date(), cancelReason: reason },
+            data: {
+              status: "cancelled",
+              cancelledAt: new Date(),
+              cancelReason: reason,
+            },
           });
           await recordAudit(tx, {
             orgId,
             actorMemberId: memberId,
-            action: 'bridal.cancel',
-            entityType: 'bridal_group',
+            action: "bridal.cancel",
+            entityType: "bridal_group",
             entityId: input.id,
             reason,
             metadata: { cancelledAppointments: cancelled },
@@ -790,11 +919,15 @@ export class BridalService {
 
   async list(
     orgId: string,
-    filters: { status?: string | null; from?: string | null; to?: string | null },
+    filters: {
+      status?: string | null;
+      from?: string | null;
+      to?: string | null;
+    },
   ): Promise<BridalGroupView[]> {
     for (const d of [filters.from, filters.to]) {
       if (d && !isValidDate(d)) {
-        throw new BadRequestException('Data inválida; use YYYY-MM-DD.');
+        throw new BadRequestException("Data inválida; use YYYY-MM-DD.");
       }
     }
     return this.tenant.runWithTenant(orgId, async (tx) => {
@@ -804,14 +937,18 @@ export class BridalService {
           ...(filters.from || filters.to
             ? {
                 eventDate: {
-                  ...(filters.from ? { gte: new Date(`${filters.from}T00:00:00.000Z`) } : {}),
-                  ...(filters.to ? { lte: new Date(`${filters.to}T00:00:00.000Z`) } : {}),
+                  ...(filters.from
+                    ? { gte: new Date(`${filters.from}T00:00:00.000Z`) }
+                    : {}),
+                  ...(filters.to
+                    ? { lte: new Date(`${filters.to}T00:00:00.000Z`) }
+                    : {}),
                 },
               }
             : {}),
         },
         include: BRIDAL_GROUP_INCLUDE,
-        orderBy: [{ eventDate: 'asc' }, { createdAt: 'asc' }],
+        orderBy: [{ eventDate: "asc" }, { createdAt: "asc" }],
         take: LIST_LIMIT,
       });
       return buildViews(tx, rows);
