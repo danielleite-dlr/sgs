@@ -211,7 +211,7 @@ Plans:
 
 **Requirements**: CONT-01, CONT-02, CONT-03 (refinamento)
 **Depends on:** Phase 4
-**Plans:** 16/17 plans executed
+**Plans:** 17/17 plans complete
 
 Plans:
 - [x] 04.1-01-database-schema-seed-PLAN.md — Migration única (campos novos, parcelas do sinal, papel timbrado por hash, snapshot, RLS, backfill D-18) + seed do Studio JS pelo id da org
