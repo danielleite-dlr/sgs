@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import request from 'supertest';
 import { adminPrisma, appPrisma } from './setup';
 import {
@@ -6,8 +8,15 @@ import {
   destroyPhase4World,
   gqlAs,
   insertBridalGroupRow,
+  makeContractReady,
+  attachPackage,
   type Phase4World,
 } from './helpers/phase4-fixtures';
+
+const PNG_PATH = join(
+  __dirname,
+  '../../../../.planning/phases/04.1-layout-e-regras-do-contrato-modelo-studio-js/04.1-papel-timbrado-studio-js.png',
+);
 
 const VALID_CPF = '529.982.247-25';
 
@@ -25,6 +34,8 @@ const PHASE4_TABLES = [
   'contract_payments',
   'ai_schedule_suggestions',
   'contract_alert_runs',
+  'contract_deposit_installments',
+  'contract_letterheads',
 ] as const;
 
 const SET_SERVICES = `mutation($m: UUID!, $s: [BridalMemberServiceInput!]!) {
@@ -64,6 +75,11 @@ const SETTINGS = `query { contractSettings { balanceDueDaysBefore } }`;
 const UPDATE_SETTINGS = `mutation($input: UpdateContractSettingsInput!) {
   updateContractSettings(input: $input) { errors { code message } }
 }`;
+const READINESS = `query($id: UUID!) { contractReadiness(id: $id) { ready } }`;
+const UPLOAD_LH = `mutation($input: UploadContractLetterheadInput!) {
+  uploadContractLetterhead(input: $input) { settings { letterhead { sha256 } } errors { code message } }
+}`;
+const REMOVE_LH = `mutation { removeContractLetterhead { errors { code message } } }`;
 const PDF = `query($id: UUID!) { contractPdf(id: $id) { filename } }`;
 const RUN_NOW = `mutation { runContractAlertsNow { ran candidates created resolved emailed } }`;
 const CONTRACT_BY_ID = `query($id: UUID!) { contract(id: $id) { id } }`;
@@ -99,6 +115,7 @@ describe('Phase 4 - RLS e RBAC transversais', () => {
 
     const grp = await insertBridalGroupRow(w, { companions: 1, eventDate: localDay(40) });
     groupId = grp.groupId;
+    await makeContractReady(w, grp);
     brideMemberId = grp.brideMemberId;
     const svc = await admin(SET_SERVICES, {
       m: brideMemberId,
@@ -106,9 +123,24 @@ describe('Phase 4 - RLS e RBAC transversais', () => {
     });
     expect(svc.data.setBridalMemberServices.errors).toEqual([]);
 
+    const lh = await admin(UPLOAD_LH, {
+      input: {
+        filename: 'timbrado.png',
+        mimeType: 'image/png',
+        base64: readFileSync(PNG_PATH).toString('base64'),
+      },
+    });
+    expect(lh.data.uploadContractLetterhead.errors).toEqual([]);
+
     const created = await admin(CREATE, {
       input: {
         groupId,
+        paymentMode: 'sinal_parcelado',
+        depositAmount: '300.00',
+        installments: [
+          { dueDate: localDay(5), amount: '100.00' },
+          { dueDate: localDay(20), amount: '200.00' },
+        ],
         items: [{ groupMemberId: brideMemberId, serviceId: w.serviceId, unitPrice: '1000.00' }],
       },
     });
@@ -116,8 +148,15 @@ describe('Phase 4 - RLS e RBAC transversais', () => {
     contractId = created.data.createContract.contract.id;
     textSha = created.data.createContract.contract.currentTextSha256;
 
+    await attachPackage(w, contractId);
     const link = await admin(LINK, { id: contractId });
     expect(link.data.generateContractLink.errors).toEqual([]);
+    // o link pode criar versão nova (D-18): usar o hash da versão vigente
+    const cur = await adminPrisma.contract.findUniqueOrThrow({ where: { id: contractId } });
+    const ver = await adminPrisma.contractVersion.findFirstOrThrow({
+      where: { contractId, version: cur.currentVersion },
+    });
+    textSha = ver.textSha256;
     token = (link.data.generateContractLink.url as string).split('/').pop() as string;
 
     const acc = await request(w.app.getHttpServer())
@@ -181,6 +220,8 @@ describe('Phase 4 - RLS e RBAC transversais', () => {
         bridal_groups: `INSERT INTO bridal_groups (id, organization_id, name, event_date) VALUES ('${randomUUID()}', '${w.orgId}', 'hack', '2031-01-01')`,
         contract_sequences: `INSERT INTO contract_sequences (organization_id, year, last_value) VALUES ('${w.orgId}', 1999, 1)`,
         contract_alert_runs: `INSERT INTO contract_alert_runs (organization_id, run_date) VALUES ('${w.orgId}', '2001-01-01')`,
+        contract_deposit_installments: `INSERT INTO contract_deposit_installments (organization_id, contract_id, seq, amount, due_date) VALUES ('${w.orgId}', '${contractId}', 99, 1, '2031-01-01')`,
+        contract_letterheads: `INSERT INTO contract_letterheads (organization_id, sha256, mime_type, width, height, size_bytes, data) VALUES ('${w.orgId}', '${'a'.repeat(64)}', 'image/png', 1, 1, 1, '\\x00')`,
       };
       for (const [table, sql] of Object.entries(inserts)) {
         await expect([
@@ -307,6 +348,13 @@ describe('Phase 4 - RLS e RBAC transversais', () => {
         ['admin'],
         (g) => g(UPDATE_SETTINGS, { input: { balanceDueDaysBefore: 10 } }),
       ],
+      ['contractReadiness', ['admin', 'manager', 'attendant'], (g) => g(READINESS, { id: contractId })],
+      [
+        'uploadContractLetterhead',
+        ['admin'],
+        (g) => g(UPLOAD_LH, { input: { filename: 'x.gif', mimeType: 'image/gif', base64: 'AAAA' } }),
+      ],
+      ['removeContractLetterhead', ['admin'], (g) => g(REMOVE_LH)],
       ['contractPdf', ['admin', 'manager', 'attendant'], (g) => g(PDF, { id: missing() })],
       ['runContractAlertsNow', ['admin', 'manager'], (g) => g(RUN_NOW)],
     ];
@@ -315,9 +363,9 @@ describe('Phase 4 - RLS e RBAC transversais', () => {
       ROLES.map((role) => [role, op, allowedRoles.includes(role), run] as const),
     );
 
-    it('cobre as 16 operacoes x 4 papeis', () => {
-      expect(ops.length).toBe(16);
-      expect(rows.length).toBe(64);
+    it('cobre as 19 operacoes x 4 papeis', () => {
+      expect(ops.length).toBe(19);
+      expect(rows.length).toBe(76);
     });
 
     it.each(rows.map((r) => [r[0], r[1], r[2], r[3]] as const))(
