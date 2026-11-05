@@ -345,6 +345,29 @@ export const ContractPdfQuery = gql`
   }
 `;
 
+/** Prévia em PDF do formulário de contrato (somente leitura, não grava nada). */
+export const ContractPreviewPdfQuery = gql`
+  query ContractPreviewPdf($input: ContractPreviewInput!) {
+    contractPreviewPdf(input: $input) {
+      filename
+      base64
+      errors {
+        code
+        message
+        field
+      }
+    }
+  }
+`;
+
+export interface ContractPreviewPdfResult {
+  contractPreviewPdf: {
+    filename: string | null;
+    base64: string | null;
+    errors: { code: string; message: string; field: string | null }[];
+  };
+}
+
 /** Consulta mínima do grupo para o formulário (independente do api do 04-13). */
 export const ContractGroupQuery = gql`
   query ContractGroup($id: UUID!) {

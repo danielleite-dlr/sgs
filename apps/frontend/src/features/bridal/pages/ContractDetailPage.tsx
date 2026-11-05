@@ -28,17 +28,11 @@ import {
 import { CancelContractDialog } from '../components/CancelContractDialog';
 import { ContractFormDialog } from '../components/ContractFormDialog';
 import { ContractLinkCard } from '../components/ContractLinkCard';
+import { base64ToBlob } from '../lib/contract-preview';
 import { ContractPaymentDialog } from '../components/ContractPaymentDialog';
 import { ReverseContractPaymentDialog } from '../components/ReverseContractPaymentDialog';
 
 const brl = (v: string) => `R$ ${formatCurrencyDisplay(v)}`;
-
-function base64ToBlob(b64: string, type: string): Blob {
-  const bin = atob(b64);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return new Blob([bytes], { type });
-}
 
 export function ContractDetailPage() {
   const { id } = useParams<{ id: string }>();

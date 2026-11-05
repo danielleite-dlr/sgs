@@ -21,6 +21,7 @@ import {
   maskCurrency,
   unmaskCurrency,
 } from '@/features/catalog/utils/currency-mask';
+import { useMediaQuery } from '@/lib/use-media-query';
 import { centsToDecimal, decimalToCents } from '@/features/operations/lib/money';
 import {
   ContractGroupQuery,
@@ -53,6 +54,13 @@ import {
   emptyNewContract,
   newContractBrideName,
 } from '../lib/new-contract';
+import {
+  buildContractPreviewInput,
+  buildContractSaveInput,
+  type ContractFormState,
+} from '../lib/contract-preview';
+import { useContractPreview } from '../lib/use-contract-preview';
+import { ContractPreviewButton, ContractPreviewPanel } from './ContractPreviewPanel';
 
 const brl = (cents: number) => `R$ ${formatCurrencyDisplay(centsToDecimal(cents))}`;
 
@@ -118,7 +126,10 @@ export function ContractFormDialog({ open, onOpenChange, groupId, contract }: Co
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" data-testid="contract-form">
+      <DialogContent
+        className="max-w-3xl lg:max-w-[1400px] max-h-[90vh] overflow-y-auto"
+        data-testid="contract-form"
+      >
         <DialogHeader>
           <DialogTitle>{contract ? `Editar contrato ${contract.code}` : 'Novo contrato'}</DialogTitle>
           <DialogDescription>
@@ -336,33 +347,36 @@ function ContractForm({
     setAddService('');
   }
 
+  // Mesmo input para salvar e para a prévia (prévia = o que seria salvo).
+  const formState: ContractFormState = {
+    contractId: contract?.id ?? null,
+    groupId: isNew ? null : group.id,
+    newGroup: isNew ? newGroupResult : null,
+    items,
+    packageId,
+    packageDriven,
+    discount,
+    discountDescription,
+    paymentMode,
+    depositCents,
+    installments: resolvedRows,
+    days,
+  };
+  const previewInput = buildContractPreviewInput(formState);
+  // Telas largas: PDF ao lado, regerado sozinho; celular: botão "Ver prévia".
+  const isLg = useMediaQuery('(min-width: 1024px)');
+  const preview = useContractPreview(previewInput, { auto: isLg });
+
   async function submit() {
     setError('');
-    const explicitItems = items.map((i) => ({
-      groupMemberId: i.groupMemberId === BRIDE_DRAFT_ID ? undefined : i.groupMemberId,
-      serviceId: i.serviceId,
-      unitPrice: unmaskCurrency(i.unitPrice) || '0.00',
-      quantity: i.quantity,
-      purpose: i.purpose,
-      packageItem: i.packageItem,
-    }));
-    const common = {
-      packageId: packageId || undefined,
-      discountAmount: discount ? unmaskCurrency(discount) : '0.00',
-      depositAmount: depositCents > 0 ? centsToDecimal(depositCents) : undefined,
-      paymentMode,
-      discountDescription: discountDescription.trim() || null,
-      installments: resolvedRows.map((r) => ({
-        dueDate: r.dueDate,
-        amount: centsToDecimal(r.cents ?? 0),
-      })),
-      balanceDueDaysBefore: days !== '' ? Number(days) : undefined,
-    };
+    const save = buildContractSaveInput(formState);
+    if (save.kind === 'incomplete') {
+      setError(save.error);
+      return;
+    }
     try {
-      if (contract) {
-        const res = await updateContract({
-          variables: { id: contract.id, input: { ...common, items: explicitItems } },
-        });
+      if (save.kind === 'update') {
+        const res = await updateContract({ variables: { id: save.id, input: save.input } });
         const payload = res.data?.updateContract;
         if (payload?.errors.length) {
           setError(contractErrorMessage(payload.errors[0]));
@@ -372,25 +386,7 @@ function ContractForm({
         onClose();
         return;
       }
-      let target: Record<string, unknown>;
-      if (isNew) {
-        if (!newGroupResult.ok) {
-          setError(newGroupResult.error);
-          return;
-        }
-        target = { newGroup: newGroupResult.input };
-      } else {
-        target = { groupId: group.id };
-      }
-      const res = await createContract({
-        variables: {
-          input: {
-            ...target,
-            ...common,
-            ...(packageDriven ? {} : { items: explicitItems }),
-          },
-        },
-      });
+      const res = await createContract({ variables: { input: save.input } });
       const payload = res.data?.createContract;
       if (payload?.errors.length) {
         setError(contractErrorMessage(payload.errors[0]));
@@ -411,8 +407,8 @@ function ContractForm({
     installmentsError === null &&
     (!isNew || newGroupResult.ok);
 
-  return (
-    <div className="space-y-md">
+  const formColumn = (
+    <div className="space-y-md lg:max-h-[75vh] lg:overflow-y-auto lg:pr-sm">
       {isNew ? (
         <NewContractEventFields value={nc} onChange={setNc} />
       ) : (
@@ -699,7 +695,14 @@ function ContractForm({
         </p>
       )}
 
+      {!isLg && previewInput && preview.error && (
+        <p data-testid="contract-preview-error" className="text-sm text-error-600">
+          Prévia: {preview.error}
+        </p>
+      )}
+
       <DialogFooter>
+        {!isLg && <ContractPreviewButton preview={preview} hasInput={!!previewInput} />}
         <Button type="button" variant="outline" onClick={onClose}>
           Cancelar
         </Button>
@@ -707,6 +710,16 @@ function ContractForm({
           {busy ? 'Salvando…' : contract ? 'Salvar nova versão' : 'Criar contrato'}
         </Button>
       </DialogFooter>
+    </div>
+  );
+
+  if (!isLg) return formColumn;
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-lg">
+      {formColumn}
+      <div className="h-[75vh]">
+        <ContractPreviewPanel preview={preview} hasInput={!!previewInput} />
+      </div>
     </div>
   );
 }
