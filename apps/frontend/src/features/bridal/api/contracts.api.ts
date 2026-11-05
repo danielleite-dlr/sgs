@@ -11,6 +11,22 @@ export const CONTRACT_FIELDS = gql`
     eventDate
     brideClientId
     brideName
+    eventKind
+    contractorClientId
+    contractorName
+    paymentMode
+    discountDescription
+    packageName
+    currentSnapshotFormat
+    installments {
+      seq
+      dueDate
+      amount
+      paidAmount
+      pendingAmount
+      state
+      overdue
+    }
     packageId
     itemsTotal
     discountAmount
@@ -54,6 +70,7 @@ export const CONTRACT_FIELDS = gql`
       unitPrice
       total
       purpose
+      isPackageItem
     }
     payments {
       id
@@ -305,6 +322,20 @@ export const CancelContractMutation = gql`
   }
 `;
 
+export const ContractReadinessQuery = gql`
+  query ContractReadiness($id: UUID!) {
+    contractReadiness(id: $id) {
+      ready
+      missing {
+        code
+        label
+        target
+        targetId
+      }
+    }
+  }
+`;
+
 export const ContractPdfQuery = gql`
   query ContractPdf($id: UUID!) {
     contractPdf(id: $id) {
@@ -382,6 +413,29 @@ export interface ContractItemData {
   unitPrice: string;
   total: string;
   purpose: string;
+  isPackageItem: boolean;
+}
+
+export interface ContractInstallmentData {
+  seq: number;
+  dueDate: string;
+  amount: string;
+  paidAmount: string;
+  pendingAmount: string;
+  /** paid | partial | open */
+  state: string;
+  overdue: boolean;
+}
+
+export interface ContractMissingField {
+  code: string;
+  label: string;
+  /** client | group | contract | settings */
+  target: string;
+  targetId: string | null;
+}
+export interface ContractReadinessResult {
+  contractReadiness: { ready: boolean; missing: ContractMissingField[] };
 }
 
 export interface ContractPaymentData {
@@ -414,6 +468,15 @@ export interface ContractData {
   eventDate: string;
   brideClientId: string;
   brideName: string;
+  eventKind: string;
+  contractorClientId: string;
+  contractorName: string;
+  /** sinal | sinal_parcelado | a_vista */
+  paymentMode: string;
+  discountDescription: string | null;
+  packageName: string | null;
+  currentSnapshotFormat: number;
+  installments: ContractInstallmentData[];
   packageId: string | null;
   itemsTotal: string;
   discountAmount: string;
