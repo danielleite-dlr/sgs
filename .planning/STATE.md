@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 Phase: 04.1 (layout-e-regras-do-contrato-modelo-studio-js) — EXECUTING
 Plan: 2 of 17
 Status: Ready to execute
-Last activity: 2026-11-05 - Completed quick task 261105-c26: contrato comeca pela noiva e cria o grupo
+Last activity: 2026-11-05 - Completed quick task 261105-d6k: previa do contrato ao vivo no formulario
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -187,6 +187,7 @@ Recent decisions affecting current work:
 | 261104-ix0 | Pacote do contrato vale para o grupo: contrato grava o pacote no grupo e os servicos na noiva (update so quando o pacote muda ou o grupo esta sem pacote), backfill dos grupos existentes e refetch do grupo no dialogo | 2026-11-04 | ee28378 | [261104-ix0-pacote-do-contrato-vale-para-o-grupo](./quick/261104-ix0-pacote-do-contrato-vale-para-o-grupo/) |
 | 261104-ky7 | Rateio do pacote pelo repasse quando os servicos nao tem preco avulso (divisao igual sem repasse), em contratos e comandas, e dica no aceite publico do que falta para habilitar "Aceito" | 2026-11-04 | dd2739d | [261104-ky7-rateio-do-pacote-pelo-repasse-e-dica-no-](./quick/261104-ky7-rateio-do-pacote-pelo-repasse-e-dica-no-/) |
 | 261105-c26 | Contrato comeca pela noiva em Contratos > Novo contrato e cria o grupo na mesma transacao; acompanhantes entram depois, fora do contrato | 2026-11-05 | f9d862a | [261105-c26-contrato-comeca-pela-noiva-e-cria-o-grup](./quick/261105-c26-contrato-comeca-pela-noiva-e-cria-o-grup/) |
+| 261105-d6k | Previa ao vivo do contrato no formulario: o proprio PDF (modelo Studio JS, timbrado) ao lado do formulario no desktop e Ver previa no celular, via query contractPreviewPdf que roda create/update numa transacao desfeita (nada gravado) | 2026-11-05 | a20e500 | [261105-d6k-previa-do-contrato-ao-vivo-no-formulario](./quick/261105-d6k-previa-do-contrato-ao-vivo-no-formulario/) |
 
 ## Session Continuity
 
