@@ -1,9 +1,11 @@
 import {
+  allocateInstallments,
   balanceDueDate,
   computeContractStatus,
   computeContractTotals,
   computeDepositCents,
   daysBetween,
+  validateInstallments,
 } from './contract-math';
 
 describe('computeDepositCents', () => {
@@ -128,5 +130,83 @@ describe('computeContractStatus', () => {
     expect(r.balanceDueSoon).toBe(false);
     expect(r.balanceOverdue).toBe(false);
     expect(r.depositOverdue).toBe(false);
+  });
+});
+
+describe('allocateInstallments', () => {
+  const inst = [
+    { seq: 1, dueDate: '2026-11-01', cents: 300 },
+    { seq: 2, dueDate: '2026-12-01', cents: 200 },
+  ];
+  const run = (paid: number, today = '2026-10-01') =>
+    allocateInstallments(inst, paid, today).map((i) => [i.state, i.paidCents, i.pendingCents]);
+
+  it('sem pagamento: tudo em aberto', () => {
+    expect(run(0)).toEqual([['open', 0, 300], ['open', 0, 200]]);
+  });
+  it('pagamento parcial na segunda', () => {
+    expect(run(350)).toEqual([['paid', 300, 0], ['partial', 50, 150]]);
+  });
+  it('pagamento exato quita ambas', () => {
+    expect(run(500)).toEqual([['paid', 300, 0], ['paid', 200, 0]]);
+  });
+  it('excedente não vira parcela negativa', () => {
+    expect(run(600)).toEqual([['paid', 300, 0], ['paid', 200, 0]]);
+  });
+  it('estorno líquido negativo vale 0', () => {
+    expect(run(-100)).toEqual([['open', 0, 300], ['open', 0, 200]]);
+  });
+  it('ordena por vencimento e depois seq', () => {
+    const r = allocateInstallments([inst[1], inst[0]], 300, '2026-10-01');
+    expect(r.map((i) => i.seq)).toEqual([1, 2]);
+    expect(r[0].state).toBe('paid');
+  });
+  it('vencida só quando há pendência e a data passou', () => {
+    const r = allocateInstallments(inst, 0, '2026-11-15');
+    expect(r.map((i) => i.overdue)).toEqual([true, false]);
+    expect(allocateInstallments(inst, 300, '2026-11-15')[0].overdue).toBe(false);
+  });
+});
+
+describe('validateInstallments', () => {
+  const one = [{ dueDate: '2026-11-10', cents: 30000 }];
+  const err = (fn: () => void, code: string) => expect(fn).toThrow(new RangeError(code));
+
+  it('aceita sinal único e sinal parcelado', () => {
+    expect(() => validateInstallments('sinal', one, 30000, 100000)).not.toThrow();
+    expect(() =>
+      validateInstallments(
+        'sinal_parcelado',
+        [{ dueDate: '2026-11-10', cents: 15000 }, { dueDate: '2026-12-10', cents: 15000 }],
+        30000,
+        100000,
+      ),
+    ).not.toThrow();
+  });
+  it('modo inválido', () => {
+    err(() => validateInstallments('x', one, 30000, 100000), 'PAYMENT_MODE_INVALID');
+  });
+  it('lista vazia', () => {
+    err(() => validateInstallments('sinal', [], 30000, 100000), 'INSTALLMENTS_REQUIRED');
+  });
+  it('contagem inválida', () => {
+    err(() => validateInstallments('sinal', [...one, ...one], 60000, 100000), 'INSTALLMENTS_COUNT_INVALID');
+    err(() => validateInstallments('a_vista', [...one, ...one], 60000, 60000), 'INSTALLMENTS_COUNT_INVALID');
+    const many = Array.from({ length: 13 }, () => ({ dueDate: '2026-11-10', cents: 100 }));
+    err(() => validateInstallments('sinal_parcelado', many, 1300, 100000), 'INSTALLMENTS_COUNT_INVALID');
+  });
+  it('parcela inválida', () => {
+    err(() => validateInstallments('sinal', [{ dueDate: '2026-11-10', cents: 0 }], 0, 100), 'INSTALLMENT_INVALID');
+    err(() => validateInstallments('sinal', [{ dueDate: '2026-11-10', cents: 10.5 }], 10, 100), 'INSTALLMENT_INVALID');
+    err(() => validateInstallments('sinal', [{ dueDate: '10/11/2026', cents: 100 }], 100, 1000), 'INSTALLMENT_INVALID');
+    err(() => validateInstallments('sinal', [{ dueDate: '2026-02-31', cents: 100 }], 100, 1000), 'INSTALLMENT_INVALID');
+  });
+  it('tolerância de R$ 0,01 na soma', () => {
+    expect(() => validateInstallments('sinal', [{ dueDate: '2026-11-10', cents: 29999 }], 30000, 100000)).not.toThrow();
+    err(() => validateInstallments('sinal', [{ dueDate: '2026-11-10', cents: 29998 }], 30000, 100000), 'INSTALLMENTS_SUM_MISMATCH');
+  });
+  it('à vista precisa igualar o total', () => {
+    expect(() => validateInstallments('a_vista', one, 30000, 30000)).not.toThrow();
+    err(() => validateInstallments('a_vista', one, 30000, 40000), 'A_VISTA_MUST_EQUAL_TOTAL');
   });
 });
