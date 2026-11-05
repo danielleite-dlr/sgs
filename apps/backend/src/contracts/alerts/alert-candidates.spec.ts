@@ -13,6 +13,10 @@ function contract(over: Partial<AlertContractInput> = {}): AlertContractInput {
     code: 'CT-2030-001',
     status: 'active',
     brideName: 'Ana',
+    contractorName: 'Ana',
+    debutanteName: null,
+    paymentMode: 'sinal',
+    installments: [],
     totalCents: 800000,
     depositCents: 240000,
     paymentsCents: [640000],
@@ -97,5 +101,104 @@ describe('buildAlertCandidates', () => {
   it('cancelado e rascunho não geram alertas de contrato', () => {
     expect(run([contract({ status: 'cancelled', balanceDueDate: '2030-06-01' })])).toHaveLength(0);
     expect(run([contract({ status: 'draft', balanceDueDate: '2030-06-01' })])).toHaveLength(0);
+  });
+});
+
+describe('alertas de parcela do sinal', () => {
+  const inst2 = [
+    { seq: 1, dueDate: '2030-06-12', cents: 20000 },
+    { seq: 2, dueDate: '2030-06-30', cents: 20000 },
+  ];
+  const base = { installments: inst2, paymentsCents: [] as number[], balanceDueDate: '2030-09-01' };
+  const kinds = (r: { kind: string }[]) => r.map((c) => c.kind);
+
+  it('parcela vencendo em 2 dias', () => {
+    const r = run([contract(base)]);
+    expect(kinds(r)).toEqual(['contract_installment_due_soon']);
+    expect(r[0].state).toBe('p1:2030-06-12');
+    expect(r[0].title).toBe('Parcela do sinal vence em 2 dia(s)');
+  });
+
+  it('parcela vencendo hoje', () => {
+    const r = run([contract({ ...base, installments: [{ seq: 1, dueDate: TODAY, cents: 20000 }] })]);
+    expect(r[0].title).toBe('Parcela do sinal vence hoje');
+  });
+
+  it('parcela vencida parcialmente paga', () => {
+    const r = run([
+      contract({
+        ...base,
+        installments: [{ seq: 1, dueDate: '2030-06-09', cents: 20000 }, inst2[1]],
+        paymentsCents: [10000],
+      }),
+    ]);
+    expect(kinds(r)).toEqual(['contract_installment_overdue']);
+    expect(r[0].title).toBe('Parcela do sinal vencida');
+    expect(r[0].message).toContain('R$');
+    expect(r[0].message).toContain('100,00');
+    expect(r[0].message).toContain('parcela 1/2');
+    expect(r[0].dedupeKey).toBe('contract_installment_overdue:c1:p1:2030-06-09');
+  });
+
+  it('parcela quitada não alerta; tudo pago não alerta', () => {
+    expect(kinds(run([contract({ ...base, paymentsCents: [20000] })]))).toEqual([]);
+    expect(run([contract({ ...base, paymentsCents: [40000] })])).toHaveLength(0);
+  });
+
+  it('estorno volta a alertar', () => {
+    const r = run([contract({ ...base, paymentsCents: [20000, -20000] })]);
+    expect(kinds(r)).toEqual(['contract_installment_due_soon']);
+  });
+
+  it('à vista vencido não gera alertas do restante', () => {
+    const r = run([
+      contract({
+        paymentMode: 'a_vista',
+        installments: [{ seq: 1, dueDate: '2030-06-09', cents: 80000 }],
+        paymentsCents: [],
+        balanceDueDate: '2030-06-01',
+      }),
+    ]);
+    expect(kinds(r)).toEqual(['contract_installment_overdue']);
+    expect(r[0].title).toBe('Pagamento à vista vencido');
+  });
+
+  it('à vista vencendo', () => {
+    const r = run([
+      contract({
+        paymentMode: 'a_vista',
+        installments: [{ seq: 1, dueDate: '2030-06-12', cents: 80000 }],
+        paymentsCents: [],
+      }),
+    ]);
+    expect(r[0].title).toBe('Pagamento à vista vence em 2 dia(s)');
+  });
+
+  it('sem parcelas mantém entrada não paga legada', () => {
+    const r = run([
+      contract({ paymentsCents: [], balanceDueDate: '2030-07-30', acceptedLocalDate: '2030-06-07' }),
+    ]);
+    expect(kinds(r)).toEqual(['contract_deposit_unpaid']);
+  });
+
+  it('aguardando aceite não gera alerta de parcela', () => {
+    const r = run([
+      contract({
+        ...base,
+        status: 'awaiting_acceptance',
+        installments: [{ seq: 1, dueDate: '2030-06-09', cents: 20000 }],
+        linkGeneratedLocalDate: '2030-06-09',
+      }),
+    ]);
+    expect(kinds(r)).toEqual([]);
+  });
+
+  it('rótulo da debutante nomeia a contratante e a debutante', () => {
+    const r = run([
+      contract({ ...base, contractorName: 'Mãe', debutanteName: 'Filha' }),
+      contract({ ...base, id: 'c2', code: 'CT-2', contractorName: 'Noiva' }),
+    ]);
+    expect(r[0].message.startsWith('CT-2030-001 — Mãe (debutante Filha)')).toBe(true);
+    expect(r[1].message.startsWith('CT-2 — Noiva')).toBe(true);
   });
 });

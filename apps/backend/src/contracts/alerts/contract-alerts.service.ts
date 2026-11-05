@@ -107,13 +107,27 @@ export class ContractAlertsService {
         const cfg = await this.settings.getEffective(tx, orgId);
         const contractRows = await tx.contract.findMany({
           where: { status: { in: ['awaiting_acceptance', 'active'] } },
-          include: { payments: true, bride: { select: { fullName: true } } },
+          include: {
+            payments: true,
+            bride: { select: { fullName: true } },
+            contractor: { select: { fullName: true } },
+            group: { select: { eventKind: true } },
+            installments: { orderBy: { seq: 'asc' } },
+          },
         });
         const contracts: AlertContractInput[] = contractRows.map((c) => ({
           id: c.id,
           code: c.code,
           status: c.status,
           brideName: c.bride.fullName,
+          contractorName: c.contractor?.fullName ?? c.bride.fullName,
+          debutanteName: c.group.eventKind === 'debutante' ? c.bride.fullName : null,
+          paymentMode: c.paymentMode as AlertContractInput['paymentMode'],
+          installments: c.installments.map((i) => ({
+            seq: i.seq,
+            dueDate: i.dueDate.toISOString().slice(0, 10),
+            cents: toCents(i.amount),
+          })),
           totalCents: toCents(c.totalAmount),
           depositCents: toCents(c.depositAmount),
           paymentsCents: c.payments.map((p) => toCents(p.amount)),

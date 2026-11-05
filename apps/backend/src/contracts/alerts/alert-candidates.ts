@@ -1,10 +1,12 @@
-import { computeContractStatus, daysBetween } from '../domain/contract-math';
+import { allocateInstallments, computeContractStatus, daysBetween } from '../domain/contract-math';
 import { formatBRL, formatDateBR } from '../domain/contract-template';
 
 export const ALERT_KINDS = [
   'contract_balance_due_soon',
   'contract_balance_overdue',
   'contract_deposit_unpaid',
+  'contract_installment_due_soon',
+  'contract_installment_overdue',
   'contract_not_accepted',
   'bridal_companion_deposit_pending',
 ] as const;
@@ -28,6 +30,10 @@ export interface AlertContractInput {
   code: string;
   status: string;
   brideName: string;
+  contractorName: string;
+  debutanteName: string | null;
+  paymentMode: 'sinal' | 'sinal_parcelado' | 'a_vista';
+  installments: { seq: number; dueDate: string; cents: number }[];
   totalCents: number;
   depositCents: number;
   /** Pagamentos assinados (estornos negativos). */
@@ -118,7 +124,51 @@ export function buildAlertCandidates(input: BuildAlertCandidatesInput): AlertCan
       depositUnpaidDays: settings.depositUnpaidDays,
     });
 
-    if (st.depositOverdue) {
+    const aVista = c.paymentMode === 'a_vista';
+    const instLabel = c.debutanteName
+      ? `${c.code} — ${c.contractorName} (debutante ${c.debutanteName})`
+      : `${c.code} — ${c.contractorName}`;
+    const n = c.installments.length;
+    if (n > 0) {
+      const net = c.paymentsCents.reduce((a, b) => a + b, 0);
+      for (const i of allocateInstallments(c.installments, net, today)) {
+        if (i.pendingCents <= 0) continue;
+        const state = `p${i.seq}:${i.dueDate}`;
+        const what = aVista ? 'Pagamento à vista' : 'Parcela do sinal';
+        const ext = { ...extra, seq: i.seq, dueDate: i.dueDate };
+        if (i.overdue) {
+          const ref = aVista ? 'o pagamento à vista' : `a parcela ${i.seq}/${n}`;
+          out.push(
+            make(
+              'contract_installment_overdue',
+              'contract',
+              c.id,
+              state,
+              aVista ? 'Pagamento à vista vencido' : 'Parcela do sinal vencida',
+              `${instLabel}: ${ref} de ${formatBRL(i.pendingCents)} venceu em ${formatDateBR(i.dueDate)}.`,
+              ext,
+            ),
+          );
+        } else {
+          const d = daysBetween(today, i.dueDate);
+          if (d >= 0 && d <= 3) {
+            out.push(
+              make(
+                'contract_installment_due_soon',
+                'contract',
+                c.id,
+                state,
+                d === 0 ? `${what} vence hoje` : `${what} vence em ${d} dia(s)`,
+                `${instLabel}: ${aVista ? 'pagamento à vista' : `parcela ${i.seq}/${n}`} de ${formatBRL(i.pendingCents)} vence em ${formatDateBR(i.dueDate)}.`,
+                ext,
+              ),
+            );
+          }
+        }
+      }
+    }
+
+    if (n === 0 && st.depositOverdue) {
       out.push(
         make(
           'contract_deposit_unpaid',
@@ -131,6 +181,7 @@ export function buildAlertCandidates(input: BuildAlertCandidatesInput): AlertCan
         ),
       );
     }
+    if (aVista) continue;
     if (st.balanceOverdue) {
       out.push(
         make(
@@ -144,14 +195,14 @@ export function buildAlertCandidates(input: BuildAlertCandidatesInput): AlertCan
         ),
       );
     } else if (st.balanceDueSoon) {
-      const n = st.daysToBalanceDue;
+      const dn = st.daysToBalanceDue;
       out.push(
         make(
           'contract_balance_due_soon',
           'contract',
           c.id,
           c.balanceDueDate,
-          n === 0 ? 'Restante vence hoje' : `Restante vence em ${n} dia(s)`,
+          dn === 0 ? 'Restante vence hoje' : `Restante vence em ${dn} dia(s)`,
           `${label}: saldo ${formatBRL(st.balanceCents)} até ${formatDateBR(c.balanceDueDate)}.`,
           extra,
         ),
