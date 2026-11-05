@@ -305,7 +305,7 @@ describe('ClientsService — CRUD', () => {
       rg: '98.765.432-1',
     });
     const rows = await adminPrisma.$queryRawUnsafe<Array<{ n: bigint }>>(
-      `SELECT count(*)::bigint AS n FROM audit_logs WHERE organization_id = '${orgAId}'::uuid AND metadata::text LIKE '%98.765.432-1%'`,
+      `SELECT count(*)::bigint AS n FROM audit_log WHERE organization_id = '${orgAId}'::uuid AND metadata::text LIKE '%98.765.432-1%'`,
     );
     expect(Number(rows[0].n)).toBe(0);
   });
