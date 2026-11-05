@@ -1,13 +1,13 @@
-import { Injectable } from "@nestjs/common";
-import { recordAudit } from "../common/audit-log";
-import { TenantContextService } from "../database/tenant-context.service";
-import type { TenantPrismaClient } from "../database/types";
-import { DEFAULT_CANCELLATION_CLAUSE } from "./domain/cancellation-policy";
+import { Injectable } from '@nestjs/common';
+import { recordAudit } from '../common/audit-log';
+import { TenantContextService } from '../database/tenant-context.service';
+import type { TenantPrismaClient } from '../database/types';
+import { DEFAULT_CANCELLATION_CLAUSE } from './domain/cancellation-policy';
 import {
   DEFAULT_BRIDAL_TEMPLATE,
   TEMPLATE_VARIABLES,
   validateTemplate,
-} from "./domain/contract-template";
+} from './domain/contract-template';
 import {
   CONTRACT_TEXT_SECTIONS,
   CONTRACT_TEXT_VARIABLES,
@@ -15,12 +15,8 @@ import {
   validateContractTexts,
   type ContractTextSection,
   type ContractTexts,
-} from "./domain/contract-texts";
-import {
-  ContractError,
-  mapContractError,
-  type ContractUserError,
-} from "./contract-errors";
+} from './domain/contract-texts';
+import { ContractError, mapContractError, type ContractUserError } from './contract-errors';
 
 export interface ContractStudio {
   name: string;
@@ -115,8 +111,8 @@ const DEFAULTS: SettingsRow = {
   alert_deposit_unpaid_days: 3,
   alert_not_accepted_days: 3,
   alert_companion_deposit_days: 15,
-  day_start: "06:00",
-  day_end: "20:00",
+  day_start: '06:00',
+  day_end: '20:00',
   studio_name: null,
   studio_cnpj: null,
   studio_address: null,
@@ -133,37 +129,32 @@ const DEFAULTS: SettingsRow = {
   letterhead_sha256: null,
 };
 
-type TextColumn =
-  | "text_title"
-  | "text_intro"
-  | "text_parties"
-  | "text_trial_note"
-  | "text_clauses";
+type TextColumn = 'text_title' | 'text_intro' | 'text_parties' | 'text_trial_note' | 'text_clauses';
 
 const TEXT_COLUMN: Record<ContractTextSection, TextColumn> = {
-  title: "text_title",
-  intro: "text_intro",
-  parties: "text_parties",
-  trialNote: "text_trial_note",
-  clauses: "text_clauses",
+  title: 'text_title',
+  intro: 'text_intro',
+  parties: 'text_parties',
+  trialNote: 'text_trial_note',
+  clauses: 'text_clauses',
 };
 
 const TEXT_FIELD: Record<ContractTextSection, string> = {
-  title: "textTitle",
-  intro: "textIntro",
-  parties: "textParties",
-  trialNote: "textTrialNote",
-  clauses: "textClauses",
+  title: 'textTitle',
+  intro: 'textIntro',
+  parties: 'textParties',
+  trialNote: 'textTrialNote',
+  clauses: 'textClauses',
 };
 
 const STUDIO_COLUMN: Record<keyof ContractStudio, keyof SettingsRow> = {
-  name: "studio_name",
-  cnpj: "studio_cnpj",
-  address: "studio_address",
-  representative: "studio_representative",
-  representativeRg: "studio_representative_rg",
-  forumCity: "forum_city",
-  forumUf: "forum_uf",
+  name: 'studio_name',
+  cnpj: 'studio_cnpj',
+  address: 'studio_address',
+  representative: 'studio_representative',
+  representativeRg: 'studio_representative_rg',
+  forumCity: 'forum_city',
+  forumUf: 'forum_uf',
 };
 
 const STUDIO_MAX: Record<keyof ContractStudio, number> = {
@@ -178,9 +169,9 @@ const STUDIO_MAX: Record<keyof ContractStudio, number> = {
 
 const TEXT_MESSAGES: Record<string, (detail: string) => string> = {
   UNKNOWN_TEMPLATE_VARIABLE: (d) => `Variável desconhecida: {{${d}}}.`,
-  TEXT_TOO_LONG: () => "Texto muito longo (máx. 20.000 caracteres).",
+  TEXT_TOO_LONG: () => 'Texto muito longo (máx. 20.000 caracteres).',
   TEXT_UNSUPPORTED_CHARS: (d) => `Caracteres não suportados no PDF: ${d}`,
-  TEXT_EMPTY: () => "O texto não pode ficar vazio.",
+  TEXT_EMPTY: () => 'O texto não pode ficar vazio.',
 };
 
 function toView(
@@ -209,13 +200,13 @@ function toView(
     templateVariables: [...TEMPLATE_VARIABLES],
     missingVariables: validateTemplate(templateBody).missing,
     studio: {
-      name: r.studio_name ?? "",
-      cnpj: r.studio_cnpj ?? "",
-      address: r.studio_address ?? "",
-      representative: r.studio_representative ?? "",
-      representativeRg: r.studio_representative_rg ?? "",
-      forumCity: r.forum_city ?? "",
-      forumUf: r.forum_uf ?? "",
+      name: r.studio_name ?? '',
+      cnpj: r.studio_cnpj ?? '',
+      address: r.studio_address ?? '',
+      representative: r.studio_representative ?? '',
+      representativeRg: r.studio_representative_rg ?? '',
+      forumCity: r.forum_city ?? '',
+      forumUf: r.forum_uf ?? '',
     },
     withdrawalNoticeDays: r.withdrawal_notice_days,
     texts,
@@ -227,10 +218,7 @@ function toView(
   };
 }
 
-async function loadRow(
-  tx: TenantPrismaClient,
-  orgId: string,
-): Promise<SettingsRow | null> {
+async function loadRow(tx: TenantPrismaClient, orgId: string): Promise<SettingsRow | null> {
   const rows = await tx.$queryRaw<SettingsRow[]>`
     SELECT balance_due_days_before, template_body, cancellation_clause,
            alert_deposit_unpaid_days, alert_not_accepted_days, alert_companion_deposit_days,
@@ -293,7 +281,7 @@ const timeToDate = (hhmm: string) => new Date(`1970-01-01T${hhmm}:00.000Z`);
 function checkInt(v: number, min: number, max: number, field: string): number {
   if (!Number.isInteger(v) || v < min || v > max) {
     throw new ContractError(
-      "INVALID_DAYS",
+      'INVALID_DAYS',
       `Informe um número de dias entre ${min} e ${max}.`,
       field,
     );
@@ -309,34 +297,23 @@ function applyStudio(next: SettingsRow, studio: StudioInput): void {
     if (raw === undefined) continue;
     const field = `studio.${key}`;
     let value: string | null = raw === null ? null : raw.trim();
-    if (value === "") value = null;
+    if (value === '') value = null;
     if (value !== null) {
-      if (key === "cnpj") {
-        const digits = value.replace(/\D/g, "");
+      if (key === 'cnpj') {
+        const digits = value.replace(/\D/g, '');
         if (digits.length !== 14) {
-          throw new ContractError(
-            "INVALID_CNPJ",
-            "Informe um CNPJ com 14 dígitos.",
-            field,
-          );
+          throw new ContractError('INVALID_CNPJ', 'Informe um CNPJ com 14 dígitos.', field);
         }
-        value = digits.replace(
-          /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
-          "$1.$2.$3/$4-$5",
-        );
-      } else if (key === "forumUf") {
+        value = digits.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+      } else if (key === 'forumUf') {
         if (!/^[A-Za-z]{2}$/.test(value)) {
-          throw new ContractError(
-            "INVALID_UF",
-            "Informe a sigla da UF com 2 letras.",
-            field,
-          );
+          throw new ContractError('INVALID_UF', 'Informe a sigla da UF com 2 letras.', field);
         }
         value = value.toUpperCase();
       }
       if (value.length > STUDIO_MAX[key]) {
         throw new ContractError(
-          "INVALID_STUDIO_FIELD",
+          'INVALID_STUDIO_FIELD',
           `Texto muito longo (máx. ${STUDIO_MAX[key]} caracteres).`,
           field,
         );
@@ -351,17 +328,12 @@ export class ContractSettingsService {
   constructor(private readonly tenant: TenantContextService) {}
 
   /** Configuração efetiva (linha da org ou padrões), dentro da transação do chamador. */
-  async getEffective(
-    tx: TenantPrismaClient,
-    orgId: string,
-  ): Promise<ContractSettingsView> {
+  async getEffective(tx: TenantPrismaClient, orgId: string): Promise<ContractSettingsView> {
     return loadEffectiveSettings(tx, orgId);
   }
 
   get(orgId: string): Promise<ContractSettingsView> {
-    return this.tenant.runWithTenant(orgId, (tx) =>
-      this.getEffective(tx, orgId),
-    );
+    return this.tenant.runWithTenant(orgId, (tx) => this.getEffective(tx, orgId));
   }
 
   async update(
@@ -383,7 +355,7 @@ export class ContractSettingsService {
             input.balanceDueDaysBefore,
             0,
             365,
-            "balanceDueDaysBefore",
+            'balanceDueDaysBefore',
           );
         }
         if (input.alertDepositUnpaidDays != null) {
@@ -391,7 +363,7 @@ export class ContractSettingsService {
             input.alertDepositUnpaidDays,
             0,
             90,
-            "alertDepositUnpaidDays",
+            'alertDepositUnpaidDays',
           );
         }
         if (input.alertNotAcceptedDays != null) {
@@ -399,7 +371,7 @@ export class ContractSettingsService {
             input.alertNotAcceptedDays,
             0,
             90,
-            "alertNotAcceptedDays",
+            'alertNotAcceptedDays',
           );
         }
         if (input.alertCompanionDepositDays != null) {
@@ -407,7 +379,7 @@ export class ContractSettingsService {
             input.alertCompanionDepositDays,
             0,
             365,
-            "alertCompanionDepositDays",
+            'alertCompanionDepositDays',
           );
         }
 
@@ -415,9 +387,9 @@ export class ContractSettingsService {
           const d = input.withdrawalNoticeDays;
           if (!Number.isInteger(d) || d < 0 || d > 365) {
             throw new ContractError(
-              "INVALID_WITHDRAWAL_DAYS",
-              "Informe um prazo de desistência entre 0 e 365 dias.",
-              "withdrawalNoticeDays",
+              'INVALID_WITHDRAWAL_DAYS',
+              'Informe um prazo de desistência entre 0 e 365 dias.',
+              'withdrawalNoticeDays',
             );
           }
           next.withdrawal_notice_days = d;
@@ -445,9 +417,9 @@ export class ContractSettingsService {
             const { unknown } = validateTemplate(input.templateBody);
             if (unknown.length > 0) {
               throw new ContractError(
-                "UNKNOWN_TEMPLATE_VARIABLE",
-                `Variáveis desconhecidas no modelo: ${unknown.map((v) => `{{${v}}}`).join(", ")}.`,
-                "templateBody",
+                'UNKNOWN_TEMPLATE_VARIABLE',
+                `Variáveis desconhecidas no modelo: ${unknown.map((v) => `{{${v}}}`).join(', ')}.`,
+                'templateBody',
               );
             }
             next.template_body = input.templateBody;
@@ -460,30 +432,29 @@ export class ContractSettingsService {
             const len = input.cancellationClause.trim().length;
             if (len < 10 || len > 5000) {
               throw new ContractError(
-                "INVALID_CLAUSE",
-                "A cláusula deve ter entre 10 e 5000 caracteres.",
-                "cancellationClause",
+                'INVALID_CLAUSE',
+                'A cláusula deve ter entre 10 e 5000 caracteres.',
+                'cancellationClause',
               );
             }
             next.cancellation_clause = input.cancellationClause;
           }
         }
 
-        if (input.scheduleDayStart != null)
-          next.day_start = input.scheduleDayStart;
+        if (input.scheduleDayStart != null) next.day_start = input.scheduleDayStart;
         if (input.scheduleDayEnd != null) next.day_end = input.scheduleDayEnd;
         if (!TIME_RE.test(next.day_start) || !TIME_RE.test(next.day_end)) {
           throw new ContractError(
-            "INVALID_DAY_WINDOW",
-            "Use horários no formato HH:MM.",
-            "scheduleDayStart",
+            'INVALID_DAY_WINDOW',
+            'Use horários no formato HH:MM.',
+            'scheduleDayStart',
           );
         }
         if (next.day_end <= next.day_start) {
           throw new ContractError(
-            "INVALID_DAY_WINDOW",
-            "O fim do dia deve ser depois do início.",
-            "scheduleDayEnd",
+            'INVALID_DAY_WINDOW',
+            'O fim do dia deve ser depois do início.',
+            'scheduleDayEnd',
           );
         }
 
@@ -519,17 +490,14 @@ export class ContractSettingsService {
         await recordAudit(tx, {
           orgId,
           actorMemberId: memberId,
-          action: "contract.settings.update",
-          entityType: "contract_settings",
+          action: 'contract.settings.update',
+          entityType: 'contract_settings',
           entityId: orgId,
           metadata: {
             // Só as chaves alteradas: nunca valores (RG do representante, textos).
             fields: [
               ...Object.entries(input)
-                .filter(
-                  ([k, v]) =>
-                    v !== undefined && k !== "studio" && k !== "texts",
-                )
+                .filter(([k, v]) => v !== undefined && k !== 'studio' && k !== 'texts')
                 .map(([k]) => k),
               ...Object.entries(input.studio ?? {})
                 .filter(([, v]) => v !== undefined)

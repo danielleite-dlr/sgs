@@ -1,0 +1,14 @@
+# ===== Papel timbrado do contrato (fase 04.1, D-03) =====
+# Os bytes da imagem nunca são expostos aqui: só o PDF os lê, por hash.
+
+input UploadContractLetterheadInput {
+  filename: String!
+  mimeType: String!
+  "Conteúdo da imagem (PNG ou JPG, até 2,5 MB) em base64, sem prefixo data:."
+  base64: String!
+}
+
+extend type Mutation {
+  uploadContractLetterhead(input: UploadContractLetterheadInput!): ContractSettingsPayload!
+  removeContractLetterhead: ContractSettingsPayload!
+}
