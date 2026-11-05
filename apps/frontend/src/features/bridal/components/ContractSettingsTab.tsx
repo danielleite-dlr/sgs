@@ -19,6 +19,7 @@ import {
   type UserError,
 } from '../api/contracts.api';
 import { contractErrorMessage } from '../lib/contract-labels';
+import { LetterheadUpload } from './LetterheadUpload';
 
 const TEXT_SECTIONS: Array<{
   key: ContractTextSection;
@@ -235,6 +236,8 @@ function SettingsForm({ settings }: { settings: ContractSettingsData }) {
           })}
         </CardContent>
       </Card>
+
+      <LetterheadUpload letterhead={settings.letterhead} />
 
       <Card>
         <CardHeader>

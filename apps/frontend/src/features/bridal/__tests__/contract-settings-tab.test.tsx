@@ -1,7 +1,12 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
-import { ContractSettingsQuery, UpdateContractSettingsMutation } from '../api/contracts.api';
+import {
+  ContractSettingsQuery,
+  RemoveContractLetterheadMutation,
+  UpdateContractSettingsMutation,
+  UploadContractLetterheadMutation,
+} from '../api/contracts.api';
 import { ContractSettingsTab } from '../components/ContractSettingsTab';
 import { makeSettings } from './contract-fixtures';
 
@@ -142,5 +147,87 @@ describe('ContractSettingsTab', () => {
       await screen.findByRole('button', { name: '{{prazo_desistencia_dias}}' }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('Prazo para desistência (dias)')).toHaveValue(7);
+  });
+});
+
+const LETTERHEAD = {
+  __typename: 'ContractLetterhead',
+  sha256: 'a'.repeat(64),
+  mimeType: 'image/png',
+  width: 2480,
+  height: 3508,
+  sizeBytes: 204800,
+  originalFilename: 'timbrado.png',
+  uploadedAt: '2030-01-02T12:00:00.000Z',
+};
+
+describe('LetterheadUpload', () => {
+  it('sem arquivo mostra o aviso de PDF sem fundo', async () => {
+    renderTab([queryMock()]);
+    expect(
+      await screen.findByText('Sem papel timbrado — o PDF sai sem fundo, com as mesmas margens.'),
+    ).toBeInTheDocument();
+  });
+
+  it('enviar PNG chama a mutation com mimeType e base64 sem prefixo', async () => {
+    const withLetterhead = makeSettings({ letterhead: LETTERHEAD });
+    const mutation: MockedResponse = {
+      request: {
+        query: UploadContractLetterheadMutation,
+        variables: {
+          input: { filename: 'timbrado.png', mimeType: 'image/png', base64: 'aGVsbG8=' },
+        },
+      },
+      result: vi.fn(() => ({
+        data: {
+          uploadContractLetterhead: {
+            __typename: 'ContractSettingsPayload',
+            settings: withLetterhead,
+            errors: [],
+          },
+        },
+      })),
+    };
+    renderTab([queryMock(), mutation, queryMock(withLetterhead)]);
+    const input = await screen.findByLabelText('Enviar papel timbrado');
+    const file = new File(['hello'], 'timbrado.png', { type: 'image/png' });
+    fireEvent.change(input, { target: { files: [file] } });
+    await waitFor(() => expect(mutation.result).toHaveBeenCalled());
+    expect(await screen.findByText(/timbrado\.png/)).toBeInTheDocument();
+    expect(screen.getByText(/2480×3508 px · 200 KB/)).toBeInTheDocument();
+  });
+
+  it('arquivo .gif mostra a mensagem sem chamar a mutation', async () => {
+    const result = vi.fn();
+    const mutation: MockedResponse = {
+      request: { query: UploadContractLetterheadMutation, variables: { input: {} } },
+      result,
+    };
+    renderTab([queryMock(), mutation]);
+    const input = await screen.findByLabelText('Enviar papel timbrado');
+    const file = new File(['gif'], 'fundo.gif', { type: 'image/gif' });
+    fireEvent.change(input, { target: { files: [file] } });
+    expect(await screen.findByText('Envie uma imagem PNG ou JPG.')).toBeInTheDocument();
+    expect(result).not.toHaveBeenCalled();
+  });
+
+  it('remover (com confirmação) chama removeContractLetterhead', async () => {
+    const withLetterhead = makeSettings({ letterhead: LETTERHEAD });
+    const mutation: MockedResponse = {
+      request: { query: RemoveContractLetterheadMutation },
+      result: vi.fn(() => ({
+        data: {
+          removeContractLetterhead: {
+            __typename: 'ContractSettingsPayload',
+            settings: SETTINGS,
+            errors: [],
+          },
+        },
+      })),
+    };
+    renderTab([queryMock(withLetterhead), mutation, queryMock()]);
+    fireEvent.click(await screen.findByRole('button', { name: 'Remover' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Remover papel timbrado' }));
+    await waitFor(() => expect(mutation.result).toHaveBeenCalled());
   });
 });
