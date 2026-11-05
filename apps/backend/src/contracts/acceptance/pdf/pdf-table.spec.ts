@@ -69,7 +69,13 @@ describe('drawTable', () => {
     const rows: TableRow[] = Array.from({ length: 60 }, (_, i) => ({
       cells: [{ text: `linha ${i}` }, { text: 'x' }],
     }));
-    const r = drawTable(doc, { x: X, width: W, columns: [0.5, 0.5], rows, probe });
+    const r = drawTable(doc, {
+      x: X,
+      width: W,
+      columns: [0.5, 0.5],
+      rows,
+      probe,
+    });
     expect(r.pages).toBeGreaterThanOrEqual(2);
     expect(probe.maxY.length).toBeGreaterThanOrEqual(2);
     for (const y of probe.maxY) expect(y).toBeLessThanOrEqual(pageBottom(doc) + 1e-6);

@@ -5,6 +5,7 @@ import { recordAudit } from '../../common/audit-log';
 import { isUuid, TenantContextService } from '../../database/tenant-context.service';
 import type { TenantPrismaClient } from '../../database/types';
 import { lockContract } from '../contract-lock';
+import type { ContractSnapshot } from '../domain/contract-snapshot';
 import { maskCpf } from '../domain/contract-template';
 import { hashToken } from '../domain/contract-token';
 
@@ -37,6 +38,12 @@ export interface PublicContractView {
 }
 
 export interface ContractPdfData {
+  /** Snapshot estruturado (formato 2); ausente nas versões legadas. */
+  snapshot?: ContractSnapshot | null;
+  /** Papel timbrado (PNG/JPG) do salão, quando houver. */
+  letterhead?: Buffer | null;
+  /** Nome de arquivo sugerido (usado como título do PDF). */
+  fileName?: string;
   orgName: string;
   code: string;
   text: string;

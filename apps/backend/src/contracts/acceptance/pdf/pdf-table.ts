@@ -75,7 +75,12 @@ function writeRuns(
   const runs = parseBold(toWinAnsi(text));
   runs.forEach((run, i) => {
     doc.font(run.bold || baseBold ? 'Helvetica-Bold' : 'Helvetica').fontSize(size);
-    const o = { continued: i < runs.length - 1, width: w, align, lineGap: CELL_LINE_GAP };
+    const o = {
+      continued: i < runs.length - 1,
+      width: w,
+      align,
+      lineGap: CELL_LINE_GAP,
+    };
     if (i === 0) doc.text(run.text, x, y, o);
     else doc.text(run.text, o);
   });
