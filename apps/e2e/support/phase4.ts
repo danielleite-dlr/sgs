@@ -174,3 +174,102 @@ export async function groupAppointments(
   );
   return data.bridalGroup.appointments;
 }
+
+/**
+ * Completa os dados exigidos para gerar o link do contrato (gate D-09, fase 04.1):
+ * CPF/endereço/celulares da noiva, horário do evento e dados do studio. Os demais
+ * campos do grupo são relidos e reenviados para o update não zerá-los.
+ */
+export async function completeContractData(
+  token: string,
+  opts: { groupId: string; brideClientId?: string },
+): Promise<void> {
+  const g = await gql<{
+    bridalGroup: {
+      name: string;
+      eventDate: string;
+      readyBy: string | null;
+      locationKind: string;
+      locationAddress: string | null;
+      locationName: string | null;
+      travelMinutesBefore: number;
+      travelMinutesAfter: number;
+      notes: string | null;
+      members: { clientId: string; role: string }[];
+    };
+  }>(
+    `query($id: UUID!) {
+      bridalGroup(id: $id) {
+        name eventDate readyBy locationKind locationAddress locationName
+        travelMinutesBefore travelMinutesAfter notes
+        members { clientId role }
+      }
+    }`,
+    { id: opts.groupId },
+    { token },
+  );
+  const group = g.bridalGroup;
+  const brideClientId =
+    opts.brideClientId ?? group.members.find((m) => m.role === 'bride')!.clientId;
+
+  const client = await gql<{ updateClient: { errors: never[] } }>(
+    `mutation($input: UpdateClientInput!) {
+      updateClient(input: $input) { errors { code message } }
+    }`,
+    {
+      input: {
+        id: brideClientId,
+        cpf: '52998224725',
+        address: 'Rua das Flores, 10 - Osasco/SP',
+        phone: '11987654321',
+        phone2: '(11) 91111-2222',
+      },
+    },
+    { token },
+  );
+  expectNoUserErrors(client.updateClient, 'updateClient da noiva');
+
+  const upd = await gql<{ updateBridalGroup: { errors: never[] } }>(
+    `mutation($id: UUID!, $input: BridalGroupFieldsInput!) {
+      updateBridalGroup(id: $id, input: $input) { errors { code message } }
+    }`,
+    {
+      id: opts.groupId,
+      input: {
+        name: group.name,
+        eventDate: group.eventDate,
+        readyBy: group.readyBy,
+        locationKind: group.locationKind,
+        locationAddress: group.locationAddress,
+        locationName: group.locationName,
+        travelMinutesBefore: group.travelMinutesBefore,
+        travelMinutesAfter: group.travelMinutesAfter,
+        notes: group.notes,
+        eventTime: '16:00',
+      },
+    },
+    { token },
+  );
+  expectNoUserErrors(upd.updateBridalGroup, 'updateBridalGroup (horário do evento)');
+
+  const settings = await gql<{ updateContractSettings: { errors: never[] } }>(
+    `mutation($i: UpdateContractSettingsInput!) {
+      updateContractSettings(input: $i) { errors { code message } }
+    }`,
+    {
+      i: {
+        studio: {
+          name: 'Studio E2E',
+          cnpj: '48562103000171',
+          address: 'Rua E2E, 1',
+          representative: 'Dona E2E',
+          representativeRg: '11.111.111-1',
+          forumCity: 'Osasco',
+          forumUf: 'SP',
+        },
+      },
+    },
+    { token },
+  );
+  expectNoUserErrors(settings.updateContractSettings, 'updateContractSettings (studio)');
+}
