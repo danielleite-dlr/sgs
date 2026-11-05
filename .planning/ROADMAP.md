@@ -211,10 +211,25 @@ Plans:
 
 **Requirements**: CONT-01, CONT-02, CONT-03 (refinamento)
 **Depends on:** Phase 4
-**Plans:** 0 plans
+**Plans:** 16 plans (6 waves)
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 04.1 to break down)
+- [ ] 04.1-01-database-schema-seed-PLAN.md — Migration única (campos novos, parcelas do sinal, papel timbrado por hash, snapshot, RLS, backfill D-18) + seed do Studio JS pelo id da org
+- [ ] 04.1-02-contract-texts-tdd-PLAN.md — TDD: textos padrão do Studio JS com variáveis, negrito, WinAnsi, data por extenso, nome do arquivo
+- [ ] 04.1-03-snapshot-installments-tdd-PLAN.md — TDD: snapshot canônico + hash, orçamento pacote/adicionais, alocação e validação das parcelas, gate D-09
+- [ ] 04.1-04-backend-client-package-group-fields-PLAN.md — RG/CEP/celulares da cliente, descrição do pacote, tipo/responsável/horário/local do grupo
+- [ ] 04.1-05-backend-settings-letterhead-PLAN.md — Dados do studio, textos editáveis com restaurar padrão, upload do papel timbrado, bodyLimit
+- [ ] 04.1-06-pdf-structured-layout-PLAN.md — PDF pdfkit no layout do Studio JS (tabelas, fundo 0,8, margens, aviso pré-aceite, aceite), legado intacto
+- [ ] 04.1-07-backend-installment-alerts-PLAN.md — Alertas de parcela vencendo/vencida no job diário, à vista, dedupe por parcela
+- [ ] 04.1-08-backend-contracts-core-PLAN.md — Forma de pagamento + parcelas, desconto descrito, correção packageItem (D-05), versão com snapshot, gate e versão nova ao gerar link
+- [ ] 04.1-09-frontend-client-package-forms-PLAN.md — Ficha da cliente (RG, CEP, celulares) e descrição do pacote no catálogo
+- [ ] 04.1-10-frontend-bridal-group-form-PLAN.md — Grupo de noiva/debutante com responsável, horário, nome e endereço do local
+- [ ] 04.1-11-frontend-contract-settings-PLAN.md — Configurações: studio, prazos, textos por seção e papel timbrado
+- [ ] 04.1-12-backend-acceptance-pdf-wiring-PLAN.md — Aceite/página pública com snapshot, CPF da contratante, PDF desde o rascunho, nome do arquivo, backfill testado
+- [ ] 04.1-13-frontend-contract-form-detail-PLAN.md — Formulário com sinal/parcelado/à vista, detalhe com parcelas, pendências do link e PDF
+- [ ] 04.1-14-frontend-public-accept-page-PLAN.md — Página pública com o contrato estruturado, legível no celular
+- [ ] 04.1-15-e2e-verification-PLAN.md — RLS/RBAC das tabelas novas, E2E noiva (sinal parcelado) e debutante (à vista), gate completo, VALIDATION.md
+- [ ] 04.1-16-deploy-human-verification-PLAN.md — Push + deploy staging + CI, conferência do seed e verificação humana do PDF vs. gerador do Studio
 
 ### Phase 5: Communication & Launch
 
