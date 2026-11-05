@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 4 context gathered
-last_updated: "2026-11-04T02:38:00.145Z"
+stopped_at: Phase 04.1 context gathered
+last_updated: "2026-11-05T00:40:25.809Z"
 last_activity: 2026-11-04 -- Phase 04 execution started
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 4
   total_plans: 45
-  completed_plans: 30
+  completed_plans: 45
   percent: 100
 ---
 
@@ -165,6 +165,7 @@ Recent decisions affecting current work:
 
 - Phase 02.1 inserted after Phase 2: Equipe e profissionais — cadastro completo de profissionais (URGENT)
 - Phase 02.1 executada 2026-09-29: 2 waves, 2/2 planos. Backend e frontend mesclados no master. Falta a verificacao manual ponta a ponta do criterio do M1 (convite -> aceite -> aparece em /profissionais, /agenda e /catalogo/comissoes), que exige as duas apps no ar.
+- Phase 04.1 inserted after Phase 4: Layout e regras do contrato (modelo Studio JS) — PDF em 2 páginas com tabelas, cláusulas I–VIII e assinaturas; Noiva/Debutante; dados completos da contratante; extras/desconto; à vista ou sinal parcelado com alertas; dados do studio configuráveis (URGENT)
 
 ### Quick Tasks Completed
 
@@ -188,6 +189,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-03T01:45:25.971Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-bridal-contracts/04-CONTEXT.md
+Last session: 2026-11-05T00:40:25.801Z
+Stopped at: Phase 04.1 context gathered
+Resume file: .planning/phases/04.1-layout-e-regras-do-contrato-modelo-studio-js/04.1-CONTEXT.md
