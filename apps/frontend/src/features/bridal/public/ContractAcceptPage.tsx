@@ -13,6 +13,7 @@ import {
   PublicContractError,
   type PublicContract,
 } from '../api/public-contract.api';
+import { ContractDocument } from './ContractDocument';
 
 type LoadState =
   | { kind: 'loading' }
@@ -168,12 +169,16 @@ export function ContractAcceptPage() {
             </h1>
           </header>
 
-          <article
-            aria-label="Texto do contrato"
-            className="whitespace-pre-wrap rounded-md border border-neutral-200 bg-white p-md text-sm text-neutral-800"
-          >
-            {state.contract.text}
-          </article>
+          {state.contract.snapshot ? (
+            <ContractDocument snapshot={state.contract.snapshot} />
+          ) : (
+            <article
+              aria-label="Texto do contrato"
+              className="whitespace-pre-wrap rounded-md border border-neutral-200 bg-white p-md text-sm text-neutral-800"
+            >
+              {state.contract.text}
+            </article>
+          )}
 
           {state.contract.accepted ? (
             <section className="pt-lg" aria-label="Contrato aceito">
@@ -198,7 +203,7 @@ export function ContractAcceptPage() {
                 />
               </div>
               <div className="space-y-xs">
-                <Label htmlFor="accept-cpf">CPF</Label>
+                <Label htmlFor="accept-cpf">CPF da contratante</Label>
                 <Input
                   id="accept-cpf"
                   inputMode="numeric"
