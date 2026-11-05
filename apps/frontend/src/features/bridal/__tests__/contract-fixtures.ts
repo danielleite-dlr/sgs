@@ -65,6 +65,56 @@ export function withTypenames(c: ContractData) {
     ...c,
     acceptance: c.acceptance ? { __typename: 'ContractAcceptanceView', ...c.acceptance } : null,
     items: c.items.map((i) => ({ __typename: 'ContractItem', ...i })),
-    payments: c.payments.map((p) => ({ __typename: 'ContractPaymentView', ...p })),
+    payments: c.payments.map((p) => ({
+      __typename: 'ContractPaymentView',
+      ...p,
+    })),
+  };
+}
+
+const STUDIO_TEXTS = {
+  title: 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS',
+  intro: 'Pelo presente instrumento particular, as partes abaixo se obrigam.',
+  parties: '**CONTRATADA:** {{studio_nome}}.',
+  trialNote: 'Os testes ocorrem em data a combinar.',
+  clauses: 'Cláusula 1. Desistência em até {{prazo_desistencia_dias}} dias.',
+};
+
+/** Configurações de contrato (com __typename, para o MockedProvider). */
+export function makeSettings(over: Record<string, unknown> = {}) {
+  return {
+    __typename: 'ContractSettings',
+    balanceDueDaysBefore: 7,
+    cancellationClause: 'Cláusula padrão de cancelamento do estúdio.',
+    isDefaultClause: true,
+    alertDepositUnpaidDays: 3,
+    alertNotAcceptedDays: 5,
+    alertCompanionDepositDays: 30,
+    scheduleDayStart: '08:00',
+    scheduleDayEnd: '20:00',
+    studio: {
+      __typename: 'ContractStudioInfo',
+      name: 'Studio JS',
+      cnpj: '12.345.678/0001-95',
+      address: 'Rua das Flores, 100, Centro',
+      representative: 'Joana Silva',
+      representativeRg: '12.345.678-9',
+      forumCity: 'São Paulo',
+      forumUf: 'SP',
+    },
+    withdrawalNoticeDays: 7,
+    texts: { __typename: 'ContractTexts', ...STUDIO_TEXTS },
+    textsDefault: {
+      __typename: 'ContractTextsDefaultFlags',
+      title: true,
+      intro: true,
+      parties: true,
+      trialNote: true,
+      clauses: true,
+    },
+    defaultTexts: { __typename: 'ContractTexts', ...STUDIO_TEXTS },
+    textVariables: ['noiva', 'total', 'prazo_desistencia_dias'],
+    letterhead: null,
+    ...over,
   };
 }
