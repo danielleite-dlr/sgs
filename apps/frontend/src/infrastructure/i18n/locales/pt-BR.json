@@ -154,7 +154,11 @@
     "search": "Buscar cliente",
     "fields": {
       "name": "Nome",
-      "phone": "Telefone",
+      "phone": "Celular 1",
+      "phone2": "Celular 2",
+      "phone3": "Celular 3",
+      "rg": "RG",
+      "postalCode": "CEP",
       "email": "E-mail",
       "birthdate": "Data de nascimento",
       "notes": "Observações"
@@ -162,7 +166,7 @@
     "form": {
       "fullName": "Nome completo",
       "fullNamePlaceholder": "Maria da Silva",
-      "phone": "Telefone",
+      "phone": "Celular 1",
       "phonePlaceholder": "(11) 99999-9999",
       "email": "E-mail",
       "emailPlaceholder": "maria@email.com",
@@ -184,7 +188,9 @@
       "contactRequired": "Informe pelo menos um telefone ou e-mail.",
       "cpfInvalid": "CPF inválido. Verifique os números.",
       "phoneInvalid": "Informe um telefone válido. Ex.: (11) 99999-9999",
-      "emailInvalid": "Informe um e-mail válido."
+      "emailInvalid": "Informe um e-mail válido.",
+      "rgInvalid": "RG inválido.",
+      "postalCodeInvalid": "CEP inválido."
     },
     "tabs": {
       "data": "Dados",

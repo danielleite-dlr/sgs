@@ -153,7 +153,7 @@ describe('ClientForm', () => {
 
     await act(async () => {
       fireEvent.change(screen.getByPlaceholderText(/Maria da Silva/i), { target: { value: 'Teste Usuário' } });
-      fireEvent.change(screen.getByRole('textbox', { name: /telefone/i }), { target: { value: '(11) 91111-1111' } });
+      fireEvent.change(screen.getByRole('textbox', { name: /celular 1/i }), { target: { value: '(11) 91111-1111' } });
       fireEvent.change(screen.getByRole('textbox', { name: /cpf/i }), { target: { value: '529.982.247-25' } });
     });
 
@@ -224,5 +224,113 @@ describe('ClientForm', () => {
     await waitFor(() => {
       expect(screen.getByText(/Informe pelo menos um telefone ou e-mail\./i)).toBeInTheDocument();
     }, { timeout: 2000 });
+  });
+
+  it('aplica máscaras de RG, CEP e Celular 2 e envia os valores no create', async () => {
+    let variablesOk = false;
+    const mocks: MockedResponse[] = [
+      {
+        request: {
+          query: ClientsListQuery,
+          variables: { search: null, limit: 20, offset: 0 },
+        },
+        result: { data: { clients: { rows: [], totalCount: 0 } } },
+      },
+      {
+        request: {
+          query: CreateClientMutation,
+          variables: {
+            input: {
+              fullName: 'Maria Teste',
+              phone: '(11) 91111-1111',
+              email: null,
+              cpf: null,
+              birthDate: null,
+              address: null,
+              rg: '48.830.035-6',
+              postalCode: '06083-290',
+              phone2: '(11) 92222-2222',
+              notes: null,
+            },
+          },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any,
+        result: () => {
+          variablesOk = true;
+          return {
+            data: {
+              createClient: { client: { id: 'x', fullName: 'Maria Teste' }, errors: [] },
+            },
+          };
+        },
+      },
+    ];
+    renderForm(mocks);
+
+    const rg = screen.getByRole('textbox', { name: /^rg/i });
+    const cep = screen.getByRole('textbox', { name: /^cep/i });
+    const phone2 = screen.getByRole('textbox', { name: /celular 2/i });
+    await act(async () => {
+      fireEvent.change(screen.getByPlaceholderText(/Maria da Silva/i), { target: { value: 'Maria Teste' } });
+      fireEvent.change(screen.getByRole('textbox', { name: /celular 1/i }), { target: { value: '11911111111' } });
+      fireEvent.change(rg, { target: { value: '488300356' } });
+      fireEvent.change(cep, { target: { value: '06083290' } });
+      fireEvent.change(phone2, { target: { value: '11922222222' } });
+    });
+    expect(rg).toHaveValue('48.830.035-6');
+    expect(cep).toHaveValue('06083-290');
+    expect(phone2).toHaveValue('(11) 92222-2222');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /salvar/i }));
+    });
+    await waitFor(() => expect(variablesOk).toBe(true), { timeout: 2000 });
+  });
+
+  it('mostra CEP inválido quando incompleto', async () => {
+    renderForm();
+    await act(async () => {
+      fireEvent.change(screen.getByPlaceholderText(/Maria da Silva/i), { target: { value: 'Maria Teste' } });
+      fireEvent.change(screen.getByRole('textbox', { name: /celular 1/i }), { target: { value: '11911111111' } });
+      fireEvent.change(screen.getByRole('textbox', { name: /^cep/i }), { target: { value: '0608' } });
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /salvar/i }));
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/CEP inválido/i)).toBeInTheDocument();
+    });
+  });
+
+  it('edição carrega RG, CEP e celulares existentes', () => {
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <I18nextProvider i18n={i18n}>
+          <MemoryRouter>
+            <ClientForm
+              initial={{
+                id: 'c1',
+                fullName: 'Ana',
+                phone: '(11) 91111-1111',
+                email: null,
+                cpf: null,
+                birthDate: null,
+                address: null,
+                rg: '488300356',
+                postalCode: '06083290',
+                phone2: '(11) 92222-2222',
+                phone3: null,
+                notes: null,
+                createdAt: '',
+                updatedAt: '',
+              }}
+            />
+          </MemoryRouter>
+        </I18nextProvider>
+      </MockedProvider>,
+    );
+    expect(screen.getByRole('textbox', { name: /^rg/i })).toHaveValue('48.830.035-6');
+    expect(screen.getByRole('textbox', { name: /^cep/i })).toHaveValue('06083-290');
+    expect(screen.getByRole('textbox', { name: /celular 2/i })).toHaveValue('(11) 92222-2222');
   });
 });
