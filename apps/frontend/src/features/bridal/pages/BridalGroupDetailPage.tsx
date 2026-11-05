@@ -14,6 +14,7 @@ import { BridalMembersCard } from '../components/BridalMembersCard';
 import { CancelBridalGroupDialog } from '../components/CancelBridalGroupDialog';
 import {
   CONTRACT_STATUS_LABEL,
+  EVENT_KIND_LABEL,
   GROUP_STATUS_LABEL,
   LOCATION_LABEL,
   formatEventDate,
@@ -97,6 +98,24 @@ export function BridalGroupDetailPage() {
 
       <dl className="mb-md grid grid-cols-2 gap-sm text-sm sm:grid-cols-4">
         <div>
+          <dt className="text-xs font-semibold text-neutral-700">Tipo de evento</dt>
+          <dd data-testid="bg-detail-kind">
+            <Badge variant="outline">{EVENT_KIND_LABEL[group.eventKind] ?? group.eventKind}</Badge>
+          </dd>
+        </div>
+        {group.eventKind === 'debutante' && (
+          <div>
+            <dt className="text-xs font-semibold text-neutral-700">Responsável</dt>
+            <dd data-testid="bg-detail-responsible">
+              {group.responsibleName ?? <span className="text-amber-700">não definida</span>}
+            </dd>
+          </div>
+        )}
+        <div>
+          <dt className="text-xs font-semibold text-neutral-700">Horário do evento</dt>
+          <dd data-testid="bg-detail-event-time">{group.eventTime ?? 'não informado'}</dd>
+        </div>
+        <div>
           <dt className="text-xs font-semibold text-neutral-700">Data do evento</dt>
           <dd>{formatEventDate(group.eventDate)}</dd>
         </div>
@@ -108,10 +127,26 @@ export function BridalGroupDetailPage() {
           <dt className="text-xs font-semibold text-neutral-700">Local</dt>
           <dd>
             {LOCATION_LABEL[group.locationKind] ?? group.locationKind}
+            {group.locationName && (
+              <span
+                className="block text-xs text-neutral-600"
+                data-testid="bg-detail-location-name"
+              >
+                {group.locationName}
+              </span>
+            )}
+            {group.locationAddress && (
+              <span
+                className="block text-xs text-neutral-600"
+                data-testid="bg-detail-location-address"
+              >
+                Endereço do atendimento: {group.locationAddress}
+              </span>
+            )}
             {group.locationKind === 'external' && (
               <span className="block text-xs text-neutral-600">
-                {group.locationAddress} — deslocamento {group.travelMinutesBefore} min antes /{' '}
-                {group.travelMinutesAfter} min depois
+                Deslocamento {group.travelMinutesBefore} min antes / {group.travelMinutesAfter} min
+                depois
               </span>
             )}
           </dd>
