@@ -94,5 +94,11 @@ export function buildContractSaveInput(s: ContractFormState): ContractSaveInput 
 export function buildContractPreviewInput(s: ContractFormState): Record<string, unknown> | null {
   const r = buildContractSaveInput(s);
   if (r.kind === 'incomplete') return null;
-  return r.kind === 'update' ? { contractId: r.id, ...r.input } : r.input;
+  const input: Record<string, unknown> =
+    r.kind === 'update' ? { contractId: r.id, ...r.input } : { ...r.input };
+  // Sinal ainda não preenchido (parcela única de R$ 0,00): o "Salvar" fica bloqueado
+  // no formulário, mas a prévia não deve falhar — sem parcelas, o backend usa o sinal
+  // sugerido (pacote) ou nenhum, e o PDF sai com a lacuna.
+  if (s.installments.every((i) => !i.cents || i.cents <= 0)) delete input.installments;
+  return input;
 }

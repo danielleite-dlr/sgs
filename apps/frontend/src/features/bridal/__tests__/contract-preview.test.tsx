@@ -179,6 +179,8 @@ describe('ContractFormDialog — prévia do contrato em PDF', () => {
     expect(input.groupId).toBeUndefined();
     expect(input.contractId).toBeUndefined();
     expect((input.items as Vars[])[0]).toMatchObject({ serviceId: 's1', unitPrice: '800.00' });
+    // sinal ainda vazio: sem parcela de R$ 0,00 (o backend a rejeitaria e a prévia não sairia)
+    expect(input.installments).toBeUndefined();
   });
 
   it('Atualizar prévia gera na hora e mantém o PDF anterior enquanto carrega', async () => {
