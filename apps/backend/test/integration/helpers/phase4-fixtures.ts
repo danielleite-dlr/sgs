@@ -52,6 +52,18 @@ export async function destroyPhase4World(w: Phase4World): Promise<void> {
   await destroyPhase3World(w);
 }
 
+/** Cliente com todos os campos exigidos pelo contrato (CPF valido, RG, CEP, celulares). */
+export const COMPLETE_CLIENT = {
+  cpf: '52998224725',
+  rg: '12.345.678-9',
+  postalCode: '06083-290',
+  address: 'Rua das Flores, 10 – Osasco/SP',
+  phone: '+5511982529341',
+  phone2: '+5511911112222',
+  phone3: null as string | null,
+  email: 'noiva@example.com',
+};
+
 let seq = 0;
 
 export interface InsertBridalGroupOpts {
@@ -64,6 +76,11 @@ export interface InsertBridalGroupOpts {
   travelAfter?: number;
   /** ISO 8601 */
   readyBy?: string;
+  eventKind?: 'noiva' | 'debutante';
+  responsibleClientId?: string | null;
+  /** "HH:MM" */
+  eventTime?: string | null;
+  locationName?: string | null;
 }
 
 /** Insere grupo + noiva + acompanhantes direto no banco (sem passar pelas mutations). */
@@ -87,6 +104,10 @@ export async function insertBridalGroupRow(
       readyBy: opts.readyBy ? new Date(opts.readyBy) : null,
       locationKind: opts.locationKind ?? 'studio',
       locationAddress: external ? 'Rua do Evento, 100' : null,
+      ...(opts.eventKind ? { eventKind: opts.eventKind } : {}),
+      responsibleClientId: opts.responsibleClientId ?? null,
+      eventTime: opts.eventTime ?? null,
+      locationName: opts.locationName ?? null,
       travelMinutesBefore: opts.travelBefore ?? 0,
       travelMinutesAfter: opts.travelAfter ?? 0,
     },
@@ -140,6 +161,11 @@ export interface InsertContractOpts {
   status?: string;
   balanceDueDate?: string;
   items?: { groupMemberId: string; serviceId: string; unitPrice: string }[];
+  paymentMode?: 'sinal' | 'sinal_parcelado' | 'a_vista';
+  discountDescription?: string | null;
+  contractorClientId?: string | null;
+  /** parcelas do sinal (contract_deposit_installments); dueDate "YYYY-MM-DD" */
+  installments?: { seq: number; amount: string; dueDate: string }[];
 }
 
 const TEST_TEXT = 'texto';
@@ -172,6 +198,9 @@ export async function insertContractRow(
         clause: 'Cláusula de teste.',
       },
       currentVersion: 1,
+      ...(opts.paymentMode ? { paymentMode: opts.paymentMode } : {}),
+      discountDescription: opts.discountDescription ?? null,
+      contractorClientId: opts.contractorClientId ?? null,
       cancelledAt: status === 'cancelled' ? new Date() : null,
       items: {
         create: (opts.items ?? []).map((it, i) => ({
@@ -185,6 +214,14 @@ export async function insertContractRow(
           sortOrder: i,
         })),
       },
+      installments: {
+        create: (opts.installments ?? []).map((i) => ({
+          organizationId: w.orgId,
+          seq: i.seq,
+          amount: i.amount,
+          dueDate: new Date(`${i.dueDate}T00:00:00.000Z`),
+        })),
+      },
       versions: {
         create: {
           organizationId: w.orgId,
@@ -196,4 +233,32 @@ export async function insertContractRow(
     },
   });
   return { contractId: contract.id, code };
+}
+
+export interface InsertLetterheadOpts {
+  sha256: string;
+  data: Buffer;
+  mimeType: 'image/png' | 'image/jpeg';
+  width: number;
+  height: number;
+}
+
+/** Insere um papel timbrado (contract_letterheads) direto no banco. */
+export async function insertLetterheadRow(
+  db: typeof adminPrisma,
+  orgId: string,
+  opts: InsertLetterheadOpts,
+): Promise<{ id: string }> {
+  const row = await db.contractLetterhead.create({
+    data: {
+      organizationId: orgId,
+      sha256: opts.sha256,
+      mimeType: opts.mimeType,
+      width: opts.width,
+      height: opts.height,
+      sizeBytes: opts.data.length,
+      data: new Uint8Array(opts.data),
+    },
+  });
+  return { id: row.id };
 }
