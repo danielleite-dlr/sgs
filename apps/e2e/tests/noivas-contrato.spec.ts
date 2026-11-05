@@ -113,6 +113,7 @@ test.describe('Fase 4: pacote -> grupo de noivas -> contrato -> aceite público 
     await page.locator('#contract-discount').fill('10000');
     await page.locator('#contract-discount-description').fill('10% OFF');
     await expect(page.getByTestId('contract-form-total')).toHaveText(brl('7900.00'));
+    await expect(page.locator('#contract-deposit')).toHaveValue('2.370,00');
     await page.locator('#contract-deposit').fill('240000');
     await page.locator('#contract-mode-sinal_parcelado').click();
     const firstDue = addDaysYmd(spDate(0), -2);
