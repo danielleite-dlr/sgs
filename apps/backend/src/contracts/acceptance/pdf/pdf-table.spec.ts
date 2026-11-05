@@ -84,14 +84,72 @@ describe('drawTable', () => {
 });
 
 describe('drawRichParagraph', () => {
-  it('alterna Helvetica/Helvetica-Bold e fecha com continued=false', () => {
+  interface Call {
+    text: string;
+    x: number;
+    y: number;
+    bold: boolean;
+    w: number;
+  }
+
+  function capture(text: string, align?: 'justify' | 'left'): Call[] {
     const doc = newDoc();
-    const font = jest.spyOn(doc, 'font');
-    const text = jest.spyOn(doc, 'text');
-    drawRichParagraph(doc, 'a **b** c', { width: W });
-    expect(font.mock.calls.map((c) => c[0])).toEqual(['Helvetica', 'Helvetica-Bold', 'Helvetica']);
-    const last = text.mock.calls[text.mock.calls.length - 1];
-    expect((last[last.length - 1] as { continued: boolean }).continued).toBe(false);
+    const calls: Call[] = [];
+    let bold = false;
+    const origFont = doc.font.bind(doc);
+    jest.spyOn(doc, 'font').mockImplementation(((name: string) => {
+      bold = name === 'Helvetica-Bold';
+      return origFont(name);
+    }) as never);
+    const origText = doc.text.bind(doc);
+    jest.spyOn(doc, 'text').mockImplementation(((t: string, x: number, y: number, o: object) => {
+      calls.push({ text: t, x, y, bold, w: doc.widthOfString(t) });
+      return origText(t, x, y, o);
+    }) as never);
+    drawRichParagraph(doc, text, { width: W, align });
     doc.end();
+    return calls;
+  }
+
+  const LONG =
+    'Os serviços da **CONTRATADA** serão prestados no local, no dia, mês, ano e **horário confirmado** no fechamento do contrato. ' +
+    'Parágrafo **Segundo:** o sinal pago no ato da contratação tem como finalidade a reserva da data do evento e nada mais.';
+
+  it('usa Helvetica e Helvetica-Bold conforme os ** e escreve tudo', () => {
+    const calls = capture('a **b** c');
+    expect(calls.map((c) => [c.text, c.bold])).toEqual([
+      ['a', false],
+      ['b', true],
+      ['c', false],
+    ]);
+  });
+
+  it('justifica a linha inteira (todas as runs): mesma folga entre palavras e borda direita alinhada', () => {
+    const calls = capture(LONG);
+    const firstY = calls[0].y;
+    const first = calls.filter((c) => c.y === firstY);
+    expect(first.length).toBeGreaterThan(5);
+    expect(first.some((c) => c.bold)).toBe(true);
+    const last = first[first.length - 1];
+    expect(last.x + last.w).toBeCloseTo(X + W, 3);
+    const gaps = first.slice(1).map((c, i) => c.x - (first[i].x + first[i].w));
+    for (const g of gaps) expect(g).toBeCloseTo(gaps[0], 3);
+  });
+
+  it('a última linha do parágrafo não é justificada', () => {
+    const calls = capture(LONG);
+    const lastY = calls[calls.length - 1].y;
+    const row = calls.filter((c) => c.y === lastY);
+    const end = row[row.length - 1];
+    expect(end.x + end.w).toBeLessThan(X + W - 5);
+  });
+
+  it('linha terminada em \\n (quebra dura) não é justificada', () => {
+    const calls = capture('**Título:**\n' + LONG);
+    expect(calls[0].text).toBe('Título:');
+    const row = calls.filter((c) => c.y === calls[0].y);
+    expect(row).toHaveLength(1);
+    const next = calls.find((c) => c.y > calls[0].y);
+    expect(next?.x).toBeCloseTo(X, 3);
   });
 });
