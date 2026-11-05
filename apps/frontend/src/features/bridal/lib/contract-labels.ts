@@ -8,6 +8,22 @@ export const CONTRACT_STATUS_LABEL: Record<string, string> = {
   cancelled: 'Cancelado',
 };
 
+export const PAYMENT_MODE_LABEL: Record<string, string> = {
+  sinal: 'Sinal',
+  sinal_parcelado: 'Sinal parcelado',
+  a_vista: 'À vista',
+};
+
+export function installmentStateLabel(i: {
+  state: string;
+  overdue: boolean;
+}): 'Paga' | 'Vencida' | 'Parcial' | 'Em aberto' {
+  if (i.state === 'paid') return 'Paga';
+  if (i.overdue) return 'Vencida';
+  if (i.state === 'partial') return 'Parcial';
+  return 'Em aberto';
+}
+
 export const PARTY_LABEL: Record<string, string> = {
   client: 'Pela noiva',
   studio: 'Pelo estúdio',
@@ -60,11 +76,19 @@ export const CONTRACT_ERROR_MESSAGES: Record<string, string> = {
   TOTAL_BELOW_PAID: 'O novo total ficaria abaixo do que já foi pago.',
   UNKNOWN_TEMPLATE_VARIABLE: 'O modelo usa uma variável desconhecida.',
   ALREADY_ACCEPTED: 'Este contrato já foi aceito nesta versão.',
+  PAYMENT_MODE_INVALID: 'Forma de pagamento inválida.',
+  INSTALLMENTS_REQUIRED: 'Informe ao menos uma parcela do sinal.',
+  INSTALLMENTS_COUNT_INVALID: 'Quantidade de parcelas inválida para a forma de pagamento.',
+  INSTALLMENT_INVALID: 'Toda parcela precisa de valor maior que zero e data.',
+  INSTALLMENTS_SUM_MISMATCH: 'A soma das parcelas deve ser igual ao valor do sinal.',
+  A_VISTA_MUST_EQUAL_TOTAL: 'No pagamento à vista, a entrada é o valor total.',
+  PACKAGE_ITEM_WITHOUT_PACKAGE: 'Há item marcado como do pacote, mas o contrato não tem pacote.',
+  INVALID_DISCOUNT_DESCRIPTION: 'A descrição do desconto é inválida (máximo de 120 caracteres).',
 };
 
 /** Mensagem para um erro do backend; a do servidor é mais específica quando existe. */
 export function contractErrorMessage(e: { code: string; message: string }): string {
-  if (e.code === 'UNKNOWN_TEMPLATE_VARIABLE') return e.message || CONTRACT_ERROR_MESSAGES[e.code];
+  if (e.code === 'UNKNOWN_TEMPLATE_VARIABLE' || e.code === 'CONTRACT_INCOMPLETE') return e.message || CONTRACT_ERROR_MESSAGES[e.code];
   return CONTRACT_ERROR_MESSAGES[e.code] ?? e.message;
 }
 

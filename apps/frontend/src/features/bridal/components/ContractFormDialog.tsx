@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -37,7 +39,13 @@ import {
   type UpdateContractResult,
 } from '../api/contracts.api';
 import { BridalGroupQuery } from '../api/bridal.api';
-import { contractErrorMessage, formatDateOnly } from '../lib/contract-labels';
+import { contractErrorMessage, formatDateOnly, PAYMENT_MODE_LABEL } from '../lib/contract-labels';
+import {
+  InstallmentsEditor,
+  installmentsValid,
+  type InstallmentRow,
+  type PaymentModeValue,
+} from './InstallmentsEditor';
 
 const brl = (cents: number) => `R$ ${formatCurrencyDisplay(centsToDecimal(cents))}`;
 
@@ -51,6 +59,13 @@ interface ItemRow {
   unitPrice: string; // mascarado "80,00"
   quantity: number;
   purpose: string;
+  /** Item que veio do pacote (D-05): preservado na edição. */
+  packageItem: boolean;
+}
+
+function todayIso(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function typedToCents(masked: string): number {
@@ -156,6 +171,7 @@ function ContractForm({
         unitPrice: formatCurrencyDisplay(i.unitPrice),
         quantity: i.quantity,
         purpose: i.purpose,
+        packageItem: i.isPackageItem,
       }));
     }
     return group.members
@@ -171,6 +187,7 @@ function ContractForm({
           unitPrice: formatCurrencyDisplay(priceByService.get(s.serviceId) ?? '0.00'),
           quantity: 1,
           purpose: s.purpose === 'trial' ? 'trial' : 'event',
+          packageItem: false,
         })),
       );
   });
@@ -183,6 +200,20 @@ function ContractForm({
   const [discount, setDiscount] = useState(
     contract && Number(contract.discountAmount) > 0 ? formatCurrencyDisplay(contract.discountAmount) : '',
   );
+  const [discountDescription, setDiscountDescription] = useState(contract?.discountDescription ?? '');
+  const [paymentMode, setPaymentMode] = useState<PaymentModeValue>(
+    (contract?.paymentMode as PaymentModeValue | undefined) ?? 'sinal',
+  );
+  const [rows, setRows] = useState<InstallmentRow[]>(() =>
+    contract && contract.installments.length > 0
+      ? contract.installments.map((i) => ({
+          dueDate: i.dueDate.slice(0, 10),
+          cents: decimalToCents(i.amount),
+        }))
+      : [{ dueDate: todayIso(), cents: null }],
+  );
+  // Parcela única acompanha o valor do sinal até a usuária mexer nela.
+  const [followDeposit, setFollowDeposit] = useState(!contract);
   const [deposit, setDeposit] = useState(contract ? formatCurrencyDisplay(contract.depositAmount) : '');
   const [days, setDays] = useState(contract ? String(contract.balanceDueDaysBefore) : '');
   const [addMember, setAddMember] = useState('');
@@ -198,7 +229,7 @@ function ContractForm({
   );
   const [updateContract, { loading: updating }] = useMutation<UpdateContractResult>(
     UpdateContractMutation,
-    { refetchQueries: [groupRefetch] },
+    { refetchQueries: [groupRefetch, 'ContractReadiness'] },
   );
 
   const pkg = packages.find((p) => p.id === packageId) ?? null;
@@ -219,7 +250,23 @@ function ContractForm({
   if (pkg?.depositKind === 'percent' && pkg.depositValue) {
     suggestedDeposit = Math.round((total * Number(pkg.depositValue)) / 100);
   }
-  const depositCents = deposit ? typedToCents(deposit) : suggestedDeposit;
+  const aVista = paymentMode === 'a_vista';
+  const depositCents = aVista ? total : deposit ? typedToCents(deposit) : suggestedDeposit;
+  const parcelado = paymentMode === 'sinal_parcelado';
+  const resolvedRows: InstallmentRow[] =
+    !parcelado || followDeposit
+      ? [{ dueDate: rows[0]?.dueDate ?? '', cents: depositCents }]
+      : rows;
+  const installmentsError = installmentsValid(paymentMode, resolvedRows, depositCents, total);
+
+  function resetInstallments() {
+    setRows([{ dueDate: todayIso(), cents: null }]);
+    setFollowDeposit(true);
+  }
+  function changeMode(m: PaymentModeValue) {
+    setPaymentMode(m);
+    resetInstallments();
+  }
   const daysNum = days !== '' ? Number(days) : (defaultDays ?? 0);
 
   function updateItem(key: string, patch: Partial<ItemRow>) {
@@ -242,6 +289,7 @@ function ContractForm({
         unitPrice: formatCurrencyDisplay(svc.basePrice),
         quantity: 1,
         purpose: 'event',
+        packageItem: false,
       },
     ]);
     setAddService('');
@@ -255,11 +303,18 @@ function ContractForm({
       unitPrice: unmaskCurrency(i.unitPrice) || '0.00',
       quantity: i.quantity,
       purpose: i.purpose,
+      packageItem: i.packageItem,
     }));
     const common = {
       packageId: packageId || undefined,
       discountAmount: discount ? unmaskCurrency(discount) : '0.00',
-      depositAmount: deposit ? unmaskCurrency(deposit) : undefined,
+      depositAmount: depositCents > 0 ? centsToDecimal(depositCents) : undefined,
+      paymentMode,
+      discountDescription: discountDescription.trim() || null,
+      installments: resolvedRows.map((r) => ({
+        dueDate: r.dueDate,
+        amount: centsToDecimal(r.cents ?? 0),
+      })),
       balanceDueDaysBefore: days !== '' ? Number(days) : undefined,
     };
     try {
@@ -299,7 +354,7 @@ function ContractForm({
   }
 
   const busy = creating || updating;
-  const canSubmit = !busy && (packageDriven || items.length > 0);
+  const canSubmit = !busy && (packageDriven || items.length > 0) && installmentsError === null;
 
   return (
     <div className="space-y-md">
@@ -316,7 +371,10 @@ function ContractForm({
           id="contract-package"
           value={packageId}
           disabled={!!contract}
-          onChange={(e) => setPackageId(e.target.value)}
+          onChange={(e) => {
+            setPackageId(e.target.value);
+            resetInstallments();
+          }}
           className="mt-xs w-full rounded-md border border-neutral-200 bg-white px-sm py-xs text-sm"
         >
           <option value="">Sem pacote</option>
@@ -351,7 +409,14 @@ function ContractForm({
               return (
                 <tr key={i.key} className="border-t border-neutral-100">
                   <td className="py-xs">{i.personName}</td>
-                  <td>{i.description}</td>
+                  <td>
+                    {i.description}
+                    {i.packageItem && (
+                      <Badge variant="outline" className="ml-xs">
+                        Pacote
+                      </Badge>
+                    )}
+                  </td>
                   <td>
                     <Input
                       type="number"
@@ -466,17 +531,29 @@ function ContractForm({
             value={discount}
             onChange={(e) => setDiscount(maskCurrency(e.target.value))}
           />
+          <Label htmlFor="contract-discount-description" className="mt-xs block text-xs font-semibold text-neutral-700">
+            Descrição do desconto
+          </Label>
+          <Input
+            id="contract-discount-description"
+            className="mt-xs"
+            maxLength={120}
+            placeholder="ex.: 10% OFF"
+            value={discountDescription}
+            onChange={(e) => setDiscountDescription(e.target.value)}
+          />
         </div>
         <div>
           <Label htmlFor="contract-deposit" className="text-xs font-semibold text-neutral-700">
-            Entrada (R$)
+            Valor do sinal (R$)
           </Label>
           <Input
             id="contract-deposit"
             className="mt-xs"
             inputMode="numeric"
             placeholder={suggestedDeposit > 0 ? formatCurrencyDisplay(centsToDecimal(suggestedDeposit)) : '0,00'}
-            value={deposit}
+            readOnly={aVista}
+            value={aVista ? formatCurrencyDisplay(centsToDecimal(total)) : deposit}
             onChange={(e) => setDeposit(maskCurrency(e.target.value))}
           />
         </div>
@@ -497,6 +574,35 @@ function ContractForm({
         </div>
       </div>
 
+      <fieldset className="space-y-xs">
+        <legend className="text-xs font-semibold text-neutral-700">Forma de pagamento</legend>
+        <RadioGroup
+          aria-label="Forma de pagamento"
+          value={paymentMode}
+          onValueChange={(v) => changeMode(v as PaymentModeValue)}
+          className="grid-cols-1 sm:grid-cols-3"
+        >
+          {(['sinal', 'sinal_parcelado', 'a_vista'] as const).map((m) => (
+            <div key={m} className="flex items-center gap-xs">
+              <RadioGroupItem value={m} id={`contract-mode-${m}`} />
+              <Label htmlFor={`contract-mode-${m}`} className="text-sm">
+                {PAYMENT_MODE_LABEL[m]}
+              </Label>
+            </div>
+          ))}
+        </RadioGroup>
+        <InstallmentsEditor
+          mode={paymentMode}
+          depositCents={depositCents}
+          totalCents={total}
+          value={resolvedRows}
+          onChange={(r) => {
+            setRows(r);
+            setFollowDeposit(false);
+          }}
+        />
+      </fieldset>
+
       <dl className="space-y-xs rounded-md bg-neutral-50 p-sm text-sm" data-testid="contract-summary">
         <div className="flex justify-between">
           <dt>Soma dos itens</dt>
@@ -511,13 +617,15 @@ function ContractForm({
           <dd data-testid="contract-form-total">{brl(total)}</dd>
         </div>
         <div className="flex justify-between">
-          <dt>Entrada</dt>
+          <dt>{aVista ? 'À vista' : 'Sinal'}</dt>
           <dd>{brl(depositCents)}</dd>
         </div>
-        <div className="flex justify-between">
-          <dt>Restante até {dueDate(group.eventDate, daysNum)}</dt>
-          <dd>{brl(Math.max(0, total - depositCents))}</dd>
-        </div>
+        {!aVista && (
+          <div className="flex justify-between">
+            <dt>Restante até {dueDate(group.eventDate, daysNum)}</dt>
+            <dd>{brl(Math.max(0, total - depositCents))}</dd>
+          </div>
+        )}
       </dl>
 
       {error && (

@@ -19,6 +19,8 @@ import {
 import {
   CONTRACT_STATUS_LABEL,
   PAYMENT_KIND_LABEL,
+  PAYMENT_MODE_LABEL,
+  installmentStateLabel,
   derivedBadges,
   formatDateOnly,
   formatDateTime,
@@ -98,7 +100,7 @@ export function ContractDetailPage() {
       });
       const pdf = res.data.contractPdf;
       if (!pdf) {
-        toast.error('O contrato ainda não possui aceite.');
+        toast.error('O PDF do contrato não está disponível.');
         return;
       }
       const url = URL.createObjectURL(base64ToBlob(pdf.base64, 'application/pdf'));
@@ -138,16 +140,14 @@ export function ContractDetailPage() {
                 Editar
               </Button>
             )}
-            {hasAcceptance && (
-              <Button
-                type="button"
-                variant="outline"
-                disabled={pdfBusy}
-                onClick={() => void downloadPdf()}
-              >
-                Baixar PDF
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="outline"
+              disabled={pdfBusy}
+              onClick={() => void downloadPdf()}
+            >
+              {hasAcceptance ? 'Baixar PDF' : 'Baixar PDF (não aceito)'}
+            </Button>
             {canCancel && !cancelled && (
               <Button type="button" variant="destructive" onClick={() => setCancelOpen(true)}>
                 Cancelar contrato
@@ -165,7 +165,10 @@ export function ContractDetailPage() {
           </Badge>
         ))}
         <span>
-          Noiva <strong>{c.brideName}</strong>
+          {c.eventKind === 'debutante' ? 'Debutante' : 'Noiva'}: <strong>{c.brideName}</strong>
+        </span>
+        <span>
+          · Contratante: <strong>{c.contractorName}</strong>
         </span>
         <span>
           · Grupo{' '}
@@ -196,7 +199,7 @@ export function ContractDetailPage() {
                 <dd>{brl(c.itemsTotal)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt>Desconto</dt>
+                <dt>Desconto{c.discountDescription ? ` (${c.discountDescription})` : ''}</dt>
                 <dd>- {brl(c.discountAmount)}</dd>
               </div>
               <div className="flex justify-between font-semibold">
@@ -229,8 +232,78 @@ export function ContractDetailPage() {
           </CardContent>
         </Card>
 
-        <ContractLinkCard contract={c} canWrite={canWrite} />
+        <ContractLinkCard
+          contract={c}
+          canWrite={canWrite}
+          onEditContract={canWrite ? () => setEditOpen(true) : undefined}
+        />
       </div>
+
+      <Card data-testid="contract-installments">
+        <CardHeader className="pb-sm">
+          <CardTitle className="text-base">
+            Forma de pagamento: {PAYMENT_MODE_LABEL[c.paymentMode] ?? c.paymentMode}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-neutral-500">
+                <th scope="col" className="py-xs">Parcela</th>
+                <th scope="col">Vencimento</th>
+                <th scope="col" className="text-right">Valor</th>
+                <th scope="col" className="text-right">Pago</th>
+                <th scope="col">Situação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {c.installments.map((i) => {
+                const label = installmentStateLabel(i);
+                return (
+                  <tr key={i.seq} className="border-t border-neutral-100">
+                    <td className="py-xs">
+                      {c.paymentMode === 'a_vista'
+                        ? 'À VISTA'
+                        : c.paymentMode === 'sinal_parcelado'
+                          ? `SINAL ${i.seq}/${c.installments.length}`
+                          : 'SINAL'}
+                    </td>
+                    <td>{formatDateOnly(i.dueDate)}</td>
+                    <td className="text-right">{brl(i.amount)}</td>
+                    <td className="text-right">{brl(i.paidAmount)}</td>
+                    <td>
+                      <Badge
+                        variant={
+                          label === 'Vencida'
+                            ? 'destructive'
+                            : label === 'Paga'
+                              ? 'success'
+                              : label === 'Parcial'
+                                ? 'warning'
+                                : 'outline'
+                        }
+                      >
+                        {label}
+                      </Badge>
+                    </td>
+                  </tr>
+                );
+              })}
+              {c.paymentMode !== 'a_vista' && (
+                <tr className="border-t border-neutral-100">
+                  <td className="py-xs">RESTANTE</td>
+                  <td colSpan={4}>
+                    até {c.balanceDueDaysBefore} dias antes do evento ({formatDateOnly(c.balanceDueDate)})
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          {Number(c.discountAmount) > 0 && c.discountDescription && (
+            <p className="mt-sm text-xs text-neutral-600">Desconto: {c.discountDescription}</p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="pb-sm">

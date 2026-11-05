@@ -10,6 +10,33 @@ export function makeContract(over: Partial<ContractData> = {}): ContractData {
     eventDate: '2030-06-15',
     brideClientId: 'c1',
     brideName: 'Ana Souza',
+    eventKind: 'noiva',
+    contractorClientId: 'c1',
+    contractorName: 'Ana Souza',
+    paymentMode: 'sinal_parcelado',
+    discountDescription: null,
+    packageName: null,
+    currentSnapshotFormat: 2,
+    installments: [
+      {
+        seq: 1,
+        dueDate: '2030-01-05',
+        amount: '1200.00',
+        paidAmount: '1200.00',
+        pendingAmount: '0.00',
+        state: 'paid',
+        overdue: false,
+      },
+      {
+        seq: 2,
+        dueDate: '2030-01-20',
+        amount: '800.00',
+        paidAmount: '800.00',
+        pendingAmount: '0.00',
+        state: 'paid',
+        overdue: false,
+      },
+    ],
     packageId: null,
     itemsTotal: '8000.00',
     discountAmount: '0.00',
@@ -47,6 +74,7 @@ export function makeContract(over: Partial<ContractData> = {}): ContractData {
         unitPrice: '8000.00',
         total: '8000.00',
         purpose: 'event',
+        isPackageItem: false,
       },
     ],
     payments: [],
@@ -64,6 +92,7 @@ export function withTypenames(c: ContractData) {
     __typename: 'Contract',
     ...c,
     acceptance: c.acceptance ? { __typename: 'ContractAcceptanceView', ...c.acceptance } : null,
+    installments: c.installments.map((i) => ({ __typename: 'ContractInstallment', ...i })),
     items: c.items.map((i) => ({ __typename: 'ContractItem', ...i })),
     payments: c.payments.map((p) => ({
       __typename: 'ContractPaymentView',
@@ -117,4 +146,55 @@ export function makeSettings(over: Record<string, unknown> = {}) {
     letterhead: null,
     ...over,
   };
+}
+
+/** Contrato de pacote com sinal parcelado: uma parcela paga e uma vencida (D-14). */
+export function makePackageContract(over: Partial<ContractData> = {}): ContractData {
+  return makeContract({
+    packageId: 'p1',
+    packageName: 'Pacote Ouro',
+    status: 'draft',
+    paid: '300.00',
+    discountAmount: '100.00',
+    discountDescription: '10% OFF',
+    totalAmount: '2400.00',
+    itemsTotal: '2500.00',
+    depositAmount: '400.00',
+    installments: [
+      {
+        seq: 1,
+        dueDate: '2030-01-05',
+        amount: '300.00',
+        paidAmount: '300.00',
+        pendingAmount: '0.00',
+        state: 'paid',
+        overdue: false,
+      },
+      {
+        seq: 2,
+        dueDate: '2030-01-20',
+        amount: '100.00',
+        paidAmount: '0.00',
+        pendingAmount: '100.00',
+        state: 'open',
+        overdue: true,
+      },
+    ],
+    items: [
+      {
+        id: 'it1',
+        groupMemberId: 'm1',
+        personName: 'Ana Souza',
+        serviceId: 's1',
+        packageId: 'p1',
+        description: 'Maquiagem noiva',
+        quantity: 1,
+        unitPrice: '2500.00',
+        total: '2500.00',
+        purpose: 'event',
+        isPackageItem: true,
+      },
+    ],
+    ...over,
+  });
 }
