@@ -3,6 +3,11 @@ export const ROLE_LABEL: Record<string, string> = {
   companion: 'Acompanhante',
 };
 
+export const EVENT_KIND_LABEL: Record<string, string> = {
+  noiva: 'Noiva',
+  debutante: 'Debutante',
+};
+
 export const LOCATION_LABEL: Record<string, string> = {
   studio: 'No estúdio',
   external: 'Externo',
@@ -45,6 +50,10 @@ export const ERROR_MESSAGES: Record<string, string> = {
   NO_PLANNED_SERVICES: 'Nenhuma pessoa tem serviços planejados. Inclua serviços antes de agendar.',
   INVALID_PROPOSAL: 'A proposta de agenda não é válida. Revise as linhas e tente de novo.',
   DEPOSIT_ONLY_FOR_UNCOVERED: 'Sinal só pode ser registrado para pessoa que paga avulso.',
+  INVALID_EVENT_TIME: 'Horário do evento inválido. Use o formato HH:MM.',
+  RESPONSIBLE_IS_DEBUTANTE: 'A responsável não pode ser a própria debutante.',
+  RESPONSIBLE_NOT_FOUND: 'Responsável não encontrada. Escolha outra cliente.',
+  INVALID_EVENT_KIND: 'Tipo de evento inválido.',
   EVENT_DATE_MISMATCH: 'Os horários precisam estar no dia do evento.',
 };
 

@@ -9,6 +9,11 @@ export const BRIDAL_GROUP_LIST_FIELDS = gql`
     readyBy
     locationKind
     locationAddress
+    locationName
+    eventKind
+    responsibleClientId
+    responsibleName
+    eventTime
     travelMinutesBefore
     travelMinutesAfter
     status
@@ -261,6 +266,12 @@ export interface BridalGroupData {
   readyBy: string | null;
   locationKind: string;
   locationAddress: string | null;
+  locationName: string | null;
+  eventKind: 'noiva' | 'debutante';
+  responsibleClientId: string | null;
+  responsibleName: string | null;
+  /** HH:MM; separado de "pronta até". */
+  eventTime: string | null;
   travelMinutesBefore: number;
   travelMinutesAfter: number;
   status: string;
@@ -309,6 +320,12 @@ export interface BridalGroupFieldsInput {
   readyBy?: string | null;
   locationKind?: string;
   locationAddress?: string | null;
+  locationName?: string | null;
+  eventKind?: 'noiva' | 'debutante';
+  /** update: omitido = mantém; null = remove */
+  responsibleClientId?: string | null;
+  newResponsible?: { fullName: string; phone?: string };
+  eventTime?: string | null;
   travelMinutesBefore?: number;
   travelMinutesAfter?: number;
   notes?: string | null;

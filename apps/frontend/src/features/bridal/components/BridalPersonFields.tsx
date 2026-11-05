@@ -22,6 +22,8 @@ interface Props {
   onRemove?: () => void;
   /** Esconde "Incluída no contrato" (ex.: tela que só edita serviços). */
   hideCoverage?: boolean;
+  /** Só escolher/cadastrar a cliente (sem relação, cobertura nem serviços). */
+  compact?: boolean;
 }
 
 export function BridalPersonFields({
@@ -31,6 +33,7 @@ export function BridalPersonFields({
   onChange,
   onRemove,
   hideCoverage,
+  compact,
 }: Props) {
   const [search, setSearch] = useState('');
   const { data: clients } = useQuery<ClientsListResult>(ClientsListQuery, {
@@ -144,92 +147,107 @@ export function BridalPersonFields({
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm items-end">
-        <div>
-          <Label className={LABEL_CLASS} htmlFor={`${idPrefix}-relation`}>
-            Relação (ex.: Madrinha, Mãe)
-          </Label>
-          <Input
-            id={`${idPrefix}-relation`}
-            className="mt-xs"
-            value={value.relationLabel}
-            onChange={(e) => patch({ relationLabel: e.target.value })}
-          />
-        </div>
-        {!hideCoverage && (
-          <label className="flex items-center gap-xs text-sm">
-            <input
-              type="checkbox"
-              checked={value.coveredByContract}
-              onChange={(e) => patch({ coveredByContract: e.target.checked })}
-              data-testid={`${idPrefix}-covered`}
-            />
-            Incluída no contrato
-          </label>
-        )}
-      </div>
-
-      <div>
-        <Label className={LABEL_CLASS} htmlFor={`${idPrefix}-add-service`}>
-          Adicionar serviço planejado
-        </Label>
-        <select
-          id={`${idPrefix}-add-service`}
-          data-testid={`${idPrefix}-add-service`}
-          className={SELECT_CLASS}
-          value=""
-          onChange={(e) => {
-            if (!e.target.value) return;
-            patch({ services: [...value.services, { serviceId: e.target.value, purpose: 'event' }] });
-          }}
-        >
-          <option value="">Selecione…</option>
-          {services.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-        <ul className="mt-xs space-y-xs">
-          {value.services.map((s, i) => (
-            <li key={`${s.serviceId}-${i}`} className="flex items-center gap-sm text-sm">
-              <span className="flex-1">
-                {services.find((x) => x.id === s.serviceId)?.name ?? 'Serviço'}
-              </span>
-              <label className="sr-only" htmlFor={`${idPrefix}-purpose-${i}`}>
-                Finalidade do serviço {i + 1}
+      {!compact && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm items-end">
+            <div>
+              <Label className={LABEL_CLASS} htmlFor={`${idPrefix}-relation`}>
+                Relação (ex.: Madrinha, Mãe)
+              </Label>
+              <Input
+                id={`${idPrefix}-relation`}
+                className="mt-xs"
+                value={value.relationLabel}
+                onChange={(e) => patch({ relationLabel: e.target.value })}
+              />
+            </div>
+            {!hideCoverage && (
+              <label className="flex items-center gap-xs text-sm">
+                <input
+                  type="checkbox"
+                  checked={value.coveredByContract}
+                  onChange={(e) => patch({ coveredByContract: e.target.checked })}
+                  data-testid={`${idPrefix}-covered`}
+                />
+                Incluída no contrato
               </label>
-              <select
-                id={`${idPrefix}-purpose-${i}`}
-                className="rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white"
-                value={s.purpose}
-                onChange={(e) =>
-                  patch({
-                    services: value.services.map((x, j) =>
-                      j === i ? { ...x, purpose: e.target.value as 'event' | 'trial' } : x,
-                    ),
-                  })
-                }
-              >
-                {Object.entries(PURPOSE_LABEL).map(([k, label]) => (
-                  <option key={k} value={k}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                aria-label={`Remover serviço ${i + 1}`}
-                onClick={() => patch({ services: value.services.filter((_, j) => j !== i) })}
-              >
-                <Trash2 className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </li>
-          ))}
-        </ul>
-      </div>
+            )}
+          </div>
+
+          <div>
+            <Label className={LABEL_CLASS} htmlFor={`${idPrefix}-add-service`}>
+              Adicionar serviço planejado
+            </Label>
+            <select
+              id={`${idPrefix}-add-service`}
+              data-testid={`${idPrefix}-add-service`}
+              className={SELECT_CLASS}
+              value=""
+              onChange={(e) => {
+                if (!e.target.value) return;
+                patch({
+                  services: [...value.services, { serviceId: e.target.value, purpose: 'event' }],
+                });
+              }}
+            >
+              <option value="">Selecione…</option>
+              {services.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+            <ul className="mt-xs space-y-xs">
+              {value.services.map((s, i) => (
+                <li key={`${s.serviceId}-${i}`} className="flex items-center gap-sm text-sm">
+                  <span className="flex-1">
+                    {services.find((x) => x.id === s.serviceId)?.name ?? 'Serviço'}
+                  </span>
+                  <label className="sr-only" htmlFor={`${idPrefix}-purpose-${i}`}>
+                    Finalidade do serviço {i + 1}
+                  </label>
+                  <select
+                    id={`${idPrefix}-purpose-${i}`}
+                    className="rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white"
+                    value={s.purpose}
+                    onChange={(e) =>
+                      patch({
+                        services: value.services.map((x, j) =>
+                          j === i
+                            ? {
+                                ...x,
+                                purpose: e.target.value as 'event' | 'trial',
+                              }
+                            : x,
+                        ),
+                      })
+                    }
+                  >
+                    {Object.entries(PURPOSE_LABEL).map(([k, label]) => (
+                      <option key={k} value={k}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    aria-label={`Remover serviço ${i + 1}`}
+                    onClick={() =>
+                      patch({
+                        services: value.services.filter((_, j) => j !== i),
+                      })
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
     </fieldset>
   );
 }
