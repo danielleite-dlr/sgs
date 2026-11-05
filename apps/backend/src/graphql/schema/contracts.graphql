@@ -1,9 +1,64 @@
 # ===== Configurações do contrato da organização =====
 
+type ContractStudioInfo {
+  name: String!
+  cnpj: String!
+  address: String!
+  representative: String!
+  representativeRg: String!
+  forumCity: String!
+  forumUf: String!
+}
+
+type ContractTexts {
+  title: String!
+  intro: String!
+  parties: String!
+  trialNote: String!
+  clauses: String!
+}
+
+type ContractTextsDefaultFlags {
+  title: Boolean!
+  intro: Boolean!
+  parties: Boolean!
+  trialNote: Boolean!
+  clauses: Boolean!
+}
+
+type ContractLetterhead {
+  sha256: String!
+  mimeType: String!
+  width: Int!
+  height: Int!
+  sizeBytes: Int!
+  originalFilename: String
+  uploadedAt: DateTime!
+}
+
+input ContractStudioInput {
+  name: String
+  cnpj: String
+  address: String
+  representative: String
+  representativeRg: String
+  forumCity: String
+  forumUf: String
+}
+
+"Cada seção: omitida = mantém; null = restaura o texto padrão."
+input ContractTextsInput {
+  title: String
+  intro: String
+  parties: String
+  trialNote: String
+  clauses: String
+}
+
 type ContractSettings {
   balanceDueDaysBefore: Int!
-  templateBody: String!
-  isDefaultTemplate: Boolean!
+  templateBody: String! @deprecated(reason: "Fase 04.1: substituído por texts")
+  isDefaultTemplate: Boolean! @deprecated(reason: "Fase 04.1: substituído por texts")
   cancellationClause: String!
   isDefaultClause: Boolean!
   alertDepositUnpaidDays: Int!
@@ -11,11 +66,21 @@ type ContractSettings {
   alertCompanionDepositDays: Int!
   scheduleDayStart: String!
   scheduleDayEnd: String!
-  templateVariables: [String!]!
-  missingVariables: [String!]!
+  templateVariables: [String!]! @deprecated(reason: "Fase 04.1: substituído por texts")
+  missingVariables: [String!]! @deprecated(reason: "Fase 04.1: substituído por texts")
+  studio: ContractStudioInfo!
+  withdrawalNoticeDays: Int!
+  texts: ContractTexts!
+  textsDefault: ContractTextsDefaultFlags!
+  defaultTexts: ContractTexts!
+  textVariables: [String!]!
+  letterhead: ContractLetterhead
 }
 
 input UpdateContractSettingsInput {
+  studio: ContractStudioInput
+  withdrawalNoticeDays: Int
+  texts: ContractTextsInput
   balanceDueDaysBefore: Int
   templateBody: String
   cancellationClause: String
