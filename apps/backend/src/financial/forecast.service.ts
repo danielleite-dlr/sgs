@@ -1,20 +1,26 @@
-import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { fromCents, toCents } from '../common/money';
-import { TenantContextService } from '../database/tenant-context.service';
-import { loadCategoryParents } from '../identity/member-categories';
-import { categoryChain, computeCommission, resolveCommissionRule, type RuleLite } from './commission-resolver';
-import { orgTimezone, validateRange } from './financial.service';
+import { Injectable } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
+import { fromCents, toCents } from "../common/money";
+import { TenantContextService } from "../database/tenant-context.service";
+import { loadCategoryParents } from "../identity/member-categories";
+import {
+  categoryChain,
+  computeCommission,
+  resolveCommissionRule,
+  type RuleLite,
+} from "./commission-resolver";
+import { orgTimezone, validateRange } from "./financial.service";
 import {
   FORECAST_APPOINTMENT_STATUSES,
   appointmentInflowCents,
   buildWeeklyBuckets,
+  costGroupOf,
   contractReceivables,
   expandFixedExpenses,
   fallbackCommission,
   summarizeForecast,
   type ForecastItemCents,
-} from './forecast';
+} from "./forecast";
 
 interface AppointmentRow {
   id: string;
@@ -45,6 +51,14 @@ interface ContractItemRow {
   scheduled: number;
 }
 
+interface PackageCostRow {
+  contract_id: string;
+  code: string;
+  event_date: string;
+  name: string;
+  cost: string;
+}
+
 const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 
 @Injectable()
@@ -57,11 +71,13 @@ export class ForecastService {
     return this.tenant.runWithTenant(orgId, async (tx) => {
       const tz = await orgTimezone(tx, orgId);
 
-      const ruleRows = await tx.commissionRule.findMany({ where: { deletedAt: null } });
+      const ruleRows = await tx.commissionRule.findMany({
+        where: { deletedAt: null },
+      });
       const rules: RuleLite[] = ruleRows.map((r) => ({
         id: r.id,
-        scopeType: r.scopeType as RuleLite['scopeType'],
-        kind: r.kind as RuleLite['kind'],
+        scopeType: r.scopeType as RuleLite["scopeType"],
+        kind: r.kind as RuleLite["kind"],
         value: r.value.toString(),
         memberId: r.memberId,
         serviceId: r.serviceId,
@@ -93,7 +109,8 @@ export class ForecastService {
 
       for (const a of appts) {
         const baseCents = toCents(a.base_price);
-        const variantCents = a.variant_price == null ? null : toCents(a.variant_price);
+        const variantCents =
+          a.variant_price == null ? null : toCents(a.variant_price);
         if (a.contract_id == null) {
           const cents = appointmentInflowCents({
             comandaItemCount: a.comanda_item_count,
@@ -105,8 +122,8 @@ export class ForecastService {
           if (cents > 0) {
             items.push({
               date: a.day,
-              kind: 'appointment',
-              direction: 'in',
+              kind: "appointment",
+              direction: "in",
               cents,
               label: `${a.service_name} · ${a.professional_name}`,
               refId: a.id,
@@ -119,16 +136,20 @@ export class ForecastService {
         // D-10: comissão de TODOS os agendamentos, inclusive os ligados a contrato
         const listUnitCents = variantCents ?? baseCents;
         const match = resolveCommissionRule(rules, {
-          kind: 'service',
+          kind: "service",
           memberId: a.professional_id,
           serviceId: a.service_id,
           categoryChain: categoryChain(a.category_id, parents),
         });
-        const c = computeCommission(match, { listUnitCents, quantity: 1, chargedCents: listUnitCents });
+        const c = computeCommission(match, {
+          listUnitCents,
+          quantity: 1,
+          chargedCents: listUnitCents,
+        });
         items.push({
           date: a.day,
-          kind: 'commission',
-          direction: 'out',
+          kind: "commission",
+          direction: "out",
           cents: c.amountCents,
           label: `Comissão — ${a.professional_name} · ${a.service_name}`,
           refId: a.id,
@@ -140,12 +161,16 @@ export class ForecastService {
 
       // c. Contratos ativos
       const contracts = await tx.contract.findMany({
-        where: { status: 'active' },
+        where: { status: "active" },
         include: { installments: true },
       });
-      const paidRows = await tx.$queryRaw<{ contract_id: string; net: string }[]>`
+      const paidRows = await tx.$queryRaw<
+        { contract_id: string; net: string }[]
+      >`
         SELECT contract_id, COALESCE(SUM(amount), 0)::text AS net FROM contract_payments GROUP BY contract_id`;
-      const netByContract = new Map(paidRows.map((r) => [r.contract_id, toCents(r.net)]));
+      const netByContract = new Map(
+        paidRows.map((r) => [r.contract_id, toCents(r.net)]),
+      );
       for (const c of contracts) {
         items.push(
           ...contractReceivables(
@@ -190,13 +215,20 @@ export class ForecastService {
         const baseCents = toCents(r.base_price);
         const f = fallbackCommission(
           rules,
-          { serviceId: r.service_id, categoryChain: categoryChain(r.category_id, parents) },
-          { listUnitCents: baseCents, quantity: qty, chargedCents: baseCents * qty },
+          {
+            serviceId: r.service_id,
+            categoryChain: categoryChain(r.category_id, parents),
+          },
+          {
+            listUnitCents: baseCents,
+            quantity: qty,
+            chargedCents: baseCents * qty,
+          },
         );
         items.push({
           date: r.event_date,
-          kind: 'commission',
-          direction: 'out',
+          kind: "commission",
+          direction: "out",
           cents: f.amountCents,
           label: `Comissão estimada — sem profissional definido · ${r.service_name} (contrato ${r.code})`,
           refId: r.contract_id,
@@ -206,8 +238,38 @@ export class ForecastService {
         });
       }
 
+      // d2. Outros custos dos pacotes: uma vez por contrato ativo, na data do evento.
+      // Valores atuais de package_cost_items (não há snapshot). Custo 0 é ignorado.
+      const pcRows = await tx.$queryRaw<PackageCostRow[]>`
+        SELECT c.id AS contract_id, c.code, g.event_date::text AS event_date,
+               pci.name, pci.cost::text AS cost
+          FROM contracts c
+          JOIN bridal_groups g ON g.id = c.bridal_group_id
+          JOIN packages p ON p.id = c.package_id AND p.deleted_at IS NULL
+          JOIN package_cost_items pci ON pci.package_id = p.id
+         WHERE c.status = 'active' AND c.package_id IS NOT NULL
+           AND g.event_date >= ${from}::date AND g.event_date < ${to}::date
+         ORDER BY pci.display_order, pci.created_at`;
+      for (const r of pcRows) {
+        const cents = toCents(r.cost);
+        if (cents <= 0) continue;
+        items.push({
+          date: r.event_date,
+          kind: "package_cost",
+          direction: "out",
+          cents,
+          label: `${r.name} — ${r.code}`,
+          refId: r.contract_id,
+          overdue: false,
+          noRule: false,
+          withoutProfessional: false,
+        });
+      }
+
       // e. Despesas fixas
-      const expenses = await tx.fixedExpense.findMany({ where: { active: true } });
+      const expenses = await tx.fixedExpense.findMany({
+        where: { active: true },
+      });
       items.push(
         ...expandFixedExpenses(
           expenses.map((e) => ({
@@ -226,7 +288,7 @@ export class ForecastService {
       items.sort(
         (x, y) =>
           (x.date < y.date ? -1 : x.date > y.date ? 1 : 0) ||
-          (x.direction === y.direction ? 0 : x.direction === 'in' ? -1 : 1) ||
+          (x.direction === y.direction ? 0 : x.direction === "in" ? -1 : 1) ||
           (x.label < y.label ? -1 : x.label > y.label ? 1 : 0),
       );
       const buckets = buildWeeklyBuckets(items, from, to);
@@ -240,8 +302,13 @@ export class ForecastService {
         outflowTotal: fromCents(totals.outflowCents),
         balance: fromCents(totals.balanceCents),
         overdueInflowTotal: fromCents(totals.overdueInflowCents),
-        noRuleCount: items.filter((i) => i.kind === 'commission' && i.noRule).length,
-        withoutProfessionalCount: items.filter((i) => i.withoutProfessional).length,
+        professionalOutflowTotal: fromCents(totals.professionalOutflowCents),
+        operationalOutflowTotal: fromCents(totals.operationalOutflowCents),
+        fixedOutflowTotal: fromCents(totals.fixedOutflowCents),
+        noRuleCount: items.filter((i) => i.kind === "commission" && i.noRule)
+          .length,
+        withoutProfessionalCount: items.filter((i) => i.withoutProfessional)
+          .length,
         buckets: buckets.map((b) => ({
           start: b.start,
           end: b.end,
@@ -249,6 +316,9 @@ export class ForecastService {
           outflow: fromCents(b.outflowCents),
           balance: fromCents(b.balanceCents),
           overdueInflow: fromCents(b.overdueInflowCents),
+          professionalOutflow: fromCents(b.professionalOutflowCents),
+          operationalOutflow: fromCents(b.operationalOutflowCents),
+          fixedOutflow: fromCents(b.fixedOutflowCents),
         })),
         items: items.map((i) => ({
           date: i.date,
@@ -260,6 +330,7 @@ export class ForecastService {
           overdue: i.overdue,
           noRule: i.noRule,
           withoutProfessional: i.withoutProfessional,
+          costGroup: costGroupOf(i.kind, i.direction),
         })),
       };
     });

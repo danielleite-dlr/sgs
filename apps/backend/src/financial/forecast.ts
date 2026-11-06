@@ -1,21 +1,70 @@
-import { allocateInstallments, type InstallmentInput } from '../contracts/domain/contract-math';
-import { computeCommission, type RuleLite } from './commission-resolver';
+import {
+  allocateInstallments,
+  type InstallmentInput,
+} from "../contracts/domain/contract-math";
+import { computeCommission, type RuleLite } from "./commission-resolver";
 
 /** D-13: "confirmado" para a previsão. Trocar aqui muda a previsão inteira. */
-export const FORECAST_APPOINTMENT_STATUSES = ['scheduled', 'confirmed'] as const;
+export const FORECAST_APPOINTMENT_STATUSES = [
+  "scheduled",
+  "confirmed",
+] as const;
 export const FORECAST_HORIZON_DAYS = 30;
 
 export type ForecastKind =
-  | 'appointment'
-  | 'contract_installment'
-  | 'contract_balance'
-  | 'commission'
-  | 'fixed_expense';
+  | "appointment"
+  | "contract_installment"
+  | "contract_balance"
+  | "commission"
+  | "package_cost"
+  | "fixed_expense";
+
+/** Grupo de custo das saídas: profissional (comissão), operacional (outros custos do pacote), fixo (despesas fixas). */
+export type ForecastCostGroup = "professional" | "operational" | "fixed";
+
+const COST_GROUP_BY_KIND: Partial<Record<ForecastKind, ForecastCostGroup>> = {
+  commission: "professional",
+  package_cost: "operational",
+  fixed_expense: "fixed",
+};
+
+/** Entradas não têm grupo de custo (null). */
+export function costGroupOf(
+  kind: ForecastKind,
+  direction: "in" | "out",
+): ForecastCostGroup | null {
+  if (direction !== "out") return null;
+  return COST_GROUP_BY_KIND[kind] ?? null;
+}
+
+export interface CostGroupTotalsCents {
+  professionalCents: number;
+  operationalCents: number;
+  fixedCents: number;
+}
+
+/** Soma as saídas por grupo; professional + operational + fixed = total de saídas. */
+export function sumOutflowByCostGroup(
+  items: Pick<ForecastItemCents, "kind" | "direction" | "cents">[],
+): CostGroupTotalsCents {
+  const t: CostGroupTotalsCents = {
+    professionalCents: 0,
+    operationalCents: 0,
+    fixedCents: 0,
+  };
+  for (const i of items) {
+    const g = costGroupOf(i.kind, i.direction);
+    if (g === "professional") t.professionalCents += i.cents;
+    else if (g === "operational") t.operationalCents += i.cents;
+    else if (g === "fixed") t.fixedCents += i.cents;
+  }
+  return t;
+}
 
 export interface ForecastItemCents {
   date: string; // YYYY-MM-DD local da org
   kind: ForecastKind;
-  direction: 'in' | 'out';
+  direction: "in" | "out";
   cents: number; // sempre >= 0
   label: string;
   refId: string | null;
@@ -31,12 +80,15 @@ export interface ForecastBucketCents {
   outflowCents: number;
   balanceCents: number;
   overdueInflowCents: number;
+  professionalOutflowCents: number;
+  operationalOutflowCents: number;
+  fixedOutflowCents: number;
 }
 
 const DAY_MS = 86_400_000;
 
 function parseUtc(date: string): number {
-  const [y, m, d] = date.split('-').map(Number);
+  const [y, m, d] = date.split("-").map(Number);
   return Date.UTC(y, m - 1, d);
 }
 
@@ -53,19 +105,25 @@ function lastDayOfMonth(year: number, month1: number): number {
   return new Date(Date.UTC(year, month1, 0)).getUTCDate();
 }
 
-const base = (): Pick<ForecastItemCents, 'noRule' | 'withoutProfessional'> => ({
+const base = (): Pick<ForecastItemCents, "noRule" | "withoutProfessional"> => ({
   noRule: false,
   withoutProfessional: false,
 });
 
 export function expandFixedExpenses(
-  expenses: { id: string; name: string; cents: number; dueDay: number; active: boolean }[],
+  expenses: {
+    id: string;
+    name: string;
+    cents: number;
+    dueDay: number;
+    active: boolean;
+  }[],
   from: string,
   to: string,
 ): ForecastItemCents[] {
   const out: ForecastItemCents[] = [];
-  const [fy, fm] = from.split('-').map(Number);
-  const [ty, tm] = to.split('-').map(Number);
+  const [fy, fm] = from.split("-").map(Number);
+  const [ty, tm] = to.split("-").map(Number);
   let y = fy;
   let m = fm;
   while (y < ty || (y === ty && m <= tm)) {
@@ -73,12 +131,12 @@ export function expandFixedExpenses(
     for (const e of expenses) {
       if (!e.active) continue;
       const day = Math.min(e.dueDay, last);
-      const date = `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const date = `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
       if (date >= from && date < to) {
         out.push({
           date,
-          kind: 'fixed_expense',
-          direction: 'out',
+          kind: "fixed_expense",
+          direction: "out",
           cents: e.cents,
           label: e.name,
           refId: e.id,
@@ -111,14 +169,16 @@ export function contractReceivables(
 ): ForecastItemCents[] {
   const items: ForecastItemCents[] = [];
   const place = (dueDate: string) =>
-    dueDate < from ? { date: from, overdue: true } : { date: dueDate, overdue: false };
+    dueDate < from
+      ? { date: from, overdue: true }
+      : { date: dueDate, overdue: false };
 
   for (const i of allocateInstallments(c.installments, c.netPaidCents, from)) {
     if (i.pendingCents <= 0 || i.dueDate >= to) continue;
     items.push({
       ...place(i.dueDate),
-      kind: 'contract_installment',
-      direction: 'in',
+      kind: "contract_installment",
+      direction: "in",
       cents: i.pendingCents,
       label: `Contrato ${c.code} — parcela ${i.seq} do sinal`,
       refId: c.contractId,
@@ -126,12 +186,15 @@ export function contractReceivables(
     });
   }
 
-  const balanceCents = Math.max(0, c.totalCents - Math.max(c.netPaidCents, c.depositCents));
+  const balanceCents = Math.max(
+    0,
+    c.totalCents - Math.max(c.netPaidCents, c.depositCents),
+  );
   if (balanceCents > 0 && c.balanceDueDate < to) {
     items.push({
       ...place(c.balanceDueDate),
-      kind: 'contract_balance',
-      direction: 'in',
+      kind: "contract_balance",
+      direction: "in",
       cents: balanceCents,
       label: `Contrato ${c.code} — restante`,
       refId: c.contractId,
@@ -153,7 +216,10 @@ export function appointmentInflowCents(a: {
   baseCents: number;
   depositCents: number;
 }): number {
-  const price = a.comandaItemCount > 0 ? a.comandaItemsCents : (a.variantCents ?? a.baseCents);
+  const price =
+    a.comandaItemCount > 0
+      ? a.comandaItemsCents
+      : (a.variantCents ?? a.baseCents);
   return Math.max(0, price - a.depositCents);
 }
 
@@ -168,7 +234,7 @@ export function fallbackCommission(
   amounts: { listUnitCents: number; quantity: number; chargedCents: number },
 ): { amountCents: number; noRule: boolean; ruleId: string | null } {
   const live = rules.filter((r) => !r.deletedAt);
-  const def = live.find((r) => r.scopeType === 'default');
+  const def = live.find((r) => r.scopeType === "default");
   if (def) {
     return {
       amountCents: computeCommission({ rule: def }, amounts).amountCents,
@@ -177,18 +243,28 @@ export function fallbackCommission(
     };
   }
   const candidates = [
-    ...live.filter((r) => r.scopeType === 'member_service' && r.serviceId === item.serviceId),
-    ...live.filter((r) => r.scopeType === 'service' && r.serviceId === item.serviceId),
     ...live.filter(
-      (r) => r.scopeType === 'category' && !!r.categoryId && item.categoryChain.includes(r.categoryId),
+      (r) => r.scopeType === "member_service" && r.serviceId === item.serviceId,
+    ),
+    ...live.filter(
+      (r) => r.scopeType === "service" && r.serviceId === item.serviceId,
+    ),
+    ...live.filter(
+      (r) =>
+        r.scopeType === "category" &&
+        !!r.categoryId &&
+        item.categoryChain.includes(r.categoryId),
     ),
   ];
   let best: { amountCents: number; ruleId: string } | null = null;
   for (const rule of candidates) {
     const amountCents = computeCommission({ rule }, amounts).amountCents;
-    if (!best || amountCents > best.amountCents) best = { amountCents, ruleId: rule.id };
+    if (!best || amountCents > best.amountCents)
+      best = { amountCents, ruleId: rule.id };
   }
-  return best ? { ...best, noRule: false } : { amountCents: 0, noRule: true, ruleId: null };
+  return best
+    ? { ...best, noRule: false }
+    : { amountCents: 0, noRule: true, ruleId: null };
 }
 
 export function buildWeeklyBuckets(
@@ -201,11 +277,16 @@ export function buildWeeklyBuckets(
     const next = addDaysIso(start, 7);
     const end = next < to ? next : to;
     const inBucket = items.filter((i) => i.date >= start && i.date < end);
-    const inflowCents = inBucket.filter((i) => i.direction === 'in').reduce((s, i) => s + i.cents, 0);
-    const outflowCents = inBucket.filter((i) => i.direction === 'out').reduce((s, i) => s + i.cents, 0);
-    const overdueInflowCents = inBucket
-      .filter((i) => i.direction === 'in' && i.overdue)
+    const inflowCents = inBucket
+      .filter((i) => i.direction === "in")
       .reduce((s, i) => s + i.cents, 0);
+    const outflowCents = inBucket
+      .filter((i) => i.direction === "out")
+      .reduce((s, i) => s + i.cents, 0);
+    const overdueInflowCents = inBucket
+      .filter((i) => i.direction === "in" && i.overdue)
+      .reduce((s, i) => s + i.cents, 0);
+    const g = sumOutflowByCostGroup(inBucket);
     buckets.push({
       start,
       end,
@@ -213,6 +294,9 @@ export function buildWeeklyBuckets(
       outflowCents,
       balanceCents: inflowCents - outflowCents,
       overdueInflowCents,
+      professionalOutflowCents: g.professionalCents,
+      operationalOutflowCents: g.operationalCents,
+      fixedOutflowCents: g.fixedCents,
     });
   }
   return buckets;
@@ -223,17 +307,29 @@ export function summarizeForecast(items: ForecastItemCents[]): {
   outflowCents: number;
   balanceCents: number;
   overdueInflowCents: number;
+  professionalOutflowCents: number;
+  operationalOutflowCents: number;
+  fixedOutflowCents: number;
 } {
   let inflowCents = 0;
   let outflowCents = 0;
   let overdueInflowCents = 0;
   for (const i of items) {
-    if (i.direction === 'in') {
+    if (i.direction === "in") {
       inflowCents += i.cents;
       if (i.overdue) overdueInflowCents += i.cents;
     } else {
       outflowCents += i.cents;
     }
   }
-  return { inflowCents, outflowCents, balanceCents: inflowCents - outflowCents, overdueInflowCents };
+  const g = sumOutflowByCostGroup(items);
+  return {
+    inflowCents,
+    outflowCents,
+    balanceCents: inflowCents - outflowCents,
+    overdueInflowCents,
+    professionalOutflowCents: g.professionalCents,
+    operationalOutflowCents: g.operationalCents,
+    fixedOutflowCents: g.fixedCents,
+  };
 }

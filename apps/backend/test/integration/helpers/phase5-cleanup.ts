@@ -7,6 +7,9 @@ import { adminPrisma } from '../setup';
  */
 export async function deletePhase5Rows(orgFilterSql: string): Promise<void> {
   await adminPrisma.$executeRawUnsafe(
+    `DELETE FROM package_cost_items WHERE organization_id IN (${orgFilterSql})`,
+  );
+  await adminPrisma.$executeRawUnsafe(
     `DELETE FROM fixed_expenses WHERE organization_id IN (${orgFilterSql})`,
   );
 }

@@ -13,6 +13,12 @@ type CashForecast {
   balance: String!
   "Parte das entradas que está em atraso (D-09)"
   overdueInflowTotal: String!
+  "Saídas de custo profissional (comissões)"
+  professionalOutflowTotal: String!
+  "Saídas de custo operacional (outros custos dos pacotes)"
+  operationalOutflowTotal: String!
+  "Saídas de custo fixo (despesas fixas)"
+  fixedOutflowTotal: String!
   "Agendamentos/itens sem regra de comissão (contados como R$ 0,00)"
   noRuleCount: Int!
   "Itens de contrato sem profissional definido com comissão estimada (D-10)"
@@ -31,11 +37,14 @@ type ForecastBucket {
   outflow: String!
   balance: String!
   overdueInflow: String!
+  professionalOutflow: String!
+  operationalOutflow: String!
+  fixedOutflow: String!
 }
 
 type ForecastItem {
   date: String!
-  "appointment | contract_installment | contract_balance | commission | fixed_expense"
+  "appointment | contract_installment | contract_balance | commission | package_cost | fixed_expense"
   kind: String!
   "in | out"
   direction: String!
@@ -45,4 +54,6 @@ type ForecastItem {
   overdue: Boolean!
   noRule: Boolean!
   withoutProfessional: Boolean!
+  "Só para saídas: professional | operational | fixed. Null nas entradas"
+  costGroup: String
 }
