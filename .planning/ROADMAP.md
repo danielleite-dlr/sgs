@@ -15,7 +15,7 @@ Construir um SaaS multi-tenant completo para salões de beleza, partindo da fund
 - [ ] **Phase 2: Core Domain** - Catálogo de serviços/produtos e perfis de clientes — o inventário do negócio
 - [ ] **Phase 3: Core Operations** - Loop atômico de agendamento + POS + financeiro + comissões
 - [x] **Phase 4: Bridal & Contracts** - Vertical de noivas, contratos de evento e IA de otimização de agenda (completed 2026-11-05)
-- [ ] **Phase 5: Communication & Launch** - Automação WhatsApp, campanhas, previsão financeira e qualidade de produção
+- [ ] **Phase 5: Uso no dia a dia** - Rodada de usabilidade das telas principais e previsão financeira de 30 dias
 
 ## Phase Details
 
@@ -232,33 +232,53 @@ Plans:
 - [x] 04.1-16-e2e-verification-PLAN.md — RLS/RBAC das tabelas novas, E2E noiva (sinal parcelado) e debutante (à vista), gate completo, VALIDATION.md
 - [ ] 04.1-17-deploy-human-verification-PLAN.md — Push + deploy staging + CI, conferência do seed e verificação humana do PDF vs. gerador do Studio
 
-### Phase 5: Communication & Launch
+### Phase 5: Uso no dia a dia
 
-**Goal:** Comunicação com clientes está automatizada via WhatsApp oficial, previsão financeira está disponível, e o sistema atende os critérios de qualidade e observabilidade necessários para operar em produção com 250+ organizações.
+**Goal:** O SGS é usável na rotina diária do Studio JS: as telas mais usadas (agenda, comanda e caixa, noivas e contratos, clientes e financeiro, painel) não travam nem confundem, e a dona vê no painel quanto deve entrar e sair nos próximos 30 dias.
 
-**Depends on:** Phase 4
+**Depends on:** Phase 4.1
 
 **Requirements:**
-- COMM-01: Lembrete automático via WhatsApp 24h antes do agendamento
-- COMM-02: Campanhas de comunicação segmentadas (aniversário, clientes inativos, sazonais)
-- FIN-03: Previsão financeira para os próximos 30 dias baseada em histórico e agendamentos confirmados
-- QA-01: Cobertura de testes unitários >= 80% do código de domínio no backend
-- QA-02: Testes E2E (Playwright) cobrindo fluxos críticos: signup org, login, criar agendamento, fechar comanda, calcular comissão, criar contrato
-- QA-03: Suite de testes de isolamento de tenant em CI verificando que RLS impede vazamento de dados entre organizações
-- QA-04: Monitoramento em produção com Sentry (error tracking) e Grafana (métricas de latência, filas, DB)
+- FIN-03: Previsão financeira para os próximos 30 dias (agenda confirmada + parcelas de contratos − comissões a pagar − despesas fixas)
+- UX-DAY: Rodada de usabilidade — auditoria das telas principais feita pelo Claude, lista priorizada aprovada pela usuária, correções aplicadas
 
 **Success Criteria** (what must be TRUE):
-1. Cliente recebe mensagem WhatsApp de lembrete automaticamente 24h antes do agendamento, sem ação manual do atendente
-2. Proprietário consegue criar uma campanha de aniversário e ver a lista segmentada de clientes que farão aniversário no mês seguinte antes de enviar
-3. Proprietário consegue abrir a previsão financeira e ver projeção de receita para os próximos 30 dias baseada em agendamentos confirmados + histórico sazonal
-4. CI pipeline bloqueia merge se cobertura unitária do domínio cair abaixo de 80% ou se qualquer teste E2E dos fluxos críticos falhar
-5. Sentry captura erros em produção e Grafana exibe dashboard de latência P95 da API, tamanho das filas BullMQ e conexões DB em tempo real
+1. Existe uma lista priorizada de problemas de usabilidade das telas principais, aprovada pela usuária, e os itens aprovados estão corrigidos no staging
+2. A dona abre o painel inicial e vê o total previsto de entradas, saídas e saldo dos próximos 30 dias, com gráfico por semana, e clica para o detalhe no Financeiro
+3. A previsão soma agendamentos confirmados e parcelas de contratos a vencer, e desconta comissões a pagar e despesas fixas cadastradas
+4. A dona consegue cadastrar despesas fixas mensais (nome, valor, dia de vencimento) que entram na previsão
 
 **Plans:** TBD
 
 **UI hint:** yes
 
 ---
+
+## Backlog
+
+Ideias estacionadas, sem ordem. Entram no roadmap só quando a usuária promover (`/gsd:review-backlog`).
+
+### 999.1: Comunicação com clientes (WhatsApp)
+- COMM-01: Lembrete automático via WhatsApp 24h antes do agendamento
+- COMM-02: Campanhas segmentadas (aniversário, clientes inativas, sazonais)
+- Envio do link de aceite do contrato e lembretes para a noiva por WhatsApp/e-mail (prometido na fase 4, D-15/D-21)
+- Pré-requisito externo: verificação do negócio na Meta (WABA), 1–4 semanas; consentimento LGPD da cliente para mensagens
+- Retirado da fase 5 pela usuária em 2026-11-05: "o foco precisa ser em entregar um sistema usável para o dia a dia"
+
+### 999.2: Pix com QR via gateway
+- Pix QR real (Pagar.me/Stripe Connect) com webhooks, adiado da fase 3 (D-10)
+
+### 999.3: Produção e monitoramento
+- QA-04: Sentry (erros) e Grafana (latência, filas, DB)
+- Ambiente de produção separado do staging, com backup automático
+
+### 999.4: Fechamento da cobertura de testes
+- QA-01: ≥80% de cobertura unitária no domínio, com bloqueio no CI
+- QA-02: E2E dos fluxos críticos (signup, login, agendamento, comanda, comissão, contrato) — boa parte já existe
+- QA-03: Suíte de isolamento de tenant (RLS) no CI — já existe por fase; consolidar
+
+### 999.5: Sugestão de agenda com a Claude real
+- Ligar `ANTHROPIC_API_KEY` no staging e repetir o passo 3 do 04-16 (adiado pela usuária em 2026-11-05)
 
 ## Progress
 
@@ -270,4 +290,4 @@ Plans:
 | 2. Core Domain | 6/8 | In Progress|  |
 | 3. Core Operations | 0/? | Not started | - |
 | 4. Bridal & Contracts | 16/16 | Complete    | 2026-11-05 |
-| 5. Communication & Launch | 0/? | Not started | - |
+| 5. Uso no dia a dia | 0/? | Not started | - |
