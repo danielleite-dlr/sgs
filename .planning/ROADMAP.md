@@ -257,7 +257,7 @@ Plans:
 - [ ] 05-04-backend-cash-forecast-PLAN.md — Query cashForecast (agenda, parcelas, comissões, despesas; atraso D-09; fallback D-10) + integração
 - [x] 05-05-frontend-despesas-fixas-PLAN.md — Tela /financeiro/despesas-fixas + camada de API da fase
 - [x] 05-06-frontend-painel-previsao-PLAN.md — Cartão no painel e detalhe /financeiro/previsao
-- [ ] 05-06b-frontend-home-por-papel-PLAN.md — Painel como home de ADMIN/MANAGER; PROFESSIONAL/ATTENDANT na Agenda (D-11)
+- [x] 05-06b-frontend-home-por-papel-PLAN.md — Painel como home de ADMIN/MANAGER; PROFESSIONAL/ATTENDANT na Agenda (D-11)
 - [ ] 05-07-e2e-deploy-previsao-PLAN.md — E2E da previsão, gate completo, backup, deploy no staging e CI
 - [x] 05-08-gerar-lotes-correcao-PLAN.md — Aprovação da auditoria pela usuária (2026-11-06) + gera os lotes de correção 05-09…05-16
 - [ ] 05-09-ux-lote-agenda-1-PLAN.md — Lote 1 de usabilidade: Agenda (UX-01, UX-04, UX-05)

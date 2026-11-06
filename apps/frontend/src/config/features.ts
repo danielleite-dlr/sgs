@@ -14,8 +14,8 @@
  * A ordem de religamento está em `.planning/ROADMAP-MOCKS.md`.
  */
 const FLAGS = {
-  /** Home com cards de descoberta — conteúdo estático. */
-  dashboard: false,
+  /** Painel inicial com a previsão de 30 dias (05-06). Home de ADMIN/MANAGER (D-11). */
+  dashboard: true,
   /** Agenda em modo relatório (`?modo=relatorio`) — o parâmetro não é lido. */
   agendaRelatorio: false,
   /** Filtro de aniversariantes (`?filtro=aniversariantes`) — não é lido. */
@@ -63,6 +63,14 @@ export const FEATURES: Record<FeatureKey, boolean> = FLAGS;
 
 /** Para onde mandar o usuário quando a home ainda não existe. */
 export const HOME_PATH: string = FEATURES.dashboard ? '/dashboard' : '/agenda';
+
+/** D-11: quem cai no painel ao entrar. Os demais papéis vão para a Agenda. */
+export const DASHBOARD_HOME_ROLES: readonly string[] = ['ADMIN', 'MANAGER'];
+
+export function homePathForRole(roleName: string | null | undefined): string {
+  if (!FEATURES.dashboard) return '/agenda';
+  return roleName != null && DASHBOARD_HOME_ROLES.includes(roleName) ? '/dashboard' : '/agenda';
+}
 
 /**
  * Caminhos governados por flag, do mais específico para o mais genérico.
