@@ -248,14 +248,14 @@ Plans:
 3. A previsão soma agendamentos confirmados e parcelas de contratos a vencer, e desconta comissões a pagar e despesas fixas cadastradas
 4. A dona consegue cadastrar despesas fixas mensais (nome, valor, dia de vencimento) que entram na previsão
 
-**Plans:** 10 planos agora (+ lotes de correção 05-09…05-19 gerados pelo 05-08 após a aprovação da auditoria)
+**Plans:** 1/10 plans executed
 
 Plans:
 - [ ] 05-01-auditoria-usabilidade-PLAN.md — Auditoria no staging (usuário dedicado, só leitura) + local; 05-AUDITORIA.md commitado aguardando aprovação (D-01, D-12)
 - [ ] 05-02-backend-previsao-fundacao-PLAN.md — Migration fixed_expenses (RLS), permissão financial.expenseWrite, funções puras da previsão (TDD)
 - [ ] 05-03-backend-despesas-fixas-PLAN.md — API GraphQL de despesas fixas + integração RLS/RBAC
 - [ ] 05-04-backend-cash-forecast-PLAN.md — Query cashForecast (agenda, parcelas, comissões, despesas; atraso D-09; fallback D-10) + integração
-- [ ] 05-05-frontend-despesas-fixas-PLAN.md — Tela /financeiro/despesas-fixas + camada de API da fase
+- [x] 05-05-frontend-despesas-fixas-PLAN.md — Tela /financeiro/despesas-fixas + camada de API da fase
 - [ ] 05-06-frontend-painel-previsao-PLAN.md — Cartão no painel e detalhe /financeiro/previsao
 - [ ] 05-06b-frontend-home-por-papel-PLAN.md — Painel como home de ADMIN/MANAGER; PROFESSIONAL/ATTENDANT na Agenda (D-11)
 - [ ] 05-07-e2e-deploy-previsao-PLAN.md — E2E da previsão, gate completo, backup, deploy no staging e CI
@@ -302,4 +302,4 @@ Ideias estacionadas, sem ordem. Entram no roadmap só quando a usuária promover
 | 2. Core Domain | 6/8 | In Progress|  |
 | 3. Core Operations | 0/? | Not started | - |
 | 4. Bridal & Contracts | 16/16 | Complete    | 2026-11-05 |
-| 5. Uso no dia a dia | 0/? | Not started | - |
+| 5. Uso no dia a dia | 1/10 | In Progress|  |
