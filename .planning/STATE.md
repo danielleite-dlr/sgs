@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-16-ux-lote-financeiro-PLAN.md
-last_updated: "2026-11-06T17:00:00.000Z"
+stopped_at: Completed 05-20-fechamento-PLAN.md
+last_updated: "2026-11-06T16:49:51.219Z"
 last_activity: 2026-11-06
 progress:
-  total_phases: 7
-  completed_phases: 6
+  total_phases: 8
+  completed_phases: 7
   total_plans: 80
-  completed_plans: 80
+  completed_plans: 81
   percent: 100
 ---
 
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 
 ## Current Position
 
-Phase: 05 (uso-no-dia-a-dia) — EXECUTING
-Plan: 10 of 10
+Phase: 06
+Plan: Not started
 Status: Ready to execute
 Last activity: 2026-11-06
 
@@ -171,6 +171,7 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-14: contrato no celular em cartões (tabelas só a partir de md); "Completar dados da contratante" em diálogo único; aviso de pendências segue junto de "Gerar link de aceite" (é o que o gate D-09 bloqueia)
 - [Phase 05]: 05-15: lista de clientes com nome em link, cartões no celular (com paginação própria) e colunas E-mail/CPF ocultas quando vazias; nome da cliente exibido com toDisplayName na lista, ficha, comanda, financeiro e contratos (só exibição)
 - [Phase 05]: 05-16: tipos de lançamento via cashKindLabel (operations-labels) com fallback 'Outro lançamento'; cartões do Financeiro com texto de apoio fiel ao financial.service (Faturado = comandas não cobertas + pagamentos de contrato; Recebido = soma de cash_movements); filtros juntos; ações da cliente 44 px com rótulo nominal
+- [Phase 05]: 05-20: fase 5 aceita pela usuária em 2026-11-06 ("aprovado"); UX-01 a UX-19 conferidos no staging; previsão conferida contra o banco; usuário de auditoria desativado e senha local apagada
 
 ### Pending Todos
 
@@ -217,5 +218,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-11-06T10:40:48.553Z
-Stopped at: Completed 05-16-ux-lote-financeiro-PLAN.md
+Stopped at: Completed 05-20-fechamento-PLAN.md
 Resume file: None

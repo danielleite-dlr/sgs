@@ -143,3 +143,10 @@ Nota UX-10 (05-12): o aviso não vinha do menu lateral, e sim da trilha no topo 
 - UX-20 — Painel inicial com resumo do dia (agendamentos de hoje e amanhã, valores a receber, parcelas vencendo). Backlog 999.6.
 - UX-16 (parte não aprovada) — Aviso de cliente duplicado (mesmo telefone) ao cadastrar. Backlog 999.6.
 - Remarcar pelo menu do cartão do agendamento (alternativa ao arrastar, útil no celular). Backlog 999.6, a decidir depois da conferência manual no celular.
+
+## Aceite final
+
+- **Data:** 2026-11-06
+- **Resposta da usuária:** "aprovado", depois de receber a lista dos 19 itens corrigidos (UX-01 a UX-19, com UX-16 parcial) e o roteiro de conferência da previsão de 30 dias no staging.
+- **Previsão conferida contra o banco do staging:** entradas R$ 2.400,00 (restante do único contrato ativo, em 02/12), saídas R$ 0,00 (nenhuma despesa fixa ativa e nenhum agendamento no período), saldo R$ 2.400,00.
+- **Observações levadas para depois (não aprovadas como itens):** título do grupo de noivas com o nome da cliente sem padronizar ("Noiva julia Souza"); tabela "Itens por pessoa" apertada no detalhe do contrato no computador.

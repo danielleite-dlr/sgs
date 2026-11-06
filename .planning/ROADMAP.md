@@ -15,7 +15,7 @@ Construir um SaaS multi-tenant completo para salões de beleza, partindo da fund
 - [ ] **Phase 2: Core Domain** - Catálogo de serviços/produtos e perfis de clientes — o inventário do negócio
 - [ ] **Phase 3: Core Operations** - Loop atômico de agendamento + POS + financeiro + comissões
 - [x] **Phase 4: Bridal & Contracts** - Vertical de noivas, contratos de evento e IA de otimização de agenda (completed 2026-11-05)
-- [ ] **Phase 5: Uso no dia a dia** - Rodada de usabilidade das telas principais e previsão financeira de 30 dias
+- [x] **Phase 5: Uso no dia a dia** - Rodada de usabilidade das telas principais e previsão financeira de 30 dias (completed 2026-11-06)
 
 ## Phase Details
 
@@ -248,7 +248,7 @@ Plans:
 3. A previsão soma agendamentos confirmados e parcelas de contratos a vencer, e desconta comissões a pagar e despesas fixas cadastradas
 4. A dona consegue cadastrar despesas fixas mensais (nome, valor, dia de vencimento) que entram na previsão
 
-**Plans:** 1/18 plans executed
+**Plans:** 18/18 plans complete
 
 Plans:
 - [x] 05-01-auditoria-usabilidade-PLAN.md — Auditoria no staging (usuário dedicado, só leitura) + local; 05-AUDITORIA.md commitado aguardando aprovação (D-01, D-12)
@@ -268,7 +268,7 @@ Plans:
 - [x] 05-14-ux-lote-noivas-2-PLAN.md — Lote 6 de usabilidade: Contrato no celular e completar dados (UX-12, UX-13)
 - [x] 05-15-ux-lote-clientes-PLAN.md — Lote 7 de usabilidade: Clientes (UX-15, UX-16 só padronizar nomes)
 - [x] 05-16-ux-lote-financeiro-PLAN.md — Lote 8 de usabilidade: Financeiro e botões de ação (UX-17, UX-18, UX-19)
-- [ ] 05-20-fechamento-PLAN.md — Reverificação no staging, alinhamento do FIN-03 no REQUIREMENTS, aceite da usuária, desativação do usuário de auditoria
+- [x] 05-20-fechamento-PLAN.md — Reverificação no staging, alinhamento do FIN-03 no REQUIREMENTS, aceite da usuária, desativação do usuário de auditoria
 
 **UI hint:** yes
 
@@ -325,4 +325,4 @@ Ideias estacionadas, sem ordem. Entram no roadmap só quando a usuária promover
 | 2. Core Domain | 6/8 | In Progress|  |
 | 3. Core Operations | 0/? | Not started | - |
 | 4. Bridal & Contracts | 16/16 | Complete    | 2026-11-05 |
-| 5. Uso no dia a dia | 1/18 | In Progress|  |
+| 5. Uso no dia a dia | 1/18 | Complete    | 2026-11-06 |
