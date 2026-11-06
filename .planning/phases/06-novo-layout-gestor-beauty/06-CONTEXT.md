@@ -52,6 +52,7 @@ Entregas em lotes, cada um com deploy no staging e CI verde, para a usuária ver
 ### Testes e entrega
 - D-23: Cada lote: testes Vitest das classes/estrutura alteradas, E2E existentes verdes (ajustar só seletor que dependia de estilo; `data-testid` e papéis ARIA se mantêm), gate completo, commit, push, deploy no staging e CI verde (fluxo padrão do projeto).
 - D-24: Cada lote compara a tela com a referência do Stitch usando o roteiro de screenshots `apps/e2e/audit` contra o ambiente local (`AUDIT_TARGET=local`, com seed do E2E). A conta de auditoria do staging continua desativada; a conferência no staging é feita pela usuária no fechamento.
+- D-25: O rodapé institucional da Agenda ("Meu site | SGS Ajuda | Blog | Fale conosco | Contato" + ícones de redes sociais, `SchedulePage.tsx`, comentário "Footer institucional (estilo Trinks)") sai — decisão da usuária em 2026-11-06 ("tira"). Não existe no design e os links apontam para `#`.
 
 ### Claude's Discretion
 - Como mapear os tokens no Tailwind (manter os nomes atuais `primary-*`, `neutral-*`, `text-label/body/heading/display` e trocar os valores, ou criar nomes novos), desde que nenhum componente fique com cor antiga.

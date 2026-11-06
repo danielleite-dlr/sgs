@@ -211,3 +211,9 @@ Lote Agenda do dia entregue no staging, sem regressão de UX-01, UX-02 e UX-05.
 <output>
 After completion, create `.planning/phases/06-novo-layout-gestor-beauty/06-03-SUMMARY.md`
 </output>
+
+<addendum date="2026-11-06" source="decisão da usuária (D-25)">
+Passo extra, dentro da tarefa de implementação da Agenda: remover de `apps/frontend/src/features/operations/pages/SchedulePage.tsx` o bloco `{/* Footer institucional (estilo Trinks) */}` inteiro (o `<footer>` com a nav "Links institucionais" — Meu site, SGS Ajuda, Blog, Fale conosco, Contato — e os ícones Facebook, Instagram, YouTube, LinkedIn), e os imports lucide que ficarem sem uso (Facebook, Instagram, Youtube, Linkedin). Teste Vitest no `agenda-gestor-beauty.test.tsx`: a Agenda renderizada não tem `navigation` com nome "Links institucionais" nem o texto "Fale conosco".
+Acceptance: `grep -n "Links institucionais\|Fale conosco" apps/frontend/src/features/operations/pages/SchedulePage.tsx` não acha nada. (`pages/DashboardPlaceholder.tsx` não está em nenhuma rota e fica fora deste passo.)
+</addendum>
+
