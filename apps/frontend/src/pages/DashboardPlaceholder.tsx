@@ -35,14 +35,14 @@ const DISCOVERY_CARDS: DiscoveryCard[] = [
     icon: Smartphone,
     title: 'App profissional',
     description: 'Acompanhe os atendimentos e comissões direto do celular',
-    color: '#5D54C7',
+    color: '#570080',
   },
   {
     id: 'agendamento-online',
     icon: Globe,
     title: 'Agendamento online',
     description: 'Receba agendamentos pelo site, redes sociais ou Google Reserve',
-    color: '#1D9E75',
+    color: '#1B7A43',
   },
   {
     id: 'whatsapp',
@@ -65,7 +65,7 @@ const DISCOVERY_CARDS: DiscoveryCard[] = [
     title: 'Estoque',
     description: 'Controle o que entra e sai e mantenha seus produtos em dia',
     to: '/catalogo/produtos',
-    color: '#D85A30',
+    color: '#BA1A1A',
   },
 ];
 
@@ -77,10 +77,10 @@ interface ExpenseLegend {
 
 const EXPENSE_LEGEND: ExpenseLegend[] = [
   { label: 'Fixas',    value: 'R$ 0,00', color: '#EF9F27' },
-  { label: 'Variáveis', value: 'R$ 0,00', color: '#888780' },
-  { label: 'Pessoal',  value: 'R$ 0,00', color: '#D85A30' },
-  { label: 'Impostos', value: 'R$ 0,00', color: '#5D54C7' },
-  { label: 'Outros',   value: 'R$ 0,00', color: '#2C2C2A' },
+  { label: 'Variáveis', value: 'R$ 0,00', color: '#6B6670' },
+  { label: 'Pessoal',  value: 'R$ 0,00', color: '#BA1A1A' },
+  { label: 'Impostos', value: 'R$ 0,00', color: '#570080' },
+  { label: 'Outros',   value: 'R$ 0,00', color: '#221E26' },
 ];
 
 interface OnboardingStep {

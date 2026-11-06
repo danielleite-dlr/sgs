@@ -219,7 +219,7 @@ export function FinanceiroPage() {
                     />
                     <Legend />
                     <Bar dataKey="billed" name="Faturado" fill="#570080" isAnimationActive={false} />
-                    <Bar dataKey="received" name="Recebido" fill="#1D9E75" isAnimationActive={false} />
+                    <Bar dataKey="received" name="Recebido" fill="#1B7A43" isAnimationActive={false} />
                   </BarChart>
                 </ResponsiveContainer>
               </section>

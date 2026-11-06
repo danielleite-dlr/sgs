@@ -20,14 +20,14 @@ export function ImpersonationBanner() {
   if (!impersonating) return null;
 
   return (
-    <div className="flex items-center justify-between gap-4 bg-amber-100 px-4 py-2 text-sm text-amber-900">
+    <div className="flex items-center justify-between gap-4 border-b border-warning-500 bg-white px-md py-xs text-body text-warning-700">
       <span>
         Você está dentro do salão <strong>{organizationName}</strong> como
         administrador da plataforma.
       </span>
       <button
         type="button"
-        className="inline-flex items-center gap-1 font-medium underline disabled:opacity-60"
+        className="inline-flex min-h-[44px] items-center gap-1 font-medium underline disabled:opacity-60"
         disabled={leaving}
         onClick={() => {
           setLeaving(true);

@@ -4,21 +4,23 @@
 
 @layer base {
   :root {
-    /* Colors — primary brand: deep violet #570080 */
+    /* Cores — Gestor Beauty "Studio Editorial Density" (06-UI-SPEC §1) */
     --color-primary-50:  #F5E6FB;
     --color-primary-500: #570080;
-    --color-primary-700: #3D005A;
-    --color-primary-900: #2B003F;
+    --color-primary-700: #440064;
+    --color-primary-900: #370053;
 
-    --color-success-500: #1D9E75;
+    --color-success-500: #1B7A43;
     --color-warning-500: #EF9F27;
-    --color-error-500:   #D85A30;
+    --color-error-500:   #BA1A1A;
+    --color-info-500:    #0E61A8;
 
     --color-neutral-0:   #FFFFFF;
-    --color-neutral-50:  #FAFAF8;
-    --color-neutral-200: #E5E3DC;
-    --color-neutral-500: #888780;
-    --color-neutral-800: #2C2C2A;
+    --color-neutral-50:  #F7F6F3;
+    --color-neutral-100: #F4F3F0;
+    --color-neutral-200: #E2DFE5;
+    --color-neutral-500: #6B6670;
+    --color-neutral-800: #221E26;
 
     --color-background: var(--color-neutral-50);
     --color-surface:    var(--color-neutral-0);
@@ -27,18 +29,35 @@
     --color-border:     var(--color-neutral-200);
 
     /* shadcn HSL bridges (matches the Tailwind theme above) */
-    --border: 41 14% 87%;
-    --ring: 245 53% 56%;
+    --border: 270 10% 89%;
+    --ring: 281 100% 25%;
   }
 
   html, body, #root { height: 100%; }
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  /* D-07 — títulos de página e de seção em serifa (CardTitle e DialogTitle renderizam h2) */
+  h1, h2 {
+    font-family: theme('fontFamily.serif');
+    font-weight: 600;
   }
 
   /* WCAG 2.1 AA — visible focus ring on all interactive elements (UI-SPEC §"Color") */
   *:focus-visible {
     outline: 2px solid var(--color-primary-500);
     outline-offset: 2px;
+  }
+
+  /* D-14 — campo em foco: borda de 1 px + 0,5 px interno = 1,5 px roxo, sem halo */
+  input:not([type='checkbox']):not([type='radio']):focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+    border-color: var(--color-primary-500);
+    box-shadow: inset 0 0 0 0.5px var(--color-primary-500);
   }
 }

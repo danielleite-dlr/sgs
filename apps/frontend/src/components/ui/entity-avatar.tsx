@@ -14,12 +14,15 @@ export function EntityAvatar({
   imageUrl?: string | null;
   className?: string;
 }) {
+  // Avatar de pessoa é redondo; os demais tipos usam o raio de 6 px (D-08).
+  const shape = kind === 'client' ? 'rounded-full' : 'rounded-md';
+
   if (imageUrl) {
     return (
       <img
         src={imageUrl}
         alt=""
-        className={cn('h-10 w-10 rounded-md object-cover', className)}
+        className={cn('h-10 w-10 object-cover', shape, className)}
       />
     );
   }
@@ -36,7 +39,8 @@ export function EntityAvatar({
   return (
     <div
       className={cn(
-        'flex h-10 w-10 items-center justify-center rounded-md bg-primary-50 text-sm font-semibold text-primary-700',
+        'flex h-10 w-10 items-center justify-center bg-primary-50 text-sm font-semibold text-primary-700',
+        shape,
         className,
       )}
       aria-hidden="true"

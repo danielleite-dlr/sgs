@@ -103,7 +103,7 @@ export function ChangePasswordPage() {
               {...register('currentPassword')}
             />
             {errors.currentPassword && (
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-error-600">
                 {errors.currentPassword.message}
               </p>
             )}
@@ -118,7 +118,7 @@ export function ChangePasswordPage() {
               {...register('newPassword')}
             />
             {errors.newPassword && (
-              <p className="text-sm text-red-600">{errors.newPassword.message}</p>
+              <p className="text-sm text-error-600">{errors.newPassword.message}</p>
             )}
           </div>
 
@@ -131,7 +131,7 @@ export function ChangePasswordPage() {
               {...register('confirmPassword')}
             />
             {errors.confirmPassword && (
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-error-600">
                 {errors.confirmPassword.message}
               </p>
             )}

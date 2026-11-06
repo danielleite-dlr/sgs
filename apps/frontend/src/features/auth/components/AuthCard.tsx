@@ -12,7 +12,7 @@ export function AuthCard({ heading, stepIndicator, children }: AuthCardProps) {
   return (
     <>
       <Logo />
-      <Card className="bg-neutral-0 border-neutral-200 rounded-lg shadow-card">
+      <Card className="bg-neutral-0 border-neutral-200">
         <CardContent className="p-lg md:p-xl space-y-md">
           <h1 className="text-heading text-neutral-800">{heading}</h1>
           {stepIndicator}

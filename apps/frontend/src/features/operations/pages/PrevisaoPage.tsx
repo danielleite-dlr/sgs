@@ -21,8 +21,8 @@ import {
   type CashForecastResult,
 } from '../api/forecast.api';
 
-const GREEN = '#1D9E75';
-const RED = '#B42318';
+const GREEN = '#1B7A43';
+const RED = '#BA1A1A';
 
 const brl = (v: string) => `R$ ${formatCurrencyDisplay(v.replace('-', ''))}`;
 const signed = (v: string) => (Number(v) < 0 ? `−${brl(v)}` : brl(v));

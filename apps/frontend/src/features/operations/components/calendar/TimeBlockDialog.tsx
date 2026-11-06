@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
+import { NATIVE_SELECT_CLASS } from '@/lib/field-classes';
 import {
   CreateTimeBlockMutation,
   type CreateTimeBlockResult,
@@ -37,8 +38,7 @@ function parseTime(t: string): number | null {
   return h > 23 || min > 59 ? null : h * 60 + min;
 }
 
-const SELECT_CLASS =
-  'mt-xs w-full rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white';
+const SELECT_CLASS = `${NATIVE_SELECT_CLASS} mt-xs`;
 const LABEL_CLASS = 'text-xs font-semibold text-neutral-700';
 
 export function TimeBlockDialog({

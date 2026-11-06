@@ -374,7 +374,7 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
             </span>
           </p>
           {missingCommission.length > 0 && (
-            <p className="text-xs text-warning-500" role="status">
+            <p className="text-xs text-warning-700" role="status">
               Sem comissão cadastrada (conta R$ 0): {missingCommission.join(', ')}. Defina em
               Catálogo › Serviços.
             </p>

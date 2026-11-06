@@ -28,7 +28,7 @@ export function PackagePriceSummary({ individualSum, packagePrice }: PackagePric
   if (diff > 0.001) {
     delta = {
       text: t('catalog.pacote.delta.above', { v: fmt(diff) }),
-      cls: 'text-warning-500',
+      cls: 'text-warning-700',
     };
   } else if (diff < -0.001) {
     delta = {

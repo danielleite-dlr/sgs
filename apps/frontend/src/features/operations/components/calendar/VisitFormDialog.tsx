@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@apollo/client';
 import { toast } from 'sonner';
 import { Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { NATIVE_SELECT_CLASS } from '@/lib/field-classes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -58,8 +59,7 @@ export interface VisitFormDialogProps {
   onCreated: (r: { comandaId: string | null; comandaCode: string | null }) => void;
 }
 
-const SELECT_CLASS =
-  'mt-xs w-full rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white';
+const SELECT_CLASS = `${NATIVE_SELECT_CLASS} mt-xs`;
 const LABEL_CLASS = 'text-xs font-semibold text-neutral-700';
 
 function dateToBr(d: Date): string {

@@ -4,14 +4,14 @@ import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NATIVE_SELECT_CLASS } from '@/lib/field-classes';
 import { ClientsListQuery, type ClientsListResult } from '@/features/clients/api/clients.api';
 import { ServicesQuery, type ServicesQueryResult } from '@/features/catalog/api/servicos.api';
 import { maskBrPhone } from '@/features/identity/member-validation';
 import { PURPOSE_LABEL } from '../lib/bridal-labels';
 import type { PersonDraft } from '../lib/person-draft';
 
-const SELECT_CLASS =
-  'mt-xs w-full rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white';
+const SELECT_CLASS = `${NATIVE_SELECT_CLASS} mt-xs`;
 const LABEL_CLASS = 'text-xs font-semibold text-neutral-700';
 
 interface Props {

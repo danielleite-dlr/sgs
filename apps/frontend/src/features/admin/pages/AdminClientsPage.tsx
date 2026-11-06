@@ -429,7 +429,7 @@ export function AdminClientsPage() {
               <Label htmlFor="salonName">Nome do salão</Label>
               <Input id="salonName" {...createForm.register('salonName')} />
               {createForm.formState.errors.salonName && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-error-600">
                   {createForm.formState.errors.salonName.message}
                 </p>
               )}
@@ -438,7 +438,7 @@ export function AdminClientsPage() {
               <Label htmlFor="ownerName">Responsável</Label>
               <Input id="ownerName" {...createForm.register('ownerName')} />
               {createForm.formState.errors.ownerName && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-error-600">
                   {createForm.formState.errors.ownerName.message}
                 </p>
               )}
@@ -451,7 +451,7 @@ export function AdminClientsPage() {
                 {...createForm.register('ownerEmail')}
               />
               {createForm.formState.errors.ownerEmail && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-error-600">
                   {createForm.formState.errors.ownerEmail.message}
                 </p>
               )}
@@ -499,7 +499,7 @@ export function AdminClientsPage() {
               <Label htmlFor="tradeName">Nome do salão</Label>
               <Input id="tradeName" {...editForm.register('tradeName')} />
               {editForm.formState.errors.tradeName && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-error-600">
                   {editForm.formState.errors.tradeName.message}
                 </p>
               )}
@@ -508,7 +508,7 @@ export function AdminClientsPage() {
               <Label htmlFor="legalName">Razão social</Label>
               <Input id="legalName" {...editForm.register('legalName')} />
               {editForm.formState.errors.legalName && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-error-600">
                   {editForm.formState.errors.legalName.message}
                 </p>
               )}
@@ -517,7 +517,7 @@ export function AdminClientsPage() {
               <Label htmlFor="editEmail">E-mail do salão</Label>
               <Input id="editEmail" type="email" {...editForm.register('email')} />
               {editForm.formState.errors.email && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-error-600">
                   {editForm.formState.errors.email.message}
                 </p>
               )}
@@ -530,7 +530,7 @@ export function AdminClientsPage() {
               <Label htmlFor="editOwnerName">Responsável</Label>
               <Input id="editOwnerName" {...editForm.register('ownerName')} />
               {editForm.formState.errors.ownerName && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-error-600">
                   {editForm.formState.errors.ownerName.message}
                 </p>
               )}

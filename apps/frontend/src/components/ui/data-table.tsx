@@ -3,7 +3,6 @@ import { ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
 import { Skeleton } from './skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
 import { Button } from './button';
-import { cn } from '@/lib/utils';
 
 export type SortDirection = 'asc' | 'desc' | null;
 export type SortState<TKey extends string = string> = { key: TKey; direction: SortDirection } | null;
@@ -62,7 +61,7 @@ export function DataTable<TRow, TKey extends string = string>(
         <TableHeader>
           <TableRow>
             {columns.map((c) => (
-              <TableHead key={c.key} className="text-label text-neutral-500">
+              <TableHead key={c.key}>
                 {c.header}
               </TableHead>
             ))}
@@ -107,7 +106,7 @@ export function DataTable<TRow, TKey extends string = string>(
               return (
                 <TableHead
                   key={c.key}
-                  className={cn('text-label text-neutral-500', c.className)}
+                  className={c.className}
                   aria-sort={
                     isSorted
                       ? sort?.direction === 'asc'
@@ -163,7 +162,7 @@ export function DataTable<TRow, TKey extends string = string>(
             >
               Anterior
             </Button>
-            <span className="px-sm py-xs rounded bg-primary-500 text-white text-sm font-semibold">
+            <span className="inline-flex h-11 min-w-[44px] items-center justify-center rounded-md bg-primary px-sm text-label tabular-nums text-white">
               {page}
             </span>
             <Button

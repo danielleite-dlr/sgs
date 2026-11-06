@@ -71,3 +71,6 @@ apps/e2e/blob-report/
 # Fase 5 — auditoria de usabilidade (credencial e evidências com dados reais)
 .env.audit
 .planning/phases/05-uso-no-dia-a-dia/05-audit-evidence/
+
+# Fase 6 — screenshots de comparação com o Stitch (auditoria local)
+.planning/phases/06-novo-layout-gestor-beauty/06-audit-evidence/

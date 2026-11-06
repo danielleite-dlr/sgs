@@ -10,8 +10,8 @@ import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
 import { useHasPermission } from '../operations-permissions';
 import { CashForecastQuery, FORECAST_COST_GROUP_LABELS, forecastWindow, weekLabel, type CashForecastResult } from '../api/forecast.api';
 
-const GREEN = '#1D9E75';
-const RED = '#B42318';
+const GREEN = '#1B7A43';
+const RED = '#BA1A1A';
 
 const brl = (v: string) => `R$ ${formatCurrencyDisplay(v)}`;
 
@@ -139,8 +139,8 @@ export function ForecastCard() {
                   <YAxis />
                   <Tooltip formatter={(v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
                   <Legend />
-                  <Bar dataKey="inflow" name="Entradas" fill="#1D9E75" isAnimationActive={false} />
-                  <Bar dataKey="outflow" name="Saídas" fill="#B42318" isAnimationActive={false} />
+                  <Bar dataKey="inflow" name="Entradas" fill={GREEN} isAnimationActive={false} />
+                  <Bar dataKey="outflow" name="Saídas" fill={RED} isAnimationActive={false} />
                 </BarChart>
               </ResponsiveContainer>
               <table className="sr-only">
