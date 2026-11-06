@@ -4,6 +4,9 @@ import type { TimeBlockData } from "../../api/appointments.api";
 import { cn } from "@/lib/utils";
 import { blockGridRange, formatHM } from "./types";
 
+const BLOCK_HATCH =
+  "repeating-linear-gradient(135deg, #F4F3F0 0px, #F4F3F0 6px, #FFFFFF 6px, #FFFFFF 12px)";
+
 interface TimeBlockOverlayProps {
   block: TimeBlockData;
   slotHeight: number;
@@ -24,12 +27,14 @@ export function TimeBlockOverlay({
   const label = kind?.label ?? block.kind;
   const ariaLabel = `${label} das ${formatHM(new Date(block.startsAt))} às ${formatHM(new Date(block.endsAt))}`;
   const className = cn(
-    "absolute left-0 right-0 z-[5] border-l-4 px-xs text-left text-[11px] font-semibold overflow-hidden",
+    "absolute left-0 right-0 z-[5] border-l-[3px] px-xs text-left text-[11px] font-semibold overflow-hidden",
     kind?.className,
   );
+  // Hachura neutra do bloqueio (D-19); a cor do tipo fica só na borda esquerda.
   const style = {
     top: (from / SLOT_MINUTES) * slotHeight,
     height: ((to - from) / SLOT_MINUTES) * slotHeight,
+    backgroundImage: BLOCK_HATCH,
   };
   const content = (
     <>

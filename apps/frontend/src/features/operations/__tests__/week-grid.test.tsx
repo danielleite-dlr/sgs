@@ -50,7 +50,8 @@ describe("WeekGrid", () => {
   it("coloca o agendamento de quarta só na 4ª coluna", () => {
     render(<WeekGrid days={days} appointments={[appt]} timeBlocks={[]} onOpenDay={vi.fn()} />);
     const wed = screen.getByTestId("week-day-2026-11-04");
-    expect(within(wed).getByText(/10:00 · Ana Paula · Corte/)).toBeInTheDocument();
+    // Hora, nome (em serifa) e serviço ficam em trechos separados do mesmo card (fase 6).
+    expect(within(wed).getByTestId("week-card-a1")).toHaveTextContent("10:00 · Ana Paula · Corte");
     expect(screen.getAllByText(/Ana Paula/)).toHaveLength(1);
     expect(within(wed).queryByText("Sem agendamentos")).not.toBeInTheDocument();
   });

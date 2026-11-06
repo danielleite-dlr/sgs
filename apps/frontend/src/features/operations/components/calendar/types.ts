@@ -6,6 +6,7 @@ import {
   SLOT_MINUTES,
   minutesFromGridStart,
 } from "../../lib/schedule-grid";
+import { statusSpineColor } from "../../lib/appointment-status-style";
 
 export interface ScheduleProfessional {
   id: string;
@@ -70,8 +71,8 @@ export function getAppointmentStyle(
   return {
     top: `${top}px`,
     height: `${height}px`,
-    backgroundColor: appt.categoryColor + "22",
-    borderLeft: `3px solid ${appt.categoryColor}`,
+    backgroundColor: "#FFFFFF",
+    borderLeft: `3px solid ${statusSpineColor(appt.status)}`,
   };
 }
 

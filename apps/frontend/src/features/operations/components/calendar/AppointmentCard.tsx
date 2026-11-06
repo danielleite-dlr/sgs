@@ -6,6 +6,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { toDisplayName } from "@/lib/format-name";
+import { statusSpineColor } from "../../lib/appointment-status-style";
+import { APPOINTMENT_STATUS_LABELS } from "../../lib/operations-labels";
 import { formatHM, type ScheduleAppointment } from "./types";
 
 interface AppointmentCardProps {
@@ -29,6 +32,7 @@ export function AppointmentCard({
     });
   const starts = formatHM(appointment.start);
   const ends = formatHM(appointment.end);
+  const displayName = toDisplayName(appointment.clientName);
   const ariaLabel = `${appointment.clientName}, ${appointment.service}, ${starts} a ${ends}${draggable ? ". Pressione espaço para mover" : ""}`;
   const merged: CSSProperties = {
     ...style,
@@ -61,25 +65,47 @@ export function AppointmentCard({
                 },
               })}
           className={cn(
-            "absolute left-1 right-1 rounded-md px-xs py-xs overflow-hidden z-10 transition-colors hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500",
+            "absolute left-1 right-1 rounded-md border border-neutral-200 bg-white px-[12px] py-[6px] overflow-hidden z-10 transition-colors hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500",
             draggable ? "cursor-grab touch-none" : "cursor-pointer",
-            isDragging && "z-30 shadow-lg cursor-grabbing opacity-90",
+            isDragging &&
+              "z-30 cursor-grabbing opacity-90 outline outline-[1.5px] outline-primary-500",
           )}
           style={merged}
         >
-          <p className="text-xs font-semibold text-neutral-800 truncate leading-tight">
-            {appointment.clientName}
-          </p>
-          <p className="text-xs text-neutral-600 truncate leading-tight">
+          <div className="flex items-start justify-between gap-xs">
+            <p className="truncate font-serif text-[15px] font-semibold leading-5 text-neutral-800">
+              {displayName}
+            </p>
+            {appointment.durationMinutes >= 60 && (
+              <span
+                data-testid={`appointment-status-${appointment.id}`}
+                className="inline-flex shrink-0 items-center gap-1 rounded-md border border-neutral-200 bg-neutral-50 px-1.5 text-[11px] font-semibold leading-5 text-neutral-800"
+              >
+                <span
+                  aria-hidden="true"
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: statusSpineColor(appointment.status) }}
+                />
+                {APPOINTMENT_STATUS_LABELS[appointment.status] ?? appointment.status}
+              </span>
+            )}
+          </div>
+          <p className="truncate text-[12px] leading-4 text-neutral-500">
             {appointment.service}
+          </p>
+          <p
+            data-testid={`appointment-time-${appointment.id}`}
+            className="truncate text-[12px] leading-4 tabular-nums text-neutral-500"
+          >
+            {starts} - {ends} • {appointment.durationMinutes} min
           </p>
         </div>
       </TooltipTrigger>
       <TooltipContent>
         <div className="text-sm space-y-xs">
-          <p className="font-semibold">{appointment.clientName}</p>
-          <p className="text-neutral-300">{appointment.service}</p>
-          <p className="text-neutral-300 text-xs">
+          <p className="font-semibold">{displayName}</p>
+          <p className="text-white/80">{appointment.service}</p>
+          <p className="text-white/80 text-xs tabular-nums">
             {starts} — {appointment.durationMinutes} min
           </p>
         </div>

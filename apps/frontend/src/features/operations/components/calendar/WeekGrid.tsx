@@ -1,7 +1,8 @@
 import type { AppointmentData, TimeBlockData } from "../../api/appointments.api";
 import { TIME_BLOCK_KINDS } from "../../lib/operations-labels";
 import { cn } from "@/lib/utils";
-import { statusColor } from "./appointment-statuses";
+import { toDisplayName } from "@/lib/format-name";
+import { statusSpineColor } from "../../lib/appointment-status-style";
 import { formatHM } from "./types";
 
 interface WeekGridProps {
@@ -34,7 +35,7 @@ export function WeekGrid({
   return (
     <div
       data-testid="week-grid"
-      className="grid grid-cols-1 md:grid-cols-7 gap-px bg-neutral-200 border border-neutral-200 m-md rounded-lg overflow-hidden"
+      className="grid grid-cols-1 md:grid-cols-7 gap-px bg-neutral-200 border border-neutral-200 m-md rounded-md overflow-hidden"
     >
       {days.map((day) => {
         const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate());
@@ -64,7 +65,7 @@ export function WeekGrid({
             <button
               type="button"
               onClick={() => onOpenDay(day)}
-              className="px-sm py-sm text-left text-xs font-bold uppercase tracking-wider text-neutral-700 hover:bg-primary-50 border-b border-neutral-200 capitalize"
+              className="min-h-[44px] px-sm py-sm text-left text-overline uppercase text-neutral-500 hover:bg-neutral-50 border-b border-neutral-200"
             >
               {label}
             </button>
@@ -72,7 +73,7 @@ export function WeekGrid({
               {holiday && (
                 <span
                   className={cn(
-                    "inline-block rounded px-xs text-[11px] font-semibold border-l-4",
+                    "inline-block rounded-md border border-neutral-200 bg-neutral-50 px-xs text-[11px] font-semibold border-l-[3px]",
                     holidayClass,
                   )}
                 >
@@ -88,10 +89,16 @@ export function WeekGrid({
                     type="button"
                     data-testid={`week-card-${a.id}`}
                     onClick={() => onOpenAppointment?.(a.id)}
-                    className="w-full text-left rounded-md px-xs py-xs text-xs bg-neutral-50 hover:brightness-95 truncate"
-                    style={{ borderLeft: `3px solid ${statusColor(a.status)}` }}
+                    className="w-full text-left rounded-md border border-neutral-200 bg-white px-xs py-xs text-xs text-neutral-800 hover:bg-neutral-50 truncate"
+                    style={{ borderLeft: `3px solid ${statusSpineColor(a.status)}` }}
                   >
-                    {formatHM(new Date(a.startsAt))} · {a.client.fullName} · {a.service.name}
+                    <span className="tabular-nums text-neutral-500">
+                      {formatHM(new Date(a.startsAt))}
+                    </span>
+                    {" · "}
+                    <span className="font-serif font-semibold">{toDisplayName(a.client.fullName)}</span>
+                    {" · "}
+                    {a.service.name}
                   </button>
                 ))
               )}

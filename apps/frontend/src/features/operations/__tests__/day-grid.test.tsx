@@ -80,13 +80,14 @@ function renderGrid(over: Partial<DayGridProps> = {}) {
 }
 
 describe("DayGrid", () => {
-  it("mostra raias, 30 linhas de horário a partir das 7h", () => {
+  it("mostra raias, 30 linhas de horário a partir das 07:00", () => {
     renderGrid();
     expect(screen.getByTestId("lane-p1")).toBeInTheDocument();
     expect(screen.getByTestId("lane-p2")).toBeInTheDocument();
     const rows = screen.getAllByTestId("time-row");
     expect(rows).toHaveLength(30);
-    expect(rows[0]).toHaveTextContent("7h");
+    expect(rows[0]).toHaveTextContent("07:00");
+    expect(rows[1].textContent).toBe("");
     expect(screen.getByTestId("slot-p1-10:00")).toBeInTheDocument();
     expect(screen.getByTestId("slot-p2-21:30")).toBeInTheDocument();
   });

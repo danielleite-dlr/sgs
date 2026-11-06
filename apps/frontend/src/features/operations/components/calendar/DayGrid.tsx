@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { toDisplayName } from "@/lib/format-name";
 import type {
   AppointmentData,
   TimeBlockData,
@@ -32,6 +33,7 @@ import { AppointmentCard } from "./AppointmentCard";
 import { TimeBlockOverlay } from "./TimeBlockOverlay";
 import {
   appointmentToSchedule,
+  formatHM,
   getAppointmentStyle,
   type ScheduleProfessional,
 } from "./types";
@@ -39,6 +41,8 @@ import {
 /** Faixas "fora do expediente" são só visuais (D-25: não bloqueiam nada). */
 const VISUAL_WORK_START_HOUR = 9;
 const VISUAL_WORK_END_HOUR = 19;
+/** Papel neutro das horas fora do expediente (fase 6, D-19; era azul-claro). */
+const OFF_HOURS_BG = "#F4F3F0";
 
 export interface DayGridProps {
   date: Date;
@@ -112,12 +116,12 @@ function ProfessionalLane({
       <div
         aria-hidden="true"
         className="absolute left-0 right-0 pointer-events-none"
-        style={{ top: 0, height: beforeWorkHeight, backgroundColor: "#DDE7F3" }}
+        style={{ top: 0, height: beforeWorkHeight, backgroundColor: OFF_HOURS_BG }}
       />
       <div
         aria-hidden="true"
         className="absolute left-0 right-0 pointer-events-none"
-        style={{ top: afterWorkTop, height: afterWorkHeight, backgroundColor: "#DDE7F3" }}
+        style={{ top: afterWorkTop, height: afterWorkHeight, backgroundColor: OFF_HOURS_BG }}
       />
 
       {GRID_SLOTS.map((slot, i) => {
@@ -130,9 +134,10 @@ function ProfessionalLane({
             disabled={!canSchedule || blocked}
             onClick={() => onSlotClick(slot.hour, slot.minute, professional.id)}
             className={cn(
-              "absolute w-full border-b text-left",
-              slot.minute === 0 ? "border-neutral-200" : "border-neutral-100 border-dashed",
-              canSchedule && !blocked ? "hover:bg-primary-50/30" : "cursor-default",
+              // Borda no topo do slot: linha cheia na hora cheia, tracejada na meia hora (D-19).
+              "absolute w-full border-t text-left",
+              slot.minute === 0 ? "border-neutral-200" : "border-neutral-200 border-dashed",
+              canSchedule && !blocked ? "hover:bg-primary-50/40" : "cursor-default",
             )}
             style={{ top: i * slotHeight, height: slotHeight }}
             aria-label={
@@ -254,6 +259,12 @@ export function DayGrid({
     void move(appt, { professionalId, professionalName, startsAt });
   }
 
+  const countByProfessional = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const a of appointments) map.set(a.professionalId, (map.get(a.professionalId) ?? 0) + 1);
+    return map;
+  }, [appointments]);
+
   const now = new Date();
   const isToday = date.toDateString() === now.toDateString();
   const nowLineTop = (minutesFromGridStart(now) / SLOT_MINUTES) * slotHeight;
@@ -272,33 +283,42 @@ export function DayGrid({
           },
         }}
       >
-        <div ref={gridRef} className="bg-white border border-neutral-200 m-md rounded-lg overflow-hidden">
+        <div ref={gridRef} className="bg-white border border-neutral-200 m-md rounded-md overflow-hidden">
           <div
-            className="grid border-b border-neutral-200 bg-white sticky top-0 z-10"
+            className="grid border-b border-neutral-200 bg-neutral-50 sticky top-0 z-10"
             style={{ gridTemplateColumns: columns }}
           >
             <div className="p-sm border-r border-neutral-200" />
             {professionals.length === 0 ? (
               <div className="p-md text-xs text-neutral-500">Nenhum profissional selecionado.</div>
             ) : (
-              professionals.map((pro) => (
-                <div
-                  key={pro.id}
-                  className="px-sm py-md border-r border-neutral-200 last:border-r-0 flex items-center gap-sm"
-                >
-                  <div className="h-8 w-8 rounded-full bg-neutral-100 flex items-center justify-center shrink-0 overflow-hidden">
-                    <div
-                      className="h-full w-full rounded-full flex items-center justify-center text-white text-xs font-semibold"
-                      style={{ backgroundColor: pro.color }}
+              professionals.map((pro) => {
+                const n = countByProfessional.get(pro.id) ?? 0;
+                return (
+                  <div
+                    key={pro.id}
+                    className="px-sm py-sm border-r border-neutral-200 last:border-r-0 flex items-center gap-sm min-w-0"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="h-8 w-8 shrink-0 rounded-full bg-primary-50 text-primary-700 text-xs font-semibold flex items-center justify-center"
                     >
                       {pro.initials}
+                    </span>
+                    <div className="min-w-0">
+                      <span className="block truncate font-serif text-[14px] font-semibold leading-5 text-neutral-800">
+                        {toDisplayName(pro.name)}
+                      </span>
+                      <span
+                        data-testid={`lane-count-${pro.id}`}
+                        className="block text-[11px] leading-4 tabular-nums text-neutral-500"
+                      >
+                        {n} {n === 1 ? "atendimento" : "atendimentos"}
+                      </span>
                     </div>
                   </div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-neutral-700 truncate">
-                    {pro.name.split(" ")[0]}
-                  </span>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 
@@ -308,11 +328,16 @@ export function DayGrid({
                 <div
                   key={slot.label}
                   data-testid="time-row"
-                  className="border-b border-neutral-100 flex items-center justify-end pr-sm"
+                  className={cn(
+                    "flex items-start justify-end pr-sm pt-[2px]",
+                    slot.minute === 0 && "border-t border-neutral-200",
+                  )}
                   style={{ height: slotHeight }}
                 >
                   {slot.minute === 0 && (
-                    <span className="text-xs text-neutral-500 font-medium">{slot.hour}h</span>
+                    <span className="text-data tabular-nums text-neutral-500">
+                      {String(slot.hour).padStart(2, "0")}:00
+                    </span>
                   )}
                 </div>
               ))}
@@ -343,11 +368,14 @@ export function DayGrid({
 
             {isToday && nowLineTop > 0 && nowLineTop < gridHeight && (
               <div
-                className="absolute left-0 right-0 z-20 pointer-events-none flex items-center"
+                data-testid="now-line"
+                className="absolute left-0 right-0 z-20 pointer-events-none flex items-center -translate-y-1/2"
                 style={{ top: nowLineTop }}
               >
-                <span className="h-2 w-2 rounded-full bg-error-500 ml-[60px]" />
-                <div className="flex-1 h-px bg-error-500" />
+                <span className="ml-[4px] rounded-md bg-primary px-1 py-0.5 text-[10px] font-semibold leading-none tabular-nums text-white">
+                  {formatHM(now)}
+                </span>
+                <div className="flex-1 h-[1.5px] bg-primary" />
               </div>
             )}
           </div>

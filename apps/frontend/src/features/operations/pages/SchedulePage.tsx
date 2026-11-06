@@ -16,10 +16,6 @@ import {
   EyeOff,
   X,
   Users,
-  Facebook,
-  Instagram,
-  Youtube,
-  Linkedin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +43,7 @@ import {
   type MembersQueryResult,
 } from "@/features/catalog/api/members.api";
 import { cn } from "@/lib/utils";
+import { NATIVE_SELECT_CLASS } from "@/lib/field-classes";
 import { useAuthStore } from "@/infrastructure/stores/auth.store";
 import {
   AlertDialog,
@@ -152,7 +149,7 @@ export function InlineCalendar({ selected, onSelect }: InlineCalendarProps) {
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <span className="text-sm font-semibold text-neutral-800">
+        <span className="font-serif text-[15px] font-semibold text-neutral-800">
           {monthLabel}
         </span>
         <Button
@@ -164,7 +161,7 @@ export function InlineCalendar({ selected, onSelect }: InlineCalendarProps) {
           <ChevronRight className="h-4 w-4" />
         </Button>
       </header>
-      <div className="grid grid-cols-7 gap-px text-[11px] text-neutral-400 mb-xs">
+      <div className="grid grid-cols-7 gap-px text-[11px] font-semibold text-neutral-500 mb-xs">
         {["D", "S", "T", "Q", "Q", "S", "S"].map((w, i) => (
           <span key={i} className="text-center">
             {w}
@@ -173,17 +170,17 @@ export function InlineCalendar({ selected, onSelect }: InlineCalendarProps) {
       </div>
       <div className="grid grid-cols-7 gap-px">
         {cells.map((c, i) => {
-          if (!c.date) return <span key={i} className="h-7" />;
+          if (!c.date) return <span key={i} className="h-8" />;
           return (
             <button
               key={i}
               type="button"
               onClick={() => onSelect(c.date!)}
               className={cn(
-                "h-7 w-7 mx-auto rounded-full text-xs flex items-center justify-center transition-colors",
+                "h-8 w-8 mx-auto rounded-md text-xs tabular-nums flex items-center justify-center transition-colors",
                 c.isCurrent
-                  ? "bg-primary-500 text-white font-semibold"
-                  : "text-neutral-700 hover:bg-neutral-50",
+                  ? "bg-primary text-white font-semibold"
+                  : "text-neutral-800 hover:bg-neutral-50",
               )}
             >
               {c.date.getDate()}
@@ -218,6 +215,9 @@ interface FilterPanelProps {
   canSelectProfessionals: boolean;
 }
 
+const QUICK_ACTION_CLASS =
+  "flex min-h-[44px] items-center gap-sm rounded-md border border-neutral-200 bg-white px-sm text-left text-label text-neutral-800 transition-colors hover:bg-neutral-50";
+
 function FilterPanel(props: FilterPanelProps) {
   return (
     <aside className="flex flex-col gap-md">
@@ -227,17 +227,15 @@ function FilterPanel(props: FilterPanelProps) {
         onSelect={props.onSelectDate}
       />
 
-      {/* Ações rápidas — Buscar e Agendar / Seleção de Profissionais */}
+      {/* Ações rápidas — Buscar e Agendar / Bloquear / Seleção de Profissionais */}
       <div className="flex flex-col gap-xs">
         {props.canSchedule && (
           <button
             type="button"
             onClick={props.onOpenBuscarAgendar}
-            className="flex items-center gap-sm px-sm py-xs rounded-md border border-primary-200 text-sm text-neutral-700 hover:bg-primary-50 transition-colors text-left"
+            className={QUICK_ACTION_CLASS}
           >
-            <span className="h-6 w-6 rounded-md bg-primary-500 text-white flex items-center justify-center shrink-0">
-              <CalendarDays className="h-3.5 w-3.5" />
-            </span>
+            <CalendarDays aria-hidden="true" className="h-5 w-5 shrink-0 text-neutral-500" />
             <span className="flex-1">Buscar e Agendar</span>
           </button>
         )}
@@ -245,11 +243,9 @@ function FilterPanel(props: FilterPanelProps) {
           <button
             type="button"
             onClick={props.onOpenBlock}
-            className="flex items-center gap-sm px-sm py-xs rounded-md border border-primary-200 text-sm text-neutral-700 hover:bg-primary-50 transition-colors text-left"
+            className={QUICK_ACTION_CLASS}
           >
-            <span className="h-6 w-6 rounded-md bg-neutral-700 text-white flex items-center justify-center shrink-0">
-              <Ban className="h-3.5 w-3.5" />
-            </span>
+            <Ban aria-hidden="true" className="h-5 w-5 shrink-0 text-neutral-500" />
             <span className="flex-1">Bloquear horário</span>
           </button>
         )}
@@ -257,11 +253,9 @@ function FilterPanel(props: FilterPanelProps) {
           <button
             type="button"
             onClick={props.onOpenSelecaoProf}
-            className="flex items-center gap-sm px-sm py-xs rounded-md border border-primary-200 text-sm text-neutral-700 hover:bg-primary-50 transition-colors text-left"
+            className={QUICK_ACTION_CLASS}
           >
-            <span className="h-6 w-6 rounded-md bg-primary-700 text-white flex items-center justify-center shrink-0">
-              <Users className="h-3.5 w-3.5" />
-            </span>
+            <Users aria-hidden="true" className="h-5 w-5 shrink-0 text-neutral-500" />
             <span className="flex-1">Seleção de Profissionais</span>
           </button>
         )}
@@ -282,10 +276,10 @@ function FilterPanel(props: FilterPanelProps) {
               }
             }}
             className={cn(
-              "min-h-[44px] shrink-0 px-md md:min-h-0 md:px-sm md:py-xs rounded-full text-xs border transition-colors",
+              "min-h-[44px] shrink-0 px-md rounded-md text-label border transition-colors",
               props.visibleProfIds.size === props.professionals.length
-                ? "bg-neutral-800 text-white border-neutral-800"
-                : "bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50",
+                ? "bg-primary text-white border-primary"
+                : "bg-white text-neutral-800 border-neutral-200 hover:bg-neutral-50",
             )}
           >
             Todos
@@ -298,12 +292,12 @@ function FilterPanel(props: FilterPanelProps) {
                 type="button"
                 onClick={() => props.onToggleProf(pro.id)}
                 className={cn(
-                  "h-11 w-11 shrink-0 md:h-7 md:w-7 rounded-full text-xs font-semibold border transition-colors flex items-center justify-center",
+                  "h-11 w-11 shrink-0 rounded-md text-xs font-semibold border transition-colors flex items-center justify-center",
                   visible
-                    ? "text-white border-transparent"
-                    : "bg-white text-neutral-500 border-neutral-300 hover:bg-neutral-50",
+                    ? "bg-primary text-white border-primary"
+                    : "bg-white text-neutral-500 border-neutral-200 hover:bg-neutral-50",
                 )}
-                style={visible ? { backgroundColor: pro.color } : undefined}
+                aria-pressed={visible}
                 aria-label={`${pro.name} — ${visible ? "visível" : "oculto"}`}
               >
                 {pro.initials}
@@ -313,7 +307,7 @@ function FilterPanel(props: FilterPanelProps) {
         </div>
       </CollapsibleSection>
 
-      {/* Status do Agendamento — pílulas coloridas full-width */}
+      {/* Status do Agendamento — selos de 6 px com ponto na cor do status (D-11) */}
       <CollapsibleSection title="Status do Agendamento">
         <div className="flex flex-col gap-xs">
           {APPT_STATUSES.map((s) => {
@@ -322,19 +316,20 @@ function FilterPanel(props: FilterPanelProps) {
               <button
                 key={s.id}
                 type="button"
+                aria-pressed={active}
                 onClick={() => props.onToggleStatus(s.id)}
                 className={cn(
-                  "rounded-full px-sm py-xs text-[11px] font-medium text-center transition-opacity border",
+                  "flex min-h-[44px] items-center gap-xs rounded-md border px-sm text-left text-[12px] font-semibold transition-colors",
                   active
-                    ? "opacity-100 border-transparent"
-                    : "opacity-50 border-neutral-200 bg-white text-neutral-600",
+                    ? "border-neutral-200 bg-neutral-50 text-neutral-800"
+                    : "border-dashed border-neutral-200 bg-white text-neutral-500 line-through",
                 )}
-                style={
-                  active
-                    ? { backgroundColor: s.color, color: s.textOnColor }
-                    : undefined
-                }
               >
+                <span
+                  aria-hidden="true"
+                  className="h-1.5 w-1.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: s.id === "absent" ? "#6B6670" : s.color }}
+                />
                 {s.label}
               </button>
             );
@@ -353,10 +348,10 @@ function FilterPanel(props: FilterPanelProps) {
                 props.onChangeClosing(props.closingFilter === opt ? "all" : opt)
               }
               className={cn(
-                "px-md py-xs rounded-full text-xs border transition-colors",
+                "min-h-[44px] px-md rounded-md text-label border transition-colors",
                 props.closingFilter === opt
-                  ? "bg-neutral-800 text-white border-neutral-800"
-                  : "bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50",
+                  ? "bg-primary text-white border-primary"
+                  : "bg-white text-neutral-800 border-neutral-200 hover:bg-neutral-50",
               )}
             >
               {opt === "open" ? "Aberta" : "Fechada"}
@@ -447,7 +442,7 @@ function CollapsibleSection({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex items-center justify-between w-full text-sm font-semibold text-neutral-800 mb-sm"
+        className="flex min-h-[44px] items-center justify-between w-full text-overline uppercase text-neutral-500"
       >
         <span>{title}</span>
         <ChevronDown
@@ -541,7 +536,7 @@ function BuscarAgendarModal({
               <Label className="text-xs font-semibold text-neutral-700">
                 Serviço:
               </Label>
-              <select className="mt-xs w-full rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white h-9">
+              <select className={cn(NATIVE_SELECT_CLASS, "mt-xs")}>
                 <option value="">Selecione…</option>
               </select>
             </div>
@@ -549,7 +544,7 @@ function BuscarAgendarModal({
               <Label className="text-xs font-semibold text-neutral-700">
                 Profissional:
               </Label>
-              <select className="mt-xs w-full rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white h-9">
+              <select className={cn(NATIVE_SELECT_CLASS, "mt-xs")}>
                 <option value="">Selecione…</option>
                 {professionals.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -634,9 +629,9 @@ function SelecaoProfissionaisModal({
         <div className="px-md py-md space-y-md">
           {/* Categoria de Serviço */}
           <section className="rounded-md border border-neutral-200 overflow-hidden">
-            <header className="bg-primary-700 text-white px-md py-xs flex items-center gap-xs">
-              <ChevronRight className="h-3 w-3" />
-              <h3 className="text-sm font-semibold">Categoria de Serviço</h3>
+            <header className="bg-neutral-100 border-b border-neutral-200 px-md py-xs flex items-center gap-xs">
+              <ChevronRight className="h-3 w-3 text-neutral-500" />
+              <h3 className="text-overline uppercase text-neutral-500">Categoria de Serviço</h3>
             </header>
             <div className="p-md grid grid-cols-2 gap-sm">
               <label className="flex items-center gap-xs text-sm text-neutral-700 cursor-pointer">
@@ -665,8 +660,8 @@ function SelecaoProfissionaisModal({
 
           {/* Profissionais */}
           <section className="rounded-md border border-neutral-200 overflow-hidden">
-            <header className="bg-primary-700 text-white px-md py-xs">
-              <h3 className="text-sm font-semibold">Profissionais</h3>
+            <header className="bg-neutral-100 border-b border-neutral-200 px-md py-xs">
+              <h3 className="text-overline uppercase text-neutral-500">Profissionais</h3>
             </header>
             <div className="p-md grid grid-cols-1 sm:grid-cols-2 gap-sm">
               <label className="flex items-center gap-xs text-sm text-neutral-700 cursor-pointer">
@@ -913,7 +908,7 @@ export function SchedulePage() {
         type="button"
         onClick={() => setSidebarCollapsed((v) => !v)}
         aria-label={sidebarCollapsed ? "Mostrar filtros" : "Ocultar filtros"}
-        className="hidden lg:flex h-8 w-6 self-start mt-md -ml-3 z-20 items-center justify-center rounded-r-md border border-l-0 border-neutral-200 bg-white text-primary-500 hover:bg-primary-50 shadow-sm"
+        className="hidden lg:flex h-8 w-6 self-start mt-md -ml-3 z-20 items-center justify-center rounded-r-md border border-l-0 border-neutral-200 bg-white text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800"
       >
         {sidebarCollapsed ? (
           <ChevronsRight className="h-4 w-4" />
@@ -933,7 +928,7 @@ export function SchedulePage() {
       </Sheet>
 
       {/* MAIN — top bar + grid */}
-      <div className="flex-1 flex flex-col min-w-0 bg-neutral-50/30">
+      <div className="flex-1 flex flex-col min-w-0 bg-neutral-50">
         {/* TOP BAR */}
         <div className="flex items-center gap-sm px-md py-sm border-b border-neutral-200 bg-white shrink-0 flex-wrap">
           {/* Date navigator */}
@@ -943,22 +938,22 @@ export function SchedulePage() {
               size="icon"
               onClick={() => shiftDay(-1)}
               aria-label={view === "week" ? "Semana anterior" : "Dia anterior"}
-              className="h-11 w-11 md:h-8 md:w-8"
+              className="h-11 w-11"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <button
               type="button"
-              className="flex flex-col items-center px-sm leading-tight hover:bg-neutral-50 rounded-md py-xs min-w-[120px]"
+              className="flex flex-col items-center px-sm leading-tight hover:bg-neutral-50 rounded-md py-xs min-w-[120px] min-h-[44px]"
             >
-              <span className="text-sm font-bold text-neutral-800">
+              <span className="font-serif text-headline-sm tabular-nums text-neutral-800">
                 {view === "week"
                   ? `${week.days[0].toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} – ${week.days[6].toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}`
                   : `${selectedDate.getDate()} ${selectedDate
                       .toLocaleDateString("pt-BR", { month: "short" })
                       .replace(".", "")} ${selectedDate.getFullYear()}`}
               </span>
-              <span className="text-[11px] text-neutral-500 capitalize">
+              <span className="text-overline uppercase tabular-nums text-neutral-500">
                 {view === "week"
                   ? selectedDate.getFullYear()
                   : selectedDate.toLocaleDateString("pt-BR", { weekday: "long" })}
@@ -969,7 +964,7 @@ export function SchedulePage() {
               size="icon"
               onClick={() => shiftDay(1)}
               aria-label={view === "week" ? "Próxima semana" : "Próximo dia"}
-              className="h-11 w-11 md:h-8 md:w-8"
+              className="h-11 w-11"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -1006,7 +1001,7 @@ export function SchedulePage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar clientes agendados hoje"
-              className="pl-9 h-9 text-sm"
+              className="pl-9"
             />
           </div>
 
@@ -1014,7 +1009,7 @@ export function SchedulePage() {
           {canSchedule && (
             <Button
               size="sm"
-              className="gap-xs bg-error-500 hover:bg-error-700 text-white"
+              className="gap-xs"
               onClick={() => {
                 setModalSeed(undefined);
                 setModalOpen(true);
@@ -1056,7 +1051,7 @@ export function SchedulePage() {
               variant="ghost"
               size="icon"
               aria-label="Mostrar/ocultar profissionais"
-              className="h-11 w-11 md:h-8 md:w-8 shrink-0 text-neutral-500"
+              className="h-11 w-11 shrink-0 text-neutral-500"
               onClick={() => {
                 const allVisible = visibleProfIds.size === professionals.length;
                 if (allVisible) {
@@ -1075,7 +1070,7 @@ export function SchedulePage() {
               )}
             </Button>
             <div
-              className="flex items-center gap-xs overflow-x-auto md:overflow-visible md:gap-0 md:-space-x-2"
+              className="flex items-center gap-xs overflow-x-auto"
               data-testid="prof-avatars"
             >
               {professionals.slice(0, 4).map((pro) => {
@@ -1089,24 +1084,28 @@ export function SchedulePage() {
                     aria-label={`Agenda de ${pro.name}`}
                     aria-pressed={visible}
                     className={cn(
-                      "shrink-0 flex items-center gap-xs rounded-full min-h-[44px] min-w-[44px] pr-sm md:min-h-0 md:min-w-0 md:pr-0 transition-opacity",
-                      !visible && "opacity-30",
+                      "shrink-0 flex items-center gap-xs rounded-md min-h-[44px] min-w-[44px] px-2.5 border transition-colors",
+                      visible
+                        ? "bg-neutral-100 border-neutral-200 text-neutral-800"
+                        : "bg-white border-transparent text-neutral-500 hover:bg-neutral-50",
                     )}
                   >
                     <span
-                      className="h-8 w-8 shrink-0 rounded-full ring-2 ring-white flex items-center justify-center text-white text-xs font-semibold"
-                      style={{ backgroundColor: pro.color }}
+                      className={cn(
+                        "h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-[11px] font-semibold",
+                        visible ? "bg-primary text-white" : "bg-neutral-100 text-neutral-600",
+                      )}
                     >
                       {pro.initials}
                     </span>
-                    <span className="truncate max-w-[88px] text-xs font-medium text-neutral-700 md:hidden">
+                    <span className="truncate max-w-[120px] text-label">
                       {shortProfessionalName(pro.name)}
                     </span>
                   </button>
                 );
               })}
               {professionals.length > 4 && (
-                <span className="h-8 w-8 rounded-full ring-2 ring-white bg-neutral-200 text-neutral-600 text-xs font-semibold flex items-center justify-center">
+                <span className="h-11 min-w-[44px] shrink-0 rounded-md border border-neutral-200 bg-white px-xs text-label tabular-nums text-neutral-500 flex items-center justify-center">
                   +{professionals.length - 4}
                 </span>
               )}
@@ -1145,50 +1144,6 @@ export function SchedulePage() {
           )}
         </div>
 
-        {/* Footer institucional (estilo Trinks) */}
-        <footer className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-md px-md py-md border-t border-neutral-200 bg-white text-xs text-neutral-500">
-          <nav
-            className="flex flex-wrap items-center gap-x-md gap-y-xs"
-            aria-label="Links institucionais"
-          >
-            <a className="hover:text-primary-500 transition-colors" href="#">
-              Meu site
-            </a>
-            <span className="text-neutral-300">|</span>
-            <a className="hover:text-primary-500 transition-colors" href="#">
-              SGS Ajuda
-            </a>
-            <span className="text-neutral-300">|</span>
-            <a className="hover:text-primary-500 transition-colors" href="#">
-              Blog
-            </a>
-            <span className="text-neutral-300">|</span>
-            <a className="hover:text-primary-500 transition-colors" href="#">
-              Fale conosco
-            </a>
-            <span className="text-neutral-300">|</span>
-            <a className="hover:text-primary-500 transition-colors" href="#">
-              Contato
-            </a>
-          </nav>
-          <div className="flex items-center gap-sm">
-            {[
-              { label: "Facebook", Icon: Facebook, href: "#" },
-              { label: "Instagram", Icon: Instagram, href: "#" },
-              { label: "YouTube", Icon: Youtube, href: "#" },
-              { label: "LinkedIn", Icon: Linkedin, href: "#" },
-            ].map(({ label, Icon, href }) => (
-              <a
-                key={label}
-                href={href}
-                aria-label={label}
-                className="h-8 w-8 rounded-full flex items-center justify-center text-neutral-500 hover:bg-primary-50 hover:text-primary-700 transition-colors"
-              >
-                <Icon className="h-4 w-4" />
-              </a>
-            ))}
-          </div>
-        </footer>
       </div>
 
       {canSchedule && (

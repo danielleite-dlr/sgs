@@ -15,18 +15,18 @@ export function paymentMethodLabel(v: string): string {
 }
 
 export const TIME_BLOCK_KINDS = [
-  { value: 'folga', label: 'Folga', className: 'bg-slate-200 text-slate-900 border-slate-500' },
-  { value: 'intervalo', label: 'Intervalo', className: 'bg-amber-100 text-amber-900 border-amber-500' },
-  { value: 'feriado', label: 'Feriado', className: 'bg-rose-100 text-rose-900 border-rose-500' },
+  { value: 'folga', label: 'Folga', className: 'border-neutral-500 text-neutral-800' },
+  { value: 'intervalo', label: 'Intervalo', className: 'border-warning-500 text-neutral-800' },
+  { value: 'feriado', label: 'Feriado', className: 'border-error-500 text-neutral-800' },
   {
     value: 'indisponibilidade',
     label: 'Indisponibilidade',
-    className: 'bg-sky-100 text-sky-900 border-sky-500',
+    className: 'border-info-500 text-neutral-800',
   },
   {
     value: 'deslocamento',
     label: 'Deslocamento',
-    className: 'bg-amber-100 text-amber-900 border-amber-500',
+    className: 'border-warning-500 text-neutral-800',
   },
 ] as const; // D-02
 

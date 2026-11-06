@@ -58,7 +58,8 @@ describe('router phase 2', () => {
     );
 
     try {
-      expect(await screen.findByRole('link', { name: 'SGS — início' })).toBeInTheDocument();
+      // A marca aparece no menu lateral (computador) e no topo (celular); o jsdom mostra as duas.
+      expect(await screen.findByTestId('sidebar-brand')).toHaveAccessibleName('SGS — início');
     } finally {
       r.dispose();
       unmount();

@@ -8,18 +8,14 @@ import { describe, expect, it } from 'vitest';
 // Arquivos que ainda têm paleta padrão ou sombra e são refeitos num lote seguinte.
 // Cada lote remove a sua entrada; o teste falha se uma entrada ficar sobrando.
 const PALETA_PENDENTE: Record<string, string> = {
-  'features/operations/lib/operations-labels.ts': '06-03',
   'features/bridal/pages/BridalGroupDetailPage.tsx': '06-09',
 };
-const SOMBRA_PENDENTE: Record<string, string> = {
-  'features/operations/components/calendar/AppointmentCard.tsx': '06-03',
-  'features/operations/pages/SchedulePage.tsx': '06-03',
-};
+const SOMBRA_PENDENTE: Record<string, string> = {};
 
 const SRC = join(__dirname, '../..');
 
 const COR_ANTIGA =
-  /#1D9E75|#D85A30|#888780|#2C2C2A|#FAFAF8|#E5E3DC|#3D005A|#2B003F|#B42318|#5D54C7|#3C3489|shadow-card|text-red-600/i;
+  /#1D9E75|#D85A30|#888780|#2C2C2A|#FAFAF8|#E5E3DC|#3D005A|#2B003F|#B42318|#5D54C7|#3C3489|#DDE7F3|shadow-card|text-red-600/i;
 const PALETA_PADRAO =
   /\b(bg|text|border|ring|fill|stroke)-(slate|gray|zinc|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b/;
 const FONTE_ANTIGA = /\bInter\b/;
@@ -103,6 +99,15 @@ describe('sem cor antiga, paleta padrão, sombra ou Inter (fase 6)', () => {
     const achados = varrer(
       (linha, arquivo) =>
         arquivo.startsWith('components/layout/') && /(^|[\s'"`])bg-primary-700\b/.test(linha),
+    );
+    expect(listar(achados)).toBe('');
+  });
+
+  it('agenda sem o "Agendar" vermelho (bg-error-500) na SchedulePage (06-03, D-06)', () => {
+    const achados = varrer(
+      (linha, arquivo) =>
+        arquivo === 'features/operations/pages/SchedulePage.tsx' &&
+        /(^|[\s'"`])bg-error-500\b/.test(linha),
     );
     expect(listar(achados)).toBe('');
   });
