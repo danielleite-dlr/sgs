@@ -3,7 +3,7 @@ import { readSeedState } from '../support/seed-state';
 import { loginViaUi, navigateViaMenu } from '../support/ui';
 
 const BRANCO = 'rgb(255, 255, 255)';
-const ROXOS = ['rgb(87, 0, 128)', 'rgb(61, 0, 90)'];
+const ROXOS = ['rgb(87, 0, 128)', 'rgb(68, 0, 100)', 'rgb(55, 0, 83)'];
 
 async function cores(el: Locator) {
   return el.evaluate((node) => {

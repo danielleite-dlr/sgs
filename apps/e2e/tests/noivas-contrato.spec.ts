@@ -294,7 +294,8 @@ test.describe('Fase 4: pacote -> grupo de noivas -> contrato -> aceite público 
     expect(appts.filter((a) => a.covered).map((a) => a.clientName)).toEqual([brideName]);
 
     // /agenda no dia do evento mostra os agendamentos
-    await page.getByRole('link', { name: 'SGS — início' }).click();
+    // Marca do estúdio no topo do menu lateral (leva ao início).
+    await page.getByTestId('sidebar-brand').click();
     await navigateViaMenu(page, 'Agenda', 'Minha agenda');
     await expect(page.getByTestId('view-day')).toBeVisible();
     const next = page.getByRole('button', { name: 'Próximo dia' });

@@ -3,7 +3,7 @@ import { loginViaUi } from '../support/ui';
 import { installReadOnlyGuard, loadAuditEnv } from './audit-helpers';
 
 const env = loadAuditEnv();
-const ROXOS = ['rgb(87, 0, 128)', 'rgb(61, 0, 90)', 'rgb(43, 0, 63)'];
+const ROXOS = ['rgb(87, 0, 128)', 'rgb(68, 0, 100)', 'rgb(55, 0, 83)'];
 
 /** Todo elemento clicável com fundo roxo da marca deve ter letra branca. */
 async function roxosSemTextoBranco(page: Page): Promise<{ total: number; ruins: string[] }> {

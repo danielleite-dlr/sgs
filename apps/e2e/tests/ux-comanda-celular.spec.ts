@@ -117,7 +117,7 @@ test('UX-10: menu e trilha do topo sem aviso de HTML inválido no console', asyn
     await page.waitForLoadState('networkidle').catch(() => undefined);
   }
   // Abre o menu do celular (gaveta), que também tem a lista de navegação.
-  await page.getByRole('button', { name: 'Menu', exact: true }).click();
+  await page.getByRole('button', { name: 'Mais', exact: true }).click();
   await page.waitForTimeout(300);
   await page.setViewportSize({ width: 1366, height: 768 });
   for (const rota of ['/agenda', '/comanda']) {

@@ -19,7 +19,7 @@ export function ChatBubble() {
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? 'Fechar chat de suporte' : 'Abrir chat de suporte'}
         className={cn(
-          'fixed right-4 z-30 h-12 w-12 rounded-full bg-primary-500 text-white shadow-lg',
+          'fixed right-4 z-30 h-12 w-12 rounded-md bg-primary-500 text-white',
           'flex items-center justify-center hover:bg-primary-700 transition-colors',
           'focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2',
           'bottom-20 lg:bottom-6',
@@ -33,7 +33,7 @@ export function ChatBubble() {
         <div
           role="dialog"
           aria-label="Chat de suporte"
-          className="fixed right-4 z-30 w-[320px] max-w-[calc(100vw-2rem)] rounded-lg border border-neutral-200 bg-white shadow-xl bottom-36 lg:bottom-24"
+          className="fixed right-4 z-30 w-[320px] max-w-[calc(100vw-2rem)] rounded-md border border-neutral-200 bg-white bottom-36 lg:bottom-24"
         >
           <header className="flex items-center justify-between px-md py-sm border-b border-neutral-200 bg-primary-50">
             <div className="flex items-center gap-sm min-w-0">
@@ -52,7 +52,7 @@ export function ChatBubble() {
               type="button"
               onClick={() => setOpen(false)}
               aria-label="Fechar"
-              className="text-neutral-500 hover:text-neutral-800"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-md text-neutral-500 hover:text-neutral-800"
             >
               <X className="h-4 w-4" />
             </button>

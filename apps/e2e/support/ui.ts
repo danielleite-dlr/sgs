@@ -31,16 +31,12 @@ export async function expectNoReload(page: Page): Promise<void> {
 /**
  * Navega pelo menu lateral (SPA, sem recarregar). `path` são os rótulos em
  * ordem: grupos primeiro, o link por último. Ex.: ['Agenda', 'Minha agenda'].
+ * O menu lateral é fixo (256 px, sempre aberto no computador); os grupos de nível 0
+ * nascem abertos e os subgrupos abrem pelo acordeão.
  */
 export async function navigateViaMenu(page: Page, ...path: string[]): Promise<void> {
   const nav = page.getByRole('navigation', { name: 'Navegação principal' });
-  // O rail nasce recolhido (ícones + popover); expande para usar o acordeão inline.
-  await expect(
-    nav.getByRole('button', { name: /^(Expandir|Recolher) menu$/ }),
-  ).toBeVisible();
-  const expand = nav.getByRole('button', { name: 'Expandir menu' });
-  if (await expand.count()) await expand.click();
-  await expect(nav.getByRole('button', { name: 'Recolher menu' })).toBeVisible();
+  await expect(nav).toBeVisible();
 
   for (const label of path.slice(0, -1)) {
     const group = nav.getByRole('button', { name: label, exact: true });

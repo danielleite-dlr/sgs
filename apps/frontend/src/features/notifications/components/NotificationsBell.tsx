@@ -11,9 +11,20 @@ import {
 } from '../api/notifications.api';
 import { describeNotification, formatRelativeTime } from '../lib/notification-labels';
 
+interface NotificationsBellProps {
+  /** Controlado pelo casco (a gaveta "Mais" do celular abre o painel). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
 /** Sino do cabeçalho (D-24): contador, lista de não lidas, marcar lida / todas. */
-export function NotificationsBell() {
-  const [open, setOpen] = useState(false);
+export function NotificationsBell({ open: openProp, onOpenChange }: NotificationsBellProps = {}) {
+  const [openInterno, setOpenInterno] = useState(false);
+  const open = openProp ?? openInterno;
+  function setOpen(next: boolean) {
+    if (openProp === undefined) setOpenInterno(next);
+    onOpenChange?.(next);
+  }
   const navigate = useNavigate();
   const { data: countData } = useUnreadNotificationCount();
   const { data: listData, loading } = useUnreadNotifications(open);
@@ -36,13 +47,13 @@ export function NotificationsBell() {
         <button
           type="button"
           aria-label="Notificações"
-          className="relative h-9 w-9 rounded-full flex items-center justify-center text-neutral-600 hover:bg-neutral-50 hover:text-primary-700 transition-colors focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2"
+          className="relative inline-flex h-11 w-11 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-50 hover:text-neutral-800 focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2"
         >
           <Bell className="h-5 w-5" />
           {count > 0 && (
             <span
               data-testid="notifications-badge"
-              className="absolute -right-0.5 -top-0.5 min-w-[18px] rounded-full bg-destructive px-1 text-center text-[10px] font-semibold leading-[18px] text-white"
+              className="absolute right-1 top-1 min-w-[18px] rounded-md bg-primary px-1 text-center text-[10px] font-semibold leading-[18px] tabular-nums text-white"
             >
               {count > 9 ? '9+' : count}
             </span>
@@ -51,7 +62,7 @@ export function NotificationsBell() {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between border-b border-neutral-200 px-md py-sm">
-          <h2 className="text-sm font-semibold text-neutral-800">Notificações</h2>
+          <h2 className="font-serif text-headline-sm text-neutral-800">Notificações</h2>
           <button
             type="button"
             disabled={count === 0 || markingAll}

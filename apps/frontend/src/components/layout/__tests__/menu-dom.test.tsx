@@ -8,7 +8,6 @@ vi.mock('@/features/auth/hooks/useAuth', () => ({
 }));
 
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
-import { IconRail } from '../IconRail';
 import { AppDrawer } from '../AppDrawer';
 import { SidebarNav } from '../SidebarNav';
 import { PageHeader } from '../PageHeader';
@@ -43,16 +42,6 @@ function expectHtmlDeListaValido(root: ParentNode) {
 }
 
 describe('UX-10 HTML válido no menu e na trilha do topo', () => {
-  it('IconRail sem aviso e sem <li> dentro de <li>', () => {
-    const { container } = render(
-      <MemoryRouter>
-        <IconRail />
-      </MemoryRouter>,
-    );
-    expect(avisosDeHtml()).toEqual([]);
-    expectHtmlDeListaValido(container);
-  });
-
   it('AppDrawer (menu do celular) sem aviso e sem <li> dentro de <li>', () => {
     render(
       <MemoryRouter>

@@ -2,41 +2,41 @@ import { Outlet } from 'react-router-dom';
 import { useState } from 'react';
 import { useQuery } from '@apollo/client';
 import { TopHeader } from './TopHeader';
+import { SidebarNav } from './SidebarNav';
 import { BottomNav } from './BottomNav';
 import { AppDrawer } from './AppDrawer';
 import { ChatBubble } from './ChatBubble';
-import { IconRail } from './IconRail';
 import { LowStockCountQuery } from '@/features/catalog/api/produtos.api';
 import { FEATURES } from '@/config/features';
 
 /**
- * AppShell — Trinks-style authenticated layout.
+ * AppShell — casco autenticado do layout Gestor Beauty (D-15 a D-17).
  *
- * Mobile (<lg):
- *   ┌─────────────────────┐
- *   │ TopHeader           │
- *   ├─────────────────────┤
- *   │ Outlet              │
- *   │                     │
- *   ├─────────────────────┤
- *   │ BottomNav (4 itens) │
- *   └─────────────────────┘
- *   AppDrawer overlays when "Menu" tapped.
+ * Celular (<lg):
+ *   ┌───────────────────────────────────┐
+ *   │ TopHeader: marca + data · 🔍 🔔 (A) │
+ *   ├───────────────────────────────────┤
+ *   │ Outlet                            │
+ *   ├───────────────────────────────────┤
+ *   │ Agenda · Comanda · Clientes ·     │
+ *   │ Noivas · Mais (BottomNav)         │
+ *   └───────────────────────────────────┘
+ *   "Mais" abre a AppDrawer (árvore completa, Início e Notificações).
  *
- * Desktop (>=lg):
- *   ┌──────┬───────────────────────────────────────┐
- *   │ Logo │ Search ─ Estab. ▼ ─ Assine ─ 🔔❓▶👤 │   ← TopHeader (h-14)
- *   ├──────┼───────────────────────────────────────┤
- *   │  🏠  │                                       │
- *   │  📅  │  Outlet                               │
- *   │  🏢  │                                       │
- *   │  💲  │                                       │
- *   │  ⚙   │                                       │
- *   └──────┴───────────────────────────────────────┘
- *   IconRail (64px) acts as primary nav.
+ * Computador (>=lg):
+ *   ┌────────────┬──────────────────────────────────────────┐
+ *   │ [JS] Marca │ Data por extenso · [Buscar páginas] 🔔 (A) │ ← TopHeader (h-14)
+ *   ├────────────┼──────────────────────────────────────────┤
+ *   │ GRUPO      │                                          │
+ *   │  Item      │  Outlet                                  │
+ *   │  …         │                                          │
+ *   │ Usuária ⎋  │                                          │
+ *   └────────────┴──────────────────────────────────────────┘
+ *   SidebarNav (256 px, fixo na altura da tela).
  */
 export function AppShell() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   // Poll every 60s for low stock — non-blocking
   const { data: lowStockData } = useQuery(LowStockCountQuery, {
@@ -46,32 +46,32 @@ export function AppShell() {
   const lowStockCount = lowStockData?.lowStockCount ?? 0;
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <TopHeader />
+    <div className="flex min-h-screen bg-background">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 lg:block">
+        <SidebarNav lowStockCount={lowStockCount} />
+      </aside>
 
-      <div className="flex flex-1 items-stretch">
-        {/* Desktop icon rail — stretches to full page (flex column) height */}
-        <aside className="hidden lg:flex shrink-0 self-stretch">
-          <IconRail lowStockCount={lowStockCount} />
-        </aside>
-
-        {/* Main content */}
-        <main className="flex-1 px-md py-md lg:px-lg lg:py-lg pb-20 lg:pb-lg min-w-0">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <TopHeader
+          notificationsOpen={notificationsOpen}
+          onNotificationsOpenChange={setNotificationsOpen}
+        />
+        <main className="min-w-0 flex-1 px-md py-md pb-20 lg:px-lg lg:py-lg lg:pb-lg">
           <Outlet />
         </main>
       </div>
 
-      {/* Mobile bottom nav */}
+      {/* Barra inferior do celular */}
       <BottomNav onOpenMenu={() => setDrawerOpen(true)} />
 
-      {/* Mobile drawer (hierarchical menu) */}
+      {/* Gaveta "Mais" do celular (árvore completa) */}
       <AppDrawer
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         lowStockCount={lowStockCount}
+        onOpenNotifications={() => setNotificationsOpen(true)}
       />
 
-      {/* Floating chat bubble — persistent */}
       {FEATURES.chatSuporte && <ChatBubble />}
     </div>
   );

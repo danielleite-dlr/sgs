@@ -19,18 +19,24 @@ export function PageHeader({ title, breadcrumbs, cta }: PageHeaderProps) {
   return (
     <header className="pb-lg">
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <Breadcrumb className="mb-sm">
-          <BreadcrumbList>
+        // D-13: a trilha leva nomes de pessoa e de grupo, então nada de maiúsculas forçadas.
+        <Breadcrumb className="mb-xs">
+          <BreadcrumbList className="gap-1.5 text-[12px] leading-4 sm:gap-1.5">
             {breadcrumbs.map((b, i) => {
               const isLast = i === breadcrumbs.length - 1;
               return (
                 <BreadcrumbItem key={i}>
                   {!isLast && b.to ? (
                     <BreadcrumbLink asChild>
-                      <Link to={b.to}>{b.label}</Link>
+                      <Link
+                        to={b.to}
+                        className="text-[12px] font-medium leading-4 text-neutral-500 hover:text-neutral-800"
+                      >
+                        {b.label}
+                      </Link>
                     </BreadcrumbLink>
                   ) : (
-                    <BreadcrumbPage className="font-semibold text-primary-700">
+                    <BreadcrumbPage className="text-[12px] font-semibold leading-4 text-neutral-800">
                       {b.label}
                     </BreadcrumbPage>
                   )}
@@ -40,7 +46,7 @@ export function PageHeader({ title, breadcrumbs, cta }: PageHeaderProps) {
                     <span
                       role="presentation"
                       aria-hidden="true"
-                      className="[&>svg]:h-3.5 [&>svg]:w-3.5"
+                      className="text-neutral-500 [&>svg]:h-3.5 [&>svg]:w-3.5"
                     >
                       <ChevronRight />
                     </span>
@@ -51,9 +57,11 @@ export function PageHeader({ title, breadcrumbs, cta }: PageHeaderProps) {
           </BreadcrumbList>
         </Breadcrumb>
       )}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-neutral-800">{title}</h1>
-        {cta && <div>{cta}</div>}
+      <div className="flex flex-col gap-sm sm:flex-row sm:items-end sm:justify-between">
+        <h1 className="min-w-0 break-words font-serif text-headline-lg text-neutral-800">
+          {title}
+        </h1>
+        {cta && <div className="flex flex-wrap items-center gap-sm">{cta}</div>}
       </div>
     </header>
   );

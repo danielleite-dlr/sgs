@@ -1,145 +1,106 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
-import { Search, HelpCircle, PlayCircle, ChevronDown, Sparkles } from 'lucide-react';
+import { Search } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { GlobalSearchSheet } from './GlobalSearchSheet';
+import { BrandMark } from './BrandMark';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { FEATURES, HOME_PATH } from '@/config/features';
 import { NotificationsBell } from '@/features/notifications/components/NotificationsBell';
+import { brandName, personInitials } from '@/lib/brand';
+import { formatLongDate } from '@/lib/format-date-long';
+
+interface TopHeaderProps {
+  /** Painel de notificações controlado pelo casco (a gaveta "Mais" também o abre). */
+  notificationsOpen?: boolean;
+  onNotificationsOpenChange?: (open: boolean) => void;
+}
 
 /**
- * Trinks-style top header.
+ * Topo do layout Gestor Beauty (D-16, D-17), 56 px, branco com borda inferior.
  *
- *   ┌──────┬──────────────────────────────────────────────────────────────────┐
- *   │ Logo │ 🔍 Buscar páginas │ Estabelecimento ▼ │ Assine │ 🔔 ❓ ▶ 👤        │
- *   └──────┴──────────────────────────────────────────────────────────────────┘
+ *   Computador: │ Quinta-feira, 12 de novembro de 2026 │ … │ [Buscar páginas no SGS] 🔔 (A) │
+ *   Celular:    │ [JS] Studio JS / data                 │ … │ 🔍 🔔 (A) │
  *
- * Logo lives in the icon rail's color band on the left (h-14 matched).
- * Other elements collapse on small screens. Bell/help/play are decorative.
+ * A marca do computador fica no menu lateral. Sem seletor de unidade, relógio ou
+ * "Sincronizado" (D-02).
  */
-export function TopHeader() {
+export function TopHeader({ notificationsOpen, onNotificationsOpenChange }: TopHeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const roleName = useAuthStore((s) => s.roleName);
+  const fullName = useAuthStore((s) => s.fullName);
+  const organizationName = useAuthStore((s) => s.organizationName);
   const { logout } = useAuth();
-  const initial = (roleName ?? '?').slice(0, 1).toUpperCase();
+  const initial =
+    personInitials(fullName).charAt(0) || (roleName ?? '?').slice(0, 1).toUpperCase();
+  const hoje = formatLongDate(new Date());
+  const marca = brandName(organizationName);
 
   return (
     <>
-      <TooltipProvider delayDuration={300}>
-        <header className="sticky top-0 z-40 flex h-14 items-stretch border-b border-neutral-200 bg-white">
-          {/* Logo (matches icon rail width on desktop) */}
-          <Link
-            to={HOME_PATH}
-            className="hidden lg:flex w-16 items-center justify-center bg-primary-700 text-white shrink-0 hover:bg-primary-500 transition-colors"
-            aria-label="SGS — início"
-          >
-            <span className="text-lg font-bold tracking-tight">SGS</span>
-          </Link>
-
-          {/* Mobile logo */}
-          <Link
-            to={HOME_PATH}
-            className="flex lg:hidden items-center pl-md text-lg font-semibold text-primary-700"
-          >
-            SGS
-          </Link>
-
-          {/* Search */}
-          <div className="flex-1 flex items-center px-md min-w-0">
-            <button
-              type="button"
-              onClick={() => setSearchOpen(true)}
-              className="flex items-center gap-sm w-full max-w-[420px] rounded-full border border-neutral-200 bg-neutral-50 px-md py-xs text-sm text-neutral-500 hover:border-primary-300 hover:text-neutral-700 transition-colors"
-              aria-label="Buscar páginas no SGS"
+      <header className="sticky top-0 z-40 flex h-14 items-center gap-md border-b border-neutral-200 bg-white px-md lg:px-lg">
+        <Link
+          to={HOME_PATH}
+          aria-label={`${marca} — início`}
+          className="flex min-w-0 items-center gap-sm lg:hidden"
+        >
+          <BrandMark organizationName={organizationName} />
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate font-serif text-headline-sm text-neutral-800">{marca}</span>
+            <span
+              data-testid="top-date-mobile"
+              className="truncate text-[12px] leading-4 tabular-nums text-neutral-500"
             >
-              <Search className="h-4 w-4 shrink-0" />
-              <span className="truncate">Buscar páginas no SGS</span>
-              <kbd className="hidden sm:inline ml-auto text-[10px] text-neutral-400 font-mono">⌘K</kbd>
-            </button>
-          </div>
+              {hoje}
+            </span>
+          </span>
+        </Link>
 
-          {/* Estabelecimento selector — escondido até ler a organização real */}
-          {FEATURES.estabelecimentoSelector && (
-            <div className="hidden md:flex items-center px-md border-l border-neutral-200">
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-xs text-sm font-medium text-neutral-700 hover:text-primary-500 transition-colors max-w-[220px]">
-                  <span className="truncate">Studio Beleza LTDA</span>
-                  <ChevronDown className="h-4 w-4 shrink-0" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem disabled>Studio Beleza LTDA (atual)</DropdownMenuItem>
-                  <DropdownMenuItem disabled>+ Adicionar estabelecimento</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+        <p data-testid="top-date" className="hidden text-data tabular-nums text-neutral-800 lg:block">
+          {hoje}
+        </p>
+
+        <div className="ml-auto flex shrink-0 items-center gap-xs">
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Buscar páginas no SGS"
+            className="inline-flex h-11 w-11 items-center justify-center gap-sm rounded-md border border-neutral-200 bg-neutral-50 text-body text-neutral-500 transition-colors hover:border-neutral-500 hover:text-neutral-800 lg:w-[320px] lg:justify-start lg:px-[14px]"
+          >
+            <Search className="h-4 w-4 shrink-0" />
+            <span className="hidden truncate lg:inline">Buscar páginas no SGS</span>
+          </button>
+
+          {FEATURES.notificacoes && (
+            <NotificationsBell
+              open={notificationsOpen}
+              onOpenChange={onNotificationsOpenChange}
+            />
           )}
 
-          {/* Assine agora — green pill */}
-          {FEATURES.assinatura && (
-            <div className="hidden sm:flex items-center pr-md">
-              <Link
-                to="/configuracoes/plano"
-                className="flex items-center gap-xs rounded-full bg-success-500 px-md py-xs text-xs font-semibold text-white hover:bg-success-600 transition-colors"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                Assine agora
-              </Link>
-            </div>
-          )}
-
-          {/* Header actions */}
-          <div className="flex items-center gap-xs px-md border-l border-neutral-200">
-            {FEATURES.notificacoes && <NotificationsBell />}
-            {FEATURES.ajudaTutoriais && (
-              <>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label="Ajuda"
-                      className="h-9 w-9 rounded-full flex items-center justify-center text-neutral-600 hover:bg-neutral-50 hover:text-primary-700 transition-colors focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2"
-                    >
-                      <HelpCircle className="h-5 w-5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>Ajuda</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label="Tutoriais"
-                      className="h-9 w-9 rounded-full flex items-center justify-center text-neutral-600 hover:bg-neutral-50 hover:text-primary-700 transition-colors focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2"
-                    >
-                      <PlayCircle className="h-5 w-5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>Tutoriais</TooltipContent>
-                </Tooltip>
-              </>
-            )}
-
-            {/* Avatar / user menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="h-8 w-8 rounded-full bg-primary-500 text-white font-semibold flex items-center justify-center hover:ring-2 hover:ring-primary-500/30 transition-all ml-xs">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label="Conta"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-md"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-label text-white">
                 {initial}
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onSelect={() => logout()} className="text-destructive">
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
-      </TooltipProvider>
+              </span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onSelect={() => logout()} className="text-destructive">
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
 
       <GlobalSearchSheet open={searchOpen} onOpenChange={setSearchOpen} />
     </>

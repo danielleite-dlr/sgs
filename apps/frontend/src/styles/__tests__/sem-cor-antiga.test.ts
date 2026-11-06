@@ -12,9 +12,6 @@ const PALETA_PENDENTE: Record<string, string> = {
   'features/bridal/pages/BridalGroupDetailPage.tsx': '06-09',
 };
 const SOMBRA_PENDENTE: Record<string, string> = {
-  'components/layout/BottomNav.tsx': '06-02',
-  'components/layout/ChatBubble.tsx': '06-02',
-  'components/layout/IconRail.tsx': '06-02',
   'features/operations/components/calendar/AppointmentCard.tsx': '06-03',
   'features/operations/pages/SchedulePage.tsx': '06-03',
 };
@@ -98,6 +95,14 @@ describe('sem cor antiga, paleta padrão, sombra ou Inter (fase 6)', () => {
   it('nenhuma sombra fora de SOMBRA_PENDENTE (só shadow-none e o foco de campo)', () => {
     const achados = varrer(
       (linha, arquivo) => ehTsOuTsx(arquivo) && !(arquivo in SOMBRA_PENDENTE) && temSombra(linha),
+    );
+    expect(listar(achados)).toBe('');
+  });
+
+  it('casco sem o roxo escuro antigo como fundo (bg-primary-700) em components/layout', () => {
+    const achados = varrer(
+      (linha, arquivo) =>
+        arquivo.startsWith('components/layout/') && /(^|[\s'"`])bg-primary-700\b/.test(linha),
     );
     expect(listar(achados)).toBe('');
   });

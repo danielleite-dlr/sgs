@@ -21,6 +21,7 @@ function toStoredSession(payload: AuthPayload): StoredSession | null {
     mustChangePassword: payload.session.mustChangePassword ?? false,
     impersonating: payload.session.impersonating ?? false,
     organizationName: m?.organizationName ?? null,
+    fullName: payload.session.fullName ?? null,
     // permissions populated by /me query later or derived from memberships
     permissions: [],
   };

@@ -16,6 +16,8 @@ export interface AuthSession {
   /** Sessão aberta pelo seletor, dentro do salão de um cliente. */
   impersonating: boolean;
   organizationName: string | null;
+  /** Nome da usuária logada (rodapé do menu). Null em sessão salva antes de existir o campo. */
+  fullName: string | null;
   permissions: string[];
 }
 
@@ -54,6 +56,7 @@ const initialState: AuthSession = {
   mustChangePassword: false,
   impersonating: false,
   organizationName: null,
+  fullName: null,
   permissions: [],
 };
 
@@ -89,6 +92,7 @@ export const useAuthStore = create<AuthStore>()(
             mustChangePassword: current.mustChangePassword,
             impersonating: false,
             organizationName: current.organizationName,
+            fullName: current.fullName,
             permissions: current.permissions,
           },
         });
@@ -120,6 +124,7 @@ export const useAuthStore = create<AuthStore>()(
         mustChangePassword: s.mustChangePassword,
         impersonating: s.impersonating,
         organizationName: s.organizationName,
+        fullName: s.fullName,
         permissions: s.permissions,
         platformSession: s.platformSession,
       }),
