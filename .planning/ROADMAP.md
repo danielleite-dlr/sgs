@@ -248,7 +248,7 @@ Plans:
 3. A previsão soma agendamentos confirmados e parcelas de contratos a vencer, e desconta comissões a pagar e despesas fixas cadastradas
 4. A dona consegue cadastrar despesas fixas mensais (nome, valor, dia de vencimento) que entram na previsão
 
-**Plans:** 1/10 plans executed
+**Plans:** 1/18 plans executed
 
 Plans:
 - [x] 05-01-auditoria-usabilidade-PLAN.md — Auditoria no staging (usuário dedicado, só leitura) + local; 05-AUDITORIA.md commitado aguardando aprovação (D-01, D-12)
@@ -259,7 +259,15 @@ Plans:
 - [x] 05-06-frontend-painel-previsao-PLAN.md — Cartão no painel e detalhe /financeiro/previsao
 - [ ] 05-06b-frontend-home-por-papel-PLAN.md — Painel como home de ADMIN/MANAGER; PROFESSIONAL/ATTENDANT na Agenda (D-11)
 - [ ] 05-07-e2e-deploy-previsao-PLAN.md — E2E da previsão, gate completo, backup, deploy no staging e CI
-- [ ] 05-08-gerar-lotes-correcao-PLAN.md — Checkpoint de aprovação da auditoria pela usuária + gera os lotes de correção (05-09…)
+- [x] 05-08-gerar-lotes-correcao-PLAN.md — Aprovação da auditoria pela usuária (2026-11-06) + gera os lotes de correção 05-09…05-16
+- [ ] 05-09-ux-lote-agenda-1-PLAN.md — Lote 1 de usabilidade: Agenda (UX-01, UX-04, UX-05)
+- [ ] 05-10-ux-lote-agenda-2-PLAN.md — Lote 2 de usabilidade: Agenda no celular (UX-02, UX-03)
+- [ ] 05-11-ux-lote-comanda-1-PLAN.md — Lote 3 de usabilidade: Comanda e caixa (UX-06, UX-07, UX-08)
+- [ ] 05-12-ux-lote-comanda-2-PLAN.md — Lote 4 de usabilidade: Comanda no celular e menu (UX-09, UX-10)
+- [ ] 05-13-ux-lote-noivas-1-PLAN.md — Lote 5 de usabilidade: Noivas e contratos (UX-11, UX-14)
+- [ ] 05-14-ux-lote-noivas-2-PLAN.md — Lote 6 de usabilidade: Contrato no celular e completar dados (UX-12, UX-13)
+- [ ] 05-15-ux-lote-clientes-PLAN.md — Lote 7 de usabilidade: Clientes (UX-15, UX-16 só padronizar nomes)
+- [ ] 05-16-ux-lote-financeiro-PLAN.md — Lote 8 de usabilidade: Financeiro e botões de ação (UX-17, UX-18, UX-19)
 - [ ] 05-20-fechamento-PLAN.md — Reverificação no staging, alinhamento do FIN-03 no REQUIREMENTS, aceite da usuária, desativação do usuário de auditoria
 
 **UI hint:** yes
@@ -292,6 +300,11 @@ Ideias estacionadas, sem ordem. Entram no roadmap só quando a usuária promover
 ### 999.5: Sugestão de agenda com a Claude real
 - Ligar `ANTHROPIC_API_KEY` no staging e repetir o passo 3 do 04-16 (adiado pela usuária em 2026-11-05)
 
+### 999.6: Usabilidade — itens adiados da auditoria da fase 5
+- UX-20: painel inicial com resumo do dia (agendamentos de hoje e amanhã, valores a receber, parcelas de contrato vencendo); a previsão de 30 dias já entra no painel na fase 5
+- UX-16 (parte não aprovada): aviso de cliente duplicado (mesmo telefone) ao cadastrar
+- Remarcar agendamento pelo menu do cartão (alternativa ao arrastar, útil no celular), a decidir depois da conferência manual no celular
+
 ## Progress
 
 **Execution Order:** 1 → 2 → 3 → 4 → 5
@@ -302,4 +315,4 @@ Ideias estacionadas, sem ordem. Entram no roadmap só quando a usuária promover
 | 2. Core Domain | 6/8 | In Progress|  |
 | 3. Core Operations | 0/? | Not started | - |
 | 4. Bridal & Contracts | 16/16 | Complete    | 2026-11-05 |
-| 5. Uso no dia a dia | 1/10 | In Progress|  |
+| 5. Uso no dia a dia | 1/18 | In Progress|  |

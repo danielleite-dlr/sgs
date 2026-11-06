@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-06-PLAN.md
-last_updated: "2026-11-06T03:04:26.057Z"
+stopped_at: Completed 05-08-PLAN.md
+last_updated: "2026-11-06T03:08:03.280Z"
 last_activity: 2026-11-06
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 72
+  total_plans: 80
   completed_plans: 67
   percent: 100
 ---
@@ -77,7 +77,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 03 P10 | 75min | 3 tasks | 12 files |
 | Phase 03 P11 | 110min | 3 tasks | 18 files |
 | Phase 05 P01 | 75min | 2 tasks | 7 files |
-| Phase 05 P06 | 25min | 2 tasks | 7 files |
+| Phase 05 P08 | 25min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -152,6 +152,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-10: link Abrir comanda só com comandaId && isPathEnabled('/comanda'); código sempre visível em appointment-comanda-code
 - [Phase 03]: 03-11: flag comanda ligada com mock removido; PaymentPanel usa computePaymentSummary e só inclui a linha digitada no preview (dirty)
 - [Phase 05]: Auditoria 05-01: credencial só em /root/sgs/.env.audit; usuário auditoria.ux@sgs.invalid a desativar no 05-20
+- [Phase 05]: 05-AUDITORIA aprovada: UX-01..UX-15, UX-17, UX-18, UX-19 (sim); UX-16 sim parcial (só padronizar a caixa dos nomes; aviso de duplicidade vai ao backlog); UX-20 depois (backlog 999.6). Aprovação em 2026-11-06.
 
 ### Pending Todos
 
@@ -195,6 +196,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-06T03:04:26.046Z
-Stopped at: Completed 05-06-PLAN.md
+Last session: 2026-11-06T03:08:03.255Z
+Stopped at: Completed 05-08-PLAN.md
 Resume file: None
