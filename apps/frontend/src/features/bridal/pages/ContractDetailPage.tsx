@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useApolloClient, useQuery } from '@apollo/client';
 import { Link, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -34,6 +34,26 @@ import { ContractTextView } from '../components/ContractTextView';
 import { ReverseContractPaymentDialog } from '../components/ReverseContractPaymentDialog';
 
 const brl = (v: string) => `R$ ${formatCurrencyDisplay(v)}`;
+
+function installmentBadgeVariant(label: string) {
+  return label === 'Vencida'
+    ? 'destructive'
+    : label === 'Paga'
+      ? 'success'
+      : label === 'Parcial'
+        ? 'warning'
+        : 'outline';
+}
+
+/** Par rótulo/valor dos cartões do celular (UX-12); valor em R$ nunca quebra linha. */
+function CardRow({ label, children, money }: { label: string; children: ReactNode; money?: boolean }) {
+  return (
+    <div className="flex items-baseline justify-between gap-sm">
+      <dt className="text-xs text-neutral-500">{label}</dt>
+      <dd className={money ? 'whitespace-nowrap text-right' : 'text-right'}>{children}</dd>
+    </div>
+  );
+}
 
 export function ContractDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -113,6 +133,16 @@ export function ContractDetailPage() {
     }
   }
 
+  const canReverse = (p: { kind: string; reversed: boolean }) =>
+    canCancel && p.kind === 'payment' && !p.reversed && !cancelled;
+
+  const installmentName = (seq: number) =>
+    c.paymentMode === 'a_vista'
+      ? 'À VISTA'
+      : c.paymentMode === 'sinal_parcelado'
+        ? `SINAL ${seq}/${c.installments.length}`
+        : 'SINAL';
+
   const dueText =
     c.daysToBalanceDue >= 0
       ? `faltam ${c.daysToBalanceDue} ${c.daysToBalanceDue === 1 ? 'dia' : 'dias'}`
@@ -189,36 +219,47 @@ export function ContractDetailPage() {
           </CardHeader>
           <CardContent>
             <dl className="space-y-xs text-sm">
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-sm">
                 <dt>Itens</dt>
-                <dd>{brl(c.itemsTotal)}</dd>
+                <dd className="whitespace-nowrap">{brl(c.itemsTotal)}</dd>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-sm">
                 <dt>Desconto{c.discountDescription ? ` (${c.discountDescription})` : ''}</dt>
-                <dd>- {brl(c.discountAmount)}</dd>
+                <dd className="whitespace-nowrap">- {brl(c.discountAmount)}</dd>
               </div>
-              <div className="flex justify-between font-semibold">
+              <div className="flex justify-between gap-sm font-semibold">
                 <dt>Total</dt>
-                <dd data-testid="contract-total">{brl(c.totalAmount)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt>Entrada</dt>
-                <dd>
-                  {brl(c.depositPaid)} de {brl(c.depositAmount)}
-                  {Number(c.depositPending) > 0 && ` (pendente ${brl(c.depositPending)})`}
+                <dd className="whitespace-nowrap" data-testid="contract-total">
+                  {brl(c.totalAmount)}
                 </dd>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-sm">
+                <dt>Entrada</dt>
+                <dd className="text-right">
+                  <span className="whitespace-nowrap">{brl(c.depositPaid)}</span> de{' '}
+                  <span className="whitespace-nowrap">{brl(c.depositAmount)}</span>
+                  {Number(c.depositPending) > 0 && (
+                    <span className="block whitespace-nowrap text-xs text-neutral-600">
+                      pendente {brl(c.depositPending)}
+                    </span>
+                  )}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-sm">
                 <dt>Pago</dt>
-                <dd data-testid="contract-paid">{brl(c.paid)}</dd>
+                <dd className="whitespace-nowrap" data-testid="contract-paid">
+                  {brl(c.paid)}
+                </dd>
               </div>
-              <div className="flex justify-between font-semibold">
+              <div className="flex justify-between gap-sm font-semibold">
                 <dt>Saldo</dt>
-                <dd data-testid="contract-balance">{brl(c.balance)}</dd>
+                <dd className="whitespace-nowrap" data-testid="contract-balance">
+                  {brl(c.balance)}
+                </dd>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-sm">
                 <dt>Quitar até</dt>
-                <dd data-testid="contract-due">
+                <dd className="text-right" data-testid="contract-due">
                   {formatDateOnly(c.balanceDueDate)}
                   {!c.settled && !cancelled && ` (${dueText})`}
                 </dd>
@@ -240,60 +281,74 @@ export function ContractDetailPage() {
             Forma de pagamento: {PAYMENT_MODE_LABEL[c.paymentMode] ?? c.paymentMode}
           </CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs text-neutral-500">
-                <th scope="col" className="py-xs">Parcela</th>
-                <th scope="col">Vencimento</th>
-                <th scope="col" className="text-right">Valor</th>
-                <th scope="col" className="text-right">Pago</th>
-                <th scope="col">Situação</th>
-              </tr>
-            </thead>
-            <tbody>
-              {c.installments.map((i) => {
-                const label = installmentStateLabel(i);
-                return (
-                  <tr key={i.seq} className="border-t border-neutral-100">
-                    <td className="py-xs">
-                      {c.paymentMode === 'a_vista'
-                        ? 'À VISTA'
-                        : c.paymentMode === 'sinal_parcelado'
-                          ? `SINAL ${i.seq}/${c.installments.length}`
-                          : 'SINAL'}
-                    </td>
-                    <td>{formatDateOnly(i.dueDate)}</td>
-                    <td className="text-right">{brl(i.amount)}</td>
-                    <td className="text-right">{brl(i.paidAmount)}</td>
-                    <td>
-                      <Badge
-                        variant={
-                          label === 'Vencida'
-                            ? 'destructive'
-                            : label === 'Paga'
-                              ? 'success'
-                              : label === 'Parcial'
-                                ? 'warning'
-                                : 'outline'
-                        }
-                      >
-                        {label}
-                      </Badge>
+        <CardContent>
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full text-sm" data-testid="contract-installments-table">
+              <thead>
+                <tr className="text-left text-xs text-neutral-500">
+                  <th scope="col" className="py-xs">Parcela</th>
+                  <th scope="col">Vencimento</th>
+                  <th scope="col" className="text-right">Valor</th>
+                  <th scope="col" className="text-right">Pago</th>
+                  <th scope="col">Situação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {c.installments.map((i) => {
+                  const label = installmentStateLabel(i);
+                  return (
+                    <tr key={i.seq} className="border-t border-neutral-100">
+                      <td className="py-xs">{installmentName(i.seq)}</td>
+                      <td>{formatDateOnly(i.dueDate)}</td>
+                      <td className="whitespace-nowrap text-right">{brl(i.amount)}</td>
+                      <td className="whitespace-nowrap text-right">{brl(i.paidAmount)}</td>
+                      <td>
+                        <Badge variant={installmentBadgeVariant(label)}>{label}</Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {c.paymentMode !== 'a_vista' && (
+                  <tr className="border-t border-neutral-100">
+                    <td className="py-xs">RESTANTE</td>
+                    <td colSpan={4}>
+                      até {c.balanceDueDaysBefore} dias antes do evento ({formatDateOnly(c.balanceDueDate)})
                     </td>
                   </tr>
-                );
-              })}
-              {c.paymentMode !== 'a_vista' && (
-                <tr className="border-t border-neutral-100">
-                  <td className="py-xs">RESTANTE</td>
-                  <td colSpan={4}>
-                    até {c.balanceDueDaysBefore} dias antes do evento ({formatDateOnly(c.balanceDueDate)})
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <ul className="space-y-sm md:hidden" data-testid="contract-installments-cards">
+            {c.installments.map((i) => {
+              const label = installmentStateLabel(i);
+              return (
+                <li key={i.seq} className="rounded-md border border-neutral-200 p-sm text-sm">
+                  <div className="mb-xs flex items-center justify-between gap-sm">
+                    <span className="font-semibold">{installmentName(i.seq)}</span>
+                    <Badge variant={installmentBadgeVariant(label)}>{label}</Badge>
+                  </div>
+                  <dl className="space-y-xs">
+                    <CardRow label="Vencimento">{formatDateOnly(i.dueDate)}</CardRow>
+                    <CardRow label="Valor" money>
+                      <span className="whitespace-nowrap">{brl(i.amount)}</span>
+                    </CardRow>
+                    <CardRow label="Pago" money>
+                      <span className="whitespace-nowrap">{brl(i.paidAmount)}</span>
+                    </CardRow>
+                  </dl>
+                </li>
+              );
+            })}
+            {c.paymentMode !== 'a_vista' && (
+              <li className="rounded-md border border-neutral-200 p-sm text-sm">
+                <span className="font-semibold">RESTANTE</span>
+                <p className="text-neutral-700">
+                  até {c.balanceDueDaysBefore} dias antes do evento ({formatDateOnly(c.balanceDueDate)})
+                </p>
+              </li>
+            )}
+          </ul>
           {Number(c.discountAmount) > 0 && c.discountDescription && (
             <p className="mt-sm text-xs text-neutral-600">Desconto: {c.discountDescription}</p>
           )}
@@ -304,29 +359,48 @@ export function ContractDetailPage() {
         <CardHeader className="pb-sm">
           <CardTitle className="text-base">Itens por pessoa</CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <table className="w-full text-sm" data-testid="contract-items-table">
-            <thead>
-              <tr className="text-left text-xs text-neutral-500">
-                <th className="py-xs">Pessoa</th>
-                <th>Serviço</th>
-                <th className="text-right">Qtd.</th>
-                <th className="text-right">Preço unit.</th>
-                <th className="text-right">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {c.items.map((i) => (
-                <tr key={i.id} className="border-t border-neutral-100">
-                  <td className="py-xs">{i.personName}</td>
-                  <td>{i.description}</td>
-                  <td className="text-right">{i.quantity}</td>
-                  <td className="text-right">{brl(i.unitPrice)}</td>
-                  <td className="text-right">{brl(i.total)}</td>
+        <CardContent>
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full text-sm" data-testid="contract-items-table">
+              <thead>
+                <tr className="text-left text-xs text-neutral-500">
+                  <th className="py-xs">Pessoa</th>
+                  <th>Serviço</th>
+                  <th className="text-right">Qtd.</th>
+                  <th className="text-right">Preço unit.</th>
+                  <th className="text-right">Total</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {c.items.map((i) => (
+                  <tr key={i.id} className="border-t border-neutral-100">
+                    <td className="py-xs">{i.personName}</td>
+                    <td>{i.description}</td>
+                    <td className="text-right">{i.quantity}</td>
+                    <td className="whitespace-nowrap text-right">{brl(i.unitPrice)}</td>
+                    <td className="whitespace-nowrap text-right">{brl(i.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <ul className="space-y-sm md:hidden" data-testid="contract-items-cards">
+            {c.items.map((i) => (
+              <li key={i.id} className="rounded-md border border-neutral-200 p-sm text-sm">
+                <p className="font-semibold">{i.personName}</p>
+                <p className="mb-xs text-neutral-700">{i.description}</p>
+                <dl className="space-y-xs">
+                  <CardRow label="Qtd.">{i.quantity}</CardRow>
+                  <CardRow label="Preço unit." money>
+                    <span className="whitespace-nowrap">{brl(i.unitPrice)}</span>
+                  </CardRow>
+                  <CardRow label="Total" money>
+                    <span className="whitespace-nowrap font-semibold">{brl(i.total)}</span>
+                  </CardRow>
+                </dl>
+              </li>
+            ))}
+          </ul>
         </CardContent>
       </Card>
 
@@ -334,49 +408,87 @@ export function ContractDetailPage() {
         <CardHeader className="pb-sm">
           <CardTitle className="text-base">Pagamentos</CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
+        <CardContent>
           {c.payments.length === 0 ? (
             <p className="text-sm text-neutral-600">Nenhum pagamento registrado.</p>
           ) : (
-            <table className="w-full text-sm" data-testid="contract-payments">
-              <thead>
-                <tr className="text-left text-xs text-neutral-500">
-                  <th className="py-xs">Data</th>
-                  <th>Tipo</th>
-                  <th>Método</th>
-                  <th className="text-right">Valor</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {c.payments.map((p) => (
-                  <tr key={p.id} className="border-t border-neutral-100">
-                    <td className="py-xs">{formatDateTime(p.paidAt)}</td>
-                    <td>
-                      {PAYMENT_KIND_LABEL[p.kind] ?? p.kind}
-                      {p.reversed && ' (estornado)'}
-                    </td>
-                    <td>{paymentMethodLabel(p.method)}</td>
-                    <td className={`text-right ${Number(p.amount) < 0 ? 'text-error-600' : ''}`}>
-                      {brl(p.amount)}
-                    </td>
-                    <td className="text-right">
-                      {canCancel && p.kind === 'payment' && !p.reversed && !cancelled && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          aria-label={`Estornar pagamento de ${brl(p.amount)}`}
-                          onClick={() => setReverseId(p.id)}
+            <>
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full text-sm" data-testid="contract-payments">
+                  <thead>
+                    <tr className="text-left text-xs text-neutral-500">
+                      <th className="py-xs">Data</th>
+                      <th>Tipo</th>
+                      <th>Método</th>
+                      <th className="text-right">Valor</th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {c.payments.map((p) => (
+                      <tr key={p.id} className="border-t border-neutral-100">
+                        <td className="py-xs">{formatDateTime(p.paidAt)}</td>
+                        <td>
+                          {PAYMENT_KIND_LABEL[p.kind] ?? p.kind}
+                          {p.reversed && ' (estornado)'}
+                        </td>
+                        <td>{paymentMethodLabel(p.method)}</td>
+                        <td
+                          className={`whitespace-nowrap text-right ${Number(p.amount) < 0 ? 'text-error-600' : ''}`}
                         >
-                          Estornar
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
+                          {brl(p.amount)}
+                        </td>
+                        <td className="text-right">
+                          {canReverse(p) && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              aria-label={`Estornar pagamento de ${brl(p.amount)}`}
+                              onClick={() => setReverseId(p.id)}
+                            >
+                              Estornar
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <ul className="space-y-sm md:hidden" data-testid="contract-payments-cards">
+                {c.payments.map((p) => (
+                  <li key={p.id} className="rounded-md border border-neutral-200 p-sm text-sm">
+                    <div className="flex items-baseline justify-between gap-sm">
+                      <span className="font-semibold">
+                        {PAYMENT_KIND_LABEL[p.kind] ?? p.kind}
+                        {p.reversed && ' (estornado)'}
+                      </span>
+                      <span
+                        className={`whitespace-nowrap font-semibold ${Number(p.amount) < 0 ? 'text-error-600' : ''}`}
+                      >
+                        {brl(p.amount)}
+                      </span>
+                    </div>
+                    <p className="text-neutral-700">
+                      <span>{paymentMethodLabel(p.method)}</span> · {formatDateTime(p.paidAt)}
+                    </p>
+                    {canReverse(p) && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-xs min-h-[44px]"
+                        aria-label={`Estornar pagamento de ${brl(p.amount)}`}
+                        onClick={() => setReverseId(p.id)}
+                      >
+                        Estornar
+                      </Button>
+                    )}
+                  </li>
                 ))}
-              </tbody>
-            </table>
+              </ul>
+            </>
           )}
         </CardContent>
       </Card>

@@ -147,12 +147,13 @@ test.describe('Fase 4: pacote -> grupo de noivas -> contrato -> aceite público 
     // ---- gate D-09: falta o Celular 2 e o link fica bloqueado ----
     await expect(page.getByTestId('contract-missing')).toContainText('Celular 2 da contratante');
     await expect(page.getByTestId('contract-generate-link')).toBeDisabled();
-    await page.getByTestId('contract-missing').getByRole('link', { name: 'Editar cliente' }).click();
-    await page.waitForURL(new RegExp(`/clientes/${brideClientId}/editar$`));
-    await page.getByLabel('Celular 2').fill('11911112222');
-    await page.getByRole('button', { name: 'Salvar alterações' }).click();
-    await page.waitForURL((url) => !url.pathname.endsWith('/editar'));
-    await page.goto(`/contratos/${contractId}`);
+    // UX-13: completa o Celular 2 num diálogo, sem sair do contrato.
+    await page.getByTestId('contract-complete-contractor').click();
+    const completeDialog = page.getByRole('dialog');
+    await completeDialog.getByLabel('Celular 2').fill('11911112222');
+    await completeDialog.getByRole('button', { name: 'Salvar dados' }).click();
+    await expect(completeDialog).toHaveCount(0);
+    await expect(page).toHaveURL(new RegExp(`/contratos/${contractId}$`));
     await expect(page.getByTestId('contract-generate-link')).toBeEnabled();
     await expect(page.getByTestId('contract-missing')).toHaveCount(0);
   });

@@ -13,7 +13,10 @@ import {
   type ContractData,
   type GenerateContractLinkResult,
 } from '../api/contracts.api';
+import { useHasPermission } from '@/features/operations/operations-permissions';
 import { contractErrorMessage, formatDateTime } from '../lib/contract-labels';
+import { contractorFieldsFor } from '../lib/contractor-fields';
+import { CompleteContractorDialog } from './CompleteContractorDialog';
 
 function MissingAction({
   field,
@@ -26,12 +29,7 @@ function MissingAction({
 }) {
   const cls = 'underline text-primary';
   switch (field.target) {
-    case 'client':
-      return field.targetId ? (
-        <Link className={cls} to={`/clientes/${field.targetId}/editar`}>
-          Editar cliente
-        </Link>
-      ) : null;
+    // Dados da cliente: resolvidos de uma vez pelo botão "Completar dados da contratante" (UX-13).
     case 'group':
       return (
         <Link className={cls} to={`/noivas/${field.targetId ?? groupId}`}>
@@ -80,6 +78,12 @@ export function ContractLinkCard({
   });
   const missing = readiness.data?.contractReadiness.missing ?? [];
   const blocked = readiness.data ? !readiness.data.contractReadiness.ready : false;
+  const canEditClient = useHasPermission('client.write');
+  const [completeOpen, setCompleteOpen] = useState(false);
+  const contractorClientId =
+    missing.find((m) => m.target === 'client' && m.targetId)?.targetId ?? null;
+  const canComplete =
+    canEditClient && contractorClientId != null && contractorFieldsFor(missing).length > 0;
 
   async function onGenerate() {
     setError('');
@@ -170,30 +174,56 @@ export function ContractLinkCard({
           </p>
         )}
 
-        {canGenerate && blocked && (
-          <div className="rounded-md bg-warning-50 p-sm" data-testid="contract-missing">
-            <p className="font-semibold text-neutral-800">Para gerar o link falta:</p>
-            <ul className="mt-xs space-y-xs">
-              {missing.map((m) => (
-                <li key={`${m.code}-${m.targetId ?? ''}`} className="flex flex-wrap gap-sm">
-                  <span>{m.label}</span>
-                  <MissingAction field={m} groupId={contract.groupId} onEditContract={onEditContract} />
-                </li>
-              ))}
-            </ul>
+        {canGenerate && (
+          <div className="flex flex-col items-start gap-sm" data-testid="contract-link-actions">
+            {blocked && (
+              <div className="w-full rounded-md bg-warning-50 p-sm" data-testid="contract-missing">
+                <p className="font-semibold text-neutral-800">Para gerar o link falta:</p>
+                <ul className="mt-xs space-y-xs">
+                  {missing.map((m) => (
+                    <li key={`${m.code}-${m.targetId ?? ''}`} className="flex flex-wrap gap-sm">
+                      <span>{m.label}</span>
+                      <MissingAction
+                        field={m}
+                        groupId={contract.groupId}
+                        onEditContract={onEditContract}
+                      />
+                    </li>
+                  ))}
+                </ul>
+                {canComplete && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-sm"
+                    data-testid="contract-complete-contractor"
+                    onClick={() => setCompleteOpen(true)}
+                  >
+                    Completar dados da contratante
+                  </Button>
+                )}
+              </div>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              disabled={loading || blocked}
+              data-testid="contract-generate-link"
+              onClick={() => void onGenerate()}
+            >
+              Gerar link de aceite
+            </Button>
           </div>
         )}
-
-        {canGenerate && (
-          <Button
-            type="button"
-            size="sm"
-            disabled={loading || blocked}
-            data-testid="contract-generate-link"
-            onClick={() => void onGenerate()}
-          >
-            Gerar link de aceite
-          </Button>
+        {canComplete && contractorClientId && (
+          <CompleteContractorDialog
+            open={completeOpen}
+            onOpenChange={setCompleteOpen}
+            contractId={contract.id}
+            clientId={contractorClientId}
+            missing={missing}
+          />
         )}
       </CardContent>
     </Card>

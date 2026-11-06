@@ -246,14 +246,15 @@ describe('ContractDetailPage', () => {
 
   it('MANAGER vê o botão Estornar nos pagamentos', async () => {
     renderPage(CONTRACT);
-    await screen.findByTestId('contract-payments');
-    expect(screen.getAllByRole('button', { name: /Estornar pagamento/ })).toHaveLength(2);
+    const table = await screen.findByTestId('contract-payments');
+    expect(within(table).getAllByRole('button', { name: /Estornar pagamento/ })).toHaveLength(2);
   });
 
   it('mostra as parcelas com Paga e Vencida', async () => {
     renderPage(makePackageContract());
-    const card = await screen.findByTestId('contract-installments');
-    expect(within(card).getByText('Sinal parcelado', { exact: false })).toBeInTheDocument();
+    const section = await screen.findByTestId('contract-installments');
+    expect(within(section).getByText('Sinal parcelado', { exact: false })).toBeInTheDocument();
+    const card = screen.getByTestId('contract-installments-table');
     expect(within(card).getByText('Paga')).toBeInTheDocument();
     expect(within(card).getByText('Vencida')).toBeInTheDocument();
     expect(within(card).getByText('SINAL 1/2')).toBeInTheDocument();
@@ -265,22 +266,62 @@ describe('ContractDetailPage', () => {
       CONTRACT,
       [],
       readinessMock([
-        { code: 'CLIENT_CPF', label: 'CPF da contratante', target: 'client', targetId: 'c1' },
-        { code: 'STUDIO_CNPJ', label: 'CNPJ do estúdio', target: 'settings', targetId: null },
+        { code: 'CONTRACTOR_CPF', label: 'CPF da contratante', target: 'client', targetId: 'c1' },
+        {
+          code: 'CONTRACTOR_ADDRESS',
+          label: 'Endereço da contratante',
+          target: 'client',
+          targetId: 'c1',
+        },
+        { code: 'STUDIO_DATA', label: 'Dados do studio: CNPJ', target: 'settings', targetId: null },
       ]),
     );
     const box = await screen.findByTestId('contract-missing');
     expect(within(box).getByText('CPF da contratante')).toBeInTheDocument();
-    expect(within(box).getByText('CNPJ do estúdio')).toBeInTheDocument();
-    expect(within(box).getByRole('link', { name: 'Editar cliente' })).toHaveAttribute(
-      'href',
-      '/clientes/c1/editar',
-    );
+    expect(within(box).getByText('Endereço da contratante')).toBeInTheDocument();
+    expect(within(box).getByText('Dados do studio: CNPJ')).toBeInTheDocument();
+    // UX-13: um único botão para os dados da cliente, sem "Editar cliente" por item.
+    expect(within(box).queryByRole('link', { name: 'Editar cliente' })).not.toBeInTheDocument();
+    expect(
+      within(box).getAllByRole('button', { name: 'Completar dados da contratante' }),
+    ).toHaveLength(1);
     expect(within(box).getByRole('link', { name: 'Abrir configurações' })).toHaveAttribute(
       'href',
       '/contratos?aba=configuracoes',
     );
     expect(screen.getByTestId('contract-generate-link')).toBeDisabled();
+  });
+
+  it('Completar dados da contratante abre o diálogo com os campos que faltam (UX-13)', async () => {
+    renderPage(
+      CONTRACT,
+      [],
+      readinessMock([
+        { code: 'CONTRACTOR_CPF', label: 'CPF da contratante', target: 'client', targetId: 'c1' },
+      ]),
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Completar dados da contratante' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByLabelText('CPF')).toBeInTheDocument();
+    expect(within(dialog).queryByLabelText('Endereço')).not.toBeInTheDocument();
+  });
+
+  it('sem permissão de editar cliente, o botão de completar dados não aparece', async () => {
+    useAuthStore.setState({
+      roleName: 'PROFESSIONAL',
+      permissions: ['contract.read', 'contract.write'],
+    });
+    renderPage(
+      CONTRACT,
+      [],
+      readinessMock([
+        { code: 'CONTRACTOR_CPF', label: 'CPF da contratante', target: 'client', targetId: 'c1' },
+      ]),
+    );
+    await screen.findByTestId('contract-missing');
+    expect(
+      screen.queryByRole('button', { name: 'Completar dados da contratante' }),
+    ).not.toBeInTheDocument();
   });
 
   it('sem pendências, Gerar link fica habilitado', async () => {

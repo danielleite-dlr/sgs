@@ -397,3 +397,41 @@ export async function readDownload(download: import('@playwright/test').Download
   for await (const chunk of stream) chunks.push(chunk as Buffer);
   return Buffer.concat(chunks);
 }
+
+/**
+ * Cria pela UI (Contratos > Novo contrato) um contrato de noiva à vista só com nome e
+ * celular da noiva; a ficha da cliente fica sem CPF, endereço e Celular 2. Devolve o id.
+ * A página precisa estar logada e numa tela larga.
+ */
+export async function createBrideContractViaUi(
+  page: Page,
+  opts: { brideName: string; packageId: string; eventDate: string },
+): Promise<string> {
+  await page.goto('/contratos');
+  await page.getByTestId('new-contract').click();
+  await page.getByTestId('nc-kind-noiva').check();
+  await page.getByTestId('nc-bride-name').fill(opts.brideName);
+  await page.getByTestId('nc-bride-phone').fill('11987654321');
+  await page.getByTestId('nc-date').fill(opts.eventDate);
+  await page.locator('#contract-package').selectOption(opts.packageId);
+  await page.locator('#contract-mode-a_vista').click();
+  await page.getByTestId('contract-submit').click();
+  await page.waitForURL(/\/contratos\/[0-9a-f-]{36}$/);
+  return page.url().split('/').pop()!;
+}
+
+/** Registra um pagamento no contrato pelo GraphQL. */
+export async function recordContractPayment(
+  token: string,
+  contractId: string,
+  lines: { method: string; amount: string }[],
+): Promise<void> {
+  const res = await gql<{ recordContractPayment: { errors: never[] } }>(
+    `mutation($input: RecordContractPaymentInput!) {
+      recordContractPayment(input: $input) { errors { code message } }
+    }`,
+    { input: { contractId, lines } },
+    { token },
+  );
+  expectNoUserErrors(res.recordContractPayment, 'recordContractPayment');
+}
