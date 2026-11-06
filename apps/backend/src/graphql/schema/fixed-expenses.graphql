@@ -1,0 +1,37 @@
+extend type Query {
+  "Despesas fixas mensais da org (ativas e inativas), ordenadas por nome. Requer financial.read"
+  fixedExpenses: [FixedExpense!]!
+}
+
+extend type Mutation {
+  "Requer financial.expenseWrite (ADMIN/MANAGER)"
+  createFixedExpense(input: FixedExpenseInput!): FixedExpensePayload!
+  updateFixedExpense(id: UUID!, input: FixedExpenseInput!): FixedExpensePayload!
+  "Exclusão definitiva (não há histórico de pagamento). Devolve a despesa excluída."
+  deleteFixedExpense(id: UUID!): FixedExpensePayload!
+}
+
+type FixedExpense {
+  id: UUID!
+  name: String!
+  "Valor em reais, string com 2 casas: \"1500.00\""
+  amount: String!
+  "Dia do vencimento no mês (1–31). Mês sem esse dia: vence no último dia."
+  dueDay: Int!
+  active: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input FixedExpenseInput {
+  name: String!
+  amount: String!
+  dueDay: Int!
+  "Omitido = true"
+  active: Boolean
+}
+
+type FixedExpensePayload {
+  fixedExpense: FixedExpense
+  errors: [UserError!]!
+}
