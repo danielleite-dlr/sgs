@@ -30,7 +30,16 @@ test('previsão de 30 dias abre no painel e no detalhe sem erro (somente leitura
   await expect(page.getByText(ERRO)).toHaveCount(0);
   await page.screenshot({ path: `${dir}/90-previsao-detalhe.png`, fullPage: true });
 
-  await navigateViaMenu(page, 'Financeiro', 'Despesas fixas');
+  if (project === 'mobile') {
+    // No celular o menu lateral é gaveta; abre a rota direto (recarrega e pode pedir login de novo).
+    await page.goto('/financeiro/despesas-fixas');
+    if (page.url().includes('/login')) {
+      await loginViaUi(page, env.email, env.password);
+      await page.goto('/financeiro/despesas-fixas');
+    }
+  } else {
+    await navigateViaMenu(page, 'Financeiro', 'Despesas fixas');
+  }
   await expect(page.getByRole('heading', { name: 'Despesas fixas' })).toBeVisible();
   await expect(page.getByText('Não foi possível carregar as despesas fixas.')).toHaveCount(0);
   await page.screenshot({ path: `${dir}/90-previsao-despesas-fixas.png`, fullPage: true });
