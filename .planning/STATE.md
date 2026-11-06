@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 06-05-comanda-PLAN.md
-last_updated: "2026-11-06T21:50:00.000Z"
+stopped_at: Completed 06-12-paleta-previsao-PLAN.md
+last_updated: "2026-11-06T22:26:10.000Z"
 last_activity: 2026-11-06
 progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 80
-  completed_plans: 86
+  completed_plans: 87
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 06
-Plan: 06-12 (próximo, D-26; 06-01 a 06-05 concluídos, comanda no staging)
+Plan: 06-06 (próximo; 06-01 a 06-05 e 06-12 concluídos, paleta da Previsão de caixa no staging)
 Status: Executing
 Last activity: 2026-11-06
 
