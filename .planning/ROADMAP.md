@@ -315,6 +315,15 @@ Ideias estacionadas, sem ordem. Entram no roadmap só quando a usuária promover
 - UX-16 (parte não aprovada): aviso de cliente duplicado (mesmo telefone) ao cadastrar
 - Remarcar agendamento pelo menu do cartão (alternativa ao arrastar, útil no celular), a decidir depois da conferência manual no celular
 
+### 999.7: Funções vistas no design Gestor Beauty (fora da fase 6)
+- Bancadas/cadeiras/salas por agendamento e ocupação em tempo real
+- Meta de faturamento e % da meta no painel; comparação com a semana anterior
+- Exportar DRE diário
+- Cerimonial/assessoria e "dossiê" da noiva; status de prova
+- Ações rápidas no painel ("Iniciar", "Check-in", "Fechar" comanda pela lista)
+- Multiunidade (seletor de unidade no topo)
+- Decisão da usuária em 2026-11-06: fase 6 é só o visual com os dados que já existem
+
 ## Progress
 
 **Execution Order:** 1 → 2 → 3 → 4 → 5

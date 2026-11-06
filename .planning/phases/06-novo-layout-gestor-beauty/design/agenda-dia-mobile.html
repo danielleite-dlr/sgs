@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><title>SGS - Studio JS</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,600;1,8..60,600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: 'class', theme: { extend: { colors: { 'surface': '#faf9f6', 'on-tertiary-container': '#a29ca7', 'on-surface-variant': '#4d4351', 'error': '#ba1a1a', 'tertiary-fixed': '#e7e0ec', 'secondary-fixed-dim': '#ccc4cf', 'surface-bright': '#faf9f6', 'on-primary': '#ffffff', 'on-error': '#ffffff', 'surface-variant': '#e3e2df', 'surface-container-lowest': '#ffffff', 'primary-fixed-dim': '#e7b4ff', 'on-secondary-fixed-variant': '#4a454e', 'on-secondary-container': '#66606a', 'on-secondary-fixed': '#1e1a22', 'surface-container-highest': '#e3e2df', 'background': '#faf9f6', 'on-surface': '#1b1c1a', 'tertiary-fixed-dim': '#cbc4cf', 'on-tertiary': '#ffffff', 'surface-dim': '#dbdad7', 'tertiary-container': '#38343d', 'on-tertiary-fixed-variant': '#49454e', 'error-container': '#ffdad6', 'primary-fixed': '#f5d9ff', 'on-tertiary-fixed': '#1d1a22', 'secondary-fixed': '#e8e0eb', 'on-secondary': '#ffffff', 'on-primary-container': '#ca7ff3', 'outline': '#7f7382', 'inverse-surface': '#2f312f', 'primary': '#370053', 'secondary-container': '#e5dde8', 'inverse-primary': '#e7b4ff', 'on-background': '#1b1c1a', 'outline-variant': '#d0c2d2', 'secondary': '#625c66', 'surface-container-low': '#f4f3f0', 'tertiary': '#221f27', 'surface-container-high': '#e9e8e5', 'surface-container': '#efeeeb', 'on-primary-fixed-variant': '#6b2093', 'primary-container': '#570080', 'on-error-container': '#93000a', 'on-primary-fixed': '#30004a', 'surface-tint': '#853cad', 'inverse-on-surface': '#f2f1ee' }, borderRadius: { 'DEFAULT': '0.125rem', 'lg': '0.25rem', 'xl': '0.5rem', 'full': '0.75rem' }, spacing: { 'space-md': '0.75rem', 'gutter': '1rem', 'margin': '1.5rem', 'space-sm': '0.5rem', 'margin-mobile': '1rem', 'gutter-dense': '0.5rem', 'space-xs': '0.25rem', 'space-lg': '1.25rem', 'space-xl': '2rem' }, fontFamily: { 'display-lg-mobile': ['"Source Serif 4"'], 'display-lg': ['"Source Serif 4"'], 'headline-sm': ['"Source Serif 4"'], 'headline-lg': ['"Source Serif 4"'], 'headline-md': ['"Source Serif 4"'], 'body-md': ['"Public Sans"'], 'body-sm': ['"Public Sans"'], 'data-tabular': ['"Public Sans"'], 'label-md': ['"Public Sans"'], 'label-sm': ['"Public Sans"'], 'body-lg': ['"Public Sans"'] }, fontSize: { 'display-lg-mobile': ['28px', { lineHeight: '36px', letterSpacing: '-0.01em', fontWeight: '600' }], 'display-lg': ['36px', { lineHeight: '44px', letterSpacing: '-0.02em', fontWeight: '600' }], 'headline-sm': ['17px', { lineHeight: '24px', fontWeight: '600' }], 'headline-lg': ['26px', { lineHeight: '32px', letterSpacing: '-0.015em', fontWeight: '600' }], 'headline-md': ['20px', { lineHeight: '28px', letterSpacing: '-0.01em', fontWeight: '600' }], 'body-md': ['13px', { lineHeight: '18px', fontWeight: '400' }], 'body-sm': ['12px', { lineHeight: '16px', fontWeight: '400' }], 'data-tabular': ['13px', { lineHeight: '18px', letterSpacing: '0.02em', fontWeight: '500' }], 'label-md': ['12px', { lineHeight: '16px', letterSpacing: '0.04em', fontWeight: '600' }], 'label-sm': ['10px', { lineHeight: '14px', letterSpacing: '0.05em', fontWeight: '600' }], 'body-lg': ['15px', { lineHeight: '22px', fontWeight: '400' }] } } } };</script><style>@layer base{html,body{width:100%;margin:0;padding:0;background-color:#faf9f6;color:#1b1c1a;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}*{-webkit-tap-highlight-color:transparent;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface font-body-md text-body-md min-h-screen flex flex-col"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-gutter flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0"><img alt="Studio JS Logo" class="h-8 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuaAjhDgXu5y2MYaO8hWRMqjL-N_C-4wfV4XVKX987ZDZ8bRBebGnIZLbj6xaCOmshvF77Rx4X-KMAKvvmxRjIc_L7AkkCXcZd8KejpyIiztx-zs2sXFrsxBSjBOfp2tYsx2BTfeLquPcNNcrdhY5t1ZFKktr8sb4owNIShKy5euLRic7j6n4ofcs5-t__wZ0CVO8R8HL7GULA8ugedMplzrAghdeGiVJ8LMYFL7s"/><div class="flex flex-col min-w-0"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface truncate">Studio JS</span><span class="text-label-sm font-label-sm text-secondary px-1 py-0.5 rounded bg-surface-container-high">SGS</span></div><span class="font-label-sm text-label-sm text-secondary truncate">quinta-feira, 12 de novembro de 2026</span></div></div><div class="flex items-center gap-space-xs flex-shrink-0"><button aria-label="Status do sistema" class="min-h-[44px] min-w-[44px] px-space-xs flex items-center justify-center gap-1 text-on-surface-variant hover:text-on-surface" type="button"><span class="w-2 h-2 rounded-full bg-emerald-600 inline-block"></span><span class="font-label-sm text-label-sm text-secondary uppercase">Online</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 ml-1"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div><div class="px-gutter pb-1 hidden"><span class="font-headline-sm text-headline-sm">Agenda</span></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-20 bg-surface"><div class="flex flex-col w-full pb-12">
+<!-- Top Operational Control Panel -->
+<section class="flex flex-col w-full bg-surface-container-lowest px-gutter py-space-sm" style="border-bottom: 1px solid #E2DFE5;">
+<!-- Date Header & Primary Action Row -->
+<div class="flex items-center justify-between gap-space-sm mb-space-sm">
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary">Agenda diária</span>
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">quinta-feira, 12 de novembro de 2026</span>
+</div>
+<button aria-label="Criar novo agendamento" class="flex-shrink-0 h-[48px] px-space-md bg-primary-container text-on-primary flex items-center justify-center gap-space-xs rounded font-label-md text-label-md active:bg-primary transition-colors select-none" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Novo agendamento</span>
+</button>
+</div>
+<!-- Professional Selector & Filter Toggle Row -->
+<div class="flex items-center justify-between gap-space-sm pt-space-xs">
+<!-- Horizontal Scrollable Staff List -->
+<div aria-label="Profissionais" class="flex items-center gap-space-xs overflow-x-auto no-scrollbar py-0.5" role="tablist">
+<!-- Jéssica Santos (Active) -->
+<button aria-selected="true" class="flex items-center gap-space-xs px-2.5 h-[44px] rounded bg-secondary-container text-on-secondary-fixed flex-shrink-0 transition-colors" role="tab" style="border: 1px solid #570080;" type="button">
+<span class="w-7 h-7 rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm flex items-center justify-center font-semibold">JS</span>
+<div class="flex flex-col text-left">
+<span class="font-label-md text-label-md leading-tight text-on-secondary-fixed">Jéssica Santos</span>
+<span class="font-label-sm text-[9px] uppercase tracking-wider text-secondary leading-none">4 clientes</span>
+</div>
+</button>
+<!-- Camila R. -->
+<button aria-selected="false" class="flex items-center gap-space-xs px-2.5 h-[44px] rounded bg-surface text-secondary flex-shrink-0 hover:bg-surface-container transition-colors" role="tab" style="border: 1px solid #E2DFE5;" type="button">
+<span class="w-7 h-7 rounded-full bg-surface-container-high text-secondary font-label-sm text-label-sm flex items-center justify-center font-semibold">CR</span>
+<div class="flex flex-col text-left">
+<span class="font-label-md text-label-md leading-tight text-on-surface">Camila R.</span>
+<span class="font-label-sm text-[9px] uppercase tracking-wider text-secondary leading-none">3 clientes</span>
+</div>
+</button>
+<!-- Bruna M. -->
+<button aria-selected="false" class="flex items-center gap-space-xs px-2.5 h-[44px] rounded bg-surface text-secondary flex-shrink-0 hover:bg-surface-container transition-colors" role="tab" style="border: 1px solid #E2DFE5;" type="button">
+<span class="w-7 h-7 rounded-full bg-surface-container-high text-secondary font-label-sm text-label-sm flex items-center justify-center font-semibold">BM</span>
+<div class="flex flex-col text-left">
+<span class="font-label-md text-label-md leading-tight text-on-surface">Bruna M.</span>
+<span class="font-label-sm text-[9px] uppercase tracking-wider text-secondary leading-none">2 clientes</span>
+</div>
+</button>
+</div>
+<!-- Filters Action Button -->
+<button aria-label="Abrir filtros da agenda" class="h-[44px] px-space-sm bg-surface text-secondary flex items-center justify-center gap-1 rounded hover:bg-surface-container transition-colors flex-shrink-0" style="border: 1px solid #E2DFE5;" type="button">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+<span class="font-label-md text-label-md hidden xs:inline">Filtros</span>
+</button>
+</div>
+</section>
+<!-- Editorial Timeline Section -->
+<section class="relative w-full bg-surface flex-1 px-margin-mobile pt-space-md">
+<!-- Timeline Container -->
+<div class="relative w-full">
+<!-- Time Slot: 08:00 -->
+<div class="flex min-h-[48px] relative" style="border-top: 1px solid #E2DFE5;">
+<div class="w-14 flex-shrink-0 pr-space-xs pt-1">
+<span class="font-data-tabular text-data-tabular text-secondary block font-medium" style="font-variant-numeric: tabular-nums;">08:00</span>
+</div>
+<div class="flex-1 py-1 flex items-center">
+<span class="font-label-sm text-label-sm text-outline-variant italic">Horário livre</span>
+</div>
+</div>
+<!-- Time Slot: 08:30 -->
+<div class="flex min-h-[48px] relative" style="border-top: 1px dashed #E2DFE5;">
+<div class="w-14 flex-shrink-0 pr-space-xs pt-1">
+<span class="font-data-tabular text-data-tabular text-secondary block" style="font-variant-numeric: tabular-nums;">08:30</span>
+</div>
+<div class="flex-1 py-1 flex items-center">
+<span class="font-label-sm text-label-sm text-outline-variant italic">Preparação de bancada</span>
+</div>
+</div>
+<!-- Time Slot: 09:00 with Appointment 1 (Mariana Silveira, 90min) -->
+<div class="flex min-h-[144px] relative" style="border-top: 1px solid #E2DFE5;">
+<div class="w-14 flex-shrink-0 pr-space-xs pt-1">
+<span class="font-data-tabular text-data-tabular text-on-surface block font-medium" style="font-variant-numeric: tabular-nums;">09:00</span>
+<span class="font-data-tabular text-body-sm text-secondary block mt-12" style="font-variant-numeric: tabular-nums;">09:30</span>
+<span class="font-data-tabular text-body-sm text-secondary block mt-12" style="font-variant-numeric: tabular-nums;">10:00</span>
+</div>
+<div class="flex-1 py-1 pr-0.5">
+<!-- Card: Mariana Silveira (Status: Confirmado, borda verde #1B7A43) -->
+<article class="w-full bg-surface-container-lowest rounded p-space-sm flex flex-col justify-between" style="border: 1px solid #E2DFE5; border-left: 3px solid #1B7A43; min-height: 136px;">
+<div class="flex flex-col gap-0.5">
+<div class="flex items-center justify-between gap-1">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Mariana Silveira</span>
+<!-- Status tag -->
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm" style="border: 1px solid #E2DFE5;">
+<span class="w-1.5 h-1.5 rounded-full inline-block" style="background-color: #1B7A43;"></span>
+<span>Confirmado</span>
+</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface-variant font-medium">Penteado Clássico Noiva (Prévia)</span>
+</div>
+<div class="flex items-center justify-between gap-2 pt-space-xs mt-auto" style="border-top: 1px solid #F4F3F0;">
+<div class="flex items-center gap-space-xs text-secondary font-data-tabular text-body-sm">
+<span class="material-symbols-outlined text-[15px]">schedule</span>
+<span>09:00 - 10:30</span>
+<span class="text-outline-variant">•</span>
+<span>90 min</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Cadeira 01</span>
+</div>
+</article>
+</div>
+</div>
+<!-- Time Slot: 10:30 with Appointment 2 (Beatriz Vasconcellos, 60min) -->
+<div class="flex min-h-[96px] relative" style="border-top: 1px dashed #E2DFE5;">
+<div class="w-14 flex-shrink-0 pr-space-xs pt-1">
+<span class="font-data-tabular text-data-tabular text-on-surface block font-medium" style="font-variant-numeric: tabular-nums;">10:30</span>
+<span class="font-data-tabular text-body-sm text-secondary block mt-12" style="font-variant-numeric: tabular-nums;">11:00</span>
+</div>
+<div class="flex-1 py-1 pr-0.5 relative">
+<!-- Card: Beatriz Vasconcellos (Status: Em atendimento, borda azul técnico #0E61A8) -->
+<article class="w-full bg-surface-container-lowest rounded p-space-sm flex flex-col justify-between" style="border: 1px solid #E2DFE5; border-left: 3px solid #0E61A8; min-height: 88px;">
+<div class="flex flex-col gap-0.5">
+<div class="flex items-center justify-between gap-1">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Beatriz Vasconcellos</span>
+<!-- Status tag -->
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm" style="border: 1px solid #E2DFE5;">
+<span class="w-1.5 h-1.5 rounded-full inline-block" style="background-color: #0E61A8;"></span>
+<span>Em atendimento</span>
+</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface-variant font-medium">Maquiagem Social HD</span>
+</div>
+<div class="flex items-center justify-between gap-2 pt-space-xs mt-auto" style="border-top: 1px solid #F4F3F0;">
+<div class="flex items-center gap-space-xs text-secondary font-data-tabular text-body-sm">
+<span class="material-symbols-outlined text-[15px]">schedule</span>
+<span>10:30 - 11:30</span>
+<span class="text-outline-variant">•</span>
+<span>60 min</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Cadeira 02</span>
+</div>
+</article>
+<!-- Current Time Indicator Rule (10:45) -->
+<div class="absolute left-[-56px] right-0 top-[48px] pointer-events-none z-20 flex items-center" style="transform: translateY(-50%);">
+<div class="flex items-center gap-1 bg-primary-container px-1 py-0.5 rounded text-on-primary flex-shrink-0" style="margin-left: 10px;">
+<span class="w-1.5 h-1.5 rounded-full bg-surface-bright"></span>
+<span class="font-data-tabular text-[10px] font-semibold leading-none" style="font-variant-numeric: tabular-nums;">10:45</span>
+</div>
+<div class="flex-1 h-[1.5px] bg-primary-container ml-1"></div>
+</div>
+</div>
+</div>
+<!-- Time Slot: 11:30 -->
+<div class="flex min-h-[48px] relative" style="border-top: 1px dashed #E2DFE5;">
+<div class="w-14 flex-shrink-0 pr-space-xs pt-1">
+<span class="font-data-tabular text-data-tabular text-secondary block" style="font-variant-numeric: tabular-nums;">11:30</span>
+</div>
+<div class="flex-1 py-1 flex items-center">
+<span class="font-label-sm text-label-sm text-outline-variant italic">Higienização e assepsia</span>
+</div>
+</div>
+<!-- Time Slot: 12:00 -->
+<div class="flex min-h-[48px] relative" style="border-top: 1px solid #E2DFE5;">
+<div class="w-14 flex-shrink-0 pr-space-xs pt-1">
+<span class="font-data-tabular text-data-tabular text-secondary block font-medium" style="font-variant-numeric: tabular-nums;">12:00</span>
+</div>
+<div class="flex-1 py-1 flex items-center">
+<span class="font-label-sm text-label-sm text-outline-variant italic">Horário livre</span>
+</div>
+</div>
+<!-- Lunch & Station Rest Block (12:30 às 13:30) - Elegant Hatching -->
+<div class="flex min-h-[96px] relative" style="border-top: 1px dashed #E2DFE5;">
+<div class="w-14 flex-shrink-0 pr-space-xs pt-1">
+<span class="font-data-tabular text-data-tabular text-secondary block" style="font-variant-numeric: tabular-nums;">12:30</span>
+<span class="font-data-tabular text-body-sm text-secondary block mt-12" style="font-variant-numeric: tabular-nums;">13:00</span>
+</div>
+<div class="flex-1 py-1 pr-0.5">
+<div class="w-full h-full min-h-[88px] rounded flex items-center justify-between px-space-md" style="border: 1px solid #E2DFE5; background-color: #F7F6F3; background-image: repeating-linear-gradient(45deg, #E2DFE5, #E2DFE5 1px, transparent 1px, transparent 10px);">
+<div class="flex items-center gap-space-xs bg-surface-container-lowest px-space-sm py-1 rounded" style="border: 1px solid #E2DFE5;">
+<span class="material-symbols-outlined text-[16px] text-secondary">restaurant</span>
+<span class="font-label-md text-label-md text-on-surface">Almoço &amp; Intervalo de Bancada</span>
+</div>
+<span class="font-data-tabular text-label-sm text-secondary bg-surface-container-lowest px-1.5 py-0.5 rounded" style="border: 1px solid #E2DFE5;">60 min</span>
+</div>
+</div>
+</div>
+<!-- Time Slot: 13:30 -->
+<div class="flex min-h-[48px] relative" style="border-top: 1px dashed #E2DFE5;">
+<div class="w-14 flex-shrink-0 pr-space-xs pt-1">
+<span class="font-data-tabular text-data-tabular text-secondary block" style="font-variant-numeric: tabular-nums;">13:30</span>
+</div>
+<div class="flex-1 py-1 flex items-center">
+<span class="font-label-sm text-label-sm text-outline-variant italic">Organização de materiais</span>
+</div>
+</div>
+<!-- Time Slot: 14:00 with Appointment 3 (Fernanda Diniz, 90min) -->
+<div class="flex min-h-[144px] relative" style="border-top: 1px solid #E2DFE5;">
+<div class="w-14 flex-shrink-0 pr-space-xs pt-1">
+<span class="font-data-tabular text-data-tabular text-on-surface block font-medium" style="font-variant-numeric: tabular-nums;">14:00</span>
+<span class="font-data-tabular text-body-sm text-secondary block mt-12" style="font-variant-numeric: tabular-nums;">14:30</span>
+<span class="font-data-tabular text-body-sm text-secondary block mt-12" style="font-variant-numeric: tabular-nums;">15:00</span>
+</div>
+<div class="flex-1 py-1 pr-0.5">
+<!-- Card: Fernanda Diniz (Status: Agendado, borda roxa #570080) -->
+<article class="w-full bg-surface-container-lowest rounded p-space-sm flex flex-col justify-between" style="border: 1px solid #E2DFE5; border-left: 3px solid #570080; min-height: 136px;">
+<div class="flex flex-col gap-0.5">
+<div class="flex items-center justify-between gap-1">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Fernanda Diniz</span>
+<!-- Status tag -->
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm" style="border: 1px solid #E2DFE5;">
+<span class="w-1.5 h-1.5 rounded-full inline-block" style="background-color: #570080;"></span>
+<span>Agendado</span>
+</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface-variant font-medium">Pacote Noiva: Teste Completo</span>
+</div>
+<div class="flex items-center justify-between gap-2 pt-space-xs mt-auto" style="border-top: 1px solid #F4F3F0;">
+<div class="flex items-center gap-space-xs text-secondary font-data-tabular text-body-sm">
+<span class="material-symbols-outlined text-[15px]">schedule</span>
+<span>14:00 - 15:30</span>
+<span class="text-outline-variant">•</span>
+<span>90 min</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Sala Vip Noivas</span>
+</div>
+</article>
+</div>
+</div>
+<!-- Time Slot: 15:30 -->
+<div class="flex min-h-[48px] relative" style="border-top: 1px dashed #E2DFE5;">
+<div class="w-14 flex-shrink-0 pr-space-xs pt-1">
+<span class="font-data-tabular text-data-tabular text-secondary block" style="font-variant-numeric: tabular-nums;">15:30</span>
+</div>
+<div class="flex-1 py-1 flex items-center">
+<span class="font-label-sm text-label-sm text-outline-variant italic">Intervalo técnico (30 min)</span>
+</div>
+</div>
+<!-- Time Slot: 16:00 with Appointment 4 (Camila Albuquerque, 45min) -->
+<div class="flex min-h-[96px] relative" style="border-top: 1px solid #E2DFE5;">
+<div class="w-14 flex-shrink-0 pr-space-xs pt-1">
+<span class="font-data-tabular text-data-tabular text-on-surface block font-medium" style="font-variant-numeric: tabular-nums;">16:00</span>
+<span class="font-data-tabular text-body-sm text-secondary block mt-12" style="font-variant-numeric: tabular-nums;">16:30</span>
+</div>
+<div class="flex-1 py-1 pr-0.5">
+<!-- Card: Camila Albuquerque (Status: Concluído, borda cinza neutro #49454F) -->
+<article class="w-full bg-surface-container-lowest rounded p-space-sm flex flex-col justify-between opacity-85" style="border: 1px solid #E2DFE5; border-left: 3px solid #49454F; min-height: 88px;">
+<div class="flex flex-col gap-0.5">
+<div class="flex items-center justify-between gap-1">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Camila Albuquerque</span>
+<!-- Status tag -->
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm" style="border: 1px solid #E2DFE5;">
+<span class="w-1.5 h-1.5 rounded-full inline-block" style="background-color: #49454F;"></span>
+<span>Concluído</span>
+</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface-variant font-medium">Design de Sobrancelhas</span>
+</div>
+<div class="flex items-center justify-between gap-2 pt-space-xs mt-auto" style="border-top: 1px solid #F4F3F0;">
+<div class="flex items-center gap-space-xs text-secondary font-data-tabular text-body-sm">
+<span class="material-symbols-outlined text-[15px]">check_circle</span>
+<span>16:00 - 16:45</span>
+<span class="text-outline-variant">•</span>
+<span>45 min</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Cadeira 01</span>
+</div>
+</article>
+</div>
+</div>
+<!-- Time Slot: 17:00 (Closure boundary) -->
+<div class="flex min-h-[48px] relative" style="border-top: 1px solid #E2DFE5; border-bottom: 1px solid #E2DFE5;">
+<div class="w-14 flex-shrink-0 pr-space-xs pt-1">
+<span class="font-data-tabular text-data-tabular text-secondary block font-medium" style="font-variant-numeric: tabular-nums;">17:00</span>
+</div>
+<div class="flex-1 py-1 flex items-center">
+<span class="font-label-sm text-label-sm text-outline-variant italic">Encerramento da bancada</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Interactive staff selection micro-behavior -->
+<script>
+    document.querySelectorAll('[role="tablist"] button').forEach(button => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('[role="tablist"] button').forEach(b => {
+          b.setAttribute('aria-selected', 'false');
+          b.style.borderColor = '#E2DFE5';
+          b.classList.remove('bg-secondary-container', 'text-on-secondary-fixed');
+          b.classList.add('bg-surface', 'text-secondary');
+        });
+        button.setAttribute('aria-selected', 'true');
+        button.style.borderColor = '#570080';
+        button.classList.remove('bg-surface', 'text-secondary');
+        button.classList.add('bg-secondary-container', 'text-on-secondary-fixed');
+      });
+    });
+  </script>
+</div></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]" data-active-classes="text-primary-container font-semibold"><div class="h-16 flex items-stretch justify-around px-space-xs"><a aria-current="page" class="flex-1 flex flex-col items-center justify-center min-h-[48px] py-1 transition-colors text-primary-container font-semibold" data-path="agenda" href="#"><span class="material-symbols-outlined text-[20px]">calendar_today</span><span class="font-label-sm text-label-sm mt-0.5 tracking-tight">Agenda</span></a><a class="flex-1 flex flex-col items-center justify-center min-h-[48px] py-1 text-on-surface-variant hover:text-primary-container transition-colors" data-path="comanda" href="#"><span class="material-symbols-outlined text-[20px]">receipt_long</span><span class="font-label-sm text-label-sm mt-0.5 tracking-tight">Comanda</span></a><a class="flex-1 flex flex-col items-center justify-center min-h-[48px] py-1 text-on-surface-variant hover:text-primary-container transition-colors" data-path="clientes" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span class="font-label-sm text-label-sm mt-0.5 tracking-tight">Clientes</span></a><a class="flex-1 flex flex-col items-center justify-center min-h-[48px] py-1 text-on-surface-variant hover:text-primary-container transition-colors" data-path="noivas" href="#"><span class="material-symbols-outlined text-[20px]">diamond</span><span class="font-label-sm text-label-sm mt-0.5 tracking-tight">Noivas</span></a><a class="flex-1 flex flex-col items-center justify-center min-h-[48px] py-1 text-on-surface-variant hover:text-primary-container transition-colors" data-path="mais-dashboard" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span class="font-label-sm text-label-sm mt-0.5 tracking-tight">Mais</span></a></div></nav></body></html>
