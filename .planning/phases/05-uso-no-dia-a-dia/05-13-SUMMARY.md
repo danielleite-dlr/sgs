@@ -33,7 +33,8 @@ O texto do contrato na tela interna agora mostra os títulos em negrito e nenhum
 
 - 870e8d7: fix(05-13) correção do lote (UX-11, UX-14), com testes
 - 603992c: docs(05-13) hash na auditoria
-- commit final de docs: SUMMARY, STATE e ROADMAP
+- ce48cef: docs(05-13) SUMMARY, STATE e ROADMAP
+- 780bc90: fix(05-13) filtros da agenda com shrink-0 (UX-02), achado pelo CI
 
 ## Testes de regressão
 
@@ -46,14 +47,14 @@ O texto do contrato na tela interna agora mostra os títulos em negrito e nenhum
 - typecheck e lint (-r): limpos
 - Frontend: 76 arquivos, 504 testes. Backend unit: 367 de 367 (inclui os testes de contrato; o PDF já usa a mesma regra de negrito, nada a corrigir)
 - Backend integração: 599 de 601. As 2 falhas são só `phase4-alerts-boot.e2e.spec.ts` (Redis local NOAUTH, conhecida e aceita; o CI cobre)
-- E2E completo: 34 de 35. A falha foi `ux-agenda-celular.spec.ts` (UX-02), arquivo não tocado; rodado sozinho passou 3 de 3, instabilidade por carga da suíte completa
+- E2E completo: na primeira rodada 34 de 35, com falha em `ux-agenda-celular.spec.ts` (UX-02). Depois da correção 780bc90: 35 de 35
 - Deploy do staging concluído (`./scripts/deploy-staging.sh`, sem migration, sem backup necessário)
 - CI na master: verde (run 42210081849 em 603992c, todos os jobs com sucesso)
 
 ## Deviations from Plan
 
-Nenhuma.
+**[Regra 1, bug] Botões do painel de filtros da agenda encolhiam abaixo de 44 px (UX-02).** O CI do commit ce48cef falhou no E2E do UX-02 (`profissional 11: largura` 43,99 px). A suíte cria várias profissionais e os botões `w-11` do painel, itens de `flex-wrap` sem `shrink-0`, encolhiam frações de pixel. Não foi causado por este lote, mas bloqueava o CI. Correção: `shrink-0` nos botões de profissional e em "Todos", com teste de regressão no Vitest (12 profissionais) que falhava antes.
 
 ## Deferred Issues
 
-- `ux-agenda-celular.spec.ts` (UX-02) instável quando roda junto com a suíte completa do E2E; passa sozinho.
+Nenhuma.
