@@ -1,13 +1,17 @@
+import { useState } from 'react';
 import { useQuery } from '@apollo/client';
 import { Link } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
 import { useHasPermission } from '../operations-permissions';
+import { brDateToIso, isoToBrDate, maskDateBR } from '../lib/input-masks';
+import { addDays, customPeriod } from '../lib/period';
 import {
   CashForecastQuery,
   FORECAST_KIND_LABELS,
@@ -27,13 +31,113 @@ function ddMm(iso: string): string {
   return `${d}/${m}`;
 }
 
+type ForecastPreset = 7 | 15 | 30 | 'custom';
+
+const FORECAST_PRESETS: { value: 7 | 15 | 30; label: string }[] = [
+  { value: 7, label: '7 dias' },
+  { value: 15, label: '15 dias' },
+  { value: 30, label: '30 dias' },
+];
+
+/** Período da previsão: 7, 15 ou 30 dias a partir de hoje (padrão 30) ou personalizado. `to` é exclusivo. */
+function ForecastPeriodFilter({
+  preset,
+  onChange,
+}: {
+  preset: ForecastPreset;
+  onChange: (preset: ForecastPreset, range: { from: string; to: string }) => void;
+}) {
+  const [customOpen, setCustomOpen] = useState(preset === 'custom');
+  const [fromBr, setFromBr] = useState('');
+  const [toBr, setToBr] = useState('');
+  const fromIso = brDateToIso(fromBr);
+  const toIso = brDateToIso(toBr);
+
+  return (
+    <div className="flex flex-col gap-sm">
+      <div role="group" aria-label="Período" className="flex flex-wrap gap-xs">
+        {FORECAST_PRESETS.map((p) => {
+          const active = !customOpen && preset === p.value;
+          return (
+            <Button
+              key={p.value}
+              type="button"
+              size="sm"
+              variant={active ? 'default' : 'outline'}
+              aria-pressed={active}
+              data-testid={`forecast-preset-${p.value}`}
+              onClick={() => {
+                setCustomOpen(false);
+                onChange(p.value, forecastWindow(undefined, undefined, p.value));
+              }}
+            >
+              {p.label}
+            </Button>
+          );
+        })}
+        <Button
+          type="button"
+          size="sm"
+          variant={customOpen ? 'default' : 'outline'}
+          aria-pressed={customOpen}
+          data-testid="forecast-preset-custom"
+          onClick={() => setCustomOpen(true)}
+        >
+          Personalizado
+        </Button>
+      </div>
+      {customOpen && (
+        <div className="flex flex-wrap items-end gap-sm">
+          <label className="flex flex-col gap-xs text-xs font-semibold text-neutral-600">
+            De
+            <Input
+              className="h-9 w-[130px] text-sm"
+              placeholder="dd/mm/aaaa"
+              inputMode="numeric"
+              value={fromBr}
+              onChange={(e) => setFromBr(maskDateBR(e.target.value))}
+              data-testid="forecast-custom-from"
+            />
+          </label>
+          <label className="flex flex-col gap-xs text-xs font-semibold text-neutral-600">
+            Até
+            <Input
+              className="h-9 w-[130px] text-sm"
+              placeholder="dd/mm/aaaa"
+              inputMode="numeric"
+              value={toBr}
+              onChange={(e) => setToBr(maskDateBR(e.target.value))}
+              data-testid="forecast-custom-to"
+            />
+          </label>
+          <Button
+            type="button"
+            size="sm"
+            disabled={fromIso === null || toIso === null}
+            data-testid="forecast-custom-apply"
+            onClick={() => {
+              if (!fromIso || !toIso) return;
+              onChange('custom', customPeriod(fromIso, toIso));
+            }}
+          >
+            Aplicar
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function PrevisaoPage() {
   const canRead = useHasPermission('financial.read');
+  const [preset, setPreset] = useState<ForecastPreset>(30);
+  const [range, setRange] = useState(() => forecastWindow());
   const { data, error, refetch } = useQuery<CashForecastResult>(CashForecastQuery, {
-    variables: forecastWindow(),
+    variables: range,
     skip: !canRead,
   });
   const forecast = data?.cashForecast;
+  const rangeLabel = `${isoToBrDate(range.from)} a ${isoToBrDate(addDays(range.to, -1))}`;
 
   return (
     <div className="p-md">
@@ -44,6 +148,20 @@ export function PrevisaoPage() {
       <p className="-mt-sm mb-md text-sm text-neutral-600">
         Agendamentos confirmados e parcelas de contratos a receber, menos comissões estimadas e despesas fixas.
       </p>
+      {canRead && (
+        <div className="mb-md flex flex-col gap-xs">
+          <ForecastPeriodFilter
+            preset={preset}
+            onChange={(p, r) => {
+              setPreset(p);
+              setRange(r);
+            }}
+          />
+          <p className="text-sm text-neutral-600" data-testid="forecast-range">
+            Período: {rangeLabel}
+          </p>
+        </div>
+      )}
 
       {!canRead ? (
         <div className="rounded-md border border-neutral-200 bg-white p-md text-sm text-neutral-600">
@@ -52,7 +170,8 @@ export function PrevisaoPage() {
       ) : error && !forecast ? (
         <Alert variant="destructive">
           <AlertDescription>
-            Não foi possível carregar a previsão.{' '}
+            Não foi possível carregar a previsão.
+            {error.graphQLErrors[0]?.message ? ` ${error.graphQLErrors[0].message}` : ''}{' '}
             <Button type="button" variant="outline" size="sm" onClick={() => void refetch()}>
               Tentar novamente
             </Button>

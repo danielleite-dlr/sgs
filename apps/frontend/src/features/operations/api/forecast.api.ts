@@ -195,13 +195,14 @@ export const FORECAST_KIND_LABELS: Record<ForecastKind, string> = {
   fixed_expense: "Despesa fixa",
 };
 
-/** Janela de 30 dias a partir de hoje no fuso da organização. */
+/** Janela de `days` dias (padrão 30) a partir de hoje no fuso da organização; `to` é exclusivo. */
 export function forecastWindow(
   tz: string = ORG_TIMEZONE_DEFAULT,
   now: Date = new Date(),
+  days: number = 30,
 ): { from: string; to: string } {
   const from = todayInTimeZone(tz, now);
-  return { from, to: addDays(from, 30) };
+  return { from, to: addDays(from, days) };
 }
 
 function ddMm(iso: string): string {

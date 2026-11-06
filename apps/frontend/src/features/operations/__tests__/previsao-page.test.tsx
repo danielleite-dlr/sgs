@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
 import { MemoryRouter } from 'react-router-dom';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
@@ -57,17 +57,18 @@ const data = {
   ],
 };
 
-function renderPage() {
+function renderPage(seen: Array<{ from: string; to: string }> = []) {
+  // Um mock por consulta esperada (30 dias + trocas de período); cada um registra as variáveis recebidas.
+  const mock = () => ({
+    request: { query: CashForecastQuery },
+    variableMatcher: (v: { from: string; to: string }) => {
+      seen.push(v);
+      return true;
+    },
+    result: { data: { cashForecast: data } },
+  });
   return render(
-    <MockedProvider
-      mocks={[
-        {
-          request: { query: CashForecastQuery },
-          variableMatcher: () => true,
-          result: { data: { cashForecast: data } },
-        },
-      ]}
-    >
+    <MockedProvider mocks={[mock(), mock(), mock(), mock()]}>
       <MemoryRouter>
         <PrevisaoPage />
       </MemoryRouter>
@@ -91,6 +92,42 @@ describe('PrevisaoPage', () => {
     expect(screen.getByText('sem regra de comissão')).toBeInTheDocument();
     expect(screen.getByText(/2 comissão\(ões\) sem regra cadastrada/)).toBeInTheDocument();
     expect(screen.getByText('Nada previsto nesta semana.')).toBeInTheDocument();
+  });
+
+  describe('filtro de período', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-11-06T15:00:00Z'));
+    });
+    afterEach(() => vi.useRealTimers());
+
+    it('abre em 30 dias por padrão e troca para 7 e 15 dias', async () => {
+      const seen: Array<{ from: string; to: string }> = [];
+      renderPage(seen);
+      expect(screen.getByTestId('forecast-preset-30')).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByTestId('forecast-range')).toHaveTextContent('Período: 06/11/2026 a 05/12/2026');
+      await waitFor(() => expect(seen).toContainEqual({ from: '2026-11-06', to: '2026-12-06' }));
+
+      fireEvent.click(screen.getByTestId('forecast-preset-7'));
+      expect(screen.getByTestId('forecast-preset-7')).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByTestId('forecast-range')).toHaveTextContent('Período: 06/11/2026 a 12/11/2026');
+      await waitFor(() => expect(seen).toContainEqual({ from: '2026-11-06', to: '2026-11-13' }));
+
+      fireEvent.click(screen.getByTestId('forecast-preset-15'));
+      await waitFor(() => expect(seen).toContainEqual({ from: '2026-11-06', to: '2026-11-21' }));
+    });
+
+    it('personalizado consulta o período digitado (fim inclusivo)', async () => {
+      const seen: Array<{ from: string; to: string }> = [];
+      renderPage(seen);
+      fireEvent.click(screen.getByTestId('forecast-preset-custom'));
+      expect(screen.getByTestId('forecast-custom-apply')).toBeDisabled();
+      fireEvent.change(screen.getByTestId('forecast-custom-from'), { target: { value: '10/11/2026' } });
+      fireEvent.change(screen.getByTestId('forecast-custom-to'), { target: { value: '20/12/2026' } });
+      fireEvent.click(screen.getByTestId('forecast-custom-apply'));
+      expect(screen.getByTestId('forecast-range')).toHaveTextContent('Período: 10/11/2026 a 20/12/2026');
+      await waitFor(() => expect(seen).toContainEqual({ from: '2026-11-10', to: '2026-12-21' }));
+    });
   });
 
   it('ATTENDANT vê mensagem de falta de permissão', () => {
