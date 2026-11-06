@@ -43,7 +43,7 @@ describe('casco Gestor Beauty: menu lateral (D-15)', () => {
     );
   }
 
-  it('mostra a marca do estúdio, 256 px, branco com borda e item ativo roxo', () => {
+  it('mostra a marca do estúdio, 256 px, branco com borda e item ativo lilás (D-26)', () => {
     renderSidebar();
     const marca = screen.getByTestId('sidebar-brand');
     expect(within(marca).getByText('JS')).toBeInTheDocument();
@@ -53,14 +53,52 @@ describe('casco Gestor Beauty: menu lateral (D-15)', () => {
     expect(nav).toHaveClass('w-64', 'bg-white', 'border-r', 'border-neutral-200');
 
     const inicio = within(nav).getByRole('link', { name: 'Início' });
-    expect(inicio).toHaveClass('bg-primary', 'text-white', 'min-h-[44px]');
+    expect(inicio).toHaveClass(
+      'bg-primary-50',
+      'text-primary-900',
+      'font-semibold',
+      'min-h-[44px]',
+    );
+    expect(inicio).not.toHaveClass('bg-primary', 'text-white');
 
     const agenda = within(nav).getByRole('button', { name: 'Agenda' });
     expect(agenda).toHaveAttribute('aria-expanded', 'true');
     expect(agenda).toHaveAttribute('aria-label', 'Agenda');
-    expect(agenda).toHaveClass('uppercase');
+    expect(agenda).toHaveClass('uppercase', 'text-[10px]', 'tracking-widest');
 
     semSombra(nav);
+  });
+
+  it('subitem ativo roxo #521873 com texto branco e subgrupo pai em lilás (D-26)', () => {
+    render(
+      <MemoryRouter initialEntries={['/clientes']}>
+        <SidebarNav />
+      </MemoryRouter>,
+    );
+    const nav = screen.getByRole('navigation', { name: 'Navegação principal' });
+    const ativos = within(nav)
+      .getAllByRole('link')
+      .filter((link) => link.getAttribute('aria-current') === 'page');
+    expect(ativos).toHaveLength(1);
+    expect(ativos[0]).toHaveClass('bg-primary-800', 'text-white', 'font-semibold', 'rounded-md');
+    expect(ativos[0]).toHaveClass('min-h-[44px]');
+    const pai = ativos[0].closest('ul')?.parentElement?.querySelector(':scope > button');
+    expect(pai).toHaveClass('bg-primary-50', 'text-primary-900');
+    const inicio = within(nav).getByRole('link', { name: 'Início' });
+    expect(inicio).toHaveClass('text-neutral-600');
+    expect(inicio).not.toHaveClass('bg-primary-50');
+  });
+
+  it('folha sem ícone (Previsão de caixa) ativa também é subitem roxo (D-26)', () => {
+    render(
+      <MemoryRouter initialEntries={['/financeiro/previsao']}>
+        <SidebarNav />
+      </MemoryRouter>,
+    );
+    const nav = screen.getByRole('navigation', { name: 'Navegação principal' });
+    const previsao = within(nav).getByRole('link', { name: 'Previsão de caixa' });
+    expect(previsao).toHaveAttribute('aria-current', 'page');
+    expect(previsao).toHaveClass('bg-primary-800', 'text-white', 'font-semibold');
   });
 
   it('rodapé com o nome da usuária, o papel embaixo e o botão Sair de 44 px', () => {

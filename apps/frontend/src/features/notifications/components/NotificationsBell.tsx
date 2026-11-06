@@ -89,7 +89,7 @@ export function NotificationsBell({ open: openProp, onOpenChange }: Notification
                   >
                     <span className="text-sm font-medium text-neutral-800">{v.title}</span>
                     {v.message && <span className="text-xs text-neutral-600">{v.message}</span>}
-                    <span className="text-[11px] text-neutral-400">
+                    <span className="text-[11px] text-neutral-500">
                       {formatRelativeTime(n.createdAt)}
                     </span>
                   </button>

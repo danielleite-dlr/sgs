@@ -42,7 +42,7 @@ const DISCOVERY_CARDS: DiscoveryCard[] = [
     icon: Globe,
     title: 'Agendamento online',
     description: 'Receba agendamentos pelo site, redes sociais ou Google Reserve',
-    color: '#1B7A43',
+    color: '#109868',
   },
   {
     id: 'whatsapp',
@@ -65,7 +65,7 @@ const DISCOVERY_CARDS: DiscoveryCard[] = [
     title: 'Estoque',
     description: 'Controle o que entra e sai e mantenha seus produtos em dia',
     to: '/catalogo/produtos',
-    color: '#BA1A1A',
+    color: '#C53030',
   },
 ];
 
@@ -77,10 +77,10 @@ interface ExpenseLegend {
 
 const EXPENSE_LEGEND: ExpenseLegend[] = [
   { label: 'Fixas',    value: 'R$ 0,00', color: '#EF9F27' },
-  { label: 'Variáveis', value: 'R$ 0,00', color: '#6B6670' },
-  { label: 'Pessoal',  value: 'R$ 0,00', color: '#BA1A1A' },
+  { label: 'Variáveis', value: 'R$ 0,00', color: '#6B7280' },
+  { label: 'Pessoal',  value: 'R$ 0,00', color: '#D85A30' },
   { label: 'Impostos', value: 'R$ 0,00', color: '#570080' },
-  { label: 'Outros',   value: 'R$ 0,00', color: '#221E26' },
+  { label: 'Outros',   value: 'R$ 0,00', color: '#1F2937' },
 ];
 
 interface OnboardingStep {

@@ -328,7 +328,7 @@ function FilterPanel(props: FilterPanelProps) {
                 <span
                   aria-hidden="true"
                   className="h-1.5 w-1.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: s.id === "absent" ? "#6B6670" : s.color }}
+                  style={{ backgroundColor: s.id === "absent" ? "#6B7280" : s.color }}
                 />
                 {s.label}
               </button>

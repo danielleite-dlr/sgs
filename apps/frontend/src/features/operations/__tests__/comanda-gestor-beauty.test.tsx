@@ -165,17 +165,18 @@ describe('Comanda no layout Gestor Beauty (06-05)', () => {
     expect(screen.getByTestId('comanda-item-i1').className).not.toMatch(/bg-neutral-50/);
   });
 
-  it('títulos dos cartões são h2 em serifa headline-sm e nenhum cartão tem sombra', async () => {
+  it('títulos dos cartões são h2 em serifa headline-sm e nenhum cartão tem sombra grande', async () => {
     await renderPage(makeComanda({ items }));
     for (const titulo of ['Cliente', 'Itens da comanda', 'Adicionar à comanda', 'Pagamento']) {
       const h2 = screen.getByRole('heading', { level: 2, name: titulo });
       expect(h2).toHaveClass('font-serif', 'text-headline-sm');
       expect(h2.className).not.toMatch(/\btext-base\b/);
     }
-    const cartoes = document.querySelectorAll('.rounded-md.border');
+    // D-26: cartão com cantos de 8 px e só a sombra leve (shadow-sm).
+    const cartoes = document.querySelectorAll('.rounded-lg.border, .rounded-md.border');
     expect(cartoes.length).toBeGreaterThan(0);
     for (const c of Array.from(cartoes)) {
-      expect(c.className).not.toMatch(/(^|\s)shadow/);
+      expect(c.className).not.toMatch(/(^|\s)([a-z-]+:)?shadow(-(md|lg|xl|2xl))?(\s|$)/);
     }
   });
 

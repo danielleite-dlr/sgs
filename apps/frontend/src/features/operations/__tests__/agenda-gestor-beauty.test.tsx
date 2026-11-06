@@ -31,7 +31,7 @@ const appt = (over: Partial<ScheduleAppointment> = {}): ScheduleAppointment => (
   professionalId: 'p1',
   clientName: 'maria silva',
   service: 'Penteado',
-  categoryColor: '#1B7A43',
+  categoryColor: '#109868',
   start: new Date(2026, 10, 12, 9, 0),
   end: new Date(2026, 10, 12, 10, 30),
   durationMinutes: 90,
@@ -50,12 +50,12 @@ function renderCard(a: ScheduleAppointment) {
 describe('cor de status (D-11)', () => {
   it('statusSpineColor devolve a cor de cada status e um cinza para o desconhecido', () => {
     expect(statusSpineColor('scheduled')).toBe('#570080');
-    expect(statusSpineColor('confirmed')).toBe('#1B7A43');
+    expect(statusSpineColor('confirmed')).toBe('#109868');
     expect(statusSpineColor('in_progress')).toBe('#0E61A8');
     expect(statusSpineColor('completed')).toBe('#49454F');
-    expect(statusSpineColor('no_show')).toBe('#BA1A1A');
-    expect(statusSpineColor('cancelled')).toBe('#BA1A1A');
-    expect(statusSpineColor('qualquer')).toBe('#6B6670');
+    expect(statusSpineColor('no_show')).toBe('#C53030');
+    expect(statusSpineColor('cancelled')).toBe('#C53030');
+    expect(statusSpineColor('qualquer')).toBe('#6B7280');
     expect(Object.keys(STATUS_SPINE_COLORS)).toHaveLength(6);
   });
 
@@ -155,7 +155,7 @@ const appointmentData = (id: string, day: Date, h: number, pro = 'p1'): Appointm
 
 const professionals = [
   { id: 'p1', name: 'BIA SOUZA', initials: 'BS', color: '#570080' },
-  { id: 'p2', name: 'Carla Lima', initials: 'CL', color: '#1B7A43' },
+  { id: 'p2', name: 'Carla Lima', initials: 'CL', color: '#0B7A53' },
   { id: 'p3', name: 'Dora Reis', initials: 'DR', color: '#0E61A8' },
 ];
 

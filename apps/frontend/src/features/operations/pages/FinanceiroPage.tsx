@@ -219,7 +219,7 @@ export function FinanceiroPage() {
                     />
                     <Legend />
                     <Bar dataKey="billed" name="Faturado" fill="#570080" isAnimationActive={false} />
-                    <Bar dataKey="received" name="Recebido" fill="#1B7A43" isAnimationActive={false} />
+                    <Bar dataKey="received" name="Recebido" fill="#109868" isAnimationActive={false} />
                   </BarChart>
                 </ResponsiveContainer>
               </section>
@@ -292,7 +292,7 @@ export function FinanceiroPage() {
                           <td>{paymentMethodLabel(mv.method)}</td>
                           <td>{mv.clientName ? toDisplayName(mv.clientName) : '—'}</td>
                           <td>{mv.comandaCode ?? mv.contractCode ?? '—'}</td>
-                          <td className={`text-right ${negative ? 'text-error-600' : ''}`}>
+                          <td className={`text-right ${negative ? 'text-outflow-500' : ''}`}>
                             {brl(mv.amount)}
                           </td>
                         </tr>

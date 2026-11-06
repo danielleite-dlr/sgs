@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { blockGridRange, formatHM } from "./types";
 
 const BLOCK_HATCH =
-  "repeating-linear-gradient(135deg, #F4F3F0 0px, #F4F3F0 6px, #FFFFFF 6px, #FFFFFF 12px)";
+  "repeating-linear-gradient(135deg, #F3F4F6 0px, #F3F4F6 6px, #FFFFFF 6px, #FFFFFF 12px)";
 
 interface TimeBlockOverlayProps {
   block: TimeBlockData;

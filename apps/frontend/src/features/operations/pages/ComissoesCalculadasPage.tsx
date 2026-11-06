@@ -190,7 +190,7 @@ export function ComissoesCalculadasPage() {
           )}
 
           {!showRecords ? (
-            <p className="text-xs text-neutral-400 text-center">
+            <p className="text-xs text-neutral-500 text-center">
               {t('operations.commissions.selectToSee', 'Selecione um profissional para ver os registros.')}
             </p>
           ) : records.loading ? (

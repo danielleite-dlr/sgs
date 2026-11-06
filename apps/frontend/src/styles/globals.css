@@ -4,23 +4,23 @@
 
 @layer base {
   :root {
-    /* Cores — Gestor Beauty "Studio Editorial Density" (06-UI-SPEC §1) */
+    /* Cores — Previsão de caixa do Stitch (D-26) */
     --color-primary-50:  #F5E6FB;
     --color-primary-500: #570080;
-    --color-primary-700: #440064;
+    --color-primary-700: #4C0070;
     --color-primary-900: #370053;
 
-    --color-success-500: #1B7A43;
+    --color-success-500: #109868;
     --color-warning-500: #EF9F27;
-    --color-error-500:   #BA1A1A;
+    --color-error-500:   #C53030;
     --color-info-500:    #0E61A8;
 
     --color-neutral-0:   #FFFFFF;
-    --color-neutral-50:  #F7F6F3;
-    --color-neutral-100: #F4F3F0;
-    --color-neutral-200: #E2DFE5;
-    --color-neutral-500: #6B6670;
-    --color-neutral-800: #221E26;
+    --color-neutral-50:  #F9FAFB;
+    --color-neutral-100: #F3F4F6;
+    --color-neutral-200: #E5E7EB;
+    --color-neutral-500: #6B7280;
+    --color-neutral-800: #1F2937;
 
     --color-background: var(--color-neutral-50);
     --color-surface:    var(--color-neutral-0);
@@ -29,7 +29,7 @@
     --color-border:     var(--color-neutral-200);
 
     /* shadcn HSL bridges (matches the Tailwind theme above) */
-    --border: 270 10% 89%;
+    --border: 220 13% 91%;
     --ring: 281 100% 25%;
   }
 
@@ -40,10 +40,10 @@
     line-height: 20px;
   }
 
-  /* D-07 — títulos de página e de seção em serifa (CardTitle e DialogTitle renderizam h2) */
+  /* D-07/D-26 — títulos de página e de seção em serifa (CardTitle e DialogTitle renderizam h2) */
   h1, h2 {
     font-family: theme('fontFamily.serif');
-    font-weight: 600;
+    font-weight: 700;
   }
 
   /* WCAG 2.1 AA — visible focus ring on all interactive elements (UI-SPEC §"Color") */

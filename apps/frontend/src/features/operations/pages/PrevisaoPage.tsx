@@ -21,8 +21,9 @@ import {
   type CashForecastResult,
 } from '../api/forecast.api';
 
-const GREEN = '#1B7A43';
-const RED = '#BA1A1A';
+// Entrada e saída da Previsão de caixa (D-26).
+const GREEN = '#109868';
+const RED = '#D85A30';
 
 const brl = (v: string) => `R$ ${formatCurrencyDisplay(v.replace('-', ''))}`;
 const signed = (v: string) => (Number(v) < 0 ? `−${brl(v)}` : brl(v));
@@ -284,7 +285,7 @@ export function PrevisaoPage() {
                           </TableCell>
                           <TableCell>
                             <span>{it.label}</span>{' '}
-                            {it.overdue && <Badge variant="warning">em atraso</Badge>}{' '}
+                            {it.overdue && <Badge variant="destructive">em atraso</Badge>}{' '}
                             {it.withoutProfessional && (
                               <Badge variant="secondary">estimada — sem profissional definido</Badge>
                             )}{' '}

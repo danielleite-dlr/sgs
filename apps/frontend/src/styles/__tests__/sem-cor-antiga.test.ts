@@ -2,8 +2,8 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-// Varredura do layout Gestor Beauty (fase 6, D-04, D-07, D-09, D-12): nenhum arquivo do
-// frontend pode voltar a usar cor antiga, cor da paleta padrão do Tailwind, sombra ou Inter.
+// Varredura do layout (fase 6, D-26): nenhum arquivo do frontend pode voltar a usar cor das
+// paletas anteriores, cor da paleta padrão do Tailwind, sombra grande ou a fonte Public Sans.
 
 // Arquivos que ainda têm paleta padrão ou sombra e são refeitos num lote seguinte.
 // Cada lote remove a sua entrada; o teste falha se uma entrada ficar sobrando.
@@ -14,13 +14,19 @@ const SOMBRA_PENDENTE: Record<string, string> = {};
 
 const SRC = join(__dirname, '../..');
 
+// Paleta original e a do 06-01 (Studio Editorial Density), trocadas pela Previsão de caixa (D-26).
 const COR_ANTIGA =
-  /#1D9E75|#D85A30|#888780|#2C2C2A|#FAFAF8|#E5E3DC|#3D005A|#2B003F|#B42318|#5D54C7|#3C3489|#DDE7F3|shadow-card|text-red-600/i;
+  /#1D9E75|#888780|#2C2C2A|#FAFAF8|#E5E3DC|#3D005A|#2B003F|#B42318|#5D54C7|#3C3489|#DDE7F3|#F7F6F3|#E2DFE5|#221E26|#6B6670|#1B7A43|#BA1A1A|#F4F3F0|#CFCAD3|shadow-card|text-red-600/i;
 const PALETA_PADRAO =
   /\b(bg|text|border|ring|fill|stroke)-(slate|gray|zinc|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b/;
-const FONTE_ANTIGA = /\bInter\b/;
-// Sombras permitidas: nenhuma sombra e o contorno interno do foco de campo (D-14).
-const SOMBRA_PERMITIDA = new Set(['shadow-none', 'shadow-[inset_0_0_0_0.5px_#570080]']);
+const FONTE_ANTIGA = /Public[ +]Sans/;
+// Sombras permitidas: a leve de cartão/faixa (D-26), nenhuma sombra e o contorno interno do
+// foco de campo (D-14).
+const SOMBRA_PERMITIDA = new Set([
+  'shadow-sm',
+  'shadow-none',
+  'shadow-[inset_0_0_0_0.5px_#570080]',
+]);
 
 function listarArquivos(dir: string): string[] {
   const arquivos: string[] = [];
@@ -76,8 +82,8 @@ const listar = (achados: Ocorrencia[]) =>
 
 const ehTsOuTsx = (arquivo: string) => /\.tsx?$/.test(arquivo);
 
-describe('sem cor antiga, paleta padrão, sombra ou Inter (fase 6)', () => {
-  it('nenhuma cor ou classe antiga (#1D9E75, #D85A30, shadow-card, text-red-600 etc.)', () => {
+describe('sem cor antiga, paleta padrão, sombra grande ou Public Sans (fase 6, D-26)', () => {
+  it('nenhuma cor ou classe antiga (#1B7A43, #F7F6F3, shadow-card, text-red-600 etc.)', () => {
     expect(listar(varrer((linha) => COR_ANTIGA.test(linha)))).toBe('');
   });
 
@@ -88,7 +94,7 @@ describe('sem cor antiga, paleta padrão, sombra ou Inter (fase 6)', () => {
     expect(listar(achados)).toBe('');
   });
 
-  it('nenhuma sombra fora de SOMBRA_PENDENTE (só shadow-none e o foco de campo)', () => {
+  it('nenhuma sombra grande fora de SOMBRA_PENDENTE (só shadow-sm, shadow-none, foco)', () => {
     const achados = varrer(
       (linha, arquivo) => ehTsOuTsx(arquivo) && !(arquivo in SOMBRA_PENDENTE) && temSombra(linha),
     );
@@ -112,7 +118,7 @@ describe('sem cor antiga, paleta padrão, sombra ou Inter (fase 6)', () => {
     expect(listar(achados)).toBe('');
   });
 
-  it('nenhuma referência à fonte Inter', () => {
+  it('nenhuma referência à fonte Public Sans (D-26: texto em Inter)', () => {
     expect(listar(varrer((linha) => FONTE_ANTIGA.test(linha)))).toBe('');
   });
 
@@ -137,7 +143,11 @@ describe('sem cor antiga, paleta padrão, sombra ou Inter (fase 6)', () => {
 
   it('a regra de sombra pega variantes e aceita só as permitidas', () => {
     expect(temSombra("'hover:shadow-md'")).toBe(true);
+    expect(temSombra("'shadow-lg'")).toBe(true);
+    expect(temSombra("'shadow-xl'")).toBe(true);
+    expect(temSombra("'shadow-2xl'")).toBe(true);
     expect(temSombra('className="shadow"')).toBe(true);
+    expect(temSombra("'rounded-lg border shadow-sm'")).toBe(false);
     expect(temSombra("'shadow-[0_-2px_8px_rgba(0,0,0,0.06)]'")).toBe(true);
     expect(temSombra("'group-[.toaster]:!shadow-none'")).toBe(false);
     expect(temSombra("'focus-visible:shadow-[inset_0_0_0_0.5px_#570080]'")).toBe(false);

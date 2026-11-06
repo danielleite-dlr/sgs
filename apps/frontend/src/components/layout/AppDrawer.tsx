@@ -134,9 +134,12 @@ function DrawerItem({ item, lowStockCount, onNavigate, level }: DrawerItemProps)
             cn(
               'flex min-h-[44px] w-full items-center gap-sm px-md text-body transition-colors',
               FOCO,
+              // Mesmo ativo do menu lateral (D-26): 1º nível lilás claro, subitem roxo.
               isActive
-                ? 'bg-primary font-semibold text-white'
-                : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-800',
+                ? level >= 2 || !Icon
+                  ? 'bg-primary-800 font-semibold text-white'
+                  : 'bg-primary-50 font-semibold text-primary-900 [&>svg:first-child]:text-primary-500'
+                : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900',
             )
           }
           style={recuo}

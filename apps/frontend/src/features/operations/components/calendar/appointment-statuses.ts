@@ -1,7 +1,7 @@
 import { STATUS_SPINE_COLORS } from "../../lib/appointment-status-style";
 
 export const APPT_STATUSES = [
-  { id: "absent", label: "Ausência de profissional", color: "#E2DFE5", textOnColor: "#221E26" },
+  { id: "absent", label: "Ausência de profissional", color: "#E5E7EB", textOnColor: "#1F2937" },
   { id: "scheduled", label: "Agendado", color: STATUS_SPINE_COLORS.scheduled, textOnColor: "#FFFFFF" },
   { id: "confirmed", label: "Confirmado", color: STATUS_SPINE_COLORS.confirmed, textOnColor: "#FFFFFF" },
   { id: "no_show", label: "Cliente não compareceu", color: STATUS_SPINE_COLORS.no_show, textOnColor: "#FFFFFF" },
@@ -11,7 +11,7 @@ export const APPT_STATUSES = [
 ] as const;
 
 export function statusColor(status: string): string {
-  return APPT_STATUSES.find((s) => s.id === status)?.color ?? "#6B6670";
+  return APPT_STATUSES.find((s) => s.id === status)?.color ?? "#6B7280";
 }
 
 /** Status que nao ocupam lugar na grade. */

@@ -15,7 +15,7 @@ export interface PackageCostSummaryProps {
 /** Custo total, lucro em R$ e % do pacote. Só para ADMIN/MANAGER (o backend devolve null aos demais). */
 export function PackageCostSummary({ totalCost, packagePrice, compact }: PackageCostSummaryProps) {
   const { cost, profit, percent } = computeProfit(totalCost, packagePrice);
-  const profitCls = profit < 0 ? 'text-error-500' : 'text-success-500';
+  const profitCls = profit < 0 ? 'text-outflow-500' : 'text-success-500';
 
   if (compact) {
     return (

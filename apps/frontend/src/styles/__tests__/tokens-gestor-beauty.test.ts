@@ -3,49 +3,86 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { cn } from '@/lib/cn';
 
-// Trava dos tokens do layout Gestor Beauty (fase 6, D-04 a D-09 e D-14).
+// Trava dos tokens do layout (fase 6): valores da Previsão de caixa do Stitch (D-26), que
+// substituem os de D-04, D-05, D-07 (fonte do texto), D-08, D-09 e D-12; foco de D-14.
 // O tailwind.config.ts fica fora do include do tsconfig: é lido como texto.
 const root = join(__dirname, '../../..');
 const ler = (arquivo: string) => readFileSync(join(root, arquivo), 'utf8');
+const bloco = (config: string, nome: string) =>
+  config.match(new RegExp(`(^|\\s)${nome}:\\s*\\{([^}]*)\\}`))?.[2] ?? '';
+const tom = (config: string, nome: string, chave: string) =>
+  bloco(config, nome).match(new RegExp(`(^|\\s)'?${chave}'?:\\s*'([^']*)'`))?.[2];
 
-describe('tokens Gestor Beauty', () => {
-  it('index.html carrega Public Sans e Source Serif 4, sem Inter (D-07)', () => {
+describe('tokens Gestor Beauty (D-26)', () => {
+  it('index.html carrega Inter e Source Serif 4, sem Public Sans (D-26)', () => {
     const html = ler('index.html');
-    expect(html).not.toContain('family=Inter');
-    expect(html).toContain('family=Source+Serif+4:wght@600');
-    expect(html).toContain('family=Public+Sans:wght@400;500;600');
+    expect(html).toContain('family=Inter:wght@400;500;600;700');
+    expect(html).toContain('family=Source+Serif+4:wght@600;700');
+    expect(html).not.toContain('Public+Sans');
     expect(html).toContain('display=swap');
   });
 
-  it('tailwind.config.ts tem fontes, cores e escala neutra completas', () => {
+  it('escala neutra da Previsão de caixa (fundo, linhas e texto)', () => {
     const config = ler('tailwind.config.ts');
-    for (const valor of [
-      '"Public Sans"',
-      '"Source Serif 4"',
-      '#F7F6F3',
-      '#E2DFE5',
-      '#221E26',
-      '#6B6670',
-      '#440064',
-      '#1B7A43',
-      '#BA1A1A',
-      '#0E61A8',
-      '#49454F',
-    ]) {
-      expect(config, valor).toContain(valor);
-    }
-    const neutral = config.match(/neutral:\s*\{([^}]*)\}/)?.[1] ?? '';
-    for (const tom of ['0', '50', '100', '200', '300', '400', '500', '600', '700', '800', '900']) {
-      expect(neutral, `neutral-${tom}`).toMatch(new RegExp(`(^|\\s)${tom}:\\s*'#`));
+    const esperado: Record<string, string> = {
+      '0': '#FFFFFF',
+      '50': '#F9FAFB',
+      '100': '#F3F4F6',
+      '200': '#E5E7EB',
+      '300': '#D1D5DB',
+      '400': '#9CA3AF',
+      '500': '#6B7280',
+      '600': '#4B5563',
+      '700': '#374151',
+      '800': '#1F2937',
+      '900': '#111827',
+    };
+    for (const [chave, valor] of Object.entries(esperado)) {
+      expect(tom(config, 'neutral', chave), `neutral-${chave}`).toBe(valor);
     }
   });
 
-  it('tailwind.config.ts não tem mais a fonte, as cores, o raio e a sombra antigos', () => {
+  it('entrada, saída, erro e roxos (D-26)', () => {
+    const config = ler('tailwind.config.ts');
+    expect(tom(config, 'success', '500')).toBe('#109868');
+    expect(tom(config, 'success', 'DEFAULT')).toBe('#109868');
+    expect(tom(config, 'error', '500')).toBe('#C53030');
+    expect(tom(config, 'error', 'DEFAULT')).toBe('#C53030');
+    expect(tom(config, 'outflow', '500')).toBe('#D85A30');
+    expect(tom(config, 'outflow', 'DEFAULT')).toBe('#D85A30');
+    expect(tom(config, 'primary', '500')).toBe('#570080');
+    expect(tom(config, 'primary', '600')).toBe('#4C0070');
+    expect(tom(config, 'primary', '700')).toBe('#4C0070');
+    expect(tom(config, 'primary', '800')).toBe('#521873');
+    expect(tom(config, 'status', 'confirmed')).toBe('#109868');
+    expect(tom(config, 'status', 'missed')).toBe('#C53030');
+    expect(config).toContain("destructive: { DEFAULT: '#C53030'");
+  });
+
+  it('fonte do texto Inter e títulos em Source Serif 4', () => {
+    const config = ler('tailwind.config.ts');
+    expect(config).toMatch(/sans:\s*\['Inter',/);
+    expect(config).toMatch(/serif:\s*\['"Source Serif 4"'/);
+    expect(config).not.toContain('Public Sans');
+  });
+
+  it('raio 4/6/8 px e só sombra leve (D-26)', () => {
+    const config = ler('tailwind.config.ts');
+    expect(tom(config, 'borderRadius', 'DEFAULT')).toBe('4px');
+    expect(tom(config, 'borderRadius', 'sm')).toBe('4px');
+    expect(tom(config, 'borderRadius', 'md')).toBe('6px');
+    expect(tom(config, 'borderRadius', 'lg')).toBe('8px');
+    const leve = '0 1px 2px 0 rgb(0 0 0 / 0.05)';
+    for (const chave of ['sm', 'DEFAULT', 'md', 'lg', 'xl', '2xl', 'card']) {
+      expect(tom(config, 'boxShadow', chave), `shadow-${chave}`).toBe(leve);
+    }
+    expect(tom(config, 'boxShadow', 'none')).toBe('0 0 #0000');
+  });
+
+  it('tailwind.config.ts não tem mais as paletas anteriores', () => {
     const config = ler('tailwind.config.ts');
     for (const antigo of [
-      'Inter',
       '#1D9E75',
-      '#D85A30',
       '#888780',
       '#2C2C2A',
       '#FAFAF8',
@@ -53,19 +90,30 @@ describe('tokens Gestor Beauty', () => {
       '#3D005A',
       '#2B003F',
       'rgba(0,0,0,0.08)',
+      '#F7F6F3',
+      '#E2DFE5',
+      '#221E26',
+      '#6B6670',
+      '#1B7A43',
+      '#BA1A1A',
+      '#F4F3F0',
+      '#CFCAD3',
+      '#440064',
     ]) {
       expect(config, antigo).not.toContain(antigo);
     }
-    // 12px continua válido como tamanho de fonte (overline); só o raio antigo sai.
-    const raio = config.match(/borderRadius:\s*\{([^}]*)\}/)?.[1] ?? '';
-    expect(raio).not.toBe('');
-    expect(raio).not.toMatch(/'(4|8|12)px'/);
   });
 
-  it('globals.css tem borda, anel e foco de campo do Gestor Beauty (D-14)', () => {
+  it('globals.css tem fundo, borda, anel e foco de campo (D-14, D-26)', () => {
     const css = ler('src/styles/globals.css');
-    expect(css).toContain('--border: 270 10% 89%');
+    expect(css).toContain('--color-neutral-50:  #F9FAFB');
+    expect(css).toContain('--color-neutral-200: #E5E7EB');
+    expect(css).toContain('--color-neutral-800: #1F2937');
+    expect(css).toContain('--color-success-500: #109868');
+    expect(css).toContain('--color-error-500:   #C53030');
+    expect(css).toContain('--border: 220 13% 91%');
     expect(css).toContain('--ring: 281 100% 25%');
+    expect(css).toMatch(/h1, h2 \{[^}]*font-weight:\s*700/);
     expect(css).toMatch(/box-shadow:\s*inset 0 0 0 0\.5px/);
     expect(css).toMatch(/\*:focus-visible\s*\{[^}]*outline:\s*2px solid/);
   });

@@ -10,8 +10,9 @@ import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
 import { useHasPermission } from '../operations-permissions';
 import { CashForecastQuery, FORECAST_COST_GROUP_LABELS, forecastWindow, weekLabel, type CashForecastResult } from '../api/forecast.api';
 
-const GREEN = '#1B7A43';
-const RED = '#BA1A1A';
+// Entrada e saída da Previsão de caixa (D-26).
+const GREEN = '#109868';
+const RED = '#D85A30';
 
 const brl = (v: string) => `R$ ${formatCurrencyDisplay(v)}`;
 

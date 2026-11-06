@@ -19,7 +19,7 @@ const temClasses = (cls: string, esperadas: string[]) => {
 };
 
 describe('botão Gestor Beauty', () => {
-  it('padrão: roxo com texto branco, hover #440064, raio 6 px e 44 px', () => {
+  it('padrão: roxo com texto branco, hover #4C0070, raio 6 px e 44 px', () => {
     render(<Button>Salvar</Button>);
     temClasses(screen.getByRole('button', { name: 'Salvar' }).className, [
       'bg-primary',
@@ -73,7 +73,7 @@ describe('campos Gestor Beauty', () => {
     }
   };
 
-  it('Input: 44 px, raio 6 px, borda #E2DFE5, fundo branco e foco por borda', () => {
+  it('Input: 44 px, raio 6 px, borda #E5E7EB, fundo branco e foco por borda', () => {
     render(<Input aria-label="Nome" />);
     const cls = screen.getByLabelText('Nome').className;
     temClasses(cls, [

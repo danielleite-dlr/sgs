@@ -42,7 +42,7 @@ import {
 const VISUAL_WORK_START_HOUR = 9;
 const VISUAL_WORK_END_HOUR = 19;
 /** Papel neutro das horas fora do expediente (fase 6, D-19; era azul-claro). */
-const OFF_HOURS_BG = "#F4F3F0";
+const OFF_HOURS_BG = "#F3F4F6";
 
 export interface DayGridProps {
   date: Date;

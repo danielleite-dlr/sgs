@@ -13,7 +13,7 @@ import {
 } from '../dropdown-menu';
 import { Command, CommandGroup, CommandItem, CommandList } from '../command';
 
-// Superfícies do layout Gestor Beauty (fase 6, D-06 a D-10).
+// Superfícies do layout Gestor Beauty (fase 6, D-06 a D-10; cores, raio e sombra de D-26).
 const SOMBRA = /(^|\s)(hover:|focus:)?shadow(-(sm|md|lg|xl|card))?(\s|$)/;
 const temClasses = (cls: string, esperadas: string[]) => {
   const tokens = cls.split(/\s+/);
@@ -26,7 +26,7 @@ const semSombra = (raiz: ParentNode) => {
 };
 
 describe('cartão e tabela', () => {
-  it('Card branco com borda e raio 6 px, sem sombra; CardTitle em serifa', () => {
+  it('Card branco com borda, raio 8 px e só sombra leve (D-26); CardTitle em serifa', () => {
     const { container } = render(
       <Card data-testid="cartao">
         <CardHeader>
@@ -35,14 +35,18 @@ describe('cartão e tabela', () => {
         <CardContent>Conteúdo</CardContent>
       </Card>,
     );
-    const cls = screen.getByTestId('cartao').className;
-    expect(cls.split(/\s+/)).not.toContain('shadow-card');
-    temClasses(cls, ['rounded-md', 'border-neutral-200', 'bg-white']);
+    const cartao = screen.getByTestId('cartao');
+    const cls = cartao.className;
+    for (const grande of ['shadow-card', 'shadow', 'shadow-md', 'shadow-lg', 'shadow-xl']) {
+      expect(cls.split(/\s+/), grande).not.toContain(grande);
+    }
+    temClasses(cls, ['rounded-lg', 'shadow-sm', 'border', 'border-neutral-200', 'bg-white']);
     temClasses(screen.getByText('Resumo do dia').className, ['font-serif']);
-    semSombra(container);
+    semSombra(cartao);
+    expect(container.firstElementChild).toBe(cartao);
   });
 
-  it('TableHead em maiúsculas pequenas sobre superfície baixa; TableCell tabular', () => {
+  it('TableHead 11 px em maiúsculas sobre #F9FAFB; linha com divisor claro; TableCell tabular', () => {
     const { container } = render(
       <Table>
         <TableHeader>
@@ -58,17 +62,23 @@ describe('cartão e tabela', () => {
       </Table>,
     );
     temClasses(screen.getByText('Valor').className, [
-      'text-overline',
+      'text-[11px]',
+      'font-semibold',
       'uppercase',
-      'bg-neutral-100',
+      'tracking-wider',
+      'text-neutral-500',
+      'bg-neutral-50',
     ]);
+    const linha = screen.getByText('R$ 10,00').closest('tr')!;
+    temClasses(linha.className, ['border-neutral-100', 'hover:bg-neutral-50/60']);
+    temClasses(container.querySelector('thead')!.className, ['bg-neutral-50']);
     temClasses(screen.getByText('R$ 10,00').className, ['tabular-nums']);
     semSombra(container);
   });
 });
 
 describe('diálogo e folha', () => {
-  it('DialogContent sem sombra, raio 6 px, fundo rgba(34,30,38,0.40) e fechar de 44 px', () => {
+  it('DialogContent sem sombra, raio 6 px, fundo rgba(31,41,55,0.40) e fechar de 44 px', () => {
     render(
       <Dialog open>
         <DialogContent>
@@ -81,7 +91,7 @@ describe('diálogo e folha', () => {
     temClasses(conteudo.className, ['rounded-md']);
     expect(conteudo.className.split(/\s+/)).not.toContain('shadow-lg');
     const overlay = conteudo.previousElementSibling as HTMLElement;
-    temClasses(overlay.className, ['bg-[rgba(34,30,38,0.40)]']);
+    temClasses(overlay.className, ['bg-[rgba(31,41,55,0.40)]']);
     temClasses(screen.getByRole('button', { name: 'Fechar' }).className, ['h-11', 'w-11']);
     temClasses(screen.getByText('Novo agendamento').className, ['font-serif', 'text-headline-md']);
     semSombra(document.body);
@@ -99,7 +109,7 @@ describe('diálogo e folha', () => {
     const conteudo = screen.getByRole('dialog');
     expect(conteudo.className.split(/\s+/)).not.toContain('shadow-lg');
     const overlay = conteudo.previousElementSibling as HTMLElement;
-    temClasses(overlay.className, ['bg-[rgba(34,30,38,0.40)]']);
+    temClasses(overlay.className, ['bg-[rgba(31,41,55,0.40)]']);
     expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
     temClasses(screen.getByRole('button', { name: 'Fechar' }).className, ['h-11', 'w-11']);
     semSombra(document.body);

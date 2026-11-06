@@ -17,13 +17,21 @@ export interface SidebarNavProps {
 }
 
 const FOCO = 'focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2';
+const INATIVO = 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900';
+// Item de 1º nível ativo (D-26): lilás claro, texto roxo escuro, ícone roxo.
+const ATIVO_1 =
+  'bg-primary-50 font-semibold text-primary-900 [&>svg:first-child]:text-primary-500';
+// Subitem ativo (D-26): roxo de selecionado com texto branco.
+const ATIVO_SUB = 'bg-primary-800 font-semibold text-white';
 
 /**
  * Menu lateral do computador (≥ lg), layout Gestor Beauty (D-15).
  *
  * 256 px, branco com borda à direita. Topo com a marca do estúdio; grupos de nível 0 com
- * rótulo em maiúsculas pequenas; itens de 44 px, ativo roxo cheio com texto branco; rodapé
- * com a usuária logada e o botão Sair. A árvore é a de `menu-config.ts` (já podada).
+ * rótulo em maiúsculas pequenas; itens de 44 px. Ativo no padrão da Previsão de caixa (D-26):
+ * item de 1º nível (e o subgrupo que contém a rota atual) em lilás claro com texto roxo escuro
+ * e ícone roxo; subitem ativo roxo #521873 com texto branco. Rodapé com a usuária logada e o
+ * botão Sair. A árvore é a de `menu-config.ts` (já podada).
  */
 export function SidebarNav({ lowStockCount = 0, onNavigate }: SidebarNavProps) {
   const organizationName = useAuthStore((s) => s.organizationName);
@@ -125,6 +133,9 @@ function SidebarItem({ item, lowStockCount, onNavigate, level }: SidebarItemProp
   const Icon = item.icon;
   const recuo = { paddingLeft: 8 + Math.max(level - 1, 0) * 16 };
   const alerta = item.badge === 'lowStock' && lowStockCount > 0;
+  // Item com ícone nos níveis 0 e 1 é de 1º nível no Stitch; sem ícone ou do nível 2 em
+  // diante é subitem (D-26).
+  const ehSubitem = level >= 2 || !Icon;
 
   if (!hasChildren && item.to) {
     return (
@@ -138,9 +149,7 @@ function SidebarItem({ item, lowStockCount, onNavigate, level }: SidebarItemProp
             cn(
               'flex min-h-[44px] items-center gap-sm rounded-md px-sm text-body transition-colors',
               FOCO,
-              isActive
-                ? 'bg-primary font-semibold text-white'
-                : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-800',
+              isActive ? (ehSubitem ? ATIVO_SUB : ATIVO_1) : INATIVO,
             )
           }
           style={recuo}
@@ -167,7 +176,8 @@ function SidebarItem({ item, lowStockCount, onNavigate, level }: SidebarItemProp
           aria-label={item.label}
           className={cn(
             'mt-sm flex min-h-[44px] w-full items-center gap-xs rounded-md px-sm text-left',
-            'text-overline uppercase text-neutral-500 hover:text-neutral-800',
+            'text-[10px] font-semibold uppercase tracking-widest text-neutral-500',
+            'hover:text-neutral-900',
             FOCO,
           )}
         >
@@ -183,8 +193,8 @@ function SidebarItem({ item, lowStockCount, onNavigate, level }: SidebarItemProp
           aria-label={item.label}
           className={cn(
             'flex min-h-[44px] w-full items-center gap-sm rounded-md px-sm text-left text-body',
-            'font-medium text-neutral-600 transition-colors hover:bg-neutral-50',
-            'hover:text-neutral-800',
+            'font-medium transition-colors',
+            temRotaAtiva(item, pathname) ? ATIVO_1 : INATIVO,
             FOCO,
           )}
           style={recuo}
