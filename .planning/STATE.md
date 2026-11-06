@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
+status: executing
 stopped_at: Phase 5 context gathered
-last_updated: "2026-11-06T01:42:04.703Z"
-last_activity: 2026-11-05 - Fase 4 fechada (04-16; IA real adiada pela usuária)
+last_updated: "2026-11-06T02:40:57.075Z"
+last_activity: 2026-11-06 -- Phase 05 execution started
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 62
+  total_plans: 72
   completed_plans: 63
   percent: 100
 ---
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-02)
 
 **Core value:** Profissional do beleza consegue agendar, atender, cobrar e comunicar com cliente em um único fluxo — sem sair da plataforma.
-**Current focus:** Phase 04.1 — layout-e-regras-do-contrato-modelo-studio-js
+**Current focus:** Phase 05 — uso-no-dia-a-dia
 
 ## Current Position
 
-Phase: 5
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-11-05 - Fase 4 fechada (04-16; IA real adiada pela usuária)
+Phase: 05 (uso-no-dia-a-dia) — EXECUTING
+Plan: 1 of 10
+Status: Executing Phase 05
+Last activity: 2026-11-06 -- Phase 05 execution started
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
