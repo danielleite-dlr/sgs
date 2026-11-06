@@ -1,9 +1,19 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import { toast } from 'sonner';
-import { Plus, Trash2 } from 'lucide-react';
+import { AlertCircle, ChevronDown, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { NATIVE_SELECT_CLASS } from '@/lib/field-classes';
+import { FIELD_LABEL_CLASS, NATIVE_SELECT_CLASS } from '@/lib/field-classes';
+import { toDisplayName } from '@/lib/format-name';
+import { formatPhoneBr } from '@/lib/format-phone';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -60,7 +70,10 @@ export interface VisitFormDialogProps {
 }
 
 const SELECT_CLASS = `${NATIVE_SELECT_CLASS} mt-xs`;
-const LABEL_CLASS = 'text-xs font-semibold text-neutral-700';
+const LABEL_CLASS = FIELD_LABEL_CLASS;
+const OPTIONAL_CLASS = 'normal-case font-normal tracking-normal';
+// D-20: até 4 profissionais a escolha vira controle segmentado; acima disso, select.
+const SEGMENTED_MAX = 4;
 
 function dateToBr(d: Date): string {
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
@@ -83,8 +96,78 @@ interface LineRowProps {
   professionals: ScheduleProfessional[];
   lockedService: boolean;
   canRemove: boolean;
+  dateField?: ReactNode;
   onChange: (patch: Partial<LineState>) => void;
   onRemove: () => void;
+}
+
+interface ProfessionalSegmentedProps {
+  index: number;
+  options: ScheduleProfessional[];
+  value: string;
+  onPick: (professionalId: string) => void;
+}
+
+// Controle segmentado de profissional (D-20) com o padrão radiogroup do WAI-ARIA:
+// tabIndex móvel e setas com volta (WCAG 2.1 AA).
+function ProfessionalSegmented({ index, options, value, onPick }: ProfessionalSegmentedProps) {
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const anyChecked = options.some((p) => p.id === value);
+
+  function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    const step =
+      e.key === 'ArrowRight' || e.key === 'ArrowDown'
+        ? 1
+        : e.key === 'ArrowLeft' || e.key === 'ArrowUp'
+          ? -1
+          : 0;
+    if (step === 0) return;
+    e.preventDefault();
+    const current = refs.current.findIndex((el) => el === document.activeElement);
+    const from = current >= 0 ? current : Math.max(0, options.findIndex((p) => p.id === value));
+    const next = (from + step + options.length) % options.length;
+    onPick(options[next].id);
+    refs.current[next]?.focus();
+  }
+
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Profissional"
+      id={`visit-line-${index}-professional`}
+      data-testid={`visit-line-${index}-professional`}
+      onKeyDown={onKeyDown}
+      className="mt-xs grid gap-1 rounded-md border border-neutral-200 bg-neutral-100 p-1"
+      style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+    >
+      {options.map((p, i) => {
+        const sel = p.id === value;
+        return (
+          <button
+            key={p.id}
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            type="button"
+            role="radio"
+            aria-checked={sel}
+            tabIndex={sel || (!anyChecked && i === 0) ? 0 : -1}
+            title={p.name}
+            data-testid={`visit-line-${index}-professional-${p.id}`}
+            onClick={() => onPick(p.id)}
+            className={cn(
+              'min-h-[44px] truncate rounded-md px-sm text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              sel
+                ? 'bg-primary font-semibold text-white'
+                : 'bg-transparent text-neutral-600 hover:bg-white',
+            )}
+          >
+            {p.name}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 function LineRow({
@@ -94,6 +177,7 @@ function LineRow({
   professionals,
   lockedService,
   canRemove,
+  dateField,
   onChange,
   onRemove,
 }: LineRowProps) {
@@ -112,6 +196,7 @@ function LineRow({
   );
   const visible = filterProfessionalsForService(professionals, allowedIds);
   const service = services.find((s) => s.id === line.serviceId);
+  const segmented = visible.length > 0 && visible.length <= SEGMENTED_MAX;
 
   useEffect(() => {
     if (shouldClearProfessional(line.professionalId, allowedIds)) {
@@ -126,124 +211,109 @@ function LineRow({
     onChange({ variantId, ...(minutes ? { duration: String(minutes) } : {}) });
   }
 
+  function chooseProfessional(professionalId: string) {
+    const tier = professionals.find((p) => p.id === professionalId)?.seniorityTier ?? null;
+    const suggested = service ? suggestVariant(service.pricingVariants, tier) : null;
+    onChange({ professionalId });
+    if (suggested && !line.variantId) applyVariant(suggested, service);
+  }
+
+  const timeField = (
+    <div className={dateField ? 'col-span-6 sm:col-span-4' : 'col-span-6'}>
+      <Label className={LABEL_CLASS} htmlFor={`visit-line-${index}-time`}>
+        Hora
+      </Label>
+      <Input
+        id={`visit-line-${index}-time`}
+        data-testid={`visit-line-${index}-time`}
+        value={line.time}
+        onChange={(e) => onChange({ time: maskTime(e.target.value) })}
+        placeholder="HH:mm"
+        inputMode="numeric"
+        maxLength={5}
+        className="mt-xs tabular-nums"
+      />
+    </div>
+  );
+  const durationField = (
+    <div className={dateField ? 'col-span-6 sm:col-span-3' : 'col-span-6'}>
+      <Label className={LABEL_CLASS} htmlFor={`visit-line-${index}-duration`}>
+        Duração (min)
+      </Label>
+      <Input
+        id={`visit-line-${index}-duration`}
+        data-testid={`visit-line-${index}-duration`}
+        value={line.duration}
+        onChange={(e) => onChange({ duration: e.target.value.replace(/\D/g, '').slice(0, 4) })}
+        inputMode="numeric"
+        placeholder="60"
+        className="mt-xs tabular-nums"
+      />
+    </div>
+  );
+
   return (
-    <div className="rounded-md border border-neutral-200 p-sm space-y-sm" role="group" aria-label={`Serviço ${index + 1}`}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
-        <div>
-          <Label className={LABEL_CLASS} htmlFor={`visit-line-${index}-service`}>
-            Serviço
-          </Label>
-          <select
-            id={`visit-line-${index}-service`}
-            data-testid={`visit-line-${index}-service`}
-            value={line.serviceId}
-            disabled={lockedService}
-            onChange={(e) => {
-              const id = e.target.value;
-              const next = services.find((s) => s.id === id);
-              onChange({
-                serviceId: id,
-                variantId: '',
-                ...(next ? { duration: String(next.defaultDurationMinutes) } : {}),
-              });
-            }}
-            className={SELECT_CLASS}
-          >
-            <option value="">Selecione…</option>
-            {services.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <Label className={LABEL_CLASS} htmlFor={`visit-line-${index}-variant`}>
-            Variante de preço
-          </Label>
-          <select
-            id={`visit-line-${index}-variant`}
-            data-testid={`visit-line-${index}-variant`}
-            value={line.variantId}
-            onChange={(e) => applyVariant(e.target.value, service)}
-            className={SELECT_CLASS}
-          >
-            <option value="">Preço padrão</option>
-            {(service?.pricingVariants ?? []).map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name} — R$ {formatCurrencyDisplay(v.price)}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-[1fr_96px_96px_auto] gap-sm items-end">
-        <div>
-          <Label className={LABEL_CLASS} htmlFor={`visit-line-${index}-professional`}>
-            Profissional
-          </Label>
-          <select
-            id={`visit-line-${index}-professional`}
-            data-testid={`visit-line-${index}-professional`}
-            value={line.professionalId}
-            onChange={(e) => {
-              const professionalId = e.target.value;
-              const tier = professionals.find((p) => p.id === professionalId)?.seniorityTier ?? null;
-              const suggested = service
-                ? suggestVariant(service.pricingVariants, tier)
-                : null;
-              onChange({ professionalId });
-              if (suggested && !line.variantId) applyVariant(suggested, service);
-            }}
-            className={SELECT_CLASS}
-          >
-            <option value="">Selecione…</option>
-            {visible.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-          {allowedIds !== null && visible.length === 0 && (
-            <p className="mt-xs text-xs text-neutral-600">
-              Nenhum profissional atende a categoria deste serviço.
-            </p>
-          )}
-        </div>
-        <div>
-          <Label className={LABEL_CLASS} htmlFor={`visit-line-${index}-time`}>
-            Hora
-          </Label>
-          <Input
-            id={`visit-line-${index}-time`}
-            data-testid={`visit-line-${index}-time`}
-            value={line.time}
-            onChange={(e) => onChange({ time: maskTime(e.target.value) })}
-            placeholder="HH:mm"
-            inputMode="numeric"
-            maxLength={5}
-            className="mt-xs"
-          />
-        </div>
-        <div>
-          <Label className={LABEL_CLASS} htmlFor={`visit-line-${index}-duration`}>
-            Duração (min)
-          </Label>
-          <Input
-            id={`visit-line-${index}-duration`}
-            data-testid={`visit-line-${index}-duration`}
-            value={line.duration}
-            onChange={(e) => onChange({ duration: e.target.value.replace(/\D/g, '').slice(0, 4) })}
-            inputMode="numeric"
-            placeholder="60"
-            className="mt-xs"
-          />
+    <div
+      className="rounded-md border border-neutral-200 bg-white p-sm space-y-sm"
+      role="group"
+      aria-label={`Serviço ${index + 1}`}
+    >
+      <div className="flex items-end gap-sm">
+        <div className="grid flex-1 grid-cols-1 sm:grid-cols-2 gap-sm">
+          <div>
+            <Label className={LABEL_CLASS} htmlFor={`visit-line-${index}-service`}>
+              Serviço
+            </Label>
+            <select
+              id={`visit-line-${index}-service`}
+              data-testid={`visit-line-${index}-service`}
+              value={line.serviceId}
+              disabled={lockedService}
+              onChange={(e) => {
+                const id = e.target.value;
+                const next = services.find((s) => s.id === id);
+                onChange({
+                  serviceId: id,
+                  variantId: '',
+                  ...(next ? { duration: String(next.defaultDurationMinutes) } : {}),
+                });
+              }}
+              className={SELECT_CLASS}
+            >
+              <option value="">Selecione…</option>
+              {services.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <Label className={LABEL_CLASS} htmlFor={`visit-line-${index}-variant`}>
+              Variante de preço
+            </Label>
+            <select
+              id={`visit-line-${index}-variant`}
+              data-testid={`visit-line-${index}-variant`}
+              value={line.variantId}
+              onChange={(e) => applyVariant(e.target.value, service)}
+              className={SELECT_CLASS}
+            >
+              <option value="">Preço padrão</option>
+              {(service?.pricingVariants ?? []).map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name} — R$ {formatCurrencyDisplay(v.price)}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         {canRemove && (
           <Button
             type="button"
             variant="ghost"
             size="icon"
+            className="h-11 w-11 shrink-0"
             onClick={onRemove}
             aria-label={`Remover serviço ${index + 1}`}
           >
@@ -251,8 +321,71 @@ function LineRow({
           </Button>
         )}
       </div>
+      <div>
+        {segmented ? (
+          <>
+            <span className={cn(LABEL_CLASS, 'block')} aria-hidden="true">
+              Profissional
+            </span>
+            <ProfessionalSegmented
+              index={index}
+              options={visible}
+              value={line.professionalId}
+              onPick={chooseProfessional}
+            />
+          </>
+        ) : (
+          <>
+            <Label className={LABEL_CLASS} htmlFor={`visit-line-${index}-professional`}>
+              Profissional
+            </Label>
+            <select
+              id={`visit-line-${index}-professional`}
+              data-testid={`visit-line-${index}-professional`}
+              value={line.professionalId}
+              onChange={(e) => chooseProfessional(e.target.value)}
+              className={SELECT_CLASS}
+            >
+              <option value="">Selecione…</option>
+              {visible.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
+        {allowedIds !== null && visible.length === 0 && (
+          <p className="mt-xs text-[12px] leading-4 text-neutral-500">
+            Nenhum profissional atende a categoria deste serviço.
+          </p>
+        )}
+      </div>
+      <div
+        data-testid={dateField ? 'visit-when' : undefined}
+        className="grid grid-cols-12 gap-sm"
+      >
+        {dateField}
+        {timeField}
+        {durationField}
+      </div>
     </div>
   );
+}
+
+interface ServiceChip {
+  name: string;
+  price: string | null;
+}
+
+function serviceChips(lines: LineState[], services: ServiceData[]): ServiceChip[] {
+  return lines.flatMap((l) => {
+    const s = services.find((x) => x.id === l.serviceId);
+    if (!s) return [];
+    const variant = s.pricingVariants.find((v) => v.id === l.variantId);
+    const price = variant?.price ?? s.basePrice;
+    return [{ name: s.name, price: price ? formatCurrencyDisplay(price) : null }];
+  });
 }
 
 export function VisitFormDialog({
@@ -266,6 +399,7 @@ export function VisitFormDialog({
   const [clientSearch, setClientSearch] = useState('');
   const [clientId, setClientId] = useState('');
   const [clientName, setClientName] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
   const [newClientOpen, setNewClientOpen] = useState(false);
   const [newClientName, setNewClientName] = useState('');
   const [newClientPhone, setNewClientPhone] = useState('');
@@ -278,6 +412,8 @@ export function VisitFormDialog({
   ]);
   const [depositAmount, setDepositAmount] = useState('');
   const [depositMethod, setDepositMethod] = useState('pix');
+  // D-20: "Sinal" começa recolhido; abre sozinho se já houver valor preenchido.
+  const [depositOpen, setDepositOpen] = useState(false);
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
   // UX-03: no celular, avisa que há mais campos até o corpo chegar ao fim.
@@ -310,6 +446,7 @@ export function VisitFormDialog({
       setLines([emptyLine(seedTime(initialTime), initialTime?.profId)]);
       setPackageId('');
       setError('');
+      setDepositOpen(depositAmount !== '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialTime]);
@@ -317,14 +454,19 @@ export function VisitFormDialog({
   // Remede o aviso de rolagem quando o conteúdo do corpo muda de altura.
   useEffect(() => {
     if (open) updateAtBottom(bodyRef.current);
-  }, [open, lines.length, packageId, newClientOpen, error, updateAtBottom]);
+  }, [open, lines.length, packageId, newClientOpen, error, depositOpen, updateAtBottom]);
 
   const clientRows = clientsData?.clients.rows ?? [];
-  const selectedClient = clientId ? { id: clientId, fullName: clientName } : null;
+  const selectedClient = clientId
+    ? { id: clientId, fullName: clientName, phone: clientPhone }
+    : null;
+  const chips = serviceChips(lines, services);
+  const depositLabel = PAYMENT_METHODS.find((m) => m.value === depositMethod)?.label ?? '';
 
-  function pickClient(id: string, fullName: string) {
+  function pickClient(id: string, fullName: string, phone: string | null) {
     setClientId(id);
     setClientName(fullName);
+    setClientPhone(phone ?? '');
     setClientSearch(fullName);
   }
 
@@ -354,7 +496,7 @@ export function VisitFormDialog({
         setNewClientError(payload?.errors[0]?.message ?? 'Não foi possível cadastrar o cliente.');
         return;
       }
-      pickClient(payload.client.id, payload.client.fullName);
+      pickClient(payload.client.id, payload.client.fullName, payload.client.phone);
       setNewClientOpen(false);
       toast.success('Cliente cadastrado.');
     } catch {
@@ -366,6 +508,7 @@ export function VisitFormDialog({
     setClientSearch('');
     setClientId('');
     setClientName('');
+    setClientPhone('');
     setNewClientOpen(false);
     setNewClientName('');
     setNewClientPhone('');
@@ -373,6 +516,7 @@ export function VisitFormDialog({
     setPackageId('');
     setDepositAmount('');
     setDepositMethod('pix');
+    setDepositOpen(false);
     setNotes('');
     setError('');
   }
@@ -456,19 +600,39 @@ export function VisitFormDialog({
     }
   }
 
+  const dateField = (
+    <div className="col-span-12 sm:col-span-5">
+      <Label className={LABEL_CLASS} htmlFor="visit-date">
+        Data
+      </Label>
+      <Input
+        id="visit-date"
+        data-testid="visit-date"
+        value={dateBr}
+        onChange={(e) => setDateBr(maskDateBR(e.target.value))}
+        placeholder="dd/mm/aaaa"
+        inputMode="numeric"
+        maxLength={10}
+        className="mt-xs tabular-nums"
+      />
+    </div>
+  );
+
   return (
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())}>
       <DialogContent
         data-testid="visit-form"
-        className="max-w-[720px] p-0 max-sm:p-0 max-sm:border-0 h-[100dvh] max-h-[100dvh] rounded-none sm:h-auto sm:max-h-[90vh] sm:rounded-lg flex flex-col"
+        className="max-w-[720px] gap-0 max-sm:gap-0 sm:gap-0 p-0 max-sm:p-0 sm:p-0 max-sm:border-0 h-[100dvh] max-h-[100dvh] rounded-none sm:h-auto sm:max-h-[90vh] sm:rounded-md flex flex-col"
       >
-        <header className="flex items-center justify-between px-md py-md border-b border-neutral-200 bg-neutral-50">
-          <DialogTitle className="text-sm font-bold uppercase tracking-wide text-neutral-800">
-            Cadastrar agendamento
-          </DialogTitle>
-          <DialogDescription className="sr-only">
-            Informe cliente, serviços, profissionais, horários e o sinal recebido.
-          </DialogDescription>
+        <header className="flex items-start justify-between gap-sm px-md py-md pr-14 border-b border-neutral-200 bg-white">
+          <div className="min-w-0">
+            <DialogTitle className="font-serif text-headline-md text-neutral-800">
+              Cadastrar agendamento
+            </DialogTitle>
+            <DialogDescription className="text-[12px] leading-4 text-neutral-500">
+              Preencha os detalhes do atendimento
+            </DialogDescription>
+          </div>
         </header>
         <div
           ref={bodyRef}
@@ -492,22 +656,27 @@ export function VisitFormDialog({
               className="mt-xs"
             />
             {clientSearch && !clientId && !newClientOpen && (
-              <div className="mt-xs max-h-40 overflow-y-auto rounded-md border border-neutral-200 bg-white">
+              <div className="mt-xs max-h-48 overflow-y-auto rounded-md border border-neutral-200 bg-white">
                 {clientRows.map((client) => (
                   <button
                     key={client.id}
                     type="button"
                     data-testid={`visit-client-option-${client.id}`}
-                    onClick={() => pickClient(client.id, client.fullName)}
-                    className="block w-full px-sm py-xs text-left text-sm hover:bg-neutral-50"
+                    onClick={() => pickClient(client.id, client.fullName, client.phone)}
+                    className="flex min-h-[44px] w-full items-center justify-between gap-sm px-sm text-left text-body text-neutral-800 hover:bg-neutral-50"
                   >
-                    {client.fullName}
+                    <span className="truncate">{toDisplayName(client.fullName)}</span>
+                    {client.phone && (
+                      <span className="shrink-0 text-[12px] tabular-nums text-neutral-500">
+                        {formatPhoneBr(client.phone)}
+                      </span>
+                    )}
                   </button>
                 ))}
                 {clientsData && clientRows.length === 0 && (
                   <p
                     data-testid="visit-client-empty"
-                    className="px-sm py-xs text-sm text-neutral-500"
+                    className="px-sm py-sm text-body text-neutral-500"
                   >
                     Nenhum cliente encontrado.
                   </p>
@@ -517,7 +686,7 @@ export function VisitFormDialog({
                     type="button"
                     data-testid="visit-client-new"
                     onClick={openNewClient}
-                    className="flex w-full items-center gap-xs border-t border-neutral-100 px-sm py-xs text-left text-sm font-medium text-primary-700 hover:bg-primary-50"
+                    className="flex min-h-[44px] w-full items-center gap-xs border-t border-neutral-200 px-sm text-left text-body font-semibold text-primary hover:bg-neutral-50"
                   >
                     <Plus className="h-4 w-4" aria-hidden="true" />
                     Cadastrar cliente
@@ -530,7 +699,7 @@ export function VisitFormDialog({
                 type="button"
                 variant="link"
                 size="sm"
-                className="mt-xs h-auto px-0"
+                className="mt-xs min-h-[44px] px-0"
                 data-testid="visit-client-new-empty"
                 onClick={openNewClient}
               >
@@ -541,9 +710,9 @@ export function VisitFormDialog({
             {newClientOpen && (
               <div
                 data-testid="visit-new-client"
-                className="mt-xs space-y-sm rounded-md border border-neutral-200 bg-neutral-50 p-sm"
+                className="mt-xs space-y-sm rounded-md border border-neutral-200 bg-neutral-100 p-sm"
               >
-                <p className="text-sm font-medium text-neutral-800">Novo cliente</p>
+                <p className="text-label text-neutral-800">Novo cliente</p>
                 <div className="grid grid-cols-1 gap-sm sm:grid-cols-2">
                   <div>
                     <Label className={LABEL_CLASS} htmlFor="visit-new-client-name">
@@ -576,7 +745,11 @@ export function VisitFormDialog({
                   </div>
                 </div>
                 {newClientError && (
-                  <p data-testid="visit-new-client-error" role="alert" className="text-sm text-error-600">
+                  <p
+                    data-testid="visit-new-client-error"
+                    role="alert"
+                    className="text-[12px] leading-4 font-semibold text-error-600"
+                  >
                     {newClientError}
                   </p>
                 )}
@@ -602,50 +775,63 @@ export function VisitFormDialog({
               </div>
             )}
             {selectedClient && (
-              <p className="mt-xs text-xs text-primary-700">
-                Cliente selecionado: {selectedClient.fullName}
+              <p
+                data-testid="visit-client-selected"
+                className="mt-xs flex min-h-[44px] items-center gap-xs rounded-md bg-neutral-100 px-sm"
+              >
+                <span className="sr-only">Cliente selecionado: </span>
+                <span className="truncate font-serif text-[15px] font-semibold text-neutral-800">
+                  {toDisplayName(selectedClient.fullName)}
+                </span>
+                {selectedClient.phone && (
+                  <span className="shrink-0 text-[12px] tabular-nums text-neutral-500">
+                    {' · '}
+                    {formatPhoneBr(selectedClient.phone)}
+                  </span>
+                )}
               </p>
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
-            <div>
-              <Label className={LABEL_CLASS} htmlFor="visit-date">
-                Data
-              </Label>
-              <Input
-                id="visit-date"
-                data-testid="visit-date"
-                value={dateBr}
-                onChange={(e) => setDateBr(maskDateBR(e.target.value))}
-                placeholder="dd/mm/aaaa"
-                inputMode="numeric"
-                maxLength={10}
-                className="mt-xs"
-              />
+          <section className="space-y-sm" aria-label="Serviços">
+            <div className="flex items-center justify-between gap-sm">
+              <span className={LABEL_CLASS}>Serviço</span>
+              <span className="text-overline text-primary-500" data-testid="visit-service-count">
+                {chips.length} {chips.length === 1 ? 'selecionado' : 'selecionados'}
+              </span>
             </div>
-            <div>
-              <Label className={LABEL_CLASS} htmlFor="visit-package">
-                Pacote <span className="font-normal text-neutral-600">(opcional)</span>
-              </Label>
-              <select
-                id="visit-package"
-                data-testid="visit-package"
-                value={packageId}
-                onChange={(e) => choosePackage(e.target.value)}
-                className={SELECT_CLASS}
-              >
-                <option value="">Sem pacote</option>
-                {(packagesData?.packages ?? []).map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+            <div data-testid="visit-service-chips" className="flex flex-wrap items-center gap-1.5">
+              {chips.map((chip, i) => (
+                <span
+                  key={i}
+                  data-testid={`visit-service-chip-${i}`}
+                  className="inline-flex h-[34px] items-center gap-1.5 rounded-md border border-neutral-200 bg-neutral-100 px-3 text-[12px] font-semibold text-neutral-800"
+                >
+                  {chip.name}
+                  {chip.price && (
+                    <span className="whitespace-nowrap text-[11px] font-normal tabular-nums text-neutral-500">
+                      R$ {chip.price}
+                    </span>
+                  )}
+                </span>
+              ))}
+              {selectedPackage === null && lines.length < 10 && (
+                <button
+                  type="button"
+                  data-testid="visit-add-line"
+                  className="inline-flex min-h-[44px] items-center gap-1 rounded-md border border-dashed border-neutral-200 bg-white px-3 text-label text-neutral-800 hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  onClick={() =>
+                    setLines((cur) => {
+                      const last = cur[cur.length - 1];
+                      return [...cur, emptyLine('', last?.professionalId)];
+                    })
+                  }
+                >
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  Adicionar serviço
+                </button>
+              )}
             </div>
-          </div>
-
-          <div className="space-y-sm">
             {lines.map((line, i) => (
               <LineRow
                 key={i}
@@ -655,84 +841,131 @@ export function VisitFormDialog({
                 professionals={professionals}
                 lockedService={selectedPackage !== null}
                 canRemove={selectedPackage === null && lines.length > 1}
+                dateField={i === 0 ? dateField : undefined}
                 onChange={(patch) => patchLine(i, patch)}
                 onRemove={() => setLines((cur) => cur.filter((_, idx) => idx !== i))}
               />
             ))}
-            {selectedPackage === null && lines.length < 10 && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                data-testid="visit-add-line"
-                className="gap-xs"
-                onClick={() =>
-                  setLines((cur) => {
-                    const last = cur[cur.length - 1];
-                    return [...cur, emptyLine('', last?.professionalId)];
-                  })
-                }
-              >
-                <Plus className="h-4 w-4" />
-                Adicionar serviço
-              </Button>
-            )}
+          </section>
+
+          {error && (
+            <p
+              role="alert"
+              data-testid="visit-error"
+              className="flex items-start gap-xs text-[12px] leading-4 font-semibold text-error-600"
+            >
+              <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {error}
+            </p>
+          )}
+
+          <div>
+            <Label className={LABEL_CLASS} htmlFor="visit-package">
+              Pacote <span className={OPTIONAL_CLASS}>(opcional)</span>
+            </Label>
+            <select
+              id="visit-package"
+              data-testid="visit-package"
+              value={packageId}
+              onChange={(e) => choosePackage(e.target.value)}
+              className={SELECT_CLASS}
+            >
+              <option value="">Sem pacote</option>
+              {(packagesData?.packages ?? []).map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <fieldset className="rounded-md border border-neutral-200 p-sm">
-            <legend className="px-xs text-xs font-semibold text-neutral-700">
-              Sinal recebido (opcional)
-            </legend>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
-              <div>
-                <Label className={LABEL_CLASS} htmlFor="visit-deposit-amount">
-                  Valor
-                </Label>
-                <div className="relative mt-xs">
-                  <span className="absolute left-sm top-1/2 -translate-y-1/2 text-sm text-neutral-600">
-                    R$
+          <section className="rounded-md border border-neutral-200 bg-neutral-100">
+            <button
+              type="button"
+              data-testid="visit-deposit-toggle"
+              aria-expanded={depositOpen}
+              aria-controls="visit-deposit-content"
+              onClick={() => setDepositOpen((o) => !o)}
+              className="flex min-h-[44px] w-full items-center justify-between gap-sm rounded-md px-sm text-left text-label text-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span className="min-w-0 truncate">
+                Sinal <span className="font-normal text-neutral-500">(opcional)</span>
+                {depositAmount && (
+                  <span className="font-normal text-neutral-500">
+                    {': '}
+                    <span className="font-semibold tabular-nums text-neutral-800">
+                      R$ {depositAmount}
+                    </span>{' '}
+                    por {depositLabel}
                   </span>
-                  <Input
-                    id="visit-deposit-amount"
-                    data-testid="visit-deposit-amount"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(maskCurrency(e.target.value))}
-                    inputMode="numeric"
-                    placeholder="0,00"
-                    className="pl-9"
-                  />
+                )}
+              </span>
+              <ChevronDown
+                className={cn(
+                  'h-4 w-4 shrink-0 text-neutral-500 transition-transform',
+                  depositOpen && 'rotate-180',
+                )}
+                aria-hidden="true"
+              />
+            </button>
+            {depositOpen && (
+              <div
+                id="visit-deposit-content"
+                className="space-y-xs border-t border-neutral-200 px-sm pb-sm pt-sm"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
+                  <div>
+                    <Label className={LABEL_CLASS} htmlFor="visit-deposit-amount">
+                      Valor
+                    </Label>
+                    <div className="relative mt-xs">
+                      <span className="absolute left-sm top-1/2 -translate-y-1/2 text-body text-neutral-500">
+                        R$
+                      </span>
+                      <Input
+                        id="visit-deposit-amount"
+                        data-testid="visit-deposit-amount"
+                        value={depositAmount}
+                        onChange={(e) => setDepositAmount(maskCurrency(e.target.value))}
+                        inputMode="numeric"
+                        placeholder="0,00"
+                        className="pl-9 tabular-nums"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className={LABEL_CLASS} htmlFor="visit-deposit-method">
+                      Forma de pagamento
+                    </Label>
+                    <select
+                      id="visit-deposit-method"
+                      data-testid="visit-deposit-method"
+                      value={depositMethod}
+                      onChange={(e) => setDepositMethod(e.target.value)}
+                      className={SELECT_CLASS}
+                    >
+                      {PAYMENT_METHODS.map((m) => (
+                        <option key={m.value} value={m.value}>
+                          {m.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
+                <p className="text-[12px] leading-4 text-neutral-500">
+                  O sinal fica como crédito do cliente e é usado no fechamento da comanda.
+                </p>
               </div>
-              <div>
-                <Label className={LABEL_CLASS} htmlFor="visit-deposit-method">
-                  Forma de pagamento
-                </Label>
-                <select
-                  id="visit-deposit-method"
-                  data-testid="visit-deposit-method"
-                  value={depositMethod}
-                  onChange={(e) => setDepositMethod(e.target.value)}
-                  className={SELECT_CLASS}
-                >
-                  {PAYMENT_METHODS.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <p className="mt-xs text-xs text-neutral-600">
-              O sinal fica como crédito do cliente e é usado no fechamento da comanda.
-            </p>
-          </fieldset>
+            )}
+          </section>
 
           <div>
             <Label className={LABEL_CLASS} htmlFor="visit-notes">
-              Observações <span className="font-normal text-neutral-600">(opcional)</span>
+              Observações <span className={OPTIONAL_CLASS}>(opcional)</span>
             </Label>
             <Textarea
               id="visit-notes"
+              data-testid="visit-notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value.slice(0, 400))}
               rows={3}
@@ -741,28 +974,27 @@ export function VisitFormDialog({
             />
           </div>
 
-          {error && (
-            <p role="alert" data-testid="visit-error" className="text-sm text-error-600">
-              {error}
-            </p>
-          )}
-
           <div
             data-testid="visit-scroll-hint"
             aria-hidden="true"
             className={cn(
-              'sticky bottom-0 -mx-md -mb-md bg-gradient-to-t from-white via-white/90 to-transparent pt-md pb-xs text-center text-xs text-neutral-600 pointer-events-none sm:hidden',
+              'sticky bottom-0 -mx-md -mb-md border-t border-neutral-200 bg-white py-xs text-center text-[12px] leading-4 text-neutral-500 pointer-events-none sm:hidden',
               atBottom && 'hidden',
             )}
           >
             Role para ver mais campos
           </div>
         </div>
-        <footer className="flex justify-end gap-xs px-md py-md border-t border-neutral-200 bg-neutral-50">
-          <Button variant="outline" size="sm" onClick={close}>
+        <footer className="flex gap-sm px-md py-sm border-t border-neutral-200 bg-white sm:justify-end">
+          <Button variant="outline" className="flex-1 sm:flex-none" onClick={close}>
             Cancelar
           </Button>
-          <Button size="sm" data-testid="visit-submit" disabled={loading} onClick={handleSave}>
+          <Button
+            data-testid="visit-submit"
+            className="flex-1 sm:flex-none"
+            disabled={loading}
+            onClick={handleSave}
+          >
             {loading ? 'Salvando…' : 'Salvar'}
           </Button>
         </footer>

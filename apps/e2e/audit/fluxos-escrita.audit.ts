@@ -1,6 +1,11 @@
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { test, type Locator, type Page } from '@playwright/test';
-import { dragCardBySlots, openAgendaAt, slotHeightOf } from '../support/agenda-ui';
+import {
+  dragCardBySlots,
+  openAgendaAt,
+  pickProfessional,
+  slotHeightOf,
+} from '../support/agenda-ui';
 import {
   createClient,
   createProfessional,
@@ -82,10 +87,10 @@ test.describe('Fluxos com escrita (somente local semeado, D-12)', () => {
       await page.getByTestId('visit-client-search').fill(client.name);
       await c(page.getByTestId(`visit-client-option-${client.id}`));
       await page.getByTestId('visit-line-0-service').selectOption(seed.phase3.serviceId);
-      await page.getByTestId('visit-line-0-professional').selectOption(pro.id);
+      await pickProfessional(page, 0, pro.id);
       await c(page.getByTestId('visit-submit'));
       await page.getByText(/Comanda C-\d{4}-\d+ aberta/).waitFor({ timeout: 8000 });
-      return 'agendamento salvo; seleção de serviço/profissional por select nativo (contados como 0 cliques de abertura)';
+      return 'agendamento salvo; seleção de serviço por select nativo e profissional por select ou controle segmentado (contados como 0 cliques de abertura)';
     });
   });
 

@@ -101,7 +101,9 @@ describe('VisitFormDialog — cadastro rápido de cliente', () => {
     await waitFor(() =>
       expect(sent).toEqual({ input: { fullName: 'Ana Lima', phone: '+5511987654321' } }),
     );
-    expect(await screen.findByText('Cliente selecionado: Ana Lima')).toBeInTheDocument();
+    expect(await screen.findByTestId('visit-client-selected')).toHaveTextContent(
+      'Cliente selecionado: Ana Lima · (11) 98765-4321',
+    );
     expect(screen.queryByTestId('visit-new-client')).not.toBeInTheDocument();
   });
 

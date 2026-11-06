@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { gql } from '../support/graphql';
-import { openAgendaAt } from '../support/agenda-ui';
+import { openAgendaAt, openDeposit, pickProfessional } from '../support/agenda-ui';
 import {
   brl,
   createClient,
@@ -62,7 +62,8 @@ test.describe('Fluxo: agendamento com sinal, comanda, pagamento dividido e comis
     await page.getByTestId('visit-client-search').fill(clientName);
     await page.getByTestId(`visit-client-option-${clientId}`).click();
     await page.getByTestId('visit-line-0-service').selectOption(serviceId);
-    await page.getByTestId('visit-line-0-professional').selectOption(pro.id);
+    await pickProfessional(page, 0, pro.id);
+    await openDeposit(page);
     await page.getByTestId('visit-deposit-amount').fill('5000');
     await expect(page.getByTestId('visit-deposit-amount')).toHaveValue('50,00');
     await page.getByTestId('visit-deposit-method').selectOption('pix');
