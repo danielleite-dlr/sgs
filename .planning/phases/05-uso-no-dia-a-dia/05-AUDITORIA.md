@@ -124,8 +124,8 @@ Nos fluxos do celular só a marcação de horário foi cronometrada; os demais f
 | UX-06 | 05-11 | dff8996 | 2026-11-06 (staging, somente leitura) |
 | UX-07 | 05-11 | dff8996 | 2026-11-06 (staging, somente leitura) |
 | UX-08 | 05-11 | dff8996 | 2026-11-06 (staging, somente leitura) |
-| UX-09 | 05-12 | 8da3f19 | — |
-| UX-10 | 05-12 | 8da3f19 | — |
+| UX-09 | 05-12 | 8da3f19 | 2026-11-06 (staging, somente leitura) |
+| UX-10 | 05-12 | 8da3f19 | 2026-11-06 (staging, somente leitura) |
 | UX-11 | 05-13 | — | — |
 | UX-14 | 05-13 | — | — |
 | UX-12 | 05-14 | — | — |
@@ -135,6 +135,8 @@ Nos fluxos do celular só a marcação de horário foi cronometrada; os demais f
 | UX-17 | 05-16 | — | — |
 | UX-18 | 05-16 | — | — |
 | UX-19 | 05-16 | — | — |
+
+Nota UX-10 (05-12): o aviso não vinha do menu lateral, e sim da trilha no topo das páginas (breadcrumb do `PageHeader`), cujo separador era um `<li>` dentro do `<li>` do item. Aparecia em comanda, financeiro, comissões, noivas e contratos. O separador virou `<span>`, com o mesmo visual; o menu lateral já estava com HTML válido e ganhou teste de trava.
 
 ### Para depois (backlog)
 

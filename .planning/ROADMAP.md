@@ -263,7 +263,7 @@ Plans:
 - [x] 05-09-ux-lote-agenda-1-PLAN.md — Lote 1 de usabilidade: Agenda (UX-01, UX-04, UX-05)
 - [x] 05-10-ux-lote-agenda-2-PLAN.md — Lote 2 de usabilidade: Agenda no celular (UX-02, UX-03)
 - [x] 05-11-ux-lote-comanda-1-PLAN.md — Lote 3 de usabilidade: Comanda e caixa (UX-06, UX-07, UX-08)
-- [ ] 05-12-ux-lote-comanda-2-PLAN.md — Lote 4 de usabilidade: Comanda no celular e menu (UX-09, UX-10)
+- [x] 05-12-ux-lote-comanda-2-PLAN.md — Lote 4 de usabilidade: Comanda no celular e menu (UX-09, UX-10)
 - [ ] 05-13-ux-lote-noivas-1-PLAN.md — Lote 5 de usabilidade: Noivas e contratos (UX-11, UX-14)
 - [ ] 05-14-ux-lote-noivas-2-PLAN.md — Lote 6 de usabilidade: Contrato no celular e completar dados (UX-12, UX-13)
 - [ ] 05-15-ux-lote-clientes-PLAN.md — Lote 7 de usabilidade: Clientes (UX-15, UX-16 só padronizar nomes)
