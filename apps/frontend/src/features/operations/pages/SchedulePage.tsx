@@ -282,7 +282,7 @@ function FilterPanel(props: FilterPanelProps) {
               }
             }}
             className={cn(
-              "min-h-[44px] px-md md:min-h-0 md:px-sm md:py-xs rounded-full text-xs border transition-colors",
+              "min-h-[44px] shrink-0 px-md md:min-h-0 md:px-sm md:py-xs rounded-full text-xs border transition-colors",
               props.visibleProfIds.size === props.professionals.length
                 ? "bg-neutral-800 text-white border-neutral-800"
                 : "bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50",
@@ -298,7 +298,7 @@ function FilterPanel(props: FilterPanelProps) {
                 type="button"
                 onClick={() => props.onToggleProf(pro.id)}
                 className={cn(
-                  "h-11 w-11 md:h-7 md:w-7 rounded-full text-xs font-semibold border transition-colors flex items-center justify-center",
+                  "h-11 w-11 shrink-0 md:h-7 md:w-7 rounded-full text-xs font-semibold border transition-colors flex items-center justify-center",
                   visible
                     ? "text-white border-transparent"
                     : "bg-white text-neutral-500 border-neutral-300 hover:bg-neutral-50",

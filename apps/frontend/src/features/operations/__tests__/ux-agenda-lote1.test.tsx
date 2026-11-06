@@ -69,3 +69,38 @@ describe('UX-05: calendário lateral e selo', () => {
     expect(container.textContent).not.toMatch(/Indica/);
   });
 });
+
+describe('UX-02: filtros da agenda com equipe grande', () => {
+  it('os botões de profissional não encolhem abaixo de 44 px (shrink-0)', async () => {
+    useAuthStore.setState({ roleName: 'ADMIN', memberId: 'x' });
+    const members = Array.from({ length: 12 }, (_, i) => ({
+      id: `p${i}`,
+      displayName: `Profissional ${i}`,
+      email: `p${i}@x.com`,
+      roleName: 'PROFESSIONAL',
+      seniorityTier: null,
+      isProfessional: true,
+    }));
+    const mocks: MockedResponse[] = [
+      { request: { query: MembersQuery }, result: { data: { members } }, maxUsageCount: 10 },
+      {
+        request: { query: AppointmentsQuery },
+        variableMatcher: () => true,
+        result: { data: { appointments: [] } },
+        maxUsageCount: 10,
+      },
+    ];
+    render(
+      <MockedProvider mocks={mocks}>
+        <MemoryRouter>
+          <SchedulePage />
+        </MemoryRouter>
+      </MockedProvider>,
+    );
+    const filtros = await screen.findByTestId('filters-open');
+    filtros.click();
+    const pros = await screen.findAllByRole('button', { name: / — (visível|oculto)$/ });
+    expect(pros).toHaveLength(12);
+    for (const b of pros) expect(b.className).toMatch(/\bshrink-0\b/);
+  });
+});
