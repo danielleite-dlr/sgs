@@ -67,6 +67,7 @@ import { DayGrid } from "../components/calendar/DayGrid";
 import { WeekGrid } from "../components/calendar/WeekGrid";
 import { maskDateBR } from "../lib/input-masks";
 import { weekRange } from "../lib/week-range";
+import { shortProfessionalName } from "../lib/professional-label";
 import {
   APPT_STATUSES,
   HIDDEN_STATUSES,
@@ -281,7 +282,7 @@ function FilterPanel(props: FilterPanelProps) {
               }
             }}
             className={cn(
-              "px-sm py-xs rounded-full text-xs border transition-colors",
+              "min-h-[44px] px-md md:min-h-0 md:px-sm md:py-xs rounded-full text-xs border transition-colors",
               props.visibleProfIds.size === props.professionals.length
                 ? "bg-neutral-800 text-white border-neutral-800"
                 : "bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50",
@@ -297,7 +298,7 @@ function FilterPanel(props: FilterPanelProps) {
                 type="button"
                 onClick={() => props.onToggleProf(pro.id)}
                 className={cn(
-                  "h-7 w-7 rounded-full text-xs font-semibold border transition-colors flex items-center justify-center",
+                  "h-11 w-11 md:h-7 md:w-7 rounded-full text-xs font-semibold border transition-colors flex items-center justify-center",
                   visible
                     ? "text-white border-transparent"
                     : "bg-white text-neutral-500 border-neutral-300 hover:bg-neutral-50",
@@ -942,7 +943,7 @@ export function SchedulePage() {
               size="icon"
               onClick={() => shiftDay(-1)}
               aria-label={view === "week" ? "Semana anterior" : "Dia anterior"}
-              className="h-8 w-8"
+              className="h-11 w-11 md:h-8 md:w-8"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -968,7 +969,7 @@ export function SchedulePage() {
               size="icon"
               onClick={() => shiftDay(1)}
               aria-label={view === "week" ? "Próxima semana" : "Próximo dia"}
-              className="h-8 w-8"
+              className="h-11 w-11 md:h-8 md:w-8"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -1040,21 +1041,22 @@ export function SchedulePage() {
           {/* Filtros (mobile) */}
           <Button
             variant="outline"
-            size="icon"
+            size="sm"
+            data-testid="filters-open"
             onClick={() => setFiltersOpen(true)}
-            aria-label="Filtros"
-            className="lg:hidden"
+            className="lg:hidden gap-xs min-h-[44px] min-w-[44px]"
           >
             <SlidersHorizontal className="h-4 w-4" />
+            <span className="text-label">Filtros</span>
           </Button>
 
           {/* Cluster avatares — alinhado à direita */}
-          <div className="flex items-center gap-xs ml-auto">
+          <div className="flex items-center gap-xs ml-auto min-w-0 max-w-full">
             <Button
               variant="ghost"
               size="icon"
               aria-label="Mostrar/ocultar profissionais"
-              className="h-8 w-8 text-neutral-500"
+              className="h-11 w-11 md:h-8 md:w-8 shrink-0 text-neutral-500"
               onClick={() => {
                 const allVisible = visibleProfIds.size === professionals.length;
                 if (allVisible) {
@@ -1072,7 +1074,10 @@ export function SchedulePage() {
                 <EyeOff className="h-4 w-4" />
               )}
             </Button>
-            <div className="flex items-center -space-x-2">
+            <div
+              className="flex items-center gap-xs overflow-x-auto md:overflow-visible md:gap-0 md:-space-x-2"
+              data-testid="prof-avatars"
+            >
               {professionals.slice(0, 4).map((pro) => {
                 const visible = visibleProfIds.has(pro.id);
                 return (
@@ -1081,13 +1086,22 @@ export function SchedulePage() {
                     type="button"
                     onClick={() => toggleProf(pro.id)}
                     title={pro.name}
+                    aria-label={`Agenda de ${pro.name}`}
+                    aria-pressed={visible}
                     className={cn(
-                      "h-8 w-8 rounded-full ring-2 ring-white flex items-center justify-center text-white text-xs font-semibold transition-opacity",
+                      "shrink-0 flex items-center gap-xs rounded-full min-h-[44px] min-w-[44px] pr-sm md:min-h-0 md:min-w-0 md:pr-0 transition-opacity",
                       !visible && "opacity-30",
                     )}
-                    style={{ backgroundColor: pro.color }}
                   >
-                    {pro.initials}
+                    <span
+                      className="h-8 w-8 shrink-0 rounded-full ring-2 ring-white flex items-center justify-center text-white text-xs font-semibold"
+                      style={{ backgroundColor: pro.color }}
+                    >
+                      {pro.initials}
+                    </span>
+                    <span className="truncate max-w-[88px] text-xs font-medium text-neutral-700 md:hidden">
+                      {shortProfessionalName(pro.name)}
+                    </span>
                   </button>
                 );
               })}

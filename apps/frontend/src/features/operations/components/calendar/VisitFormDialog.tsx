@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import { toast } from 'sonner';
 import { Plus, Trash2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -279,6 +280,13 @@ export function VisitFormDialog({
   const [depositMethod, setDepositMethod] = useState('pix');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
+  // UX-03: no celular, avisa que há mais campos até o corpo chegar ao fim.
+  const [atBottom, setAtBottom] = useState(false);
+  const updateAtBottom = useCallback((el: HTMLElement | null) => {
+    if (!el) return;
+    setAtBottom(el.scrollTop + el.clientHeight >= el.scrollHeight - 8);
+  }, []);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
 
   const { data: clientsData } = useQuery<ClientsListResult>(ClientsListQuery, {
     variables: { search: clientSearch || null, limit: 10, offset: 0 },
@@ -305,6 +313,11 @@ export function VisitFormDialog({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialTime]);
+
+  // Remede o aviso de rolagem quando o conteúdo do corpo muda de altura.
+  useEffect(() => {
+    if (open) updateAtBottom(bodyRef.current);
+  }, [open, lines.length, packageId, newClientOpen, error, updateAtBottom]);
 
   const clientRows = clientsData?.clients.rows ?? [];
   const selectedClient = clientId ? { id: clientId, fullName: clientName } : null;
@@ -447,7 +460,7 @@ export function VisitFormDialog({
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())}>
       <DialogContent
         data-testid="visit-form"
-        className="max-w-[720px] p-0 max-h-[90vh] flex flex-col"
+        className="max-w-[720px] p-0 max-sm:p-0 max-sm:border-0 h-[100dvh] max-h-[100dvh] rounded-none sm:h-auto sm:max-h-[90vh] sm:rounded-lg flex flex-col"
       >
         <header className="flex items-center justify-between px-md py-md border-b border-neutral-200 bg-neutral-50">
           <DialogTitle className="text-sm font-bold uppercase tracking-wide text-neutral-800">
@@ -457,7 +470,12 @@ export function VisitFormDialog({
             Informe cliente, serviços, profissionais, horários e o sinal recebido.
           </DialogDescription>
         </header>
-        <div className="flex-1 overflow-y-auto px-md py-md space-y-md">
+        <div
+          ref={bodyRef}
+          data-testid="visit-form-body"
+          onScroll={(e) => updateAtBottom(e.currentTarget)}
+          className="flex-1 min-h-0 overflow-y-auto px-md py-md space-y-md"
+        >
           <div>
             <Label className={LABEL_CLASS} htmlFor="visit-client-search">
               Cliente
@@ -728,6 +746,17 @@ export function VisitFormDialog({
               {error}
             </p>
           )}
+
+          <div
+            data-testid="visit-scroll-hint"
+            aria-hidden="true"
+            className={cn(
+              'sticky bottom-0 -mx-md -mb-md bg-gradient-to-t from-white via-white/90 to-transparent pt-md pb-xs text-center text-xs text-neutral-600 pointer-events-none sm:hidden',
+              atBottom && 'hidden',
+            )}
+          >
+            Role para ver mais campos
+          </div>
         </div>
         <footer className="flex justify-end gap-xs px-md py-md border-t border-neutral-200 bg-neutral-50">
           <Button variant="outline" size="sm" onClick={close}>
