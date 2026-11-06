@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-11-06T02:56:35.332Z"
+last_updated: "2026-11-06T03:07:34.853Z"
 last_activity: 2026-11-06
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 72
-  completed_plans: 64
+  total_plans: 80
+  completed_plans: 66
   percent: 100
 ---
 
@@ -151,6 +151,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-10: link Abrir comanda só com comandaId && isPathEnabled('/comanda'); código sempre visível em appointment-comanda-code
 - [Phase 03]: 03-11: flag comanda ligada com mock removido; PaymentPanel usa computePaymentSummary e só inclui a linha digitada no preview (dirty)
 - [Phase 05]: Auditoria 05-01: credencial só em /root/sgs/.env.audit; usuário auditoria.ux@sgs.invalid a desativar no 05-20
+- [Phase 05]: 05-AUDITORIA aprovada: UX-01..UX-15, UX-17, UX-18, UX-19 (sim); UX-16 sim parcial (só padronizar a caixa dos nomes; aviso de duplicidade vai ao backlog); UX-20 depois (backlog 999.6). Aprovação em 2026-11-06.
 
 ### Pending Todos
 
