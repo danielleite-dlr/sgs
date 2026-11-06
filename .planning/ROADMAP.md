@@ -261,7 +261,7 @@ Plans:
 - [x] 05-07-e2e-deploy-previsao-PLAN.md — E2E da previsão, gate completo, backup, deploy no staging e CI
 - [x] 05-08-gerar-lotes-correcao-PLAN.md — Aprovação da auditoria pela usuária (2026-11-06) + gera os lotes de correção 05-09…05-16
 - [x] 05-09-ux-lote-agenda-1-PLAN.md — Lote 1 de usabilidade: Agenda (UX-01, UX-04, UX-05)
-- [ ] 05-10-ux-lote-agenda-2-PLAN.md — Lote 2 de usabilidade: Agenda no celular (UX-02, UX-03)
+- [x] 05-10-ux-lote-agenda-2-PLAN.md — Lote 2 de usabilidade: Agenda no celular (UX-02, UX-03)
 - [ ] 05-11-ux-lote-comanda-1-PLAN.md — Lote 3 de usabilidade: Comanda e caixa (UX-06, UX-07, UX-08)
 - [ ] 05-12-ux-lote-comanda-2-PLAN.md — Lote 4 de usabilidade: Comanda no celular e menu (UX-09, UX-10)
 - [ ] 05-13-ux-lote-noivas-1-PLAN.md — Lote 5 de usabilidade: Noivas e contratos (UX-11, UX-14)
