@@ -16,7 +16,6 @@ import {
   EyeOff,
   X,
   Users,
-  AlertCircle,
   Facebook,
   Instagram,
   Youtube,
@@ -117,12 +116,13 @@ interface InlineCalendarProps {
   onSelect: (d: Date) => void;
 }
 
-function InlineCalendar({ selected, onSelect }: InlineCalendarProps) {
+export function InlineCalendar({ selected, onSelect }: InlineCalendarProps) {
   const [viewDate, setViewDate] = useState(new Date(selected));
-  const monthLabel = viewDate.toLocaleDateString("pt-BR", {
+  const rawMonthLabel = viewDate.toLocaleDateString("pt-BR", {
     month: "long",
     year: "numeric",
   });
+  const monthLabel = rawMonthLabel.charAt(0).toUpperCase() + rawMonthLabel.slice(1);
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
   const firstDay = new Date(year, month, 1);
@@ -151,7 +151,7 @@ function InlineCalendar({ selected, onSelect }: InlineCalendarProps) {
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <span className="text-sm font-semibold capitalize text-neutral-800">
+        <span className="text-sm font-semibold text-neutral-800">
           {monthLabel}
         </span>
         <Button
@@ -1048,7 +1048,7 @@ export function SchedulePage() {
             <SlidersHorizontal className="h-4 w-4" />
           </Button>
 
-          {/* Cluster avatares + Pgto Indica — alinhado à direita */}
+          {/* Cluster avatares — alinhado à direita */}
           <div className="flex items-center gap-xs ml-auto">
             <Button
               variant="ghost"
@@ -1096,15 +1096,6 @@ export function SchedulePage() {
                   +{professionals.length - 4}
                 </span>
               )}
-            </div>
-            {/* Pgto Indica indicator */}
-            <div className="hidden sm:flex items-center gap-xs px-sm py-xs rounded-md bg-warning-50 border border-warning-200">
-              <AlertCircle className="h-3.5 w-3.5 text-warning-600" />
-              <span className="text-[11px] font-medium text-warning-700 leading-none">
-                Pgto
-                <br />
-                Indica
-              </span>
             </div>
           </div>
         </div>

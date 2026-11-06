@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import { toast } from 'sonner';
-import { Plus, Trash2, X } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -456,9 +456,6 @@ export function VisitFormDialog({
           <DialogDescription className="sr-only">
             Informe cliente, serviços, profissionais, horários e o sinal recebido.
           </DialogDescription>
-          <Button variant="ghost" size="icon" onClick={close} aria-label="Fechar">
-            <X className="h-4 w-4" />
-          </Button>
         </header>
         <div className="flex-1 overflow-y-auto px-md py-md space-y-md">
           <div>
