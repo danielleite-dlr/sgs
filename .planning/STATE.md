@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-03-PLAN.md
-last_updated: "2026-11-06T03:01:40.561Z"
+stopped_at: Completed 05-04-PLAN.md
+last_updated: "2026-11-06T03:11:23.924Z"
 last_activity: 2026-11-06
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 72
-  completed_plans: 67
+  completed_plans: 68
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 05 (uso-no-dia-a-dia) — EXECUTING
-Plan: 3 of 10
+Plan: 4 of 10
 Status: Ready to execute
 Last activity: 2026-11-06
 
@@ -78,6 +78,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 03 P11 | 110min | 3 tasks | 18 files |
 | Phase 05 P01 | 75min | 2 tasks | 7 files |
 | Phase 05 P03 | 20min | 2 tasks | 7 files |
+| Phase 05 P04 | 25min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -152,6 +153,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-10: link Abrir comanda só com comandaId && isPathEnabled('/comanda'); código sempre visível em appointment-comanda-code
 - [Phase 03]: 03-11: flag comanda ligada com mock removido; PaymentPanel usa computePaymentSummary e só inclui a linha digitada no preview (dirty)
 - [Phase 05]: Auditoria 05-01: credencial só em /root/sgs/.env.audit; usuário auditoria.ux@sgs.invalid a desativar no 05-20
+- [Phase 05]: 05-04: comissão estimada para todos os agendamentos da janela (inclusive de contrato); entrada só sem contrato
 
 ### Pending Todos
 
@@ -195,6 +197,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-06T03:01:40.551Z
-Stopped at: Completed 05-03-PLAN.md
+Last session: 2026-11-06T03:11:23.915Z
+Stopped at: Completed 05-04-PLAN.md
 Resume file: None
