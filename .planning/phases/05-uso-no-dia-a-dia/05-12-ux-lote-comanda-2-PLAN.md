@@ -121,7 +121,7 @@ Output: correções commitadas, `05-AUDITORIA.md` com os hashes e `05-12-SUMMARY
   </read_first>
   <action>
 1. Rodar o gate completo, na raiz do repositório, e só seguir com tudo verde: `pnpm -r typecheck`, `pnpm -r --if-present lint`, `pnpm --filter @sgs/backend test`, `pnpm --filter @sgs/backend test:integration`, `pnpm --filter @sgs/frontend test`, `corepack pnpm --filter @sgs/e2e test:e2e`. Falha causada pelos arquivos deste lote: corrigir. Falha antiga em arquivo não tocado: registrar em `deferred-items.md` da fase e não corrigir.
-2. Commit dos arquivos do lote (adicionar um a um, nunca `git add .`): `fix(05-12): comanda no celular e estrutura do menu (UX-09, UX-10)`, com o trailer `Co-Authored-By` que o ambiente indicar.
+2. Commit dos arquivos do lote (adicionar um a um, nunca `git add .`): `fix(05-12): comanda no celular e estrutura do menu (UX-09, UX-10)`, com o trailer `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 3. Em `05-AUDITORIA.md`, seção `## Correções`, preencher a coluna `Corrigido em (commit)` das linhas UX-09, UX-10 com o hash curto (`git rev-parse --short HEAD`) e commitar com `docs(05-12): registra commit das correções UX-09, UX-10`.
 4. `git push origin master`.
 5. Este lote não tem migration, então não precisa de backup. Rodar `./scripts/deploy-staging.sh`.
