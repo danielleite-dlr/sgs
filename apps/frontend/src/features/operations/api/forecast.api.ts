@@ -6,7 +6,10 @@ export type ForecastKind =
   | "contract_installment"
   | "contract_balance"
   | "commission"
+  | "package_cost"
   | "fixed_expense";
+
+export type ForecastCostGroup = "professional" | "operational" | "fixed";
 
 export interface ForecastItem {
   date: string;
@@ -18,6 +21,8 @@ export interface ForecastItem {
   overdue: boolean;
   noRule: boolean;
   withoutProfessional: boolean;
+  /** Só nas saídas; null nas entradas. */
+  costGroup: ForecastCostGroup | null;
 }
 
 export interface ForecastBucket {
@@ -27,6 +32,9 @@ export interface ForecastBucket {
   outflow: string;
   balance: string;
   overdueInflow: string;
+  professionalOutflow: string;
+  operationalOutflow: string;
+  fixedOutflow: string;
 }
 
 export interface CashForecast {
@@ -37,6 +45,9 @@ export interface CashForecast {
   outflowTotal: string;
   balance: string;
   overdueInflowTotal: string;
+  professionalOutflowTotal: string;
+  operationalOutflowTotal: string;
+  fixedOutflowTotal: string;
   noRuleCount: number;
   withoutProfessionalCount: number;
   buckets: ForecastBucket[];
@@ -85,6 +96,9 @@ export const CashForecastQuery = gql`
       outflowTotal
       balance
       overdueInflowTotal
+      professionalOutflowTotal
+      operationalOutflowTotal
+      fixedOutflowTotal
       noRuleCount
       withoutProfessionalCount
       buckets {
@@ -94,6 +108,9 @@ export const CashForecastQuery = gql`
         outflow
         balance
         overdueInflow
+        professionalOutflow
+        operationalOutflow
+        fixedOutflow
       }
       items {
         date
@@ -105,6 +122,7 @@ export const CashForecastQuery = gql`
         overdue
         noRule
         withoutProfessional
+        costGroup
       }
     }
   }
@@ -192,7 +210,14 @@ export const FORECAST_KIND_LABELS: Record<ForecastKind, string> = {
   contract_installment: "Parcela de contrato",
   contract_balance: "Restante de contrato",
   commission: "Comissão",
+  package_cost: "Outro custo do pacote",
   fixed_expense: "Despesa fixa",
+};
+
+export const FORECAST_COST_GROUP_LABELS: Record<ForecastCostGroup, string> = {
+  professional: "Custo profissional",
+  operational: "Custo operacional",
+  fixed: "Custo fixo",
 };
 
 /** Janela de `days` dias (padrão 30) a partir de hoje no fuso da organização; `to` é exclusivo. */

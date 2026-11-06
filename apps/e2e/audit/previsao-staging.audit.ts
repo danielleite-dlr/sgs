@@ -20,6 +20,11 @@ test('previsão de 30 dias abre no painel e no detalhe sem erro (somente leitura
   await expect(page.getByTestId('forecast-card').getByText('Previsão de caixa')).toBeVisible();
   await page.waitForLoadState('networkidle').catch(() => undefined);
   await expect(page.getByText(ERRO)).toHaveCount(0);
+  const cardGroups = page.getByTestId('forecast-card').getByTestId('forecast-cost-groups');
+  for (const label of ['Custo profissional', 'Custo operacional', 'Custo fixo']) {
+    await expect(cardGroups.getByText(label)).toBeVisible();
+  }
+  console.log(`[previsao:${project}] painel: ${(await cardGroups.innerText()).replace(/\s+/g, ' ')}`);
   await page.screenshot({ path: `${dir}/90-previsao-painel.png`, fullPage: true });
 
   await page.getByRole('link', { name: /Ver detalhe/ }).first().click();
@@ -28,6 +33,11 @@ test('previsão de 30 dias abre no painel e no detalhe sem erro (somente leitura
   ).toBeVisible();
   await page.waitForLoadState('networkidle').catch(() => undefined);
   await expect(page.getByText(ERRO)).toHaveCount(0);
+  const detailGroups = page.getByTestId('forecast-cost-groups');
+  for (const label of ['Custo profissional', 'Custo operacional', 'Custo fixo']) {
+    await expect(detailGroups.getByText(label)).toBeVisible();
+  }
+  console.log(`[previsao:${project}] detalhe: ${(await detailGroups.innerText()).replace(/\s+/g, ' ')}`);
   await page.screenshot({ path: `${dir}/90-previsao-detalhe.png`, fullPage: true });
 
   if (project === 'mobile') {

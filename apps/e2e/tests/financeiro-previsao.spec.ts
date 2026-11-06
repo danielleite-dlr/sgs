@@ -41,6 +41,14 @@ test('despesa fixa cadastrada entra na previsão do painel e no detalhe', async 
   await expect(outflow).toBeVisible();
   expect(parseBrl((await outflow.textContent()) ?? '')).toBeGreaterThanOrEqual(1234.56);
 
+  // Saídas por grupo de custo, bem visíveis no cartão.
+  const groups = page.getByTestId('forecast-card').getByTestId('forecast-cost-groups');
+  await expect(groups.getByText('Custo profissional')).toBeVisible();
+  await expect(groups.getByText('Custo operacional')).toBeVisible();
+  const fixed = groups.getByText('Custo fixo').locator('xpath=following-sibling::dd[1]');
+  await expect(fixed).toBeVisible();
+  expect(parseBrl((await fixed.textContent()) ?? '')).toBeGreaterThanOrEqual(1234.56);
+
   // Detalhe mostra a origem.
   await page.getByRole('link', { name: /Ver detalhe/ }).first().click();
   await expect(page).toHaveURL(/financeiro\/previsao/);
@@ -51,6 +59,12 @@ test('despesa fixa cadastrada entra na previsão do painel e no detalhe', async 
   await expect(row).toBeVisible();
   await expect(row.getByText('Despesa fixa', { exact: true })).toBeVisible();
   await expect(row.getByText('R$ 1.234,56')).toBeVisible();
+  await expect(row.getByText('Custo fixo', { exact: true })).toBeVisible();
+  const detailGroups = page.getByTestId('forecast-cost-groups');
+  await expect(detailGroups.getByText('Custo profissional')).toBeVisible();
+  await expect(detailGroups.getByText('Custo operacional')).toBeVisible();
+  const detailFixed = detailGroups.getByText('Custo fixo').locator('xpath=following-sibling::dd[1]');
+  expect(parseBrl((await detailFixed.textContent()) ?? '')).toBeGreaterThanOrEqual(1234.56);
 
   // Limpeza pela UI.
   await navigateViaMenu(page, 'Financeiro', 'Despesas fixas');

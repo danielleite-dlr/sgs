@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import { MemoryRouter } from 'react-router-dom';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
@@ -25,6 +25,9 @@ const forecast = (over: Record<string, unknown> = {}) => ({
   outflowTotal: '400.00',
   balance: '1100.00',
   overdueInflowTotal: '0.00',
+  professionalOutflowTotal: '100.00',
+  operationalOutflowTotal: '240.00',
+  fixedOutflowTotal: '60.00',
   noRuleCount: 0,
   withoutProfessionalCount: 0,
   buckets: [
@@ -36,6 +39,9 @@ const forecast = (over: Record<string, unknown> = {}) => ({
       outflow: '400.00',
       balance: '1100.00',
       overdueInflow: '0.00',
+      professionalOutflow: '100.00',
+      operationalOutflow: '240.00',
+      fixedOutflow: '60.00',
     },
   ],
   items: [
@@ -50,6 +56,7 @@ const forecast = (over: Record<string, unknown> = {}) => ({
       overdue: false,
       noRule: false,
       withoutProfessional: false,
+      costGroup: null,
     },
   ],
   ...over,
@@ -88,6 +95,17 @@ describe('ForecastCard', () => {
     expect(screen.getByText('Saídas previstas')).toBeInTheDocument();
     expect(screen.getByText('Saldo previsto')).toBeInTheDocument();
     expect(screen.getByText('Previsão de caixa')).toBeInTheDocument();
+  });
+
+  it('mostra as saídas por grupo de custo', async () => {
+    renderCard(ok());
+    const groups = await screen.findByTestId('forecast-cost-groups');
+    expect(within(groups).getByText('Custo profissional')).toBeInTheDocument();
+    expect(within(groups).getByText('R$ 100,00')).toBeInTheDocument();
+    expect(within(groups).getByText('Custo operacional')).toBeInTheDocument();
+    expect(within(groups).getByText('R$ 240,00')).toBeInTheDocument();
+    expect(within(groups).getByText('Custo fixo')).toBeInTheDocument();
+    expect(within(groups).getByText('R$ 60,00')).toBeInTheDocument();
   });
 
   it('avisa o valor em atraso', async () => {

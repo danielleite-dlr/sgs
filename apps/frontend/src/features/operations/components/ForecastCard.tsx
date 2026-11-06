@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
 import { useHasPermission } from '../operations-permissions';
-import { CashForecastQuery, forecastWindow, weekLabel, type CashForecastResult } from '../api/forecast.api';
+import { CashForecastQuery, FORECAST_COST_GROUP_LABELS, forecastWindow, weekLabel, type CashForecastResult } from '../api/forecast.api';
 
 const GREEN = '#1D9E75';
 const RED = '#B42318';
@@ -96,6 +96,22 @@ export function ForecastCard() {
                 <p className="text-xl font-semibold" style={{ color: RED }}>
                   {brl(forecast.outflowTotal)}
                 </p>
+                <dl className="mt-xs flex flex-col gap-0.5 text-sm" data-testid="forecast-cost-groups">
+                  {(
+                    [
+                      ['professional', forecast.professionalOutflowTotal],
+                      ['operational', forecast.operationalOutflowTotal],
+                      ['fixed', forecast.fixedOutflowTotal],
+                    ] as const
+                  ).map(([group, value]) => (
+                    <div key={group} className="flex justify-between gap-sm">
+                      <dt className="text-neutral-700">{FORECAST_COST_GROUP_LABELS[group]}</dt>
+                      <dd className="font-medium" style={{ color: RED }}>
+                        {brl(value)}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
               </div>
               <div>
                 <p className="text-sm text-neutral-600">Saldo previsto</p>

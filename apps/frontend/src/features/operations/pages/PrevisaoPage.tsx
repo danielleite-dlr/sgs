@@ -14,6 +14,7 @@ import { brDateToIso, isoToBrDate, maskDateBR } from '../lib/input-masks';
 import { addDays, customPeriod } from '../lib/period';
 import {
   CashForecastQuery,
+  FORECAST_COST_GROUP_LABELS,
   FORECAST_KIND_LABELS,
   forecastWindow,
   weekLabel,
@@ -146,7 +147,7 @@ export function PrevisaoPage() {
         breadcrumbs={[{ label: 'Financeiro', to: '/financeiro' }, { label: 'Previsão de caixa' }]}
       />
       <p className="-mt-sm mb-md text-sm text-neutral-600">
-        Agendamentos confirmados e parcelas de contratos a receber, menos comissões estimadas e despesas fixas.
+        Agendamentos confirmados e parcelas de contratos a receber, menos custos: profissional (comissões estimadas), operacional (outros custos dos pacotes, como lanche, champagne e assistente, uma vez por contrato na data do evento) e fixo (despesas fixas).
       </p>
       {canRead && (
         <div className="mb-md flex flex-col gap-xs">
@@ -207,6 +208,29 @@ export function PrevisaoPage() {
               </p>
             </div>
           </div>
+          <div
+            className="rounded-md border border-neutral-200 bg-white p-md"
+            data-testid="forecast-cost-groups"
+            aria-label="Saídas por grupo de custo"
+          >
+            <h2 className="mb-sm text-sm font-semibold text-neutral-800">Saídas por grupo de custo</h2>
+            <dl className="grid grid-cols-1 gap-md sm:grid-cols-3">
+              {(
+                [
+                  ['professional', forecast.professionalOutflowTotal],
+                  ['operational', forecast.operationalOutflowTotal],
+                  ['fixed', forecast.fixedOutflowTotal],
+                ] as const
+              ).map(([group, value]) => (
+                <div key={group}>
+                  <dt className="text-sm text-neutral-600">{FORECAST_COST_GROUP_LABELS[group]}</dt>
+                  <dd className="text-lg font-semibold" style={{ color: RED }}>
+                    {brl(value)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
           {forecast.overdueInflowTotal !== '0.00' && (
             <div>
               <Badge variant="warning">Inclui {brl(forecast.overdueInflowTotal)} em atraso</Badge>
@@ -227,6 +251,10 @@ export function PrevisaoPage() {
                 <p className="mb-sm text-sm text-neutral-600">
                   Entradas {brl(b.inflow)} · Saídas {brl(b.outflow)} · Saldo {signed(b.balance)}
                 </p>
+                <p className="mb-sm text-sm text-neutral-600" data-testid={`forecast-week-groups-${i + 1}`}>
+                  Custo profissional {brl(b.professionalOutflow)} · Custo operacional {brl(b.operationalOutflow)} ·
+                  Custo fixo {brl(b.fixedOutflow)}
+                </p>
                 {items.length === 0 ? (
                   <p className="text-sm text-neutral-500">Nada previsto nesta semana.</p>
                 ) : (
@@ -235,6 +263,7 @@ export function PrevisaoPage() {
                       <TableRow>
                         <TableHead>Data</TableHead>
                         <TableHead>Origem</TableHead>
+                        <TableHead>Grupo</TableHead>
                         <TableHead>Descrição</TableHead>
                         <TableHead className="text-right">Valor</TableHead>
                       </TableRow>
@@ -245,6 +274,13 @@ export function PrevisaoPage() {
                           <TableCell>{ddMm(it.date)}</TableCell>
                           <TableCell>
                             <Badge variant="outline">{FORECAST_KIND_LABELS[it.kind]}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            {it.costGroup ? (
+                              <Badge variant="secondary">{FORECAST_COST_GROUP_LABELS[it.costGroup]}</Badge>
+                            ) : (
+                              '—'
+                            )}
                           </TableCell>
                           <TableCell>
                             <span>{it.label}</span>{' '}

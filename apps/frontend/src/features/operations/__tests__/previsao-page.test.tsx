@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
 import { MemoryRouter } from 'react-router-dom';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
@@ -17,6 +17,7 @@ const item = (over: Record<string, unknown>) => ({
   overdue: false,
   noRule: false,
   withoutProfessional: false,
+  costGroup: null,
   ...over,
 });
 
@@ -28,6 +29,9 @@ const bucket = (start: string, end: string) => ({
   outflow: '100.00',
   balance: '200.00',
   overdueInflow: '0.00',
+  professionalOutflow: '12.34',
+  operationalOutflow: '56.78',
+  fixedOutflow: '30.88',
 });
 
 const data = {
@@ -39,6 +43,9 @@ const data = {
   outflowTotal: '100.00',
   balance: '200.00',
   overdueInflowTotal: '50.00',
+  professionalOutflowTotal: '12.34',
+  operationalOutflowTotal: '56.78',
+  fixedOutflowTotal: '30.88',
   noRuleCount: 2,
   withoutProfessionalCount: 1,
   buckets: [bucket('2026-11-05', '2026-11-12'), bucket('2026-11-12', '2026-11-19')],
@@ -49,11 +56,20 @@ const data = {
     item({
       kind: 'commission',
       direction: 'out',
+      costGroup: 'professional',
       label: 'Comissão Bia',
       withoutProfessional: true,
       noRule: true,
     }),
-    item({ kind: 'fixed_expense', direction: 'out', label: 'Aluguel', date: '2026-11-07' }),
+    item({ kind: 'fixed_expense', direction: 'out', costGroup: 'fixed', label: 'Aluguel', date: '2026-11-07' }),
+    item({
+      kind: 'package_cost',
+      direction: 'out',
+      costGroup: 'operational',
+      label: 'Lanche — CT-1',
+      amount: '56.78',
+      date: '2026-11-08',
+    }),
   ],
 };
 
@@ -92,6 +108,24 @@ describe('PrevisaoPage', () => {
     expect(screen.getByText('sem regra de comissão')).toBeInTheDocument();
     expect(screen.getByText(/2 comissão\(ões\) sem regra cadastrada/)).toBeInTheDocument();
     expect(screen.getByText('Nada previsto nesta semana.')).toBeInTheDocument();
+  });
+
+  it('mostra as saídas por grupo de custo no resumo, nas semanas e na tabela', async () => {
+    renderPage();
+    const summary = await screen.findByTestId('forecast-cost-groups');
+    expect(within(summary).getByText('Custo profissional')).toBeInTheDocument();
+    expect(within(summary).getByText('R$ 12,34')).toBeInTheDocument();
+    expect(within(summary).getByText('Custo operacional')).toBeInTheDocument();
+    expect(within(summary).getByText('R$ 56,78')).toBeInTheDocument();
+    expect(within(summary).getByText('Custo fixo')).toBeInTheDocument();
+    expect(within(summary).getByText('R$ 30,88')).toBeInTheDocument();
+    expect(screen.getByTestId('forecast-week-groups-1')).toHaveTextContent(
+      'Custo profissional R$ 12,34 · Custo operacional R$ 56,78 · Custo fixo R$ 30,88',
+    );
+    expect(screen.getByText('Outro custo do pacote')).toBeInTheDocument();
+    expect(screen.getByText('Lanche — CT-1')).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /Grupo/, hidden: true })).toBeInTheDocument();
+    expect(screen.getAllByText('Custo operacional').length).toBeGreaterThan(1);
   });
 
   describe('filtro de período', () => {
