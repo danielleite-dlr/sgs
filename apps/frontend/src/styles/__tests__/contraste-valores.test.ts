@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import config from '../../../tailwind.config';
 
 // Opção B (decisão da usuária em 2026-11-06): verde e laranja do Stitch ficam em números
 // grandes e gráficos; texto pequeno de valor usa o tom 700, com contraste AA (4,5:1).
@@ -17,8 +16,12 @@ const contraste = (a: string, b: string) => {
   return (x + 0.05) / (y + 0.05);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const cores = (config as any).theme.extend.colors;
+// O tailwind.config.ts fica fora do include do tsconfig: é lido como texto (como no teste de tokens).
+const config = readFileSync(resolve(__dirname, '../../../tailwind.config.ts'), 'utf8');
+const tom = (nome: string, chave: string) =>
+  config
+    .match(new RegExp(`(^|\\s)${nome}:\\s*\\{([^}]*)\\}`))?.[2]
+    .match(new RegExp(`(^|\\s)'?${chave}'?:\\s*'([^']*)'`))?.[2] ?? '';
 
 function arquivos(dir: string): string[] {
   return readdirSync(dir).flatMap((n) => {
@@ -30,8 +33,10 @@ function arquivos(dir: string): string[] {
 
 describe('contraste dos valores de entrada e saída (WCAG AA)', () => {
   it('os tons de texto passam de 4,5:1 sobre branco', () => {
-    expect(contraste(cores.success['700'], '#FFFFFF')).toBeGreaterThanOrEqual(4.5);
-    expect(contraste(cores.outflow['700'], '#FFFFFF')).toBeGreaterThanOrEqual(4.5);
+    expect(tom('success', '700')).toBe('#0B7A53');
+    expect(tom('outflow', '700')).toBe('#B5481F');
+    expect(contraste(tom('success', '700'), '#FFFFFF')).toBeGreaterThanOrEqual(4.5);
+    expect(contraste(tom('outflow', '700'), '#FFFFFF')).toBeGreaterThanOrEqual(4.5);
   });
 
   it('nenhum texto usa os tons claros (500/600) de entrada ou saída', () => {
