@@ -53,6 +53,17 @@ Entregas em lotes, cada um com deploy no staging e CI verde, para a usuária ver
 - D-23: Cada lote: testes Vitest das classes/estrutura alteradas, E2E existentes verdes (ajustar só seletor que dependia de estilo; `data-testid` e papéis ARIA se mantêm), gate completo, commit, push, deploy no staging e CI verde (fluxo padrão do projeto).
 - D-24: Cada lote compara a tela com a referência do Stitch usando o roteiro de screenshots `apps/e2e/audit` contra o ambiente local (`AUDIT_TARGET=local`, com seed do E2E). A conta de auditoria do staging continua desativada; a conferência no staging é feita pela usuária no fechamento.
 - D-25: O rodapé institucional da Agenda ("Meu site | SGS Ajuda | Blog | Fale conosco | Contato" + ícones de redes sociais, `SchedulePage.tsx`, comentário "Footer institucional (estilo Trinks)") sai — decisão da usuária em 2026-11-06 ("tira"). Não existe no design e os links apontam para `#`.
+- D-26: **Padrão visual = tela "Previsão de Caixa - Desktop" do Stitch** (`design/previsao-computador.html` e `.jpg`), decisão da usuária em 2026-11-06 ("todos sigam o estilo de background, linhas e cor da tela previsão de caixa"; fonte: "Usar Inter, igual à tela"). **Substitui** os valores de D-04, D-05, D-07 (só a fonte do texto), D-08, D-09, D-12 e o item ativo de D-15:
+  - Fundo da página `#F9FAFB` (área de conteúdo pode usar `#FBFBFB`); superfícies `#FFFFFF`; bordas `#E5E7EB`; divisórias internas `#F3F4F6`; cabeçalho de tabela e de cartão de semana `#F9FAFB`.
+  - Texto `#1F2937` (títulos `#111827`); secundário `#6B7280`; terciário/ícone `#9CA3AF`.
+  - Fonte do texto **Inter** (400/500/600/700); títulos de página, de seção e nomes de cliente continuam **Source Serif 4** (600/700; h1 de página 30 px bold).
+  - Raio: cartões e blocos 8 px (`rounded-lg`); botões, campos, filtros e menus 6 px (`rounded-md`); selos 4 px (`rounded`).
+  - Sombra leve só em cartões, faixas e filtro segmentado: `0 1px 2px 0 rgb(0 0 0 / 0.05)` (`shadow-sm`). Nada de sombra difusa grande.
+  - Entrada/positivo `#109868`; saída/negativo `#D85A30`; erro `#C53030`; selo "em atraso" texto `#B91C1C` sobre `#FEF2F2` com borda `#FECACA`; selo neutro texto `#4B5563` sobre `#F3F4F6` com borda `#E5E7EB`.
+  - Roxo: ação principal `#570080` (hover `#4C0070`); **selecionado** (filtro segmentado, subitem de menu ativo) `#521873` com texto branco; item de menu de 1º nível ativo com fundo `#F5E6FB` (lilás claro) e texto `#370053`, ícone `#570080`.
+  - Barras de proporção: trilho `#F3F4F6`, preenchimento `#521873` (profissional), `#D85A30` (operacional), `#6B7280` (fixo).
+  - Status da agenda: Confirmado `#109868`, Faltou/Cancelado `#C53030` (demais iguais a D-11).
+  - Os planos 06-06 a 06-10 escritos antes desta decisão citam hex antigos: **D-26 vence**; usar os tokens do Tailwind, que passam a ter estes valores.
 
 ### Claude's Discretion
 - Como mapear os tokens no Tailwind (manter os nomes atuais `primary-*`, `neutral-*`, `text-label/body/heading/display` e trocar os valores, ou criar nomes novos), desde que nenhum componente fique com cor antiga.
