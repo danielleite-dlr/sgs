@@ -145,7 +145,7 @@
 | FIN-01 | Phase 3 | Complete |
 | FIN-02 | Phase 3 | Complete |
 | FIN-03 | Phase 5 | In Progress |
-| UX-DAY | Phase 5 | Pending |
+| UX-DAY | Phase 5 | In Progress |
 | CONT-01 | Phase 4 | Pending |
 | CONT-02 | Phase 4 | Pending |
 | CONT-03 | Phase 4 | Pending |
