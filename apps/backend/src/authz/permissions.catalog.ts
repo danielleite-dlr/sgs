@@ -55,6 +55,8 @@ export const PERMISSIONS = {
   CREDIT_ADJUST: 'credit.adjust',
   FINANCIAL_READ: 'financial.read',
   COMMISSION_RECORD_READ: 'commissionRecord.read',
+  // ===== Phase 5: previsão financeira =====
+  FINANCIAL_EXPENSE_WRITE: 'financial.expenseWrite',
 
   // ===== Phase 4: Bridal & Contracts =====
   BRIDAL_READ: 'bridal.read',
@@ -116,6 +118,7 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.CREDIT_READ,
     PERMISSIONS.CREDIT_ADJUST,
     PERMISSIONS.FINANCIAL_READ,
+    PERMISSIONS.FINANCIAL_EXPENSE_WRITE,
     PERMISSIONS.COMMISSION_RECORD_READ,
     // Phase 4 — bridal & contracts
     PERMISSIONS.BRIDAL_READ,
@@ -157,6 +160,7 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.CREDIT_READ,
     PERMISSIONS.CREDIT_ADJUST,
     PERMISSIONS.FINANCIAL_READ,
+    PERMISSIONS.FINANCIAL_EXPENSE_WRITE,
     PERMISSIONS.COMMISSION_RECORD_READ,
     // Phase 4 — bridal & contracts
     PERMISSIONS.BRIDAL_READ,
