@@ -256,7 +256,7 @@ Plans:
 - [ ] 05-03-backend-despesas-fixas-PLAN.md — API GraphQL de despesas fixas + integração RLS/RBAC
 - [ ] 05-04-backend-cash-forecast-PLAN.md — Query cashForecast (agenda, parcelas, comissões, despesas; atraso D-09; fallback D-10) + integração
 - [x] 05-05-frontend-despesas-fixas-PLAN.md — Tela /financeiro/despesas-fixas + camada de API da fase
-- [ ] 05-06-frontend-painel-previsao-PLAN.md — Cartão no painel e detalhe /financeiro/previsao
+- [x] 05-06-frontend-painel-previsao-PLAN.md — Cartão no painel e detalhe /financeiro/previsao
 - [ ] 05-06b-frontend-home-por-papel-PLAN.md — Painel como home de ADMIN/MANAGER; PROFESSIONAL/ATTENDANT na Agenda (D-11)
 - [ ] 05-07-e2e-deploy-previsao-PLAN.md — E2E da previsão, gate completo, backup, deploy no staging e CI
 - [ ] 05-08-gerar-lotes-correcao-PLAN.md — Checkpoint de aprovação da auditoria pela usuária + gera os lotes de correção (05-09…)
