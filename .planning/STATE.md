@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-12-ux-lote-comanda-2-PLAN.md
-last_updated: "2026-11-06T10:40:48.560Z"
+stopped_at: Completed 05-13-ux-lote-noivas-1-PLAN.md
+last_updated: "2026-11-06T11:29:58.000Z"
 last_activity: 2026-11-06
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 80
-  completed_plans: 76
+  completed_plans: 77
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 05 (uso-no-dia-a-dia) — EXECUTING
-Plan: 9 of 10
+Plan: 10 of 10
 Status: Ready to execute
 Last activity: 2026-11-06
 
@@ -84,6 +84,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 05 P10 | ~75min | 3 tasks | 9 files |
 | Phase 05 P11 | 75min | 3 tasks | 14 files |
 | Phase 05 P12 | 70min | 3 tasks | 7 files |
+| Phase 05 P13 | ~60min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -165,6 +166,7 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-11: 'Fechar comanda' pronto mantém cor cheia enquanto salva; bloqueado sempre mostra o motivo
 - [Phase 05]: 05-12: o aviso de <li> dentro de <li> (UX-10) vinha da trilha do PageHeader, não do menu lateral; o separador virou <span> com o mesmo visual
 - [Phase 05]: 05-12: na comanda a ordem no DOM é Cliente, Itens, Adicionar, Pagamento; no computador o grid mantém o layout de três colunas
+- [Phase 05]: 05-13: texto do contrato com negrito via ContractTextView (mesma regra do aceite público e do PDF); detalhe do grupo com status único e legenda de rascunho
 
 ### Pending Todos
 
@@ -210,5 +212,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-11-06T10:40:48.553Z
-Stopped at: Completed 05-12-ux-lote-comanda-2-PLAN.md
+Stopped at: Completed 05-13-ux-lote-noivas-1-PLAN.md
 Resume file: None

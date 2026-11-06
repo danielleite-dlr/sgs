@@ -7,3 +7,5 @@
 ## 05-11 (Comanda e caixa, lote 1)
 
 - **`Card` base limitado a 400 px.** `apps/frontend/src/components/ui/card.tsx` tem `w-full max-w-[400px]` no estilo padrão, então todo cartão que não sobrescreve `max-w` fica estreito (era a causa da lista de comandas espremida, UX-07). No 05-11 só a lista de comandas foi corrigida, de forma local (`max-w-none` no `Card` da lista). Correção de causa: tirar o `max-w-[400px]` do `Card` base e colocar o limite só onde ele é desejado; isso muda a largura de outros cartões fora do lote (financeiro, clientes, configurações) e precisa de aprovação da usuária.
+
+- (05-13) `apps/e2e/tests/ux-agenda-celular.spec.ts` — teste UX-02 ("Filtros" e alvos de 44 px) falhou uma vez na suíte E2E completa e passou sozinho (3/3). Instabilidade por carga; arquivo não tocado no lote.
