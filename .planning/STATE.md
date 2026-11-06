@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-10-ux-lote-agenda-2-PLAN.md
-last_updated: "2026-11-06T09:36:19.537Z"
+stopped_at: Completed 05-11-ux-lote-comanda-1-PLAN.md
+last_updated: "2026-11-06T10:08:18.685Z"
 last_activity: 2026-11-06
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 80
-  completed_plans: 74
+  completed_plans: 75
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 05 (uso-no-dia-a-dia) — EXECUTING
-Plan: 7 of 10
+Plan: 8 of 10
 Status: Ready to execute
 Last activity: 2026-11-06
 
@@ -82,6 +82,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 05 P07 | ~45min | 2 tasks | 2 files |
 | Phase 05 P09 | ~2h | 3 tasks | 9 files |
 | Phase 05 P10 | ~75min | 3 tasks | 9 files |
+| Phase 05 P11 | 75min | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -159,6 +160,8 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-04: comissão estimada para todos os agendamentos da janela (inclusive de contrato); entrada só sem contrato
 - [Phase 05]: UX-01: cn() registra text-label/body/heading/display como font-size no tailwind-merge (causa raiz: texto escuro em botão sm)
 - [Phase 05]: 05-10: avatares da Agenda no celular com 44 px e nome curto; formulário de agendamento em tela cheia no celular; causa raiz p-lg/p-0 no cn() adiada para aprovação
+- [Phase 05]: 05-11: lista de comandas estreita era o max-w-[400px] do Card base; corrigido só na lista, causa em deferred-items
+- [Phase 05]: 05-11: 'Fechar comanda' pronto mantém cor cheia enquanto salva; bloqueado sempre mostra o motivo
 
 ### Pending Todos
 
@@ -203,6 +206,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-06T09:36:19.530Z
-Stopped at: Completed 05-10-ux-lote-agenda-2-PLAN.md
+Last session: 2026-11-06T10:08:18.676Z
+Stopped at: Completed 05-11-ux-lote-comanda-1-PLAN.md
 Resume file: None
