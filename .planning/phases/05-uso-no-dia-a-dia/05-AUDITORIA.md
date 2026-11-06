@@ -130,8 +130,8 @@ Nos fluxos do celular só a marcação de horário foi cronometrada; os demais f
 | UX-14 | 05-13 | 870e8d7 | — |
 | UX-12 | 05-14 | ad27115 | — |
 | UX-13 | 05-14 | ad27115 | — |
-| UX-15 | 05-15 | — | — |
-| UX-16 | 05-15 | — | — |
+| UX-15 | 05-15 | b231240 | — |
+| UX-16 | 05-15 | b231240 | — |
 | UX-17 | 05-16 | — | — |
 | UX-18 | 05-16 | — | — |
 | UX-19 | 05-16 | — | — |
