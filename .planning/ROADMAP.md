@@ -272,6 +272,16 @@ Plans:
 
 **UI hint:** yes
 
+### Phase 6: Novo layout Gestor Beauty
+
+**Goal:** O SGS ganha a cara do projeto Stitch "Gestor Beauty" (projects/5888991241990799272, sistema de design "Studio Editorial Density"): papel #F7F6F3, superfícies brancas com borda de 1 px, roxo #570080 só na ação principal (texto branco), Source Serif 4 em títulos e nomes de cliente, Public Sans no resto com números tabulares, raio 6 px, sem sombras, alvos de 44 px e status por borda esquerda de 3 px. Só o visual, com os dados que o SGS já tem (decisão da usuária em 2026-11-06); bancadas/cadeiras, meta de faturamento, exportar DRE, ocupação em tempo real, cerimonial e status de prova vão para o backlog. Ordem: lote base (tokens, componentes, menu lateral e barra inferior) e depois um lote por tela: Agenda do dia, Novo agendamento, Comanda, Entradas e saídas, Previsão de caixa, Despesas fixas, Grupo de noivas, Início.
+**Requirements**: TBD
+**Depends on:** Phase 5
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 6 to break down)
+
 ---
 
 ## Backlog

@@ -187,6 +187,7 @@ Recent decisions affecting current work:
 - Phase 02.1 inserted after Phase 2: Equipe e profissionais — cadastro completo de profissionais (URGENT)
 - Phase 02.1 executada 2026-09-29: 2 waves, 2/2 planos. Backend e frontend mesclados no master. Falta a verificacao manual ponta a ponta do criterio do M1 (convite -> aceite -> aparece em /profissionais, /agenda e /catalogo/comissoes), que exige as duas apps no ar.
 - Phase 04.1 inserted after Phase 4: Layout e regras do contrato (modelo Studio JS) — PDF em 2 páginas com tabelas, cláusulas I–VIII e assinaturas; Noiva/Debutante; dados completos da contratante; extras/desconto; à vista ou sinal parcelado com alertas; dados do studio configuráveis (URGENT)
+- Phase 6 added (2026-11-06): Novo layout Gestor Beauty — aplicar o design do Stitch "Gestor Beauty" ao SGS; só o visual, lote base primeiro e depois uma tela por lote
 
 ### Quick Tasks Completed
 
