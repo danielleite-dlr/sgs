@@ -282,7 +282,7 @@ Plans:
 Plans:
 - [x] 06-01-base-tokens-componentes-PLAN.md — Lote base 1/2: tokens (cores, fontes, raio, sem sombra), componentes compartilhados e varredura de cores antigas (commit local)
 - [x] 06-02-base-casco-navegacao-PLAN.md — Lote base 2/2: menu lateral 256 px, topo, barra inferior Agenda/Comanda/Clientes/Noivas/Mais, PageHeader; deploy do lote base
-- [ ] 06-03-agenda-do-dia-PLAN.md — Agenda do dia (celular e computador): borda de status, linha do tempo, hora atual roxa, bloqueio em hachura
+- [x] 06-03-agenda-do-dia-PLAN.md — Agenda do dia (celular e computador): borda de status, linha do tempo, hora atual roxa, bloqueio em hachura
 - [ ] 06-04-novo-agendamento-PLAN.md — Novo agendamento: chips de serviço, controle segmentado de profissional, Data/Hora/Duração, Sinal recolhido
 - [ ] 06-05-comanda-PLAN.md — Comanda: cliente, itens e pagamento no padrão novo
 - [ ] 06-06-entradas-e-saidas-PLAN.md — Entradas e saídas (Financeiro): faixa de números, filtros, gráfico e lançamentos
