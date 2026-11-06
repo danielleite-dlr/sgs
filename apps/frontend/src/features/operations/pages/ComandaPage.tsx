@@ -29,6 +29,7 @@ import {
 import { AddItemDialog, type AddItemMode } from '../components/comanda/AddItemDialog';
 import { PaymentPanel } from '../components/comanda/PaymentPanel';
 import { formatPhoneBr } from '@/lib/format-phone';
+import { toDisplayName } from '@/lib/format-name';
 import { ReopenComandaDialog } from '../components/comanda/ReopenComandaDialog';
 import { COMANDA_STATUS_LABELS } from '../lib/operations-labels';
 
@@ -189,7 +190,9 @@ export function ComandaPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-sm">
-              <p className="text-sm font-semibold text-neutral-800">{comanda.client.fullName}</p>
+              <p className="text-sm font-semibold text-neutral-800">
+                {toDisplayName(comanda.client.fullName)}
+              </p>
               {comanda.client.phone && (
                 <div className="flex items-center gap-xs text-sm text-neutral-600">
                   <Phone className="h-3 w-3" />

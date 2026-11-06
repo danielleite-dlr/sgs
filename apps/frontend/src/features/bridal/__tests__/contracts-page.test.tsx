@@ -259,4 +259,11 @@ describe('ContractsPage', () => {
     expect(screen.getByLabelText('Prazo para desistência (dias)')).toHaveValue(7);
     expect(screen.getByLabelText('Obs. dos testes')).toBeInTheDocument();
   });
+
+  it('lista mostra o nome da noiva em caixa normal (UX-16)', async () => {
+    renderPage([listMock({}, [withTypenames({ ...PENDING, brideName: 'BIA LIMA' })])]);
+    const table = await screen.findByTestId('contracts-table');
+    expect(within(table).getByText('Bia Lima')).toBeInTheDocument();
+    expect(within(table).queryByText('BIA LIMA')).toBeNull();
+  });
 });

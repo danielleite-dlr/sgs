@@ -25,6 +25,7 @@ import {
 import { PeriodFilter } from '../components/PeriodFilter';
 import { defaultPeriod, type PeriodValue } from '../lib/period-value';
 import { paymentMethodLabel } from '../lib/operations-labels';
+import { toDisplayName } from '@/lib/format-name';
 
 type Granularity = 'day' | 'week' | 'month';
 
@@ -281,7 +282,7 @@ export function FinanceiroPage() {
                           </td>
                           <td>{KIND_LABELS[mv.kind] ?? mv.kind}</td>
                           <td>{paymentMethodLabel(mv.method)}</td>
-                          <td>{mv.clientName ?? '—'}</td>
+                          <td>{mv.clientName ? toDisplayName(mv.clientName) : '—'}</td>
                           <td>{mv.comandaCode ?? mv.contractCode ?? '—'}</td>
                           <td className={`text-right ${negative ? 'text-error-600' : ''}`}>
                             {brl(mv.amount)}

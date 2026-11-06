@@ -12,6 +12,7 @@ import { ClientByIdQuery } from '@/features/clients/api/clients.api';
 import type { ClientByIdResult } from '@/features/clients/api/clients.api';
 import { ClientHistoryTab } from '@/features/clients/components/ClientHistoryTab';
 import { formatCpf } from '@/features/clients/utils/cpf';
+import { toDisplayName } from '@/lib/format-name';
 
 export function ClienteDetailPage() {
   const { t } = useTranslation();
@@ -24,7 +25,7 @@ export function ClienteDetailPage() {
 
   useEffect(() => {
     if (data?.client?.fullName) {
-      document.title = `${data.client.fullName} — SGS`;
+      document.title = `${toDisplayName(data.client.fullName)} — SGS`;
     }
   }, [data]);
 
@@ -44,10 +45,10 @@ export function ClienteDetailPage() {
   return (
     <>
       <PageHeader
-        title={c.fullName}
+        title={toDisplayName(c.fullName)}
         breadcrumbs={[
           { label: t('navigation.clientes'), to: '/clientes' },
-          { label: c.fullName },
+          { label: toDisplayName(c.fullName) },
         ]}
         cta={
           <Button
@@ -70,7 +71,7 @@ export function ClienteDetailPage() {
         <TabsContent value="data">
           <Card>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-md p-lg">
-              <Field label={t('clients.form.fullName')} value={c.fullName} />
+              <Field label={t('clients.form.fullName')} value={toDisplayName(c.fullName)} />
               <Field label={t('clients.form.phone')} value={c.phone ?? '—'} />
               <Field label={t('clients.form.email')} value={c.email ?? '—'} />
               <Field

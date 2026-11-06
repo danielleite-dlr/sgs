@@ -75,4 +75,42 @@ describe('FinanceiroPage', () => {
     expect(screen.getByText('Você não tem acesso ao financeiro.')).toBeInTheDocument();
     expect(called).toBe(false);
   });
+
+  it('coluna Cliente dos movimentos com o nome em caixa normal (UX-16)', async () => {
+    renderPage([
+      {
+        request: { query: FinancialSummaryQuery },
+        variableMatcher: () => true,
+        result: { data: { financialSummary: summary } },
+        maxUsageCount: 5,
+      },
+      {
+        request: { query: CashMovementsQuery },
+        variableMatcher: () => true,
+        result: {
+          data: {
+            cashMovements: [
+              {
+                __typename: 'CashMovement',
+                id: 'mv1',
+                kind: 'payment',
+                method: 'pix',
+                amount: '285.00',
+                occurredAt: '2026-11-02T15:00:00.000Z',
+                comandaId: 'cm1',
+                comandaCode: 'CM-001',
+                contractCode: null,
+                appointmentId: null,
+                clientName: 'joana PEREIRA',
+                note: null,
+              },
+            ],
+          },
+        },
+        maxUsageCount: 5,
+      },
+    ]);
+    expect(await screen.findByText('Joana Pereira')).toBeInTheDocument();
+    expect(screen.queryByText('joana PEREIRA')).toBeNull();
+  });
 });

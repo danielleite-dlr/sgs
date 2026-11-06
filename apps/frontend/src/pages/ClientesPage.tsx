@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
 import { Search, Users, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { DataTable } from '@/components/ui/data-table';
+import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import { EntityAvatar } from '@/components/ui/entity-avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,8 @@ import type {
   RestoreClientResult,
 } from '@/features/clients/api/clients.api';
 import { formatCpf } from '@/features/clients/utils/cpf';
+import { toDisplayName } from '@/lib/format-name';
+import { formatPhoneBr } from '@/lib/format-phone';
 import { toast } from 'sonner';
 
 const PAGE_SIZE = 20;
@@ -83,19 +85,65 @@ export function ClientesPage() {
       toast.error(errors[0].message);
       return;
     }
-    toast(t('catalog.softDelete.toastDeleted', { name: c.fullName }), {
+    toast(t('catalog.softDelete.toastDeleted', { name: toDisplayName(c.fullName) }), {
       action: {
         label: t('catalog.softDelete.toastUndo'),
         onClick: async () => {
           const r = await restore({ variables: { input: { id: c.id } } });
           if ((r.data?.restoreClient.errors ?? []).length === 0) {
-            toast.success(t('catalog.softDelete.toastRestored', { name: c.fullName }));
+            toast.success(t('catalog.softDelete.toastRestored', { name: toDisplayName(c.fullName) }));
           }
         },
       },
       duration: 5000,
     });
   }
+
+  const hasRows = !loading && rows.length > 0;
+  // Colunas totalmente vazias na página carregada não aparecem (UX-15).
+  const hasEmail = rows.some((r) => !!r.email);
+  const hasCpf = rows.some((r) => !!r.cpf);
+  const columns: DataTableColumn<ClientRow>[] = [
+    {
+      key: 'name',
+      header: t('clients.list.table.name'),
+      sortable: false,
+      cell: (r) => (
+        <div className="flex items-center gap-2">
+          <EntityAvatar name={toDisplayName(r.fullName)} kind="client" />
+          <ClientNameLink client={r} />
+        </div>
+      ),
+    },
+    {
+      key: 'phone',
+      header: t('clients.list.table.phone'),
+      cell: (r) => (r.phone ? formatPhoneBr(r.phone) : '—'),
+    },
+    ...(hasEmail
+      ? [
+          {
+            key: 'email',
+            header: t('clients.list.table.email'),
+            cell: (r: ClientRow) => r.email || '—',
+          },
+        ]
+      : []),
+    ...(hasCpf
+      ? [
+          {
+            key: 'cpf',
+            header: t('clients.list.table.cpf'),
+            cell: (r: ClientRow) => (r.cpf ? formatCpf(r.cpf) : '—'),
+          },
+        ]
+      : []),
+    {
+      key: 'actions',
+      header: t('clients.list.table.actions'),
+      cell: (r) => <ClientActions client={r} onDelete={handleDelete} />,
+    },
+  ];
 
   const showSearchEmpty = !!debounced && rows.length === 0 && !loading;
   const showInitialEmpty = !debounced && rows.length === 0 && !loading;
@@ -125,105 +173,137 @@ export function ClientesPage() {
         </div>
       </div>
 
-      <DataTable<ClientRow>
-        rowKey={(r) => r.id}
-        loading={loading}
-        rows={rows}
-        page={page}
-        pageSize={PAGE_SIZE}
-        totalCount={totalCount}
-        onPageChange={setPage}
-        onRowClick={(r) => navigate(`/clientes/${r.id}`)}
-        empty={
-          showSearchEmpty ? (
-            <EmptyState
-              icon={<Search className="h-12 w-12 text-neutral-500" />}
-              heading="Nenhum resultado"
-              body={`Nenhum resultado para "${debounced}".`}
-              cta={
-                <Button variant="ghost" onClick={() => setSearchInput('')}>
-                  Limpar busca
-                </Button>
-              }
-            />
-          ) : showInitialEmpty ? (
-            <EmptyState
-              icon={<Users className="h-12 w-12 text-neutral-500" />}
-              heading={t('clients.empty.heading')}
-              body={t('clients.empty.body')}
-              cta={
-                <Button onClick={() => navigate('/clientes/novo')}>
-                  {t('clients.empty.cta')}
-                </Button>
-              }
-            />
-          ) : null
-        }
-        columns={[
-          {
-            key: 'name',
-            header: t('clients.list.table.name'),
-            sortable: false,
-            cell: (r) => (
-              <div className="flex items-center gap-2">
-                <EntityAvatar name={r.fullName} kind="client" />
-                <span className="font-semibold">{r.fullName}</span>
+      {hasRows && (
+        <ul className="space-y-sm md:hidden" data-testid="clientes-cards">
+          {rows.map((r) => (
+            <li
+              key={r.id}
+              data-testid="cliente-card"
+              className="flex items-center gap-sm rounded-lg border border-neutral-200 bg-white p-sm"
+            >
+              <EntityAvatar name={toDisplayName(r.fullName)} kind="client" />
+              <div className="min-w-0 flex-1">
+                <ClientNameLink client={r} />
+                {r.phone && (
+                  <p className="text-sm text-neutral-600">{formatPhoneBr(r.phone)}</p>
+                )}
               </div>
-            ),
-          },
-          {
-            key: 'phone',
-            header: t('clients.list.table.phone'),
-            cell: (r) => r.phone ?? '—',
-          },
-          {
-            key: 'email',
-            header: t('clients.list.table.email'),
-            cell: (r) => r.email ?? '—',
-          },
-          {
-            key: 'cpf',
-            header: t('clients.list.table.cpf'),
-            cell: (r) => (r.cpf ? formatCpf(r.cpf) : '—'),
-          },
-          {
-            key: 'actions',
-            header: t('clients.list.table.actions'),
-            cell: (r) => (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                  <Button variant="ghost" size="icon" aria-label="Ações">
-                    <MoreHorizontal className="h-4 w-4" />
+              <ClientActions client={r} onDelete={handleDelete} />
+            </li>
+          ))}
+          {totalCount > PAGE_SIZE && (
+            <li className="flex items-center justify-between pt-xs text-sm text-neutral-500">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage(page - 1)}
+              >
+                Anterior
+              </Button>
+              <span>
+                Página {page} de {Math.ceil(totalCount / PAGE_SIZE)}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page * PAGE_SIZE >= totalCount}
+                onClick={() => setPage(page + 1)}
+              >
+                Próximo
+              </Button>
+            </li>
+          )}
+        </ul>
+      )}
+
+      <div className={hasRows ? 'hidden md:block' : undefined} data-testid="clientes-table">
+        <DataTable<ClientRow>
+          rowKey={(r) => r.id}
+          loading={loading}
+          rows={rows}
+          page={page}
+          pageSize={PAGE_SIZE}
+          totalCount={totalCount}
+          onPageChange={setPage}
+          onRowClick={(r) => navigate(`/clientes/${r.id}`)}
+          empty={
+            showSearchEmpty ? (
+              <EmptyState
+                icon={<Search className="h-12 w-12 text-neutral-500" />}
+                heading="Nenhum resultado"
+                body={`Nenhum resultado para "${debounced}".`}
+                cta={
+                  <Button variant="ghost" onClick={() => setSearchInput('')}>
+                    Limpar busca
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenuItem
-                    onSelect={() => navigate(`/clientes/${r.id}/editar`)}
-                  >
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Editar
-                  </DropdownMenuItem>
-                  <ConfirmSoftDeleteDialog
-                    entityName={r.fullName}
-                    entityKind="client"
-                    onConfirm={() => handleDelete(r)}
-                    trigger={
-                      <DropdownMenuItem
-                        onSelect={(e) => e.preventDefault()}
-                        className="text-error-500"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Excluir
-                      </DropdownMenuItem>
-                    }
-                  />
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ),
-          },
-        ]}
-      />
+                }
+              />
+            ) : showInitialEmpty ? (
+              <EmptyState
+                icon={<Users className="h-12 w-12 text-neutral-500" />}
+                heading={t('clients.empty.heading')}
+                body={t('clients.empty.body')}
+                cta={
+                  <Button onClick={() => navigate('/clientes/novo')}>
+                    {t('clients.empty.cta')}
+                  </Button>
+                }
+              />
+            ) : null
+          }
+          columns={columns}
+        />
+      </div>
     </>
+  );
+}
+
+function ClientNameLink({ client }: { client: ClientRow }) {
+  return (
+    <Link
+      to={`/clientes/${client.id}`}
+      className="block truncate font-semibold text-primary-700 hover:underline"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {toDisplayName(client.fullName)}
+    </Link>
+  );
+}
+
+function ClientActions({
+  client,
+  onDelete,
+}: {
+  client: ClientRow;
+  onDelete: (c: ClientRow) => Promise<void>;
+}) {
+  const navigate = useNavigate();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+        <Button variant="ghost" size="icon" aria-label="Ações" className="shrink-0">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+        <DropdownMenuItem onSelect={() => navigate(`/clientes/${client.id}/editar`)}>
+          <Pencil className="mr-2 h-4 w-4" />
+          Editar
+        </DropdownMenuItem>
+        <ConfirmSoftDeleteDialog
+          entityName={toDisplayName(client.fullName)}
+          entityKind="client"
+          onConfirm={() => onDelete(client)}
+          trigger={
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-error-500">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Excluir
+            </DropdownMenuItem>
+          }
+        />
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

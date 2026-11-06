@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
+import { toDisplayName } from '@/lib/format-name';
 import { useBridalPermission } from '../bridal-permissions';
 import { ContractsQuery, type ContractsResult } from '../api/contracts.api';
 import {
@@ -104,7 +105,7 @@ export function ContractsPage() {
                       {c.code}
                     </Link>
                   </td>
-                  <td>{c.brideName}</td>
+                  <td>{toDisplayName(c.brideName)}</td>
                   <td>{formatDateOnly(c.eventDate)}</td>
                   <td className="text-right">{brl(c.totalAmount)}</td>
                   <td className="text-right">{brl(c.paid)}</td>

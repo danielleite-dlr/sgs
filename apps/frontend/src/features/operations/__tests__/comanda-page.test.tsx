@@ -146,4 +146,11 @@ describe('ComandaPage', () => {
       '/comanda',
     );
   });
+
+  it('cartão Cliente mostra o nome em caixa normal (UX-16)', async () => {
+    const base = makeComanda({ items });
+    renderPage({ ...base, client: { ...base.client, fullName: 'MARIA DA SOUZA' } });
+    expect(await screen.findByText('Maria da Souza')).toBeInTheDocument();
+    expect(screen.queryByText('MARIA DA SOUZA')).toBeNull();
+  });
 });
