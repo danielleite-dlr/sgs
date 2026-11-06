@@ -116,9 +116,9 @@ Nos fluxos do celular só a marcação de horário foi cronometrada; os demais f
 
 | ID | Lote (plano) | Corrigido em (commit) | Verificado no staging |
 |----|--------------|-----------------------|-----------------------|
-| UX-01 | 05-09 | 3de395d | — |
-| UX-04 | 05-09 | 3de395d | — |
-| UX-05 | 05-09 | 3de395d | — |
+| UX-01 | 05-09 | 3de395d | 2026-11-06 (staging, somente leitura) |
+| UX-04 | 05-09 | 3de395d | 2026-11-06 (staging, somente leitura) |
+| UX-05 | 05-09 | 3de395d | 2026-11-06 (staging, somente leitura) |
 | UX-02 | 05-10 | — | — |
 | UX-03 | 05-10 | — | — |
 | UX-06 | 05-11 | — | — |
