@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-20-fechamento-PLAN.md
-last_updated: "2026-11-06T16:49:51.219Z"
+stopped_at: Completed 06-02-base-casco-navegacao-PLAN.md
+last_updated: "2026-11-06T18:55:06.000Z"
 last_activity: 2026-11-06
 progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 80
-  completed_plans: 81
+  completed_plans: 83
   percent: 100
 ---
 
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 06
-Plan: Not started
-Status: Ready to execute
+Plan: 06-03 (próximo; 06-01 e 06-02 concluídos, lote base no staging)
+Status: Executing
 Last activity: 2026-11-06
 
 Progress: [██████████] 100% (Phase 1 of 5)
