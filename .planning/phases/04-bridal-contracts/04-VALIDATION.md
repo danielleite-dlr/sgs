@@ -75,11 +75,11 @@ created: 2026-11-03
 
 ## Manual-Only Verifications
 
-| Behavior | Requirement | Why Manual | Test Instructions |
-|----------|-------------|------------|-------------------|
-| Sugestão real da Claude API (com chave) | AI-01 | Exige `ANTHROPIC_API_KEY` válida e custo; CI usa client fake | No staging com chave: abrir grupo → "Sugerir agenda IA" → conferir proposta editável sem conflitos e confirmar |
-| IP real gravado no aceite atrás do nginx | D-15 | Depende do proxy do staging (`trustProxy`) | Aceitar contrato pelo link público no staging e conferir IP do registro de aceite ≠ 127.0.0.1 |
-| Layout do PDF do contrato | D-15 | Avaliação visual | Baixar PDF de contrato aceito e conferir texto, dados e rodapé com hash |
+| Behavior | Requirement | Why Manual | Test Instructions | Result |
+|----------|-------------|------------|-------------------|--------|
+| Sugestão real da Claude API (com chave) | AI-01 | Exige `ANTHROPIC_API_KEY` válida e custo; CI usa client fake | No staging com chave: abrir grupo → "Sugerir agenda IA" → conferir proposta editável sem conflitos e confirmar | ⏸️ Adiado por decisão da usuária (2026-11-05): staging sem `ANTHROPIC_API_KEY`; botão segue na heurística. Verificar quando a IA for ligada |
+| IP real gravado no aceite atrás do nginx | D-15 | Depende do proxy do staging (`trustProxy`) | Aceitar contrato pelo link público no staging e conferir IP do registro de aceite ≠ 127.0.0.1 | ✅ 2026-11-05: aceite de 04/11 no staging gravou IP público (187.x), não 127.0.0.1 nem a rede Docker 172.20.x |
+| Layout do PDF do contrato | D-15 | Avaliação visual | Baixar PDF de contrato aceito e conferir texto, dados e rodapé com hash | ✅ 2026-11-05: aprovado pela usuária na verificação do 04.1-17 (layout Studio JS) |
 
 ---
 

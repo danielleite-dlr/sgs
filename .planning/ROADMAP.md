@@ -14,7 +14,7 @@ Construir um SaaS multi-tenant completo para salões de beleza, partindo da fund
  (completed 2026-05-06)
 - [ ] **Phase 2: Core Domain** - Catálogo de serviços/produtos e perfis de clientes — o inventário do negócio
 - [ ] **Phase 3: Core Operations** - Loop atômico de agendamento + POS + financeiro + comissões
-- [ ] **Phase 4: Bridal & Contracts** - Vertical de noivas, contratos de evento e IA de otimização de agenda
+- [x] **Phase 4: Bridal & Contracts** - Vertical de noivas, contratos de evento e IA de otimização de agenda (completed 2026-11-05)
 - [ ] **Phase 5: Communication & Launch** - Automação WhatsApp, campanhas, previsão financeira e qualidade de produção
 
 ## Phase Details
@@ -175,7 +175,7 @@ Plans:
 3. Ao clicar em "Sugerir agenda IA", o sistema consulta a Claude API e retorna uma alocação otimizada de profissionais para o grupo de noivas considerando disponibilidade e tempo de serviço
 4. Sistema alerta automaticamente sobre parcela de contrato vencida ou vencendo em 3 dias, sem necessidade de verificação manual pelo proprietário
 
-**Plans:** 16 plans (7 waves)
+**Plans:** 16/16 plans complete
 
 Plans:
 - [x] 04-01-database-schema-PLAN.md — Migration única (13 tabelas + ALTERs, RLS, ledgers imutáveis, job_list_active_orgs, permissões), Prisma, env da IA, deps, módulos vazios, fixtures
@@ -193,7 +193,7 @@ Plans:
 - [x] 04-13-frontend-bridal-groups-PLAN.md — Telas de grupos de noivas e "Sugerir agenda IA"
 - [x] 04-14-frontend-contracts-PLAN.md — Telas de contratos, pagamentos, cancelamento, configurações; cobertura na comanda; entrada no pacote
 - [x] 04-15-e2e-verification-PLAN.md — Flags ligadas, suíte RLS/RBAC da fase 4, E2E noivas-contrato, suíte completa
-- [ ] 04-16-human-verification-PLAN.md — Verificação humana (IP real, PDF, Claude real, sino por papel)
+- [x] 04-16-human-verification-PLAN.md — Verificação humana (IP real, PDF, Claude real, sino por papel)
 
 **UI hint:** yes
 
@@ -269,5 +269,5 @@ Plans:
 | 1. Foundation | 7/7 | Complete   | 2026-05-06 |
 | 2. Core Domain | 6/8 | In Progress|  |
 | 3. Core Operations | 0/? | Not started | - |
-| 4. Bridal & Contracts | 0/? | Not started | - |
+| 4. Bridal & Contracts | 16/16 | Complete    | 2026-11-05 |
 | 5. Communication & Launch | 0/? | Not started | - |
