@@ -27,6 +27,15 @@ export const CONTRACT_STATUS_LABEL: Record<string, string> = {
   cancelled: 'Cancelado',
 };
 
+/** Legenda curta do contrato no detalhe do grupo (UX-14), abaixo do status do grupo. */
+export const CONTRACT_STATUS_CAPTION: Record<string, string> = {
+  draft: 'Contrato em rascunho',
+  awaiting_acceptance: 'Contrato aguardando aceite',
+  active: 'Contrato ativo',
+  completed: 'Contrato concluído',
+  cancelled: 'Contrato cancelado',
+};
+
 export const PURPOSE_LABEL: Record<string, string> = {
   event: 'Evento',
   trial: 'Teste',

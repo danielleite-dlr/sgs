@@ -30,6 +30,7 @@ import { ContractFormDialog } from '../components/ContractFormDialog';
 import { ContractLinkCard } from '../components/ContractLinkCard';
 import { base64ToBlob } from '../lib/contract-preview';
 import { ContractPaymentDialog } from '../components/ContractPaymentDialog';
+import { ContractTextView } from '../components/ContractTextView';
 import { ReverseContractPaymentDialog } from '../components/ReverseContractPaymentDialog';
 
 const brl = (v: string) => `R$ ${formatCurrencyDisplay(v)}`;
@@ -387,12 +388,7 @@ export function ContractDetailPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <pre
-            data-testid="contract-text"
-            className="whitespace-pre-wrap font-sans text-sm text-neutral-700"
-          >
-            {c.currentText}
-          </pre>
+          <ContractTextView text={c.currentText} />
         </CardContent>
       </Card>
 

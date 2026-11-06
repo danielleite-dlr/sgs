@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { formatPhoneBr } from '@/lib/format-phone';
 import { ServicesQuery, type ServicesQueryResult } from '@/features/catalog/api/servicos.api';
 import {
   AddBridalGroupMemberMutation,
@@ -212,7 +213,9 @@ export function BridalMembersCard({ group }: Props) {
                     )}
                   </td>
                   <td className="p-sm">{ROLE_LABEL[m.role] ?? m.role}</td>
-                  <td className="p-sm">{m.clientPhone ?? '—'}</td>
+                  <td className="whitespace-nowrap p-sm">
+                    {m.clientPhone ? formatPhoneBr(m.clientPhone) : '—'}
+                  </td>
                   <td className="p-sm">
                     {m.services.length === 0
                       ? '—'

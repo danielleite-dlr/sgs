@@ -116,4 +116,54 @@ describe('BridalGroupDetailPage', () => {
     renderPage();
     expect(await screen.findByTestId('bg-detail-package')).toHaveTextContent('—');
   });
+  describe('UX-14: status único, campo vazio escondido e telefone formatado', () => {
+    function withGroup(over: Record<string, unknown>): MockedResponse {
+      return { ...queryMock, result: { data: { bridalGroup: { ...g, ...over } } } };
+    }
+
+    it('mostra um só Badge de status e a legenda do contrato em rascunho', async () => {
+      useAuthStore.setState({ roleName: 'MANAGER' });
+      renderPage([], withGroup({ contractId: 'ct1', contractCode: 'CT-1', contractStatus: 'draft' }));
+      const badges = await screen.findAllByTestId('group-status');
+      expect(badges).toHaveLength(1);
+      expect(badges[0]).toHaveTextContent('Ativo');
+      const caption = screen.getByTestId('group-contract-status');
+      expect(caption).toHaveTextContent('Contrato em rascunho');
+      expect(caption.tagName).toBe('P');
+      expect(screen.queryByText('Rascunho', { exact: true })).not.toBeInTheDocument();
+    });
+
+    it('sem contrato não mostra legenda de contrato', async () => {
+      useAuthStore.setState({ roleName: 'MANAGER' });
+      renderPage();
+      expect(await screen.findAllByTestId('group-status')).toHaveLength(1);
+      expect(screen.queryByTestId('group-contract-status')).not.toBeInTheDocument();
+    });
+
+    it('esconde "Pronta até" sem valor e mostra o horário quando existe', async () => {
+      useAuthStore.setState({ roleName: 'MANAGER' });
+      const { unmount } = renderPage();
+      await screen.findByTestId('bg-detail-package');
+      expect(screen.queryByText('Pronta até')).not.toBeInTheDocument();
+      unmount();
+      // 17:00 UTC = 14:00 em São Paulo, no dia do evento
+      renderPage([], withGroup({ readyBy: '2026-12-05T17:00:00.000Z' }));
+      const dd = await screen.findByTestId('bg-detail-ready-by');
+      expect(dd).toHaveTextContent('14:00');
+      expect(dd.previousElementSibling).toHaveTextContent('Pronta até');
+    });
+
+    it('formata o telefone da pessoa como (11) 98888-7777', async () => {
+      useAuthStore.setState({ roleName: 'MANAGER' });
+      renderPage(
+        [],
+        withGroup({
+          members: [member({ id: 'm9', clientName: 'Duda Lima', clientPhone: '+5511988887777' })],
+        }),
+      );
+      const row = await screen.findByTestId('member-m9');
+      expect(row).toHaveTextContent('(11) 98888-7777');
+      expect(row).not.toHaveTextContent('+5511988887777');
+    });
+  });
 });

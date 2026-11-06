@@ -99,6 +99,19 @@ describe('ContractDetailPage', () => {
     expect(screen.getByTestId('contract-text')).toHaveTextContent('TEXTO DO CONTRATO');
   });
 
+  it('texto do contrato com negrito interpretado, sem "**" (UX-11)', async () => {
+    renderPage(
+      makeContract({
+        payments: PAYMENTS,
+        currentText: '**I. Das partes:**\n\n**Contratado:** Studio JS',
+      }),
+    );
+    const text = await screen.findByTestId('contract-text');
+    expect(text.textContent).not.toContain('**');
+    expect(text).toHaveTextContent('I. Das partes:');
+    expect(within(text).getByText('Contratado:').tagName).toBe('STRONG');
+  });
+
   it('Gerar link mostra a URL e Copiar link chama clipboard.writeText', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });

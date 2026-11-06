@@ -13,6 +13,7 @@ import { BridalGroupFormDialog } from '../components/BridalGroupFormDialog';
 import { BridalMembersCard } from '../components/BridalMembersCard';
 import { CancelBridalGroupDialog } from '../components/CancelBridalGroupDialog';
 import {
+  CONTRACT_STATUS_CAPTION,
   CONTRACT_STATUS_LABEL,
   EVENT_KIND_LABEL,
   GROUP_STATUS_LABEL,
@@ -119,10 +120,12 @@ export function BridalGroupDetailPage() {
           <dt className="text-xs font-semibold text-neutral-700">Data do evento</dt>
           <dd>{formatEventDate(group.eventDate)}</dd>
         </div>
-        <div>
-          <dt className="text-xs font-semibold text-neutral-700">Pronta até</dt>
-          <dd>{group.readyBy ? toZoned(group.readyBy).time : '—'}</dd>
-        </div>
+        {group.readyBy && (
+          <div>
+            <dt className="text-xs font-semibold text-neutral-700">Pronta até</dt>
+            <dd data-testid="bg-detail-ready-by">{toZoned(group.readyBy).time}</dd>
+          </div>
+        )}
         <div>
           <dt className="text-xs font-semibold text-neutral-700">Local</dt>
           <dd>
@@ -157,12 +160,15 @@ export function BridalGroupDetailPage() {
         </div>
         <div>
           <dt className="text-xs font-semibold text-neutral-700">Status</dt>
-          <dd className="flex items-center gap-xs">
-            {GROUP_STATUS_LABEL[group.status] ?? group.status}
+          <dd>
+            <Badge variant="outline" data-testid="group-status">
+              {GROUP_STATUS_LABEL[group.status] ?? group.status}
+            </Badge>
             {group.contractStatus && (
-              <Badge variant="outline">
-                {CONTRACT_STATUS_LABEL[group.contractStatus] ?? group.contractStatus}
-              </Badge>
+              <p className="mt-xs text-xs text-neutral-600" data-testid="group-contract-status">
+                {CONTRACT_STATUS_CAPTION[group.contractStatus] ??
+                  `Contrato: ${CONTRACT_STATUS_LABEL[group.contractStatus] ?? group.contractStatus}`}
+              </p>
             )}
           </dd>
         </div>
