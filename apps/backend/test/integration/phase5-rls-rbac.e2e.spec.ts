@@ -92,6 +92,23 @@ describe('Phase 5 - RLS e RBAC', () => {
   });
 
   describe('cashForecast', () => {
-    it.todo('preenchido no plano 05-04');
+    const FORECAST = `query($from: String!, $to: String!) { cashForecast(from: $from, to: $to) { inflowTotal items { refId kind } } }`;
+    const WINDOW = { from: '2027-03-01', to: '2027-03-31' };
+
+    it.each([['attendant'], ['proA']] as const)('%s: negado', async (role) => {
+      expect(isForbidden(await gqlAs(w, w.tokens[role])(FORECAST, WINDOW))).toBe(true);
+    });
+
+    it.each([['admin'], ['manager']] as const)('%s: permitido', async (role) => {
+      const res = await gqlAs(w, w.tokens[role])(FORECAST, WINDOW);
+      expect(res.errors).toBeUndefined();
+      expect(res.data.cashForecast.items.some((i: { refId: string }) => i.refId === expenseId)).toBe(true);
+    });
+
+    it('otherAdmin não vê itens da org principal', async () => {
+      const res = await gqlAs(w, w.tokens.otherAdmin)(FORECAST, WINDOW);
+      expect(res.errors).toBeUndefined();
+      expect(res.data.cashForecast.items.some((i: { refId: string }) => i.refId === expenseId)).toBe(false);
+    });
   });
 });

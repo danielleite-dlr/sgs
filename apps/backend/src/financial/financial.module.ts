@@ -6,6 +6,8 @@ import { FinancialResolver } from './financial.resolver';
 import { FinancialService } from './financial.service';
 import { FixedExpenseResolver } from './fixed-expense.resolver';
 import { FixedExpenseService } from './fixed-expense.service';
+import { ForecastResolver } from './forecast.resolver';
+import { ForecastService } from './forecast.service';
 
 @Module({
   imports: [DatabaseModule, AuthzModule],
@@ -15,6 +17,8 @@ import { FixedExpenseService } from './fixed-expense.service';
     FinancialResolver,
     FixedExpenseService,
     FixedExpenseResolver,
+    ForecastService,
+    ForecastResolver,
   ],
   exports: [ClientCreditService, FinancialService],
 })
