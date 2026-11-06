@@ -1,8 +1,13 @@
-// Placeholder — will be replaced by Phase 2 (dashboard)
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ForecastCard } from '@/features/operations/components/ForecastCard';
+
 export default function DashboardPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-50">
-      <p className="text-neutral-500">Painel — Em construção</p>
+    <div className="p-md">
+      <PageHeader title="Início" />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <ForecastCard />
+      </div>
     </div>
   );
 }

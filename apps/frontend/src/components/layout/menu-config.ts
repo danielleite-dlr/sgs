@@ -194,6 +194,12 @@ const ALL_MENU: MenuItem[] = [
         searchTerms: ['financeiro', 'controle', 'entrada saida'],
       },
       {
+        id: 'fin-previsao',
+        label: 'Previsão de 30 dias',
+        to: '/financeiro/previsao',
+        searchTerms: ['previsão', 'fluxo de caixa', 'próximos 30 dias', 'saldo previsto'],
+      },
+      {
         id: 'fin-despesas-fixas',
         label: 'Despesas fixas',
         to: '/financeiro/despesas-fixas',
