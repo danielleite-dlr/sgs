@@ -292,7 +292,7 @@ export function FinanceiroPage() {
                           <td>{paymentMethodLabel(mv.method)}</td>
                           <td>{mv.clientName ? toDisplayName(mv.clientName) : '—'}</td>
                           <td>{mv.comandaCode ?? mv.contractCode ?? '—'}</td>
-                          <td className={`text-right ${negative ? 'text-outflow-500' : ''}`}>
+                          <td className={`text-right ${negative ? 'text-outflow-700' : ''}`}>
                             {brl(mv.amount)}
                           </td>
                         </tr>

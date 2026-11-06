@@ -90,7 +90,7 @@ function HistorySheet({
                 <tr key={m.id} className="border-t border-neutral-100">
                   <td className="py-xs">{new Date(m.createdAt).toLocaleDateString('pt-BR')}</td>
                   <td>{KIND_LABELS[m.kind] ?? m.kind}</td>
-                  <td className={`text-right ${Number(m.amount) < 0 ? 'text-outflow-500' : ''}`}>
+                  <td className={`text-right ${Number(m.amount) < 0 ? 'text-outflow-700' : ''}`}>
                     {brl(m.amount)}
                   </td>
                   <td className="pl-sm">{m.reason ?? (m.comandaId ? 'Comanda' : '—')}</td>

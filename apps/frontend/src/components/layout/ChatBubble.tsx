@@ -42,7 +42,7 @@ export function ChatBubble() {
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="text-sm font-semibold text-neutral-800">Suporte SGS</span>
-                <span className="text-xs text-success-600 flex items-center gap-xs">
+                <span className="text-xs text-success-700 flex items-center gap-xs">
                   <span className="inline-block h-2 w-2 rounded-full bg-success-500" />
                   Online
                 </span>

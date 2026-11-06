@@ -52,6 +52,9 @@ const config: Config = {
         outflow: {
           50:  '#FDF0EB',
           500: '#D85A30',
+          // Texto pequeno de saída/negativo: 5,37:1 sobre branco (WCAG AA). O 500 fica
+          // para números grandes e gráficos, como no Stitch.
+          700: '#B5481F',
           DEFAULT: '#D85A30',
         },
         warning: {

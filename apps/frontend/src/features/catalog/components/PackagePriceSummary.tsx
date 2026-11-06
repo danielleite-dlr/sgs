@@ -33,7 +33,7 @@ export function PackagePriceSummary({ individualSum, packagePrice }: PackagePric
   } else if (diff < -0.001) {
     delta = {
       text: t('catalog.pacote.delta.discount', { v: fmt(-diff) }),
-      cls: 'text-success-500',
+      cls: 'text-success-700',
     };
   }
 

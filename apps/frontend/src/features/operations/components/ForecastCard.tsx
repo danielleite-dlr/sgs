@@ -13,6 +13,8 @@ import { CashForecastQuery, FORECAST_COST_GROUP_LABELS, forecastWindow, weekLabe
 // Entrada e saída da Previsão de caixa (D-26).
 const GREEN = '#109868';
 const RED = '#D85A30';
+// Texto pequeno: tom escuro com 5,37:1 sobre branco (WCAG AA).
+const RED_TEXT = '#B5481F';
 
 const brl = (v: string) => `R$ ${formatCurrencyDisplay(v)}`;
 
@@ -107,7 +109,7 @@ export function ForecastCard() {
                   ).map(([group, value]) => (
                     <div key={group} className="flex justify-between gap-sm">
                       <dt className="text-neutral-700">{FORECAST_COST_GROUP_LABELS[group]}</dt>
-                      <dd className="font-medium" style={{ color: RED }}>
+                      <dd className="font-medium" style={{ color: RED_TEXT }}>
                         {brl(value)}
                       </dd>
                     </div>

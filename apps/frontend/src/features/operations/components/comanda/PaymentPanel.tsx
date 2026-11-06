@@ -268,7 +268,7 @@ export function PaymentPanel({
             <dt className={SUMMARY_DT_CLASS}>Troco</dt>
             <dd
               data-testid="payment-change"
-              className={`${SUMMARY_DD_CLASS} ${Number(summary.change) > 0 ? 'text-success-500' : 'text-neutral-800'}`}
+              className={`${SUMMARY_DD_CLASS} ${Number(summary.change) > 0 ? 'text-success-700' : 'text-neutral-800'}`}
             >
               {brl(summary.change)}
             </dd>

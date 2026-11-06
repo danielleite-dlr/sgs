@@ -230,7 +230,7 @@ describe('Painel de pagamento no layout Gestor Beauty (06-05)', () => {
       }),
     );
     expect(screen.getByTestId('payment-change')).toHaveTextContent('R$ 15,00');
-    expect(screen.getByTestId('payment-change')).toHaveClass('text-success-500');
+    expect(screen.getByTestId('payment-change')).toHaveClass('text-success-700');
   });
 
   it('linhas de pagamento com valor tabular e remover de 44 px', () => {

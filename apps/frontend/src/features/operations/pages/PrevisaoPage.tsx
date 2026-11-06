@@ -24,6 +24,9 @@ import {
 // Entrada e saída da Previsão de caixa (D-26).
 const GREEN = '#109868';
 const RED = '#D85A30';
+// Texto abaixo de 18,66 px em negrito precisa de 4,5:1 (WCAG AA): tom escuro do mesmo par.
+const GREEN_TEXT = '#0B7A53';
+const RED_TEXT = '#B5481F';
 
 const brl = (v: string) => `R$ ${formatCurrencyDisplay(v.replace('-', ''))}`;
 const signed = (v: string) => (Number(v) < 0 ? `−${brl(v)}` : brl(v));
@@ -225,7 +228,7 @@ export function PrevisaoPage() {
               ).map(([group, value]) => (
                 <div key={group}>
                   <dt className="text-sm text-neutral-600">{FORECAST_COST_GROUP_LABELS[group]}</dt>
-                  <dd className="text-lg font-semibold" style={{ color: RED }}>
+                  <dd className="text-lg font-semibold" style={{ color: RED_TEXT }}>
                     {brl(value)}
                   </dd>
                 </div>
@@ -293,7 +296,7 @@ export function PrevisaoPage() {
                           </TableCell>
                           <TableCell
                             className="text-right"
-                            style={{ color: it.direction === 'in' ? GREEN : RED }}
+                            style={{ color: it.direction === 'in' ? GREEN_TEXT : RED_TEXT }}
                           >
                             {it.direction === 'in' ? '+' : '−'}
                             {brl(it.amount)}

@@ -434,7 +434,7 @@ export function ContractDetailPage() {
                         </td>
                         <td>{paymentMethodLabel(p.method)}</td>
                         <td
-                          className={`whitespace-nowrap text-right ${Number(p.amount) < 0 ? 'text-outflow-500' : ''}`}
+                          className={`whitespace-nowrap text-right ${Number(p.amount) < 0 ? 'text-outflow-700' : ''}`}
                         >
                           {brl(p.amount)}
                         </td>
@@ -465,7 +465,7 @@ export function ContractDetailPage() {
                         {p.reversed && ' (estornado)'}
                       </span>
                       <span
-                        className={`whitespace-nowrap font-semibold ${Number(p.amount) < 0 ? 'text-outflow-500' : ''}`}
+                        className={`whitespace-nowrap font-semibold ${Number(p.amount) < 0 ? 'text-outflow-700' : ''}`}
                       >
                         {brl(p.amount)}
                       </span>

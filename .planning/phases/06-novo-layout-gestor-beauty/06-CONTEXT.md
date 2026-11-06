@@ -65,6 +65,8 @@ Entregas em lotes, cada um com deploy no staging e CI verde, para a usuária ver
   - Status da agenda: Confirmado `#109868`, Faltou/Cancelado `#C53030` (demais iguais a D-11).
   - Os planos 06-06 a 06-10 escritos antes desta decisão citam hex antigos: **D-26 vence**; usar os tokens do Tailwind, que passam a ter estes valores.
 
+- D-27: Contraste dos valores (opção B da usuária em 2026-11-06): o verde `#109868` e o laranja `#D85A30` do Stitch ficam em números grandes (≥ 20 px em negrito) e gráficos; texto menor de valor usa `success-700` `#0B7A53` (5,35:1) e `outflow-700` `#B5481F` (5,37:1). Travado por `src/styles/__tests__/contraste-valores.test.ts` (nenhum `text-success-500/600` ou `text-outflow-500/600` no código).
+
 ### Claude's Discretion
 - Como mapear os tokens no Tailwind (manter os nomes atuais `primary-*`, `neutral-*`, `text-label/body/heading/display` e trocar os valores, ou criar nomes novos), desde que nenhum componente fique com cor antiga.
 - Divisão do lote base em mais de um plano (tokens/componentes e casco), desde que vão juntos ao staging.
