@@ -194,6 +194,12 @@ const ALL_MENU: MenuItem[] = [
         searchTerms: ['financeiro', 'controle', 'entrada saida'],
       },
       {
+        id: 'fin-despesas-fixas',
+        label: 'Despesas fixas',
+        to: '/financeiro/despesas-fixas',
+        searchTerms: ['despesas fixas', 'contas do mês', 'aluguel', 'previsão'],
+      },
+      {
         id: 'fin-caixa',
         label: 'Financeiro — Caixa',
         to: '/financeiro/caixa',
