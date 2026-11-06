@@ -282,8 +282,13 @@ function ClientActions({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-        <Button variant="ghost" size="icon" aria-label="Ações" className="shrink-0">
-          <MoreHorizontal className="h-4 w-4" />
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={`Ações de ${toDisplayName(client.fullName)}`}
+          className="h-11 w-11 shrink-0"
+        >
+          <MoreHorizontal className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>

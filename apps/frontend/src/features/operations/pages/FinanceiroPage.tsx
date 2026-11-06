@@ -24,7 +24,7 @@ import {
 } from '../api/financial.api';
 import { PeriodFilter } from '../components/PeriodFilter';
 import { defaultPeriod, type PeriodValue } from '../lib/period-value';
-import { paymentMethodLabel } from '../lib/operations-labels';
+import { cashKindLabel, paymentMethodLabel } from '../lib/operations-labels';
 import { toDisplayName } from '@/lib/format-name';
 
 type Granularity = 'day' | 'week' | 'month';
@@ -34,13 +34,6 @@ const GRANULARITIES: { value: Granularity; label: string }[] = [
   { value: 'week', label: 'Semana' },
   { value: 'month', label: 'Mês' },
 ];
-
-const KIND_LABELS: Record<string, string> = {
-  deposit_in: 'Sinal',
-  payment_in: 'Pagamento',
-  change_out: 'Troco',
-  reversal: 'Estorno',
-};
 
 const brl = (v: string) => `R$ ${formatCurrencyDisplay(v)}`;
 
@@ -57,12 +50,14 @@ function Kpi({
   id,
   label,
   hint,
+  hintId,
   value,
   extra,
 }: {
   id: string;
   label: string;
   hint?: string;
+  hintId?: string;
   value: string;
   extra?: string;
 }) {
@@ -77,7 +72,11 @@ function Kpi({
           {extra}
         </p>
       )}
-      {hint && <p className="text-xs text-neutral-400 mt-xs">{hint}</p>}
+      {hint && (
+        <p className="text-xs text-neutral-600 mt-xs" data-testid={hintId}>
+          {hint}
+        </p>
+      )}
     </article>
   );
 }
@@ -129,7 +128,10 @@ export function FinanceiroPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-lg">
-          <div className="flex flex-wrap items-start justify-between gap-md">
+          <div
+            data-testid="financeiro-filtros"
+            className="flex flex-col gap-sm md:flex-row md:flex-wrap md:items-end md:gap-md"
+          >
             <PeriodFilter value={period} onChange={setPeriod} />
             <div role="group" aria-label="Agrupar por" className="flex gap-xs">
               {GRANULARITIES.map((g) => (
@@ -163,7 +165,8 @@ export function FinanceiroPage() {
                 <Kpi
                   id="kpi-billed"
                   label="Faturado"
-                  hint="comandas fechadas no período"
+                  hintId="card-hint-faturado"
+                  hint="Comandas fechadas no período mais os pagamentos de contrato do período."
                   value={brl(summary.billedTotal)}
                   extra={
                     Number(summary.contractBilledTotal) > 0
@@ -174,17 +177,22 @@ export function FinanceiroPage() {
                 <Kpi
                   id="kpi-received"
                   label="Recebido"
-                  hint="entradas de caixa no período, incluindo sinais"
+                  hintId="card-hint-recebido"
+                  hint="Dinheiro que entrou no período: sinais, pagamentos de comanda e parcelas de contrato, menos estornos, troco e devoluções. Pode ser diferente do faturado, porque o sinal entra antes de a comanda fechar."
                   value={brl(summary.receivedTotal)}
                 />
                 <Kpi
                   id="kpi-closed-comandas"
-                  label="Comandas fechadas"
+                  label="Comandas fechadas (sem contratos)"
+                  hintId="card-hint-comandas"
+                  hint="Só comandas com valor a pagar; serviços cobertos por contrato entram em Faturado."
                   value={String(summary.closedComandas)}
                 />
                 <Kpi
                   id="kpi-average-ticket"
                   label="Ticket médio"
+                  hintId="card-hint-ticket"
+                  hint="Faturado das comandas dividido pelas comandas fechadas."
                   value={brl(summary.averageTicket)}
                 />
                 <Kpi
@@ -280,7 +288,7 @@ export function FinanceiroPage() {
                             {d.toLocaleDateString('pt-BR')}{' '}
                             {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                           </td>
-                          <td>{KIND_LABELS[mv.kind] ?? mv.kind}</td>
+                          <td>{cashKindLabel(mv.kind)}</td>
                           <td>{paymentMethodLabel(mv.method)}</td>
                           <td>{mv.clientName ? toDisplayName(mv.clientName) : '—'}</td>
                           <td>{mv.comandaCode ?? mv.contractCode ?? '—'}</td>

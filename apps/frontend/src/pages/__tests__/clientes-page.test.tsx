@@ -84,7 +84,15 @@ describe('ClientesPage (UX-15, UX-16)', () => {
       '/clientes/c1',
     );
     expect(within(card).getByText('(11) 98765-4321')).toBeInTheDocument();
-    expect(within(card).getByRole('button', { name: 'Ações' })).toBeInTheDocument();
+    expect(within(card).getByRole('button', { name: 'Ações de Ana Souza' })).toBeInTheDocument();
+  });
+
+  it('botão de ações com 44 px, ícone maior e o nome da cliente no rótulo (UX-19)', async () => {
+    renderList([client('c1', 'MARIA SILVA')]);
+    const table = await screen.findByTestId('clientes-table');
+    const btn = within(table).getByRole('button', { name: 'Ações de Maria Silva' });
+    expect(btn).toHaveClass('h-11', 'w-11');
+    expect(btn.querySelector('svg')).toHaveClass('h-5', 'w-5');
   });
 
   it('nomes com caixas diferentes aparecem iguais', async () => {

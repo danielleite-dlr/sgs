@@ -53,3 +53,17 @@ export const COMANDA_STATUS_LABELS: Record<string, string> = {
   closed: 'Fechada',
   cancelled: 'Cancelada',
 };
+
+const CASH_KIND_LABELS: Record<string, string> = {
+  deposit_in: 'Sinal',
+  payment_in: 'Pagamento',
+  change_out: 'Troco',
+  reversal: 'Estorno',
+  contract_in: 'Entrada de contrato',
+  contract_refund: 'Devolução de contrato',
+};
+
+/** Tipo do lançamento em português; código desconhecido nunca aparece cru (UX-17). */
+export function cashKindLabel(kind: string): string {
+  return CASH_KIND_LABELS[kind] ?? 'Outro lançamento';
+}
