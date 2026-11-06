@@ -275,12 +275,22 @@ Plans:
 ### Phase 6: Novo layout Gestor Beauty
 
 **Goal:** O SGS ganha a cara do projeto Stitch "Gestor Beauty" (projects/5888991241990799272, sistema de design "Studio Editorial Density"): papel #F7F6F3, superfícies brancas com borda de 1 px, roxo #570080 só na ação principal (texto branco), Source Serif 4 em títulos e nomes de cliente, Public Sans no resto com números tabulares, raio 6 px, sem sombras, alvos de 44 px e status por borda esquerda de 3 px. Só o visual, com os dados que o SGS já tem (decisão da usuária em 2026-11-06); bancadas/cadeiras, meta de faturamento, exportar DRE, ocupação em tempo real, cerimonial e status de prova vão para o backlog. Ordem: lote base (tokens, componentes, menu lateral e barra inferior) e depois um lote por tela: Agenda do dia, Novo agendamento, Comanda, Entradas e saídas, Previsão de caixa, Despesas fixas, Grupo de noivas, Início.
-**Requirements**: TBD
+**Requirements**: UI-LAYOUT (fase só visual, decidida pela usuária em 2026-11-06)
 **Depends on:** Phase 5
-**Plans:** 0 plans
+**Plans:** 11 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 6 to break down)
+- [ ] 06-01-base-tokens-componentes-PLAN.md — Lote base 1/2: tokens (cores, fontes, raio, sem sombra), componentes compartilhados e varredura de cores antigas (commit local)
+- [ ] 06-02-base-casco-navegacao-PLAN.md — Lote base 2/2: menu lateral 256 px, topo, barra inferior Agenda/Comanda/Clientes/Noivas/Mais, PageHeader; deploy do lote base
+- [ ] 06-03-agenda-do-dia-PLAN.md — Agenda do dia (celular e computador): borda de status, linha do tempo, hora atual roxa, bloqueio em hachura
+- [ ] 06-04-novo-agendamento-PLAN.md — Novo agendamento: chips de serviço, controle segmentado de profissional, Data/Hora/Duração, Sinal recolhido
+- [ ] 06-05-comanda-PLAN.md — Comanda: cliente, itens e pagamento no padrão novo
+- [ ] 06-06-entradas-e-saidas-PLAN.md — Entradas e saídas (Financeiro): faixa de números, filtros, gráfico e lançamentos
+- [ ] 06-07-previsao-de-caixa-PLAN.md — Previsão de caixa: painel de totais, filtro segmentado, tabelas semanais
+- [ ] 06-08-despesas-fixas-PLAN.md — Despesas fixas: tabela, selos de situação, total mensal das ativas
+- [ ] 06-09-grupo-de-noivas-PLAN.md — Grupo de noivas: ficha do evento, pessoas e cronograma; título com caixa padronizada
+- [ ] 06-10-inicio-PLAN.md — Início: cabeçalho do painel e previsão de 30 dias no padrão novo
+- [ ] 06-11-fechamento-PLAN.md — Auditoria completa, roteiro de conferência e aceite da usuária
 
 ---
 
