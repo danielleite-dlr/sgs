@@ -24,6 +24,7 @@ const ROLE_OPERATION_PERMISSIONS: Record<string, readonly string[]> = {
     'financial.read',
     'commissionRecord.read',
     'commission.write',
+    'financial.expenseWrite',
   ],
   MANAGER: [
     ...COMANDA_FULL,
@@ -33,6 +34,7 @@ const ROLE_OPERATION_PERMISSIONS: Record<string, readonly string[]> = {
     'credit.adjust',
     'financial.read',
     'commissionRecord.read',
+    'financial.expenseWrite',
   ],
   ATTENDANT: [...COMANDA_FULL, CLIENT_WRITE, 'credit.read'],
   PROFESSIONAL: ['comanda.read', 'commissionRecord.read'],

@@ -29,6 +29,7 @@ import { SchedulePage } from '@/features/operations/pages/SchedulePage';
 import { ComandaPage } from '@/features/operations/pages/ComandaPage';
 import { ComandaListPage } from '@/features/operations/pages/ComandaListPage';
 import { FinanceiroPage } from '@/features/operations/pages/FinanceiroPage';
+import { DespesasFixasPage } from '@/features/operations/pages/DespesasFixasPage';
 import { ComissoesCalculadasPage } from '@/features/operations/pages/ComissoesCalculadasPage';
 // Phase 4 — Bridal / Contracts
 import { BridalGroupsPage } from '@/features/bridal/pages/BridalGroupsPage';
@@ -112,6 +113,7 @@ const PROTECTED_ROUTES: GatedRoute[] = [
   { path: '/comanda/:id',           element: <ComandaPage /> },
   { path: '/financeiro',                         element: <FinanceiroPage /> },
   { path: '/financeiro/comissoes',               element: <ComissoesCalculadasPage /> },
+  { path: '/financeiro/despesas-fixas',          element: <DespesasFixasPage /> },
   { path: '/financeiro/caixa',                   element: <FinanceiroCaixaPage /> },
   { path: '/financeiro/pagamento-profissionais', element: <PagamentoProfissionaisPage /> },
   { path: '/financeiro/fluxo',                   element: <FluxoFinanceiroPage /> },
