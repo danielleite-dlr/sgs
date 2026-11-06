@@ -38,8 +38,8 @@ export function PrevisaoPage() {
   return (
     <div className="p-md">
       <PageHeader
-        title="Previsão financeira — próximos 30 dias"
-        breadcrumbs={[{ label: 'Financeiro', to: '/financeiro' }, { label: 'Previsão de 30 dias' }]}
+        title="Previsão de caixa"
+        breadcrumbs={[{ label: 'Financeiro', to: '/financeiro' }, { label: 'Previsão de caixa' }]}
       />
       <p className="-mt-sm mb-md text-sm text-neutral-600">
         Agendamentos confirmados e parcelas de contratos a receber, menos comissões estimadas e despesas fixas.

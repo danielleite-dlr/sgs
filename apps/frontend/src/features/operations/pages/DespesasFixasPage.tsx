@@ -294,7 +294,7 @@ export function DespesasFixasPage() {
         }
       />
       <p className="-mt-sm mb-lg text-sm text-neutral-600">
-        Contas que se repetem todo mês. Elas entram nas saídas da previsão de 30 dias.
+        Contas que se repetem todo mês. Elas entram nas saídas da previsão de caixa.
       </p>
 
       {!canRead ? (

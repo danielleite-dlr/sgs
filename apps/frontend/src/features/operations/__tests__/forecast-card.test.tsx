@@ -87,7 +87,7 @@ describe('ForecastCard', () => {
     expect(screen.getByText('Entradas previstas')).toBeInTheDocument();
     expect(screen.getByText('Saídas previstas')).toBeInTheDocument();
     expect(screen.getByText('Saldo previsto')).toBeInTheDocument();
-    expect(screen.getByText('Previsão dos próximos 30 dias')).toBeInTheDocument();
+    expect(screen.getByText('Previsão de caixa')).toBeInTheDocument();
   });
 
   it('avisa o valor em atraso', async () => {
@@ -123,7 +123,7 @@ describe('ForecastCard', () => {
   it('não renderiza para PROFESSIONAL', () => {
     useAuthStore.setState({ roleName: 'PROFESSIONAL', permissions: [] });
     renderCard(ok());
-    expect(screen.queryByText('Previsão dos próximos 30 dias')).not.toBeInTheDocument();
+    expect(screen.queryByText('Previsão de caixa')).not.toBeInTheDocument();
   });
 
   it('consulta a partir de hoje no fuso de São Paulo', async () => {

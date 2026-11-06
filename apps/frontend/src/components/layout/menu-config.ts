@@ -195,9 +195,9 @@ const ALL_MENU: MenuItem[] = [
       },
       {
         id: 'fin-previsao',
-        label: 'Previsão de 30 dias',
+        label: 'Previsão de caixa',
         to: '/financeiro/previsao',
-        searchTerms: ['previsão', 'fluxo de caixa', 'próximos 30 dias', 'saldo previsto'],
+        searchTerms: ['previsão', 'previsão de caixa', 'fluxo de caixa', 'próximos 30 dias', 'saldo previsto'],
       },
       {
         id: 'fin-despesas-fixas',

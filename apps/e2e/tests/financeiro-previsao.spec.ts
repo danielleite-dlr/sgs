@@ -36,7 +36,7 @@ test('despesa fixa cadastrada entra na previsão do painel e no detalhe', async 
 
   // Aparece nas saídas do cartão do painel.
   await navigateViaMenu(page, 'Início');
-  await expect(page.getByText('Previsão dos próximos 30 dias')).toBeVisible();
+  await expect(page.getByText('Previsão de caixa')).toBeVisible();
   const outflow = page.getByText('Saídas previstas').first().locator('xpath=following-sibling::p[1]');
   await expect(outflow).toBeVisible();
   expect(parseBrl((await outflow.textContent()) ?? '')).toBeGreaterThanOrEqual(1234.56);
@@ -45,7 +45,7 @@ test('despesa fixa cadastrada entra na previsão do painel e no detalhe', async 
   await page.getByRole('link', { name: /Ver detalhe/ }).first().click();
   await expect(page).toHaveURL(/financeiro\/previsao/);
   await expect(
-    page.getByRole('heading', { name: 'Previsão financeira — próximos 30 dias' }),
+    page.getByRole('heading', { name: 'Previsão de caixa' }),
   ).toBeVisible();
   const row = page.getByRole('row', { name: new RegExp(name) });
   await expect(row).toBeVisible();

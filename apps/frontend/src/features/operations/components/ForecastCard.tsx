@@ -49,7 +49,7 @@ export function ForecastCard() {
   return (
     <Card data-testid="forecast-card">
       <CardHeader>
-        <CardTitle>Previsão dos próximos 30 dias</CardTitle>
+        <CardTitle>Previsão de caixa</CardTitle>
         {forecast && (
           <p className="text-sm text-neutral-600">
             {ddMm(forecast.from)} a {ddMm(lastDay(forecast.to))}
@@ -82,7 +82,7 @@ export function ForecastCard() {
           <>
             <Link
               to="/financeiro/previsao"
-              aria-label="Ver detalhe da previsão de 30 dias"
+              aria-label="Ver detalhe da previsão de caixa"
               className="grid grid-cols-1 gap-md rounded-md sm:grid-cols-3"
             >
               <div>
