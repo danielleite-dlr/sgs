@@ -36,7 +36,8 @@ test('UX-15/16: no celular a lista de clientes mostra cartões com nome clicáve
   await expect(card).toBeVisible();
   await expect(page.getByTestId('clientes-table')).toBeHidden();
   await expect(card.getByRole('button', { name: 'Ações' })).toBeVisible();
-  await expect(page.getByText(raw)).toHaveCount(0);
+  // getByText sem exact ignora a caixa; exact compara a grafia exata.
+  await expect(page.getByText(raw, { exact: true })).toHaveCount(0);
 
   const scroll = await page.evaluate(() => ({
     sw: document.documentElement.scrollWidth,
