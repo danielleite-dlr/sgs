@@ -28,6 +28,7 @@ import {
 } from '../api/comandas.api';
 import { AddItemDialog, type AddItemMode } from '../components/comanda/AddItemDialog';
 import { PaymentPanel } from '../components/comanda/PaymentPanel';
+import { formatPhoneBr } from '@/lib/format-phone';
 import { ReopenComandaDialog } from '../components/comanda/ReopenComandaDialog';
 import { COMANDA_STATUS_LABELS } from '../lib/operations-labels';
 
@@ -178,7 +179,7 @@ export function ComandaPage() {
 
       <div className="grid grid-cols-1 gap-md lg:grid-cols-3">
         <div className="lg:col-span-1 flex flex-col gap-md">
-          <Card>
+          <Card data-testid="comanda-client-card">
             <CardHeader className="pb-sm">
               <CardTitle className="text-base flex items-center gap-xs">
                 <User className="h-4 w-4 text-primary-500" />
@@ -186,14 +187,11 @@ export function ComandaPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-sm">
-              <p className="text-sm font-semibold text-neutral-800" data-testid="comanda-code">
-                {comanda.code}
-              </p>
               <p className="text-sm font-semibold text-neutral-800">{comanda.client.fullName}</p>
               {comanda.client.phone && (
                 <div className="flex items-center gap-xs text-sm text-neutral-600">
                   <Phone className="h-3 w-3" />
-                  <span>{comanda.client.phone}</span>
+                  <span>{formatPhoneBr(comanda.client.phone)}</span>
                 </div>
               )}
               <div className="flex items-center gap-xs text-sm text-neutral-600">

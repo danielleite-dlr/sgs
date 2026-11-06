@@ -86,7 +86,19 @@ export function PaymentPanel({
     ...new Set(comanda.items.map((i) => i.contractCode).filter((c): c is string => !!c)),
   ].join(', ');
 
-  const closeEnabled = comanda.canClose && base.canClose && !busy;
+  // Comanda vazia não fecha (o backend recusa com EMPTY_COMANDA). Total > 0 implica itens.
+  const hasItems = comanda.items.length > 0 || decimalToCents(comanda.total) > 0;
+  const readyToClose = hasItems && comanda.canClose && base.canClose;
+  const closeEnabled = readyToClose && !busy;
+  // Motivo visível quando o botão está realmente bloqueado (UX-06). O erro de
+  // troco já tem o próprio aviso acima.
+  const closeBlockedReason = readyToClose
+    ? null
+    : !hasItems
+      ? 'Adicione ao menos um item para fechar'
+      : Number(base.remaining) > 0
+        ? `Falta ${brl(base.remaining)} para fechar`
+        : null;
 
   async function add() {
     if (!pending) return;
@@ -259,16 +271,18 @@ export function PaymentPanel({
             <Button
               type="button"
               size="lg"
-              className="w-full"
+              // Pronto para fechar: cor cheia mesmo enquanto salva (UX-06).
+              className={readyToClose ? 'w-full disabled:opacity-100' : 'w-full'}
               disabled={!closeEnabled}
+              aria-busy={readyToClose && busy ? true : undefined}
               data-testid="comanda-close"
               onClick={() => void onClose()}
             >
               Fechar comanda
             </Button>
-            {!closeEnabled && !busy && Number(base.remaining) > 0 && (
-              <p className="text-xs text-neutral-600">
-                Falta {brl(base.remaining)} para poder fechar.
+            {closeBlockedReason && (
+              <p className="text-xs text-neutral-600" data-testid="close-blocked-reason">
+                {closeBlockedReason}
               </p>
             )}
           </div>

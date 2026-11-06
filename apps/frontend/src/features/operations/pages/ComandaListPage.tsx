@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useHasPermission } from '../operations-permissions';
 import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
+import { toDisplayName } from '@/lib/format-name';
 import { ComandasQuery, type ComandasQueryResult } from '../api/comandas.api';
 import { PeriodFilter } from '../components/PeriodFilter';
 import { WalkInDialog } from '../components/comanda/WalkInDialog';
@@ -86,7 +87,8 @@ export function ComandaListPage() {
         </div>
       </div>
 
-      <Card>
+      {/* O Card base limita a 400 px; a lista usa a largura da tela (UX-07). */}
+      <Card className="w-full min-w-0 max-w-none" data-testid="comanda-list-card">
         <CardContent className="p-0">
           {loading && !data ? (
             <div className="p-md">
@@ -101,12 +103,12 @@ export function ComandaListPage() {
               <table className="w-full text-sm" data-testid="comanda-list">
                 <thead>
                   <tr className="text-left text-xs text-neutral-600">
-                    <th className="p-sm">Código</th>
-                    <th>Cliente</th>
-                    <th>Aberta em</th>
-                    <th>Status</th>
-                    <th className="text-right">Total</th>
-                    <th className="p-sm text-right">Pago</th>
+                    <th className="p-sm whitespace-nowrap">Código</th>
+                    <th className="p-sm whitespace-nowrap">Cliente</th>
+                    <th className="p-sm whitespace-nowrap">Aberta em</th>
+                    <th className="p-sm whitespace-nowrap">Status</th>
+                    <th className="p-sm whitespace-nowrap text-right">Total</th>
+                    <th className="p-sm whitespace-nowrap text-right">Pago</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -116,7 +118,7 @@ export function ComandaListPage() {
                       data-testid={`comanda-row-${c.id}`}
                       className="border-t border-neutral-100"
                     >
-                      <td className="p-sm">
+                      <td className="p-sm whitespace-nowrap">
                         <Link
                           to={`/comanda/${c.id}`}
                           className="font-semibold text-primary-700 underline"
@@ -124,15 +126,15 @@ export function ComandaListPage() {
                           {c.code}
                         </Link>
                       </td>
-                      <td>{c.client.fullName}</td>
-                      <td>{formatOpenedAt(c.openedAt)}</td>
-                      <td>
+                      <td className="p-sm">{toDisplayName(c.client.fullName)}</td>
+                      <td className="p-sm whitespace-nowrap">{formatOpenedAt(c.openedAt)}</td>
+                      <td className="p-sm">
                         <Badge variant="outline" className="text-xs">
                           {COMANDA_STATUS_LABELS[c.status] ?? c.status}
                         </Badge>
                       </td>
-                      <td className="text-right">{brl(c.total)}</td>
-                      <td className="p-sm text-right">{brl(c.paid)}</td>
+                      <td className="p-sm whitespace-nowrap text-right">{brl(c.total)}</td>
+                      <td className="p-sm whitespace-nowrap text-right">{brl(c.paid)}</td>
                     </tr>
                   ))}
                 </tbody>

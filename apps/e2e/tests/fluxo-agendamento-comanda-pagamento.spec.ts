@@ -77,7 +77,7 @@ test.describe('Fluxo: agendamento com sinal, comanda, pagamento dividido e comis
     await page.getByTestId('appointment-open-comanda').click();
     await page.waitForURL(/\/comanda\/[0-9a-f-]+$/);
     const comandaId = page.url().split('/').pop()!;
-    const comandaCode = (await text(page.getByTestId('comanda-code'))).match(/C-\d{4}-\d+/)![0];
+    const comandaCode = (await text(page.getByRole('heading', { level: 1 }))).match(/C-\d{4}-\d+/)![0];
 
     // ---- produto ----
     await page.getByTestId('comanda-add-product').click();
