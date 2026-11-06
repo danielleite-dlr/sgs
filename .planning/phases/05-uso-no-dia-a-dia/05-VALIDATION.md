@@ -38,7 +38,27 @@ created: 2026-11-05
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| (preenchido pelo planner/executor a partir dos PLAN.md) | | | FIN-03 / UX-DAY | | | | ⬜ pending |
+| 05-01-T1 | 05-01 | 1 | UX-DAY | config/typecheck | `corepack pnpm --filter @sgs/e2e typecheck` + `git check-ignore .env.audit` | ❌ W0 | ⬜ pending |
+| 05-01-T2 | 05-01 | 1 | UX-DAY | Playwright (auditoria) + arquivo | `playwright test -c playwright.audit.config.ts` + grep do cabeçalho em 05-AUDITORIA.md | ❌ W0 | ⬜ pending |
+| 05-01-T3 | 05-01 | 1 | UX-DAY | manual (aprovação) | `grep '^status: aprovada' 05-AUDITORIA.md` | — | ⬜ pending |
+| 05-02-T1 | 05-02 | 1 | FIN-03 | schema | `prisma validate` + `pnpm --filter @sgs/backend typecheck` | ❌ W0 | ⬜ pending |
+| 05-02-T2 | 05-02 | 1 | FIN-03 | unit (TDD) | `pnpm --filter @sgs/backend test -- forecast` | ❌ W0 | ⬜ pending |
+| 05-03-T1 | 05-03 | 2 | FIN-03 | typecheck/lint | `pnpm --filter @sgs/backend typecheck && lint` | — | ⬜ pending |
+| 05-03-T2 | 05-03 | 2 | FIN-03 | integração | `pnpm --filter @sgs/backend test:integration -- phase5-fixed-expenses phase5-rls-rbac` | ❌ W0 | ⬜ pending |
+| 05-04-T1 | 05-04 | 3 | FIN-03 | typecheck/unit | `pnpm --filter @sgs/backend test -- forecast financial` | — | ⬜ pending |
+| 05-04-T2 | 05-04 | 3 | FIN-03 | integração | `pnpm --filter @sgs/backend test:integration -- phase5` | ❌ W0 | ⬜ pending |
+| 05-05-T1 | 05-05 | 1 | FIN-03 | vitest | `pnpm --filter @sgs/frontend test -- operations-permissions forecast-api` | ❌ W0 | ⬜ pending |
+| 05-05-T2 | 05-05 | 1 | FIN-03 | vitest | `pnpm --filter @sgs/frontend test -- fixed-expenses-page features` | ❌ W0 | ⬜ pending |
+| 05-06-T1 | 05-06 | 2 | FIN-03 | vitest | `pnpm --filter @sgs/frontend test -- forecast-card` | ❌ W0 | ⬜ pending |
+| 05-06-T2 | 05-06 | 2 | FIN-03 | vitest | `pnpm --filter @sgs/frontend test -- previsao-page features` | ❌ W0 | ⬜ pending |
+| 05-06-T3 | 05-06 | 2 | FIN-03 (D-11) | vitest + E2E | `pnpm --filter @sgs/frontend test` + `corepack pnpm --filter @sgs/e2e test:e2e smoke equipe` | ✅ (ajuste) | ⬜ pending |
+| 05-07-T1 | 05-07 | 4 | FIN-03 | E2E | `corepack pnpm --filter @sgs/e2e test:e2e financeiro-previsao` | ❌ W0 | ⬜ pending |
+| 05-07-T2 | 05-07 | 4 | FIN-03 | gate + CI + staging | suíte completa + `gh run list ... = success` + `previsao-staging.audit.ts` | — | ⬜ pending |
+| 05-08-T1/T2 | 05-08 | 2 | UX-DAY | estrutura de planos | `gsd-tools verify plan-structure` em cada lote + IDs aprovados cobertos | — | ⬜ pending |
+| 05-09…19 | lotes | ≥5 | UX-DAY | vitest/Playwright por item | definido em cada lote (gerado pelo 05-08) | por item | ⬜ pending |
+| 05-20-T1 | 05-20 | último | UX-DAY | Playwright (staging) | `playwright test -c playwright.audit.config.ts audit/previsao-staging.audit.ts` | — | ⬜ pending |
+| 05-20-T2 | 05-20 | último | UX-DAY/FIN-03 | manual (aceite) | `grep '^## Aceite final' 05-AUDITORIA.md` | — | ⬜ pending |
+| 05-20-T3 | 05-20 | último | UX-DAY (D-12) | SQL staging | `members.status = 'inactive'` para auditoria.ux@sgs.invalid | — | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 

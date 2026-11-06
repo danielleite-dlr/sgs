@@ -248,7 +248,18 @@ Plans:
 3. A previsão soma agendamentos confirmados e parcelas de contratos a vencer, e desconta comissões a pagar e despesas fixas cadastradas
 4. A dona consegue cadastrar despesas fixas mensais (nome, valor, dia de vencimento) que entram na previsão
 
-**Plans:** TBD
+**Plans:** 9 planos agora (+ lotes de correção 05-09…05-19 gerados pelo 05-08 após a aprovação da auditoria)
+
+Plans:
+- [ ] 05-01-auditoria-usabilidade-PLAN.md — Auditoria no staging (usuário dedicado, só leitura) + local; 05-AUDITORIA.md; checkpoint de aprovação (D-01, D-12)
+- [ ] 05-02-backend-previsao-fundacao-PLAN.md — Migration fixed_expenses (RLS), permissão financial.expenseWrite, funções puras da previsão (TDD)
+- [ ] 05-03-backend-despesas-fixas-PLAN.md — API GraphQL de despesas fixas + integração RLS/RBAC
+- [ ] 05-04-backend-cash-forecast-PLAN.md — Query cashForecast (agenda, parcelas, comissões, despesas; atraso D-09; fallback D-10) + integração
+- [ ] 05-05-frontend-despesas-fixas-PLAN.md — Tela /financeiro/despesas-fixas + camada de API da fase
+- [ ] 05-06-frontend-painel-previsao-PLAN.md — Cartão no painel, detalhe /financeiro/previsao, painel como home de ADMIN/MANAGER (D-11)
+- [ ] 05-07-e2e-deploy-previsao-PLAN.md — E2E da previsão, gate completo, backup, deploy no staging e CI
+- [ ] 05-08-gerar-lotes-correcao-PLAN.md — Gera os lotes de correção (05-09…) a partir da lista aprovada
+- [ ] 05-20-fechamento-PLAN.md — Reverificação no staging, aceite da usuária, desativação do usuário de auditoria
 
 **UI hint:** yes
 
