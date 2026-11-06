@@ -41,6 +41,10 @@ test('UX-02: botão "Filtros" com texto e alvos de toque de 44 px', async ({ pag
   await filtros.click();
   const painel = page.getByRole('dialog');
   await expect(painel).toBeVisible();
+  // O painel entra deslizando; medir durante a animação dá larguras como 43,99998 px.
+  await painel.evaluate((el) =>
+    Promise.all(el.getAnimations({ subtree: true }).map((an) => an.finished)),
+  );
   const todos = painel.getByRole('button', { name: 'Todos', exact: true });
   await expectAlvo44(todos, 'Todos');
   const pros = painel.getByRole('button', { name: / — (visível|oculto)$/ });
