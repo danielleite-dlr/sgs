@@ -137,17 +137,19 @@ Tabelas: appointments(professional_id NOT NULL, service_id, service_variant_id, 
     - apps/backend/src/financial/financial.module.ts
   </read_first>
   <action>
-1. `financial.service.ts`: trocar `function validateRange` por `export function validateRange` (sem outra mudança).
+1. `financial.service.ts`: trocar `function validateRange` por `export function validateRange` e extrair `export async function orgTimezone(tx, orgId)` do método privado `timezone` (passo 3a). Nenhuma outra mudança.
 2. `forecast.graphql`: copiar o SDL de `<interfaces>` literalmente.
 3. `forecast.service.ts` — `@Injectable() export class ForecastService { constructor(private readonly tenant: TenantContextService) {} async forecast(orgId: string, from: string, to: string) }`. Passos dentro de UMA `runWithTenant(orgId, async tx => …)`:
-   a. `validateRange(from, to)` antes da transação; `tz = organization.timezone ?? 'America/Sao_Paulo'`.
+   a. `validateRange(from, to)` antes da transação. Fuso: usar o helper que já existe, `FinancialService.timezone(tx, orgId): Promise<string>`. Hoje ele é um método `private async timezone(tx: Parameters<Parameters<TenantContextService['runWithTenant']>[1]>[0], orgId: string)` (linha ~31 de `financial.service.ts`), que lê `organizations.timezone`: coluna NOT NULL com default `America/Sao_Paulo`; o `??` interno só cobre org inexistente. Para reutilizar sem duplicar, extrair o corpo para `export async function orgTimezone(tx, orgId): Promise<string>` no mesmo arquivo, fazer o método privado delegar para ela (as 4 chamadas `this.timezone(tx, orgId)` continuam iguais) e chamar `const tz = await orgTimezone(tx, orgId)` no ForecastService. NÃO acrescentar outro fallback `?? 'America/Sao_Paulo'` no ForecastService.
    b. **Agendamentos da janela** (todas as origens; `$queryRaw` com `Prisma.join(FORECAST_APPOINTMENT_STATUSES)`):
 ```sql
 SELECT a.id, a.professional_id, a.service_id, a.contract_id, a.deposit_amount::text AS deposit,
        (a.starts_at AT TIME ZONE ${tz})::date::text AS day,
        s.name AS service_name, s.base_price::text AS base_price, s.category_id,
        v.price::text AS variant_price, m.display_name AS professional_name,
-       (SELECT SUM(ci.total)::text FROM comanda_items ci JOIN comandas co ON co.id = ci.comanda_id
+       (SELECT COUNT(*)::int FROM comanda_items ci JOIN comandas co ON co.id = ci.comanda_id
+         WHERE ci.appointment_id = a.id AND co.status = 'open') AS comanda_item_count,
+       (SELECT COALESCE(SUM(ci.total), 0)::text FROM comanda_items ci JOIN comandas co ON co.id = ci.comanda_id
          WHERE ci.appointment_id = a.id AND co.status = 'open') AS comanda_total
   FROM appointments a
   JOIN services s ON s.id = a.service_id
@@ -157,7 +159,7 @@ SELECT a.id, a.professional_id, a.service_id, a.contract_id, a.deposit_amount::t
    AND a.starts_at >= (${from}::date)::timestamp AT TIME ZONE ${tz}
    AND a.starts_at <  (${to}::date)::timestamp AT TIME ZONE ${tz}
 ```
-      - Entrada (só `contract_id IS NULL`): `cents = appointmentInflowCents({ comandaItemsCents: comanda_total ? toCents : null, variantCents, baseCents, depositCents })`; se `> 0` item `{ kind:'appointment', direction:'in', date: day, label: \`${service_name} · ${professional_name}\`, refId: a.id }` (sem nome de cliente no label).
+      - Entrada (só `contract_id IS NULL`): `cents = appointmentInflowCents({ comandaItemCount: comanda_item_count, comandaItemsCents: toCents(comanda_total), variantCents: variant_price == null ? null : toCents(variant_price), baseCents: toCents(base_price), depositCents: toCents(deposit) })` (converter para número ANTES; a regra de fallback é pela contagem de itens, não pela string `'0.00'`); se `> 0` item `{ kind:'appointment', direction:'in', date: day, label: \`${service_name} · ${professional_name}\`, refId: a.id }` (sem nome de cliente no label).
       - Saída (TODOS, inclusive com `contract_id` — D-10): `listUnitCents = variantCents ?? baseCents`; `match = resolveCommissionRule(rules, { kind:'service', memberId: professional_id, serviceId, categoryChain: categoryChain(category_id, parents) })`; `c = computeCommission(match, { listUnitCents, quantity: 1, chargedCents: listUnitCents })`; item `{ kind:'commission', direction:'out', date: day, cents: c.amountCents, noRule: c.noRule, label: \`Comissão — ${professional_name} · ${service_name}\`, refId: a.id }` (incluir mesmo com 0 quando `noRule`, para o detalhe mostrar).
    c. **Contratos active**: `tx.contract.findMany({ where: { status: 'active' }, include: { installments: true } })` + `SELECT contract_id, COALESCE(SUM(amount),0)::text AS net FROM contract_payments GROUP BY contract_id`; para cada um `contractReceivables({ contractId, code, installments: installments.map(i => ({ seq: i.seq, dueDate: i.dueDate.toISOString().slice(0,10), cents: toCents(i.amount) })), netPaidCents, depositCents, totalCents, balanceDueDate: balanceDueDate.toISOString().slice(0,10) }, from, to)` (as colunas são `@db.Date`, então `toISOString().slice(0,10)` é a data correta).
    d. **Itens de contrato sem agendamento (sem profissional definido, D-10)**:
@@ -186,7 +188,8 @@ SELECT ci.id, ci.contract_id, ci.service_id, ci.quantity, s.base_price::text AS 
     <automated>cd /root/sgs && pnpm --filter @sgs/backend typecheck && pnpm --filter @sgs/backend lint && pnpm --filter @sgs/backend test -- forecast financial</automated>
   </verify>
   <acceptance_criteria>
-    - `financial.service.ts` contém `export function validateRange`
+    - `financial.service.ts` contém `export function validateRange` e `export async function orgTimezone`
+    - `forecast.service.ts` contém `orgTimezone(tx, orgId)` e NÃO contém `'America/Sao_Paulo'`
     - `forecast.graphql` contém `cashForecast(from: String!, to: String!): CashForecast!`, `overdueInflowTotal: String!`, `withoutProfessional: Boolean!`
     - `forecast.service.ts` contém `FORECAST_APPOINTMENT_STATUSES`, `AT TIME ZONE`, `co.status = 'open'`, `contract_id IS NULL` ou checagem equivalente `contract_id == null` para a entrada, `fallbackCommission(`, `resolveCommissionRule(`, `contractReceivables(`, `expandFixedExpenses(`, `buildWeeklyBuckets(` e o texto `sem profissional definido`
     - `forecast.resolver.ts` contém `@RequirePermission(PERMISSIONS.FINANCIAL_READ)` e `@Query('cashForecast')`
@@ -208,7 +211,7 @@ SELECT ci.id, ci.contract_id, ci.service_id, ci.quantity, s.base_price::text AS 
   <action>
 `phase5-forecast.e2e.spec.ts` — world `createPhase4World`, org em `America/Sao_Paulo`, janela fixa `from = '2027-03-01'`, `to = '2027-03-31'` (30 dias, 5 semanas). Inserir tudo via `adminPrisma` com horários distintos por profissional (exclusion constraint). Limpeza: `deletePhase5Rows` → `destroyPhase4World` (remover antes os appointments/comandas criados, se `destroyPhase4World` não cobrir). Casos (cada um com valores esperados exatos em string):
 1. Agendamento `scheduled` proA serviço base (100.00), 2027-03-02 10:00 -03:00, sem comanda, sinal 30.00 → item `appointment` `amount '70.00'` em `2027-03-02`.
-2. Agendamento `confirmed` com variante (120.00) → `'120.00'`; com comanda `open` cujo item do agendamento tem `total '90.00'` → `'90.00'` (comanda vence a variante).
+2. Agendamento `confirmed` com variante (120.00) → `'120.00'`; com comanda `open` cujo item do agendamento tem `total '90.00'` → `'90.00'` (comanda vence a variante); com comanda `open` sem nenhum item desse agendamento → `'120.00'` (volta para a variante).
 3. `cancelled`, `no_show`, `completed`, `in_progress` na janela → nenhum item `appointment` nem `commission` para eles.
 4. Fuso: agendamento 2027-03-30 22:30 -03:00 → entra em `2027-03-30` (5º bucket); 2027-03-31 00:30 -03:00 → não entra; 2027-03-01 00:10 -03:00 → entra no 1º bucket.
 5. Comissão: regra `service` 10% para `serviceId` → agendamento com variante 120.00 gera `commission '12.00'`; sem regra para `serviceBId` (e sem default) → item `commission` `'0.00'` com `noRule: true` e `noRuleCount >= 1`.

@@ -7,6 +7,7 @@ depends_on: ["05-07", "05-08"]
 files_modified:
   - .planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md
   - .env.audit
+  - .planning/REQUIREMENTS.md
 autonomous: false
 requirements: [UX-DAY, FIN-03]
 
@@ -16,6 +17,7 @@ must_haves:
     - "A usuária confirmou no staging o painel com a previsão de 30 dias e as correções aprovadas"
     - "O usuário de auditoria está desativado no staging e não consegue mais entrar (D-12)"
     - "A senha de auditoria não existe mais em arquivo local"
+    - "O texto do FIN-03 em REQUIREMENTS.md descreve o que foi entregue (agenda confirmada + parcelas de contratos − comissões estimadas − despesas fixas; sem média histórica)"
   artifacts:
     - path: ".planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md"
       provides: "Seção Correções com Corrigido em e Verificado no staging preenchidos"
@@ -59,9 +61,10 @@ Output: `05-AUDITORIA.md` com verificação no staging, aceite registrado, usuá
 <tasks>
 
 <task type="auto">
-  <name>Task 1: Reverificar no staging os itens corrigidos e a previsão</name>
-  <files>.planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md</files>
+  <name>Task 1: Reverificar no staging os itens corrigidos e a previsão; alinhar o FIN-03</name>
+  <files>.planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md, .planning/REQUIREMENTS.md</files>
   <read_first>
+    - .planning/REQUIREMENTS.md (linha do FIN-03 e a tabela de rastreio)
     - .planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md (seção Correções)
     - apps/e2e/audit/telas.audit.ts e apps/e2e/audit/previsao-staging.audit.ts
     - SUMMARYs dos lotes 05-09…05-19 que existirem
@@ -71,14 +74,20 @@ Output: `05-AUDITORIA.md` com verificação no staging, aceite registrado, usuá
 2. Conferir que o staging está com o último commit: `git log origin/master -1 --format=%h` igual ao último deploy (rodar `./scripts/deploy-staging.sh` se `git log` mostrar commit posterior ao último deploy registrado nos SUMMARYs) e CI verde (`gh run list --branch master --limit 1 --json conclusion -q '.[0].conclusion'` = `success`).
 3. Rodar a auditoria somente leitura de novo no staging: `cd /root/sgs/apps/e2e && corepack pnpm exec playwright test -c playwright.audit.config.ts audit/telas.audit.ts audit/previsao-staging.audit.ts`. Para cada item aprovado, abrir (Read) a screenshot nova da tela correspondente e comparar com o "Esperado" do item. Preencher `Verificado no staging` com `ok (AAAA-MM-DD)` ou `falhou: <motivo>`. Item que falhou: reabrir como pendente na seção e reportar (não marcar a fase como pronta).
 4. Previsão com dados reais: no staging, comparar (via consulta somente leitura no banco com `SET LOCAL app.current_organization`) a soma das despesas fixas ativas que vencem nos próximos 30 dias e a soma das parcelas pendentes do contrato `active` da Studio JS com o que o detalhe `/financeiro/previsao` mostra (screenshot `90-previsao-*`). Registrar no SUMMARY os totais conferidos (valores agregados, sem dados de clientes).
+5. Alinhar o FIN-03 com a decisão travada (D-04, D-05, D-09; a média histórica foi descartada pela usuária). Em `.planning/REQUIREMENTS.md`, trocar a linha
+   `- [ ] **FIN-03**: Sistema gera previsão financeira para os próximos 30 dias baseada em histórico e agendamentos confirmados`
+   por
+   `- [ ] **FIN-03**: Sistema gera previsão financeira para os próximos 30 dias: agenda confirmada + parcelas de contratos a receber (vencidas entram como "em atraso") − comissões estimadas − despesas fixas cadastradas (sem média histórica)`.
+   Não marcar o checkbox nem mudar o status da tabela de rastreio: isso é feito pelo fluxo de verificação da fase.
   </action>
   <verify>
-    <automated>cd /root/sgs && F=.planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md && ! grep -E '^\| UX-[0-9]+ \| 05-[0-9]+ \|' $F | grep -qE '\| — \|' && ! grep -q 'falhou:' $F && (cd apps/e2e && corepack pnpm exec playwright test -c playwright.audit.config.ts audit/previsao-staging.audit.ts)</automated>
+    <automated>cd /root/sgs && F=.planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md && ! grep -E '^\| UX-[0-9]+ \| 05-[0-9]+ \|' $F | grep -qE '\| — \|' && ! grep -q 'falhou:' $F && grep -q 'sem média histórica' .planning/REQUIREMENTS.md && ! grep -q 'baseada em histórico e agendamentos confirmados' .planning/REQUIREMENTS.md && (cd apps/e2e && corepack pnpm exec playwright test -c playwright.audit.config.ts audit/previsao-staging.audit.ts)</automated>
   </verify>
   <acceptance_criteria>
     - Toda linha `| UX-xx | 05-NN |` da seção `## Correções` tem commit e `ok (AAAA-MM-DD)` (nenhum `—` e nenhum `falhou:`)
     - `previsao-staging.audit.ts` passa no staging
     - SUMMARY registra os totais da previsão conferidos contra o banco
+    - `.planning/REQUIREMENTS.md` contém `agenda confirmada + parcelas de contratos a receber` e `sem média histórica`, e não contém mais `baseada em histórico e agendamentos confirmados`
   </acceptance_criteria>
   <done>Correções e previsão conferidas no staging pelo roteiro automatizado.</done>
 </task>

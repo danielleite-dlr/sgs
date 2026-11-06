@@ -3,7 +3,7 @@ phase: 05-uso-no-dia-a-dia
 plan: 07
 type: execute
 wave: 4
-depends_on: ["05-04", "05-06"]
+depends_on: ["05-04", "05-06", "05-06b"]
 files_modified:
   - apps/e2e/tests/financeiro-previsao.spec.ts
   - apps/e2e/audit/previsao-staging.audit.ts
@@ -48,6 +48,7 @@ Output: `financeiro-previsao.spec.ts`, `previsao-staging.audit.ts`, deploy feito
 <context>
 @.planning/phases/05-uso-no-dia-a-dia/05-04-SUMMARY.md
 @.planning/phases/05-uso-no-dia-a-dia/05-06-SUMMARY.md
+@.planning/phases/05-uso-no-dia-a-dia/05-06b-SUMMARY.md
 
 <interfaces>
 - E2E: `loginViaUi(page, email, password)`, `navigateViaMenu(page, ...labels)` em `apps/e2e/support/ui.ts`; `readSeedState().owner` (ADMIN). Menu: grupo `Financeiro` → `Despesas fixas`, `Previsão de 30 dias`; item raiz `Início` (/dashboard).

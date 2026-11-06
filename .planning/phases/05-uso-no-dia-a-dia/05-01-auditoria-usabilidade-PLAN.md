@@ -11,7 +11,8 @@ files_modified:
   - apps/e2e/audit/telas.audit.ts
   - apps/e2e/audit/fluxos-escrita.audit.ts
   - .planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md
-autonomous: false
+  - .planning/phases/05-uso-no-dia-a-dia/.05-01-start-sha
+autonomous: true
 requirements: [UX-DAY]
 
 must_haves:
@@ -21,7 +22,8 @@ must_haves:
     - "As telas principais foram percorridas em desktop (1366x768) e celular (Pixel 7) na ordem Agenda → Comanda e caixa → Noivas e contratos → Clientes e financeiro → Painel (D-02)"
     - "As tarefas frequentes com escrita (marcar/remarcar horário, fechar comanda e receber, criar contrato e registrar parcela, achar cliente) foram medidas em cliques no ambiente local semeado (D-03, D-12)"
     - "Existe 05-AUDITORIA.md com lista priorizada (severidade, tela, passo a passo, correção proposta, esforço, coluna Aprovado?) sem dados pessoais de clientes"
-    - "Nenhuma correção de UX foi feita: o plano para no checkpoint até a usuária aprovar a lista (D-01)"
+    - "Nenhuma correção de UX foi feita: os commits deste plano (mensagem com (05-01)) não tocam apps/frontend nem apps/backend (D-01)"
+    - "05-AUDITORIA.md fica commitado com status aguardando-aprovacao e a coluna Aprovado? vazia; a aprovação é o primeiro passo do plano 05-08"
   artifacts:
     - path: "apps/e2e/playwright.audit.config.ts"
       provides: "Config Playwright separado para auditoria (staging somente leitura ou local)"
@@ -44,10 +46,12 @@ must_haves:
 ---
 
 <objective>
-Auditoria de usabilidade das telas principais (UX-DAY; D-01, D-02, D-03, D-08, D-12). Produz `05-AUDITORIA.md` com a lista priorizada e PARA num checkpoint até a usuária aprovar. Nenhuma correção de UX é feita neste plano.
+Auditoria de usabilidade das telas principais (UX-DAY; D-01, D-02, D-03, D-08, D-12). Produz e commita `05-AUDITORIA.md` com a lista priorizada e a coluna "Aprovado?" vazia, e termina. A aprovação da usuária é o checkpoint inicial do plano 05-08 (assim a onda 1 não fica parada esperando resposta). Nenhuma correção de UX é feita neste plano.
 
 Purpose: a usuária decide o que corrigir com base em problemas reais do dia a dia, medidos no staging (dados reais, só leitura) e no ambiente local (fluxos com escrita).
-Output: usuário de auditoria no staging, harness `apps/e2e/audit/*` + `playwright.audit.config.ts`, evidências gitignored, `05-AUDITORIA.md` aguardando aprovação.
+Output: usuário de auditoria no staging, harness `apps/e2e/audit/*` + `playwright.audit.config.ts`, evidências gitignored, `05-AUDITORIA.md` commitado aguardando aprovação.
+
+Commits deste plano: TODA mensagem de commit contém `(05-01)` (ex.: `chore(05-01): ...`, `docs(05-01): ...`) — a verificação de D-01 da Task 2 depende disso.
 </objective>
 
 <execution_context>
@@ -80,7 +84,7 @@ E2E existente (`apps/e2e`): `playwright.config.ts` (testDir `./tests`, projeto `
 
 <task type="auto">
   <name>Task 1: Usuário de auditoria no staging (D-12) + config e helpers da auditoria</name>
-  <files>.gitignore, apps/e2e/playwright.audit.config.ts, apps/e2e/audit/audit-helpers.ts</files>
+  <files>.gitignore, apps/e2e/playwright.audit.config.ts, apps/e2e/audit/audit-helpers.ts, .planning/phases/05-uso-no-dia-a-dia/.05-01-start-sha</files>
   <read_first>
     - apps/backend/src/scripts/create-platform-admin.ts (parâmetros argon2 exatos)
     - apps/backend/src/identity/members.service.ts (método create: campos gravados em users/members)
@@ -91,6 +95,8 @@ E2E existente (`apps/e2e`): `playwright.config.ts` (testDir `./tests`, projeto `
     - .gitignore
   </read_first>
   <action>
+**0. Marco de início (para a checagem de D-01 na Task 2):** antes de qualquer commit deste plano, `git rev-parse HEAD > .planning/phases/05-uso-no-dia-a-dia/.05-01-start-sha` (o arquivo é commitado junto com a Task 1).
+
 **A. Criar o usuário de auditoria no staging (escrita única e explícita no staging, autorizada por D-12).** Mecanismo escolhido: hash argon2 gerado DENTRO do container `sgs_stg_backend` (mesma lib e parâmetros do login) + uma transação SQL via `psql` no `sgs_stg_postgres`. Motivo: `createMember` via GraphQL exigiria credencial de um ADMIN real da usuária e forçaria `must_change_password`; o script `create-platform-admin` cria platform admin (não serve). Não alterar código do backend para isso.
 
 1. Conferir containers: `docker ps --format '{{.Names}}' | grep -E '^sgs_stg_(backend|postgres)$'` deve listar os dois.
@@ -155,6 +161,7 @@ AUDIT_ORG_ID=01a0b681-8b9b-790b-921d-4518350e534b
     - `apps/e2e/audit/audit-helpers.ts` contém `export async function installReadOnlyGuard`, `ALLOWED_MUTATIONS = new Set(['Login', 'RefreshSession', 'Logout'])` e `Bloqueado pela auditoria (somente leitura)`
     - `apps/e2e/playwright.audit.config.ts` contém `AUDIT_TARGET`, `testDir: './audit'`, `devices['Pixel 7']` e `width: 1366`
     - `corepack pnpm --filter @sgs/e2e typecheck` passa
+    - `.planning/phases/05-uso-no-dia-a-dia/.05-01-start-sha` existe e contém um SHA de 40 caracteres (`git cat-file -e $(cat …)` sai 0)
   </acceptance_criteria>
   <done>Usuário ADMIN de auditoria ativo na Studio JS, credencial só em `/root/sgs/.env.audit` (ignorado), config e helpers da auditoria compilando.</done>
 </task>
@@ -229,10 +236,12 @@ Severidade: **Bloqueia** (impede a tarefa), **Atrapalha** (atrasa ou confunde), 
 ```
 IDs sequenciais `UX-01`, `UX-02`… na ordem das seções; dentro de cada seção, ordenar Bloqueia → Atrapalha → Polimento. Coluna "Evidência" = nome do arquivo de screenshot (ex.: `mobile/03-agenda-novo-agendamento.png`), nunca a imagem. Coluna "Aprovado?" preenchida com `—`. Funcionalidade nova NÃO vira item (vai para a seção de ideias; D-03).
 
-**Proibido neste plano:** alterar qualquer arquivo em `apps/frontend` ou `apps/backend` (D-01).
+**E. Commit e fim do plano:** commitar `apps/e2e/audit/telas.audit.ts`, `apps/e2e/audit/fluxos-escrita.audit.ts` e `05-AUDITORIA.md` com mensagem `docs(05-01): auditoria de usabilidade aguardando aprovação` (+ linha `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`). NÃO pedir aprovação aqui: o plano 05-08 começa apresentando a lista à usuária.
+
+**Proibido neste plano:** alterar qualquer arquivo em `apps/frontend` ou `apps/backend` (D-01). Como outros planos da onda 1 (05-02, 05-05) mexem nessas pastas em paralelo, a checagem olha só os commits deste plano (mensagem com `(05-01)`) desde o SHA de `.05-01-start-sha`.
   </action>
   <verify>
-    <automated>cd /root/sgs && F=.planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md && test -s $F && grep -q '| ID | Severidade | Tela | Passo a passo | Esperado x Observado | Correção proposta | Esforço | Evidência | Aprovado? |' $F && grep -q '^status: aguardando-aprovacao' $F && grep -qE '^\| UX-01 \|' $F && ! grep -qE '[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2}|\(?[0-9]{2}\)? ?9[0-9]{4}-?[0-9]{4}' $F && test -z "$(git status --porcelain apps/frontend apps/backend)" && corepack pnpm --filter @sgs/e2e typecheck</automated>
+    <automated>cd /root/sgs && F=.planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md && test -s $F && grep -q '| ID | Severidade | Tela | Passo a passo | Esperado x Observado | Correção proposta | Esforço | Evidência | Aprovado? |' $F && grep -q '^status: aguardando-aprovacao' $F && grep -qE '^\| UX-01 \|' $F && ! grep -qE '[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2}|\(?[0-9]{2}\)? ?9[0-9]{4}-?[0-9]{4}' $F && S=$(cat .planning/phases/05-uso-no-dia-a-dia/.05-01-start-sha) && test -z "$(git log --format= --name-only --fixed-strings --grep='(05-01)' "$S"..HEAD | grep -E '^apps/(frontend|backend)/')" && git log --format=%s "$S"..HEAD | grep -qF 'docs(05-01)' && corepack pnpm --filter @sgs/e2e typecheck</automated>
   </verify>
   <acceptance_criteria>
     - `05-AUDITORIA.md` existe, tem `status: aguardando-aprovacao`, as 5 seções `### 1. Agenda`, `### 2. Comanda e caixa`, `### 3. Noivas e contratos`, `### 4. Clientes e financeiro`, `### 5. Painel` e o cabeçalho de tabela exato `| ID | Severidade | Tela | Passo a passo | Esperado x Observado | Correção proposta | Esforço | Evidência | Aprovado? |`
@@ -240,49 +249,24 @@ IDs sequenciais `UX-01`, `UX-02`… na ordem das seções; dentro de cada seçã
     - Seção `## Medição das tarefas frequentes (D-03)` tem linhas para "marcar horário", "remarcar", "fechar comanda", "registrar parcela" e "achar cliente"
     - O arquivo não contém padrões de CPF (`ddd.ddd.ddd-dd`) nem de celular (`9dddd-dddd`)
     - Existem `05-audit-evidence/desktop/` e `05-audit-evidence/mobile/` com screenshots, e `git status --porcelain .planning/phases/05-uso-no-dia-a-dia/05-audit-evidence` sai vazio (ignorado)
-    - `git status --porcelain apps/frontend apps/backend` sai vazio (nenhuma correção feita, D-01)
+    - `git log --format= --name-only --fixed-strings --grep='(05-01)' $(cat .planning/phases/05-uso-no-dia-a-dia/.05-01-start-sha)..HEAD | grep -E '^apps/(frontend|backend)/'` não imprime nada (nenhuma correção feita por este plano, D-01)
+    - Existe commit `docs(05-01): auditoria de usabilidade aguardando aprovação` contendo `05-AUDITORIA.md`
   </acceptance_criteria>
   <done>Lista priorizada pronta em 05-AUDITORIA.md, evidências locais fora do git, nenhuma linha de código de produto alterada.</done>
 </task>
 
-<task type="checkpoint:human-verify" gate="blocking">
-  <name>Task 3: Aprovação da lista de auditoria pela usuária (D-01)</name>
-  <files>.planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md</files>
-  <read_first>
-    - .planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md
-  </read_first>
-  <action>Apresentar à usuária, em PT-BR, o "Resumo para a usuária" e a contagem de itens por tela e severidade, com o caminho do arquivo. Esperar a resposta. Depois da resposta: preencher a coluna "Aprovado?" de cada item com sim/não/depois conforme ela disse, preencher "## Registro de aprovação" (data, forma — texto da resposta resumido — e lista de IDs aprovados), trocar o frontmatter para `status: aprovada` e registrar em `.planning/STATE.md` (seção de decisões) "05-AUDITORIA aprovada: <IDs>". Não corrigir nada aqui — as correções são geradas pelo plano 05-08.</action>
-  <what-built>Auditoria das telas principais no staging (desktop e celular, somente leitura) e no ambiente local (fluxos com escrita), com a lista priorizada em `.planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md`.</what-built>
-  <how-to-verify>
-    1. Abrir `/root/sgs/.planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md`.
-    2. Ler o "Resumo para a usuária" e as tabelas por tela.
-    3. Para cada item, dizer sim (corrigir agora), não (descartar) ou depois (backlog) — pode ser em bloco ("todos os Bloqueia e Atrapalha").
-    4. Conferir se algum item expõe dado pessoal de cliente (não deve).
-  </how-to-verify>
-  <verify>
-    <automated>cd /root/sgs && F=.planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md && grep -q '^status: aprovada' $F && ! grep -qE '^\| UX-[0-9]+ \|.*\| — \|$' $F</automated>
-  </verify>
-  <acceptance_criteria>
-    - Frontmatter de `05-AUDITORIA.md` com `status: aprovada`
-    - Nenhuma linha de item termina com `| — |` (todas têm sim, não ou depois)
-    - `## Registro de aprovação` contém a data e a lista de IDs aprovados
-    - `.planning/STATE.md` contém `05-AUDITORIA aprovada`
-  </acceptance_criteria>
-  <resume-signal>Responda com a decisão por item (ex.: "aprovo UX-01..UX-09; UX-10 não; UX-11 depois") ou "aprovado tudo".</resume-signal>
-  <done>Lista aprovada registrada no arquivo e no STATE.md; o plano 05-08 pode gerar os lotes de correção.</done>
-</task>
 
 </tasks>
 
 <verification>
 - `git check-ignore .env.audit` e da pasta de evidências: ok
 - Staging: usuário `auditoria.ux@sgs.invalid` ativo como ADMIN da Studio JS
-- `05-AUDITORIA.md` aprovado, sem dados pessoais
-- Nenhuma alteração em `apps/frontend`/`apps/backend` neste plano
+- `05-AUDITORIA.md` commitado com `status: aguardando-aprovacao`, sem dados pessoais
+- Nenhum commit `(05-01)` toca `apps/frontend`/`apps/backend`
 </verification>
 
 <success_criteria>
-Existe uma lista priorizada de problemas de usabilidade das telas principais, aprovada pela usuária (critério de sucesso 1, primeira metade). Nenhuma correção feita antes da aprovação.
+Existe uma lista priorizada de problemas de usabilidade das telas principais, pronta para a aprovação da usuária no início do plano 05-08 (critério de sucesso 1, primeira parte). Nenhuma correção feita.
 </success_criteria>
 
 <output>

@@ -10,33 +10,24 @@ files_modified:
   - apps/frontend/src/features/operations/pages/PrevisaoPage.tsx
   - apps/frontend/src/features/operations/__tests__/previsao-page.test.tsx
   - apps/frontend/src/pages/DashboardPage.tsx
-  - apps/frontend/src/pages/HomeRoute.tsx
-  - apps/frontend/src/pages/__tests__/home-route.test.tsx
-  - apps/frontend/src/config/features.ts
-  - apps/frontend/src/config/__tests__/features.test.ts
   - apps/frontend/src/router.tsx
   - apps/frontend/src/components/layout/menu-config.ts
-  - apps/e2e/tests/smoke.spec.ts
 autonomous: true
 requirements: [FIN-03]
 
 must_haves:
   truths:
-    - "ADMIN e MANAGER, ao entrar, caem no painel inicial (/dashboard); PROFESSIONAL e ATTENDANT continuam caindo na Agenda (D-11)"
     - "O painel mostra o cartão 'Previsão dos próximos 30 dias' com Entradas previstas, Saídas previstas e Saldo previsto, e um gráfico de barras por semana (D-07, D-08)"
     - "O cartão avisa quanto das entradas está em atraso (D-09) e trata carregando, vazio e erro"
     - "Clicar no cartão abre /financeiro/previsao com a lista por semana e a origem de cada valor (agendamento, parcela/restante de contrato, comissão, despesa fixa) (D-07)"
     - "Comissões sem profissional definido aparecem marcadas 'estimada — sem profissional definido' e sem regra aparecem como 'sem regra de comissão' (D-10)"
-    - "Testes vitest e E2E que assumiam home /agenda foram ajustados e passam"
   artifacts:
     - path: "apps/frontend/src/features/operations/components/ForecastCard.tsx"
       exports: ["ForecastCard"]
     - path: "apps/frontend/src/features/operations/pages/PrevisaoPage.tsx"
       exports: ["PrevisaoPage"]
-    - path: "apps/frontend/src/pages/HomeRoute.tsx"
-      exports: ["HomeRoute"]
-    - path: "apps/frontend/src/config/features.ts"
-      contains: "homePathForRole"
+    - path: "apps/frontend/src/pages/DashboardPage.tsx"
+      contains: "<ForecastCard />"
   key_links:
     - from: "apps/frontend/src/features/operations/components/ForecastCard.tsx"
       to: "CashForecastQuery"
@@ -47,16 +38,16 @@ must_haves:
       via: "Link"
       pattern: "/financeiro/previsao"
     - from: "apps/frontend/src/router.tsx"
-      to: "HomeRoute"
-      via: "rota /dashboard"
-      pattern: "<HomeRoute />"
+      to: "PrevisaoPage"
+      via: "rota /financeiro/previsao"
+      pattern: "/financeiro/previsao"
 ---
 
 <objective>
-Painel inicial real com o cartão da previsão de 30 dias, a tela de detalhe `/financeiro/previsao`, e a troca da home por papel (FIN-03; D-07, D-08, D-09, D-10, D-11; critério de sucesso 2).
+Painel inicial real com o cartão da previsão de 30 dias e a tela de detalhe `/financeiro/previsao` (FIN-03; D-07, D-08, D-09, D-10; critério de sucesso 2). A troca da home por papel (D-11) fica no plano 05-06b.
 
 Purpose: a dona abre o sistema e vê de cara quanto deve entrar e sair no mês.
-Output: `ForecastCard`, `PrevisaoPage`, `DashboardPage` real, `HomeRoute`, flag `dashboard` ligada com home por papel, testes ajustados.
+Output: `ForecastCard`, `PrevisaoPage`, `DashboardPage` real (o componente existe; a rota `/dashboard` só passa a mostrá-lo no 05-06b).
 </objective>
 
 <execution_context>
@@ -147,53 +138,11 @@ Recharts em `FinanceiroPage.tsx`: `<Bar dataKey="received" name="Recebido" fill=
   <done>Detalhe da previsão por semana com a origem de cada valor, acessível pelo cartão e pelo menu.</done>
 </task>
 
-<task type="auto">
-  <name>Task 3: Painel vira home de ADMIN/MANAGER; PROFESSIONAL/ATTENDANT na Agenda (D-11) + testes ajustados</name>
-  <files>apps/frontend/src/config/features.ts, apps/frontend/src/config/__tests__/features.test.ts, apps/frontend/src/pages/HomeRoute.tsx, apps/frontend/src/pages/__tests__/home-route.test.tsx, apps/frontend/src/router.tsx, apps/e2e/tests/smoke.spec.ts</files>
-  <read_first>
-    - apps/frontend/src/config/features.ts
-    - apps/frontend/src/config/__tests__/features.test.ts
-    - apps/frontend/src/router.tsx
-    - apps/frontend/src/components/layout/BottomNav.tsx e TopHeader.tsx (efeito da flag)
-    - apps/frontend/src/features/auth/pages/LoginPage.tsx, ChangePasswordPage.tsx, InvitationPage.tsx (navegam para /dashboard)
-    - apps/e2e/tests/smoke.spec.ts e apps/e2e/tests/equipe-acoes-por-papel.spec.ts
-    - apps/e2e/support/seed-state.ts (owner = ADMIN; attendant; proEditable)
-  </read_first>
-  <action>
-1. `features.ts`: `dashboard: true` com comentário `/** Painel inicial com a previsão de 30 dias (05-06). Home de ADMIN/MANAGER (D-11). */`. Manter `HOME_PATH` (passa a valer `/dashboard`). Acrescentar:
-```typescript
-/** D-11: quem cai no painel ao entrar. Os demais papéis vão para a Agenda. */
-export const DASHBOARD_HOME_ROLES: readonly string[] = ['ADMIN', 'MANAGER'];
-
-export function homePathForRole(roleName: string | null | undefined): string {
-  if (!FEATURES.dashboard) return '/agenda';
-  return roleName != null && DASHBOARD_HOME_ROLES.includes(roleName) ? '/dashboard' : '/agenda';
-}
-```
-2. `pages/HomeRoute.tsx`: `export function HomeRoute()` — `const roleName = useAuthStore((s) => s.roleName)`; se `homePathForRole(roleName) === '/dashboard'` renderiza `<DashboardPage />`, senão `<Navigate to="/agenda" replace />`.
-3. `router.tsx`: trocar `{ path: '/dashboard', element: <DashboardPlaceholder /> }` por `{ path: '/dashboard', element: <HomeRoute /> }` e remover o import de `DashboardPlaceholder` (o arquivo fica no repositório, sem uso). Manter o bloco `if (!FEATURES.dashboard)` como está (fica inativo). A rota `/` continua `<Navigate to={HOME_PATH} replace />` (= `/dashboard`, que decide por papel). Assim login/troca de senha/convite (que vão para `/dashboard`) e o logo do header seguem funcionando sem mudança.
-4. `features.test.ts`: retirar `'/dashboard'` da lista de "bloqueia os mockups" e incluí-lo em "libera o que está pronto" junto com `'/financeiro/previsao'` e `'/financeiro/despesas-fixas'`; trocar o teste `manda a home para a agenda enquanto o dashboard é mockup` por `painel é a home de ADMIN/MANAGER; demais papéis vão para a agenda (D-11)` verificando `FEATURES.dashboard === true`, `HOME_PATH === '/dashboard'`, `homePathForRole('ADMIN') === '/dashboard'`, `homePathForRole('MANAGER') === '/dashboard'`, `homePathForRole('PROFESSIONAL') === '/agenda'`, `homePathForRole('ATTENDANT') === '/agenda'`, `homePathForRole(null) === '/agenda'`. Acrescentar `expect(isPathEnabled('/financeiro/despesas')).toBe(false)` (mock continua desligado).
-5. `pages/__tests__/home-route.test.tsx`: `MemoryRouter initialEntries={['/dashboard']}` com rotas `/dashboard` → `<HomeRoute />` e `/agenda` → `<div>AGENDA</div>`; ADMIN renderiza o título `Início` (mockar `ForecastCard` com `vi.mock`); PROFESSIONAL e ATTENDANT renderizam `AGENDA`.
-6. `apps/e2e/tests/smoke.spec.ts`: renomear para `owner entra pela UI e cai no painel, sem trocar senha`, esperar `await expect(page).toHaveURL(/\/dashboard/)` e `await expect(page.getByRole('heading', { name: 'Início' })).toBeVisible()`; acrescentar um segundo teste `atendente entra e cai na agenda (D-11)` com `seed.attendant` esperando `/\/agenda/`. Rodar a suíte vitest inteira e a E2E inteira; ajustar qualquer outro teste que dependa de a home ser `/agenda` (procurar com `grep -rn "toHaveURL(/\\\\/agenda" apps/e2e/tests` e `grep -rn "Em construção\|DashboardPlaceholder" apps/frontend/src --include=*.test.tsx`).
-  </action>
-  <verify>
-    <automated>cd /root/sgs && pnpm --filter @sgs/frontend test && pnpm --filter @sgs/frontend typecheck && pnpm --filter @sgs/frontend lint && corepack pnpm --filter @sgs/e2e test:e2e smoke equipe</automated>
-  </verify>
-  <acceptance_criteria>
-    - `features.ts` contém `dashboard: true`, `export function homePathForRole` e `DASHBOARD_HOME_ROLES: readonly string[] = ['ADMIN', 'MANAGER']`; `financeiroRelatorios: false` intacto
-    - `router.tsx` contém `element: <HomeRoute />` e não contém `<DashboardPlaceholder />`
-    - `features.test.ts` contém `homePathForRole('PROFESSIONAL')` e não contém `expect(HOME_PATH).toBe('/agenda')`
-    - `smoke.spec.ts` contém `toHaveURL(/\/dashboard/)` e `seed.attendant`
-    - `pnpm --filter @sgs/frontend test` inteiro passa; `corepack pnpm --filter @sgs/e2e test:e2e smoke equipe` passa
-  </acceptance_criteria>
-  <done>ADMIN/MANAGER entram no painel com a previsão; PROFESSIONAL/ATTENDANT entram na Agenda; nenhum teste depende da home antiga.</done>
-</task>
 
 </tasks>
 
 <verification>
 - `pnpm --filter @sgs/frontend test && pnpm --filter @sgs/frontend typecheck && pnpm --filter @sgs/frontend lint`
-- `corepack pnpm --filter @sgs/e2e test:e2e` (suíte inteira)
 </verification>
 
 <success_criteria>

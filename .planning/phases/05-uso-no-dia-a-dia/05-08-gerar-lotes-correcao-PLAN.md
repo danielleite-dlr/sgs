@@ -8,11 +8,13 @@ files_modified:
   - .planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md
   - .planning/phases/05-uso-no-dia-a-dia/05-20-fechamento-PLAN.md
   - .planning/ROADMAP.md
-autonomous: true
+  - .planning/STATE.md
+autonomous: false
 requirements: [UX-DAY]
 
 must_haves:
   truths:
+    - "A usuária aprovou a lista de 05-AUDITORIA.md (sim/não/depois por item) antes de qualquer lote ser gerado (D-01)"
     - "Cada item com Aprovado? = sim em 05-AUDITORIA.md está em exatamente um plano de correção (lote), e nenhum item não/depois entra"
     - "Os lotes seguem a ordem de telas da usuária: Agenda → Comanda e caixa → Noivas e contratos → Clientes e financeiro → Painel (D-02)"
     - "Cada lote tem no máximo 3 tarefas, cada tarefa com teste de regressão (vitest ou Playwright), e termina com gate completo, commit, push, deploy no staging e CI verde"
@@ -32,9 +34,9 @@ must_haves:
 ---
 
 <objective>
-Transformar a lista aprovada (05-01, D-01) em planos de correção executáveis, em lotes por tela (UX-DAY). Os itens da auditoria só existem depois da aprovação, por isso este plano GERA os planos `05-09` … `05-19` (no máximo 11 lotes) em vez de eles serem escritos agora. Não corrige nada.
+Obter a aprovação da usuária para a lista de 05-01 (checkpoint bloqueante, D-01) e transformar a lista aprovada em planos de correção executáveis, em lotes por tela (UX-DAY). Os itens da auditoria só existem depois da aprovação, por isso este plano GERA os planos `05-09` … `05-19` (no máximo 11 lotes) em vez de eles serem escritos agora. Não corrige nada.
 
-Como os lotes entram na execução: este plano roda na onda 2 (depois do checkpoint de 05-01). Os planos gerados ficam com `depends_on` em `05-07`, `05-08` e no lote anterior, e ondas ≥ 5. Se a execução em curso já tiver carregado a lista de planos antes de eles existirem, rodar `/gsd:execute-phase 5` de novo: ela pula os planos com SUMMARY e executa os lotes e o 05-20.
+Como os lotes entram na execução: este plano roda na onda 2 (depois de 05-01 terminar) e começa parado esperando a aprovação. Só ele espera a usuária; os planos da previsão seguem nas outras ondas. Os planos gerados ficam com `depends_on` em `05-07`, `05-08` e no lote anterior, e ondas ≥ 5. Se a execução em curso já tiver carregado a lista de planos antes de eles existirem, rodar `/gsd:execute-phase 5` de novo: ela pula os planos com SUMMARY e executa os lotes e o 05-20.
 
 Purpose: correções pequenas, testadas e entregues no staging lote a lote, na ordem que a usuária pediu.
 Output: planos `05-09-*-PLAN.md` …, `05-20-fechamento-PLAN.md` com `depends_on` atualizado, `05-AUDITORIA.md` com a coluna "Lote (plano)" preenchida, ROADMAP com a lista de planos.
@@ -55,8 +57,35 @@ Output: planos `05-09-*-PLAN.md` …, `05-20-fechamento-PLAN.md` com `depends_on
 
 <tasks>
 
+<task type="checkpoint:human-verify" gate="blocking">
+  <name>Task 1: Aprovação da lista de auditoria pela usuária (D-01)</name>
+  <files>.planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md, .planning/STATE.md</files>
+  <read_first>
+    - .planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md (deve estar com `status: aguardando-aprovacao`, commitado pelo 05-01)
+  </read_first>
+  <action>Apresentar à usuária, em PT-BR, o "Resumo para a usuária" e a contagem de itens por tela e severidade, com o caminho do arquivo. Esperar a resposta. Depois da resposta: preencher a coluna "Aprovado?" de cada item com sim/não/depois conforme ela disse, preencher "## Registro de aprovação" (data, forma — texto da resposta resumido — e lista de IDs aprovados), trocar o frontmatter para `status: aprovada` e registrar em `.planning/STATE.md` (seção de decisões) "05-AUDITORIA aprovada: <IDs>". Commit `docs(05-08): auditoria aprovada pela usuária`. Não corrigir nada aqui.</action>
+  <what-built>Auditoria das telas principais no staging (desktop e celular, somente leitura) e no ambiente local (fluxos com escrita), com a lista priorizada em `.planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md`.</what-built>
+  <how-to-verify>
+    1. Abrir `/root/sgs/.planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md`.
+    2. Ler o "Resumo para a usuária" e as tabelas por tela.
+    3. Para cada item, dizer sim (corrigir agora), não (descartar) ou depois (backlog). Pode ser em bloco ("todos os Bloqueia e Atrapalha").
+    4. Conferir se algum item expõe dado pessoal de cliente (não deve).
+  </how-to-verify>
+  <verify>
+    <automated>cd /root/sgs && F=.planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md && grep -q '^status: aprovada' $F && ! grep -qE '^\| UX-[0-9]+ \|.*\| — \|$' $F && grep -q '05-AUDITORIA aprovada' .planning/STATE.md</automated>
+  </verify>
+  <acceptance_criteria>
+    - Frontmatter de `05-AUDITORIA.md` com `status: aprovada`
+    - Nenhuma linha de item termina com `| — |` (todas têm sim, não ou depois)
+    - `## Registro de aprovação` contém a data e a lista de IDs aprovados
+    - `.planning/STATE.md` contém `05-AUDITORIA aprovada`
+  </acceptance_criteria>
+  <resume-signal>Responda com a decisão por item (ex.: "aprovo UX-01..UX-09; UX-10 não; UX-11 depois") ou "aprovado tudo".</resume-signal>
+  <done>Lista aprovada registrada no arquivo e no STATE.md.</done>
+</task>
+
 <task type="auto">
-  <name>Task 1: Agrupar os itens aprovados e escrever os planos de lote 05-09…05-19</name>
+  <name>Task 2: Agrupar os itens aprovados e escrever os planos de lote 05-09…05-19</name>
   <files>.planning/phases/05-uso-no-dia-a-dia/05-09-*-PLAN.md (gerados), .planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md</files>
   <read_first>
     - .planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md (tem de estar com `status: aprovada`; se não estiver, PARAR e reportar)
@@ -64,7 +93,7 @@ Output: planos `05-09-*-PLAN.md` …, `05-20-fechamento-PLAN.md` com `depends_on
     - Para cada item aprovado: os arquivos do frontend/backend da tela citada (achar com `grep -rln "<texto da tela>" apps/frontend/src`), para escrever `files`, `read_first` e a ação com valores concretos
   </read_first>
   <action>
-1. Ler as tabelas de `05-AUDITORIA.md` e listar os itens com `Aprovado?` = `sim` (case-insensitive). Se a lista for vazia: não criar lote, escrever na seção `## Correções` a linha `Nenhum item aprovado para correção nesta fase.` e pular para a Task 2.
+1. Ler as tabelas de `05-AUDITORIA.md` e listar os itens com `Aprovado?` = `sim` (case-insensitive). Se a lista for vazia: não criar lote, escrever na seção `## Correções` a linha `Nenhum item aprovado para correção nesta fase.` e pular para a Task 3.
 2. Agrupar por seção na ordem D-02 (1. Agenda, 2. Comanda e caixa, 3. Noivas e contratos, 4. Clientes e financeiro, 5. Painel). Dentro do grupo: Bloqueia → Atrapalha → Polimento. Um lote = um grupo; se o grupo passar de 3 tarefas ou de 6 arquivos, dividir em lotes consecutivos do mesmo grupo. Itens pequenos da mesma tela e mesmos arquivos podem ser uma tarefa só. Numerar os lotes a partir de `05-09` (máximo `05-19`; se faltar número, juntar itens de Polimento).
 3. Escrever cada lote em `.planning/phases/05-uso-no-dia-a-dia/05-NN-ux-lote-<k>-<tela-slug>-PLAN.md` com:
    - frontmatter: `phase: 05-uso-no-dia-a-dia`, `plan: NN`, `type: execute`, `wave` = (onda de 05-07 = 4) + k, `depends_on: ["05-07", "05-08"]` + o lote anterior (`"05-(NN-1)"`) a partir do segundo lote, `files_modified` (lista exata), `autonomous: true`, `requirements: [UX-DAY]`, `must_haves` (uma truth por item: o comportamento corrigido visto pela usuária, citando o ID `UX-xx`).
@@ -90,7 +119,7 @@ Output: planos `05-09-*-PLAN.md` …, `05-20-fechamento-PLAN.md` com `depends_on
 </task>
 
 <task type="auto">
-  <name>Task 2: Encadear o fechamento (05-20), atualizar ROADMAP/backlog e commitar os planos</name>
+  <name>Task 3: Encadear o fechamento (05-20), atualizar ROADMAP/backlog e commitar os planos</name>
   <files>.planning/phases/05-uso-no-dia-a-dia/05-20-fechamento-PLAN.md, .planning/ROADMAP.md</files>
   <read_first>
     - .planning/phases/05-uso-no-dia-a-dia/05-20-fechamento-PLAN.md
