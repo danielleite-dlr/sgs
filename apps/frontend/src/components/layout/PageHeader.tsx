@@ -5,8 +5,8 @@ import {
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
-  BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export interface PageHeaderProps {
@@ -34,7 +34,17 @@ export function PageHeader({ title, breadcrumbs, cta }: PageHeaderProps) {
                       {b.label}
                     </BreadcrumbPage>
                   )}
-                  {!isLast && <BreadcrumbSeparator />}
+                  {/* Separador em <span>: um <li> aqui ficaria dentro do <li> do item
+                      (HTML inválido, UX-10). Mesmo visual do BreadcrumbSeparator. */}
+                  {!isLast && (
+                    <span
+                      role="presentation"
+                      aria-hidden="true"
+                      className="[&>svg]:h-3.5 [&>svg]:w-3.5"
+                    >
+                      <ChevronRight />
+                    </span>
+                  )}
                 </BreadcrumbItem>
               );
             })}

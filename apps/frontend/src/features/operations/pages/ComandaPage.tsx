@@ -177,8 +177,10 @@ export function ComandaPage() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-md lg:grid-cols-3">
-        <div className="lg:col-span-1 flex flex-col gap-md">
+      {/* Ordem no DOM (celular): Cliente, Itens, Adicionar, Pagamento. No computador o
+          grid mantém Adicionar na 1ª coluna, abaixo do Cliente (UX-09). */}
+      <div className="grid grid-cols-1 gap-md lg:grid-cols-3 lg:grid-rows-[auto_1fr]">
+        <div data-testid="comanda-cliente" className="lg:col-start-1 lg:row-start-1 lg:self-start">
           <Card data-testid="comanda-client-card">
             <CardHeader className="pb-sm">
               <CardTitle className="text-base flex items-center gap-xs">
@@ -216,46 +218,12 @@ export function ComandaPage() {
               </Badge>
             </CardContent>
           </Card>
-
-          {isOpen && canWrite && (
-            <Card>
-              <CardHeader className="pb-sm">
-                <CardTitle className="text-base">Adicionar à comanda</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-sm">
-                <Button
-                  variant="outline"
-                  className="justify-start gap-sm"
-                  data-testid="comanda-add-service"
-                  onClick={() => setAddMode('service')}
-                >
-                  <Scissors className="h-4 w-4 text-primary-500" />
-                  {t('operations.pos.addService', 'Adicionar serviço')}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="justify-start gap-sm"
-                  data-testid="comanda-add-product"
-                  onClick={() => setAddMode('product')}
-                >
-                  <ShoppingBag className="h-4 w-4 text-primary-500" />
-                  {t('operations.pos.addProduct', 'Adicionar produto')}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="justify-start gap-sm"
-                  data-testid="comanda-add-package"
-                  onClick={() => setAddMode('package')}
-                >
-                  <Package className="h-4 w-4 text-primary-500" />
-                  {t('operations.pos.addPackage', 'Adicionar pacote')}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
         </div>
 
-        <div className="lg:col-span-1 flex flex-col gap-md">
+        <div
+          data-testid="comanda-itens"
+          className="flex flex-col gap-md lg:col-start-2 lg:row-start-1 lg:row-span-2"
+        >
           <Card className="flex-1">
             <CardHeader className="pb-sm">
               <CardTitle className="text-base flex items-center gap-xs">
@@ -272,9 +240,9 @@ export function ComandaPage() {
                     <li
                       key={item.id}
                       data-testid={`comanda-item-${item.id}`}
-                      className="flex items-center justify-between gap-sm rounded-md border border-neutral-100 bg-neutral-50 p-sm"
+                      className="flex items-start justify-between gap-sm rounded-md border border-neutral-100 bg-neutral-50 p-sm"
                     >
-                      <div className="flex items-start gap-sm">
+                      <div className="flex min-w-0 flex-1 items-start gap-sm">
                         <div
                           className={`h-8 w-8 rounded-md flex items-center justify-center shrink-0 ${item.kind === 'product' ? 'bg-success-50' : 'bg-primary-50'}`}
                         >
@@ -284,8 +252,13 @@ export function ComandaPage() {
                             <Scissors className="h-4 w-4 text-primary-500" />
                           )}
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold text-neutral-800">{item.name}</p>
+                        <div className="min-w-0 flex-1">
+                          <p
+                            data-testid={`comanda-item-name-${item.id}`}
+                            className="min-w-0 break-words text-sm font-semibold text-neutral-800"
+                          >
+                            {item.name}
+                          </p>
                           <p className="text-xs text-neutral-600">{item.professional.displayName}</p>
                           {item.contractCode && (
                             <span
@@ -304,7 +277,10 @@ export function ComandaPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-sm">
+                      <div
+                        data-testid={`comanda-item-valores-${item.id}`}
+                        className="flex shrink-0 items-center gap-sm whitespace-nowrap"
+                      >
                         <span className="text-sm font-semibold text-neutral-800">
                           {brl(item.total)}
                         </span>
@@ -345,7 +321,49 @@ export function ComandaPage() {
           </Card>
         </div>
 
-        <div className="lg:col-span-1">
+        {isOpen && canWrite && (
+          <div
+            data-testid="comanda-adicionar"
+            className="lg:col-start-1 lg:row-start-2 lg:self-start"
+          >
+            <Card>
+              <CardHeader className="pb-sm">
+                <CardTitle className="text-base">Adicionar à comanda</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-sm">
+                <Button
+                  variant="outline"
+                  className="justify-start gap-sm"
+                  data-testid="comanda-add-service"
+                  onClick={() => setAddMode('service')}
+                >
+                  <Scissors className="h-4 w-4 text-primary-500" />
+                  {t('operations.pos.addService', 'Adicionar serviço')}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="justify-start gap-sm"
+                  data-testid="comanda-add-product"
+                  onClick={() => setAddMode('product')}
+                >
+                  <ShoppingBag className="h-4 w-4 text-primary-500" />
+                  {t('operations.pos.addProduct', 'Adicionar produto')}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="justify-start gap-sm"
+                  data-testid="comanda-add-package"
+                  onClick={() => setAddMode('package')}
+                >
+                  <Package className="h-4 w-4 text-primary-500" />
+                  {t('operations.pos.addPackage', 'Adicionar pacote')}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        <div className="lg:col-start-3 lg:row-start-1 lg:row-span-2">
           <PaymentPanel
             comanda={comanda}
             canWrite={canWrite}
