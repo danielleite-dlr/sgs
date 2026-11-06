@@ -11,7 +11,7 @@ type Unit = (typeof UNITS)[number];
 
 const money = (v: string | null | undefined) => fromCents(toCents(v ?? '0'));
 
-function validateRange(from: string, to: string): void {
+export function validateRange(from: string, to: string): void {
   if (!DATE_RE.test(from) || !DATE_RE.test(to) || Number.isNaN(Date.parse(from)) || Number.isNaN(Date.parse(to))) {
     throw new BadRequestException('Datas devem estar no formato AAAA-MM-DD.');
   }
@@ -24,16 +24,20 @@ function validateRange(from: string, to: string): void {
   }
 }
 
+type Tx = Parameters<Parameters<TenantContextService['runWithTenant']>[1]>[0];
+
+/** Fuso da org (coluna NOT NULL com default; o fallback cobre só org inexistente). */
+export async function orgTimezone(tx: Tx, orgId: string): Promise<string> {
+  const org = await tx.organization.findUnique({ where: { id: orgId } });
+  return org?.timezone ?? 'America/Sao_Paulo';
+}
+
 @Injectable()
 export class FinancialService {
   constructor(private readonly tenant: TenantContextService) {}
 
-  private async timezone(
-    tx: Parameters<Parameters<TenantContextService['runWithTenant']>[1]>[0],
-    orgId: string,
-  ): Promise<string> {
-    const org = await tx.organization.findUnique({ where: { id: orgId } });
-    return org?.timezone ?? 'America/Sao_Paulo';
+  private async timezone(tx: Tx, orgId: string): Promise<string> {
+    return orgTimezone(tx, orgId);
   }
 
   /** Dashboard D-22: Faturado (competência) + Recebido (caixa) por bucket e por método. */

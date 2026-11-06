@@ -1,0 +1,48 @@
+extend type Query {
+  "Previsão de caixa. from/to = YYYY-MM-DD no fuso da org (to exclusivo). Pendências vencidas antes de from entram em from com overdue = true. Requer financial.read"
+  cashForecast(from: String!, to: String!): CashForecast!
+}
+
+type CashForecast {
+  from: String!
+  to: String!
+  timezone: String!
+  inflowTotal: String!
+  outflowTotal: String!
+  "Pode ser negativo: \"-250.00\""
+  balance: String!
+  "Parte das entradas que está em atraso (D-09)"
+  overdueInflowTotal: String!
+  "Agendamentos/itens sem regra de comissão (contados como R$ 0,00)"
+  noRuleCount: Int!
+  "Itens de contrato sem profissional definido com comissão estimada (D-10)"
+  withoutProfessionalCount: Int!
+  "Semanas de 7 dias a partir de from; a última pode ser menor"
+  buckets: [ForecastBucket!]!
+  "Ordenados por data, depois entradas antes de saídas, depois label"
+  items: [ForecastItem!]!
+}
+
+type ForecastBucket {
+  start: String!
+  "Exclusivo"
+  end: String!
+  inflow: String!
+  outflow: String!
+  balance: String!
+  overdueInflow: String!
+}
+
+type ForecastItem {
+  date: String!
+  "appointment | contract_installment | contract_balance | commission | fixed_expense"
+  kind: String!
+  "in | out"
+  direction: String!
+  amount: String!
+  label: String!
+  refId: UUID
+  overdue: Boolean!
+  noRule: Boolean!
+  withoutProfessional: Boolean!
+}
