@@ -10,7 +10,7 @@ async function roxosSemTextoBranco(page: Page): Promise<{ total: number; ruins: 
   return page.evaluate((roxos) => {
     const ruins: string[] = [];
     let total = 0;
-    for (const el of document.querySelectorAll<HTMLElement>('button, a, [role="tab"]')) {
+    for (const el of Array.from(document.querySelectorAll<HTMLElement>('button, a, [role="tab"]'))) {
       const s = getComputedStyle(el);
       if (!roxos.includes(s.backgroundColor)) continue;
       total += 1;
