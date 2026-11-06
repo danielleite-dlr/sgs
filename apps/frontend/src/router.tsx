@@ -13,7 +13,7 @@ import { ChangePasswordPage } from '@/features/auth/pages/ChangePasswordPage';
 import { AdminClientsPage } from '@/features/admin/pages/AdminClientsPage';
 import { AppShell } from '@/components/layout/AppShell';
 import { FEATURES, HOME_PATH, isPathEnabled } from '@/config/features';
-import { DashboardPlaceholder } from '@/pages/DashboardPlaceholder';
+import { HomeRoute } from '@/pages/HomeRoute';
 import { CategoriasPage } from '@/pages/CategoriasPage';
 import { ServicosPage } from '@/pages/ServicosPage';
 import { PacotesPage } from '@/pages/PacotesPage';
@@ -98,7 +98,7 @@ interface GatedRoute {
 
 /** Tabela completa; o filtro abaixo decide o que vai ao ar. */
 const PROTECTED_ROUTES: GatedRoute[] = [
-  { path: '/dashboard',             element: <DashboardPlaceholder /> },
+  { path: '/dashboard',             element: <HomeRoute /> },
   { path: '/catalogo/categorias',   element: <CategoriasPage /> },
   { path: '/catalogo/servicos',     element: <ServicosPage /> },
   { path: '/catalogo/pacotes',      element: <PacotesPage /> },

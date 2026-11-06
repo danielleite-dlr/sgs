@@ -31,8 +31,8 @@ describe('SidebarNav (Trinks hierarchy)', () => {
         <SidebarNav />
       </MemoryRouter>,
     );
-    // Home, Relatórios, Marketing e Configurações são mockups.
-    expect(screen.queryByText('Início')).toBeNull();
+    // Relatórios, Marketing e Configurações são mockups (Início é real desde 05-06b).
+    expect(screen.getByText('Início')).toBeInTheDocument();
     expect(screen.queryByText('Relatórios')).toBeNull();
     expect(screen.queryByText('Marketing')).toBeNull();
     expect(screen.queryByText('Configurações')).toBeNull();

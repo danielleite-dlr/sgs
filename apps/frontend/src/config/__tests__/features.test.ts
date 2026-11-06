@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FEATURES, HOME_PATH, isPathEnabled } from '../features';
+import { FEATURES, HOME_PATH, homePathForRole, isPathEnabled } from '../features';
 import { MENU, flattenMenu } from '@/components/layout/menu-config';
 
 describe('feature gating', () => {
@@ -18,6 +18,9 @@ describe('feature gating', () => {
       '/financeiro/credito-cliente',
       '/comanda',
       '/comanda/:id',
+      '/dashboard',
+      '/financeiro/previsao',
+      '/financeiro/despesas-fixas',
     ]) {
       expect(isPathEnabled(path)).toBe(true);
     }
@@ -25,7 +28,6 @@ describe('feature gating', () => {
 
   it('bloqueia os mockups, inclusive sub-rotas e query strings', () => {
     for (const path of [
-      '/dashboard',
       '/financeiro/caixa',
       '/relatorios',
       '/configuracoes/sistema',
@@ -50,9 +52,15 @@ describe('feature gating', () => {
     expect(isPathEnabled('/financeiro-teste')).toBe(true);
   });
 
-  it('manda a home para a agenda enquanto o dashboard é mockup', () => {
-    expect(FEATURES.dashboard).toBe(false);
-    expect(HOME_PATH).toBe('/agenda');
+  it('painel é a home de ADMIN/MANAGER; demais papéis vão para a agenda (D-11)', () => {
+    expect(FEATURES.dashboard).toBe(true);
+    expect(HOME_PATH).toBe('/dashboard');
+    expect(homePathForRole('ADMIN')).toBe('/dashboard');
+    expect(homePathForRole('MANAGER')).toBe('/dashboard');
+    expect(homePathForRole('PROFESSIONAL')).toBe('/agenda');
+    expect(homePathForRole('ATTENDANT')).toBe('/agenda');
+    expect(homePathForRole(null)).toBe('/agenda');
+    expect(isPathEnabled('/financeiro/despesas')).toBe(false);
   });
 
   it('nenhum item do menu leva a destino desligado', () => {
