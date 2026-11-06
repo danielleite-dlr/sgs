@@ -3,13 +3,23 @@ import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { User, Phone, Clock, ShoppingBag, Scissors, Receipt, X, Package, AlertTriangle } from 'lucide-react';
+import {
+  User,
+  Phone,
+  Clock,
+  ShoppingBag,
+  Scissors,
+  Receipt,
+  X,
+  Package,
+  AlertTriangle,
+  Percent,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useHasPermission } from '../operations-permissions';
 import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
@@ -34,6 +44,17 @@ import { ReopenComandaDialog } from '../components/comanda/ReopenComandaDialog';
 import { COMANDA_STATUS_LABELS } from '../lib/operations-labels';
 
 const brl = (v: string) => `R$ ${formatCurrencyDisplay(v)}`;
+
+// Selo de status com ponto na cor (D-11).
+const STATUS_BADGE: Record<string, 'info' | 'success' | 'error' | 'neutral'> = {
+  open: 'info',
+  closed: 'success',
+  cancelled: 'error',
+};
+
+// Títulos dos cartões em serifa (D-07); ícone lucide neutro (D-18).
+const CARD_TITLE_CLASS = 'flex items-center gap-xs font-serif text-headline-sm text-neutral-800';
+const CARD_ICON_CLASS = 'h-4 w-4 shrink-0 text-neutral-500';
 
 function firstError(p: ComandaPayloadResult | undefined): string | null {
   return p && p.errors.length > 0 ? p.errors[0].message : null;
@@ -90,10 +111,10 @@ export function ComandaPage() {
         />
         <Card>
           <CardContent className="space-y-sm py-lg">
-            <p className="text-sm text-neutral-700">
+            <p className="text-body text-neutral-800">
               {t('operations.pos.notFound', 'Comanda não encontrada.')}
             </p>
-            <Link to="/comanda" className="text-sm font-semibold text-primary-700 underline">
+            <Link to="/comanda" className="text-body font-semibold text-primary-700 underline">
               Voltar para comandas
             </Link>
           </CardContent>
@@ -165,16 +186,24 @@ export function ComandaPage() {
           { label: comanda.code },
         ]}
         cta={
-          !isOpen && canReopen && comanda.status === 'closed' ? (
-            <Button
-              type="button"
-              variant="outline"
-              data-testid="comanda-reopen"
-              onClick={() => setReopenOpen(true)}
+          <>
+            <Badge
+              variant={STATUS_BADGE[comanda.status] ?? 'neutral'}
+              data-testid="comanda-status"
             >
-              {t('operations.pos.reopen', 'Reabrir comanda')}
-            </Button>
-          ) : undefined
+              {COMANDA_STATUS_LABELS[comanda.status] ?? comanda.status}
+            </Badge>
+            {!isOpen && canReopen && comanda.status === 'closed' && (
+              <Button
+                type="button"
+                variant="outline"
+                data-testid="comanda-reopen"
+                onClick={() => setReopenOpen(true)}
+              >
+                {t('operations.pos.reopen', 'Reabrir comanda')}
+              </Button>
+            )}
+          </>
         }
       />
 
@@ -182,25 +211,25 @@ export function ComandaPage() {
           grid mantém Adicionar na 1ª coluna, abaixo do Cliente (UX-09). */}
       <div className="grid grid-cols-1 gap-md lg:grid-cols-3 lg:grid-rows-[auto_1fr]">
         <div data-testid="comanda-cliente" className="lg:col-start-1 lg:row-start-1 lg:self-start">
-          <Card data-testid="comanda-client-card">
+          <Card data-testid="comanda-client-card" className="max-w-none">
             <CardHeader className="pb-sm">
-              <CardTitle className="text-base flex items-center gap-xs">
-                <User className="h-4 w-4 text-primary-500" />
+              <CardTitle className={CARD_TITLE_CLASS}>
+                <User className={CARD_ICON_CLASS} aria-hidden="true" />
                 Cliente
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-sm">
-              <p className="text-sm font-semibold text-neutral-800">
+            <CardContent className="space-y-xs">
+              <p className="break-words font-serif text-[17px] font-semibold leading-6 text-neutral-800">
                 {toDisplayName(comanda.client.fullName)}
               </p>
               {comanda.client.phone && (
-                <div className="flex items-center gap-xs text-sm text-neutral-600">
-                  <Phone className="h-3 w-3" />
+                <div className="flex items-center gap-xs text-body tabular-nums text-neutral-500">
+                  <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   <span>{formatPhoneBr(comanda.client.phone)}</span>
                 </div>
               )}
-              <div className="flex items-center gap-xs text-sm text-neutral-600">
-                <Clock className="h-3 w-3" />
+              <div className="flex items-center gap-xs text-body tabular-nums text-neutral-500">
+                <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span>
                   Aberta às{' '}
                   {new Date(comanda.openedAt).toLocaleTimeString('pt-BR', {
@@ -209,16 +238,12 @@ export function ComandaPage() {
                   })}
                 </span>
               </div>
-              <div className="text-sm text-neutral-600" data-testid="comanda-client-credit">
+              <div
+                className="text-body tabular-nums text-neutral-500"
+                data-testid="comanda-client-credit"
+              >
                 Crédito do cliente: {brl(comanda.clientCreditBalance)}
               </div>
-              <Badge
-                variant="outline"
-                data-testid="comanda-status"
-                className="bg-success-50 text-success-700 border-success-200 text-xs"
-              >
-                {COMANDA_STATUS_LABELS[comanda.status] ?? comanda.status}
-              </Badge>
             </CardContent>
           </Card>
         </div>
@@ -227,97 +252,98 @@ export function ComandaPage() {
           data-testid="comanda-itens"
           className="flex flex-col gap-md lg:col-start-2 lg:row-start-1 lg:row-span-2"
         >
-          <Card className="flex-1">
-            <CardHeader className="pb-sm">
-              <CardTitle className="text-base flex items-center gap-xs">
-                <Receipt className="h-4 w-4 text-primary-500" />
+          <Card className="max-w-none flex-1">
+            <CardHeader className="flex-row items-center justify-between gap-sm space-y-0 pb-sm">
+              <CardTitle className={CARD_TITLE_CLASS}>
+                <Receipt className={CARD_ICON_CLASS} aria-hidden="true" />
                 Itens da comanda
               </CardTitle>
+              {comanda.items.length > 0 && (
+                <span className="shrink-0 text-[12px] font-semibold leading-4 tabular-nums text-neutral-500">
+                  {comanda.items.length === 1 ? '1 item' : `${comanda.items.length} itens`}
+                </span>
+              )}
             </CardHeader>
             <CardContent>
               {comanda.items.length === 0 ? (
-                <p className="text-sm text-neutral-600">Nenhum item lançado.</p>
+                <p className="py-sm text-body text-neutral-500">Nenhum item lançado.</p>
               ) : (
-                <ul className="space-y-sm">
+                <ul>
                   {comanda.items.map((item) => (
                     <li
                       key={item.id}
                       data-testid={`comanda-item-${item.id}`}
-                      className="flex items-start justify-between gap-sm rounded-md border border-neutral-100 bg-neutral-50 p-sm"
+                      className="flex items-start gap-sm border-b border-neutral-200 py-sm last:border-b-0"
                     >
-                      <div className="flex min-w-0 flex-1 items-start gap-sm">
-                        <div
-                          className={`h-8 w-8 rounded-md flex items-center justify-center shrink-0 ${item.kind === 'product' ? 'bg-success-50' : 'bg-primary-50'}`}
+                      <div className="min-w-0 flex-1">
+                        <p
+                          data-testid={`comanda-item-name-${item.id}`}
+                          className="min-w-0 break-words text-body font-medium text-neutral-800"
                         >
-                          {item.kind === 'product' ? (
-                            <ShoppingBag className="h-4 w-4 text-success-600" />
-                          ) : (
-                            <Scissors className="h-4 w-4 text-primary-500" />
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p
-                            data-testid={`comanda-item-name-${item.id}`}
-                            className="min-w-0 break-words text-sm font-semibold text-neutral-800"
-                          >
-                            {item.name}
-                          </p>
-                          <p className="text-xs text-neutral-600">{item.professional.displayName}</p>
-                          {item.contractCode && (
-                            <span
-                              data-testid={`item-contract-${item.id}`}
-                              className="inline-block rounded bg-primary-50 px-xs text-xs font-semibold text-primary-700"
-                            >
-                              Contrato {item.contractCode}
-                            </span>
-                          )}
-                          <p className="text-xs text-neutral-600">
+                          {item.name}
+                        </p>
+                        <p className="text-[12px] leading-4 tabular-nums text-neutral-500">
+                          {item.kind === 'product'
+                            ? `Produto · ${item.professional.displayName}`
+                            : item.professional.displayName}
+                          {' · '}
+                          <span className="whitespace-nowrap">
                             {item.quantity}x{' '}
                             {item.listUnitPrice !== item.unitPrice && (
-                              <span className="line-through mr-xs">{brl(item.listUnitPrice)}</span>
+                              <span className="mr-xs line-through">{brl(item.listUnitPrice)}</span>
                             )}
                             {brl(item.unitPrice)}
-                          </p>
-                        </div>
+                          </span>
+                        </p>
+                        {item.contractCode && (
+                          <Badge
+                            variant="outline"
+                            data-testid={`item-contract-${item.id}`}
+                            className="mt-xs"
+                          >
+                            Contrato {item.contractCode}
+                          </Badge>
+                        )}
                       </div>
                       <div
                         data-testid={`comanda-item-valores-${item.id}`}
-                        className="flex shrink-0 items-center gap-sm whitespace-nowrap"
+                        className="flex shrink-0 items-center gap-xs whitespace-nowrap text-body font-semibold tabular-nums text-neutral-800"
                       >
-                        <span className="text-sm font-semibold text-neutral-800">
-                          {brl(item.total)}
-                        </span>
+                        <span>{brl(item.total)}</span>
                         {isOpen && canWrite && (
-                          <button
+                          <Button
                             type="button"
-                            className="text-neutral-500 hover:text-error-600 disabled:opacity-50"
+                            variant="ghost"
+                            size="icon"
+                            className="-my-sm -mr-sm hover:text-error-600"
                             aria-label={`Remover ${item.name}`}
                             disabled={busy}
                             onClick={() => void handleRemoveItem(item.id)}
                           >
                             <X className="h-4 w-4" />
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </li>
                   ))}
                 </ul>
               )}
-              <Separator className="my-md" />
-              <div className="flex justify-between text-base font-semibold text-neutral-800">
-                <span>Total</span>
-                <span>{brl(comanda.total)}</span>
+              <div className="mt-sm flex items-baseline justify-between gap-sm border-t border-neutral-200 pt-sm">
+                <span className="font-serif text-headline-sm text-neutral-800">Total</span>
+                <span className="whitespace-nowrap text-headline-sm tabular-nums text-neutral-800">
+                  {brl(comanda.total)}
+                </span>
               </div>
               {Number(comanda.covered) > 0 && (
                 <div
                   data-testid="comanda-covered"
-                  className="mt-xs flex justify-between text-sm text-primary-700"
+                  className="mt-xs flex justify-between gap-sm text-body text-neutral-500"
                 >
                   <span>
                     Coberto pelo contrato{' '}
                     {[...new Set(comanda.items.map((i) => i.contractCode).filter(Boolean))].join(', ')}
                   </span>
-                  <span>- {brl(comanda.covered)}</span>
+                  <span className="whitespace-nowrap tabular-nums">- {brl(comanda.covered)}</span>
                 </div>
               )}
             </CardContent>
@@ -329,36 +355,36 @@ export function ComandaPage() {
             data-testid="comanda-adicionar"
             className="lg:col-start-1 lg:row-start-2 lg:self-start"
           >
-            <Card>
+            <Card className="max-w-none">
               <CardHeader className="pb-sm">
-                <CardTitle className="text-base">Adicionar à comanda</CardTitle>
+                <CardTitle className={CARD_TITLE_CLASS}>Adicionar à comanda</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-sm">
                 <Button
                   variant="outline"
-                  className="justify-start gap-sm"
+                  className="min-h-[44px] justify-start gap-sm"
                   data-testid="comanda-add-service"
                   onClick={() => setAddMode('service')}
                 >
-                  <Scissors className="h-4 w-4 text-primary-500" />
+                  <Scissors className="h-4 w-4 text-neutral-500" aria-hidden="true" />
                   {t('operations.pos.addService', 'Adicionar serviço')}
                 </Button>
                 <Button
                   variant="outline"
-                  className="justify-start gap-sm"
+                  className="min-h-[44px] justify-start gap-sm"
                   data-testid="comanda-add-product"
                   onClick={() => setAddMode('product')}
                 >
-                  <ShoppingBag className="h-4 w-4 text-primary-500" />
+                  <ShoppingBag className="h-4 w-4 text-neutral-500" aria-hidden="true" />
                   {t('operations.pos.addProduct', 'Adicionar produto')}
                 </Button>
                 <Button
                   variant="outline"
-                  className="justify-start gap-sm"
+                  className="min-h-[44px] justify-start gap-sm"
                   data-testid="comanda-add-package"
                   onClick={() => setAddMode('package')}
                 >
-                  <Package className="h-4 w-4 text-primary-500" />
+                  <Package className="h-4 w-4 text-neutral-500" aria-hidden="true" />
                   {t('operations.pos.addPackage', 'Adicionar pacote')}
                 </Button>
               </CardContent>
@@ -380,17 +406,18 @@ export function ComandaPage() {
       </div>
 
       {comanda.status === 'closed' && (
-        <Card data-testid="comanda-commissions">
+        <Card data-testid="comanda-commissions" className="max-w-none">
           <CardHeader className="pb-sm">
-            <CardTitle className="text-base">
+            <CardTitle className={CARD_TITLE_CLASS}>
+              <Percent className={CARD_ICON_CLASS} aria-hidden="true" />
               {t('operations.pos.commissionsGenerated', 'Comissões geradas')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-sm">
             {comanda.hasCommissionWarnings && (
-              <Alert data-testid="comanda-commission-warning">
+              <Alert variant="warning" data-testid="comanda-commission-warning">
                 <AlertTriangle className="h-4 w-4" />
-                <div className="text-sm">
+                <div className="text-body">
                   {t(
                     'operations.pos.noRuleWarning',
                     'Alguns itens não têm regra de comissão e foram registrados com R$ 0,00.',
@@ -404,30 +431,34 @@ export function ComandaPage() {
               </Alert>
             )}
             {accruals.length === 0 ? (
-              <p className="text-sm text-neutral-600">Nenhuma comissão registrada.</p>
+              <p className="text-body text-neutral-500">Nenhuma comissão registrada.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <div className="overflow-x-auto rounded-md border border-neutral-200">
+                <table className="w-full text-body text-neutral-800">
                   <thead>
-                    <tr className="text-left text-xs text-neutral-600">
-                      <th className="py-xs">Profissional</th>
-                      <th>Item</th>
-                      <th className="text-right">Base</th>
-                      <th className="text-right">Cobrado</th>
-                      <th className="text-right">Comissão</th>
+                    <tr className="bg-neutral-100 text-left text-overline uppercase text-neutral-500">
+                      <th className="px-sm py-sm">Profissional</th>
+                      <th className="px-sm py-sm">Item</th>
+                      <th className="px-sm py-sm text-right">Base</th>
+                      <th className="px-sm py-sm text-right">Cobrado</th>
+                      <th className="px-sm py-sm text-right">Comissão</th>
                     </tr>
                   </thead>
                   <tbody>
                     {accruals.map((c) => (
-                      <tr key={c.id} className="border-t border-neutral-100">
-                        <td className="py-xs">{c.memberName}</td>
-                        <td>{c.itemName}</td>
-                        <td className="text-right">{brl(c.baseAmount)}</td>
-                        <td className="text-right">{brl(c.chargedAmount)}</td>
-                        <td className="text-right">
+                      <tr key={c.id} className="border-t border-neutral-200">
+                        <td className="px-sm py-sm">{c.memberName}</td>
+                        <td className="px-sm py-sm">{c.itemName}</td>
+                        <td className="whitespace-nowrap px-sm py-sm text-right tabular-nums">
+                          {brl(c.baseAmount)}
+                        </td>
+                        <td className="whitespace-nowrap px-sm py-sm text-right tabular-nums">
+                          {brl(c.chargedAmount)}
+                        </td>
+                        <td className="whitespace-nowrap px-sm py-sm text-right tabular-nums">
                           {brl(c.calculatedAmount)}
                           {c.noRule && (
-                            <Badge variant="outline" className="ml-xs text-xs">
+                            <Badge variant="outline" className="ml-xs">
                               Sem regra
                             </Badge>
                           )}
