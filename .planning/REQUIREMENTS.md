@@ -49,7 +49,7 @@
 
 - [x] **FIN-01**: Proprietário consegue visualizar dashboard financeiro com receita por dia/semana/mês e breakdown por método de pagamento
 - [x] **FIN-02**: Sistema calcula e registra comissões automaticamente por profissional ao fechar comanda, com snapshot imutável dos inputs
-- [ ] **UX-DAY**: Rodada de usabilidade das telas principais (auditoria do Claude, lista aprovada pela usuária, correções aplicadas)
+- [x] **UX-DAY**: Rodada de usabilidade das telas principais (auditoria do Claude, lista aprovada pela usuária, correções aplicadas)
 - [ ] **FIN-03**: Sistema gera previsão financeira para os próximos 30 dias baseada em histórico e agendamentos confirmados
 
 ### Contratos / Noivas
@@ -145,7 +145,7 @@
 | FIN-01 | Phase 3 | Complete |
 | FIN-02 | Phase 3 | Complete |
 | FIN-03 | Phase 5 | Pending |
-| UX-DAY | Phase 5 | Pending |
+| UX-DAY | Phase 5 | Complete |
 | CONT-01 | Phase 4 | Pending |
 | CONT-02 | Phase 4 | Pending |
 | CONT-03 | Phase 4 | Pending |

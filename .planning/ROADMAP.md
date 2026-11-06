@@ -251,7 +251,7 @@ Plans:
 **Plans:** 10 planos agora (+ lotes de correção 05-09…05-19 gerados pelo 05-08 após a aprovação da auditoria)
 
 Plans:
-- [ ] 05-01-auditoria-usabilidade-PLAN.md — Auditoria no staging (usuário dedicado, só leitura) + local; 05-AUDITORIA.md commitado aguardando aprovação (D-01, D-12)
+- [x] 05-01-auditoria-usabilidade-PLAN.md — Auditoria no staging (usuário dedicado, só leitura) + local; 05-AUDITORIA.md commitado aguardando aprovação (D-01, D-12)
 - [ ] 05-02-backend-previsao-fundacao-PLAN.md — Migration fixed_expenses (RLS), permissão financial.expenseWrite, funções puras da previsão (TDD)
 - [ ] 05-03-backend-despesas-fixas-PLAN.md — API GraphQL de despesas fixas + integração RLS/RBAC
 - [ ] 05-04-backend-cash-forecast-PLAN.md — Query cashForecast (agenda, parcelas, comissões, despesas; atraso D-09; fallback D-10) + integração
