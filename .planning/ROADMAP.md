@@ -284,7 +284,7 @@ Plans:
 - [x] 06-02-base-casco-navegacao-PLAN.md — Lote base 2/2: menu lateral 256 px, topo, barra inferior Agenda/Comanda/Clientes/Noivas/Mais, PageHeader; deploy do lote base
 - [x] 06-03-agenda-do-dia-PLAN.md — Agenda do dia (celular e computador): borda de status, linha do tempo, hora atual roxa, bloqueio em hachura
 - [x] 06-04-novo-agendamento-PLAN.md — Novo agendamento: chips de serviço, controle segmentado de profissional, Data/Hora/Duração, Sinal recolhido
-- [ ] 06-05-comanda-PLAN.md — Comanda: cliente, itens e pagamento no padrão novo
+- [x] 06-05-comanda-PLAN.md — Comanda: cliente, itens e pagamento no padrão novo
 - [ ] 06-12-paleta-previsao-PLAN.md — Paleta, linhas e fonte da Previsão de caixa do Stitch em todo o sistema (D-26, executado logo após o 06-05)
 - [ ] 06-06-entradas-e-saidas-PLAN.md — Entradas e saídas (Financeiro): faixa de números, filtros, gráfico e lançamentos
 - [ ] 06-07-previsao-de-caixa-PLAN.md — Previsão de caixa: painel de totais, filtro segmentado, tabelas semanais
