@@ -31,11 +31,15 @@ function parseEnvFile(path: string): Record<string, string> {
 export function loadAuditEnv(): AuditEnv {
   const target = process.env.AUDIT_TARGET === 'local' ? 'local' : 'staging';
   if (target === 'local') {
-    const owner = readSeedState().owner;
+    // Leitura preguiçosa: o seed só existe depois do projeto `setup`.
     return {
       baseUrl: 'http://localhost:5180',
-      email: owner.email,
-      password: owner.password,
+      get email() {
+        return readSeedState().owner.email;
+      },
+      get password() {
+        return readSeedState().owner.password;
+      },
       target,
     };
   }
