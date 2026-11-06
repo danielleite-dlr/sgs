@@ -266,7 +266,7 @@ Plans:
 - [x] 05-12-ux-lote-comanda-2-PLAN.md — Lote 4 de usabilidade: Comanda no celular e menu (UX-09, UX-10)
 - [x] 05-13-ux-lote-noivas-1-PLAN.md — Lote 5 de usabilidade: Noivas e contratos (UX-11, UX-14)
 - [x] 05-14-ux-lote-noivas-2-PLAN.md — Lote 6 de usabilidade: Contrato no celular e completar dados (UX-12, UX-13)
-- [ ] 05-15-ux-lote-clientes-PLAN.md — Lote 7 de usabilidade: Clientes (UX-15, UX-16 só padronizar nomes)
+- [x] 05-15-ux-lote-clientes-PLAN.md — Lote 7 de usabilidade: Clientes (UX-15, UX-16 só padronizar nomes)
 - [ ] 05-16-ux-lote-financeiro-PLAN.md — Lote 8 de usabilidade: Financeiro e botões de ação (UX-17, UX-18, UX-19)
 - [ ] 05-20-fechamento-PLAN.md — Reverificação no staging, alinhamento do FIN-03 no REQUIREMENTS, aceite da usuária, desativação do usuário de auditoria
 

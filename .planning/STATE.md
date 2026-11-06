@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-14-ux-lote-noivas-2-PLAN.md
-last_updated: "2026-11-06T12:39:53.000Z"
+stopped_at: Completed 05-15-ux-lote-clientes-PLAN.md
+last_updated: "2026-11-06T15:50:00.000Z"
 last_activity: 2026-11-06
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 80
-  completed_plans: 78
+  completed_plans: 79
   percent: 100
 ---
 
@@ -169,6 +169,7 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-12: na comanda a ordem no DOM é Cliente, Itens, Adicionar, Pagamento; no computador o grid mantém o layout de três colunas
 - [Phase 05]: 05-13: texto do contrato com negrito via ContractTextView (mesma regra do aceite público e do PDF); detalhe do grupo com status único e legenda de rascunho
 - [Phase 05]: 05-14: contrato no celular em cartões (tabelas só a partir de md); "Completar dados da contratante" em diálogo único; aviso de pendências segue junto de "Gerar link de aceite" (é o que o gate D-09 bloqueia)
+- [Phase 05]: 05-15: lista de clientes com nome em link, cartões no celular (com paginação própria) e colunas E-mail/CPF ocultas quando vazias; nome da cliente exibido com toDisplayName na lista, ficha, comanda, financeiro e contratos (só exibição)
 
 ### Pending Todos
 
@@ -214,5 +215,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-11-06T10:40:48.553Z
-Stopped at: Completed 05-14-ux-lote-noivas-2-PLAN.md
+Stopped at: Completed 05-15-ux-lote-clientes-PLAN.md
 Resume file: None
