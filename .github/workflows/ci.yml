@@ -36,6 +36,19 @@ jobs:
         run: pnpm prisma:generate
       - run: pnpm -r --if-present lint
 
+  frontend-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Vitest do frontend
+        run: pnpm --filter @sgs/frontend test
+
   integration:
     runs-on: ubuntu-latest
     steps:
