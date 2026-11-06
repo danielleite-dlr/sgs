@@ -240,7 +240,8 @@ test('14-clientes-busca', async ({ page }, info) => {
     searchMs = Date.now() - s;
     const href = await firstLink(page, '/clientes');
     if (href) {
-      const link = page.locator(`a[href="${href}"]`).first();
+      // Lista e cartões do celular têm o mesmo link; só um deles está visível.
+      const link = page.locator(`a[href="${href}"]:visible`).first();
       await click(link);
       await page.waitForURL(/\/clientes\/[0-9a-f-]+/);
     }

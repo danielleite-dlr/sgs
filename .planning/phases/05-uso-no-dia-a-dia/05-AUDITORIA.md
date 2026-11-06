@@ -126,15 +126,15 @@ Nos fluxos do celular só a marcação de horário foi cronometrada; os demais f
 | UX-08 | 05-11 | dff8996 | 2026-11-06 (staging, somente leitura) |
 | UX-09 | 05-12 | 8da3f19 | 2026-11-06 (staging, somente leitura) |
 | UX-10 | 05-12 | 8da3f19 | 2026-11-06 (staging, somente leitura) |
-| UX-11 | 05-13 | 870e8d7 | — |
-| UX-14 | 05-13 | 870e8d7 | — |
-| UX-12 | 05-14 | ad27115 | — |
-| UX-13 | 05-14 | ad27115 | — |
-| UX-15 | 05-15 | b231240 | — |
-| UX-16 | 05-15 | b231240 | — |
-| UX-17 | 05-16 | 464a89e | — |
-| UX-18 | 05-16 | 464a89e | — |
-| UX-19 | 05-16 | 464a89e | — |
+| UX-11 | 05-13 | 870e8d7 | ok (2026-11-06) |
+| UX-14 | 05-13 | 870e8d7 | ok (2026-11-06) |
+| UX-12 | 05-14 | ad27115 | ok (2026-11-06) |
+| UX-13 | 05-14 | ad27115 | ok (2026-11-06) |
+| UX-15 | 05-15 | b231240 | ok (2026-11-06) |
+| UX-16 | 05-15 | b231240 | ok (2026-11-06) |
+| UX-17 | 05-16 | 464a89e | ok (2026-11-06) |
+| UX-18 | 05-16 | 464a89e | ok (2026-11-06) |
+| UX-19 | 05-16 | 464a89e | ok (2026-11-06) |
 
 Nota UX-10 (05-12): o aviso não vinha do menu lateral, e sim da trilha no topo das páginas (breadcrumb do `PageHeader`), cujo separador era um `<li>` dentro do `<li>` do item. Aparecia em comanda, financeiro, comissões, noivas e contratos. O separador virou `<span>`, com o mesmo visual; o menu lateral já estava com HTML válido e ganhou teste de trava.
 
