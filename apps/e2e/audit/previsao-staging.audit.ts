@@ -17,14 +17,14 @@ test('previsão de 30 dias abre no painel e no detalhe sem erro (somente leitura
 
   await loginViaUi(page, env.email, env.password);
   await page.waitForURL(/\/dashboard/);
-  await expect(page.getByText('Previsão de caixa')).toBeVisible();
+  await expect(page.getByTestId('forecast-card').getByText('Previsão de caixa')).toBeVisible();
   await page.waitForLoadState('networkidle').catch(() => undefined);
   await expect(page.getByText(ERRO)).toHaveCount(0);
   await page.screenshot({ path: `${dir}/90-previsao-painel.png`, fullPage: true });
 
   await page.getByRole('link', { name: /Ver detalhe/ }).first().click();
   await expect(
-    page.getByRole('heading', { name: 'Previsão de caixa' }),
+    page.getByRole('heading', { level: 1, name: 'Previsão de caixa' }),
   ).toBeVisible();
   await page.waitForLoadState('networkidle').catch(() => undefined);
   await expect(page.getByText(ERRO)).toHaveCount(0);
