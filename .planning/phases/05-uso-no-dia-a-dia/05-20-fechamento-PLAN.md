@@ -2,8 +2,8 @@
 phase: 05-uso-no-dia-a-dia
 plan: 20
 type: execute
-wave: 5
-depends_on: ["05-07", "05-08"]
+wave: 13
+depends_on: ["05-07", "05-08", "05-16"]
 files_modified:
   - .planning/phases/05-uso-no-dia-a-dia/05-AUDITORIA.md
   - .env.audit
