@@ -334,6 +334,7 @@ Ideias estacionadas, sem ordem. Entram no roadmap só quando a usuária promover
 - Ações rápidas no painel ("Iniciar", "Check-in", "Fechar" comanda pela lista)
 - Multiunidade (seletor de unidade no topo)
 - Entradas e saídas (06-06): "Exportar diário"; chips "Apenas entradas/saídas"; busca e filtro por forma de pagamento; painel "Estado do Sistema / Diretriz operacional"; "Previsão D+7 / Cartões a compensar / Auditoria fiscal"; selo "Fechamento provisório"; rodapé "Conciliação em dia / Atualizado às"; botão "Lançar" (lançamento manual)
+- Painel (Início, 06-10): ticket médio diário, noivas no mês/semana, contratos críticos de noivas, comandas em aberto para conferência e "Filtrar período"; relógio e status "Sincronizado" no topo (atendimentos do dia ficam no UX-20 do 999.6)
 - Decisão da usuária em 2026-11-06: fase 6 é só o visual com os dados que já existem
 
 ## Progress
