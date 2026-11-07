@@ -90,7 +90,7 @@ describe('casco Gestor Beauty: menu lateral (D-15)', () => {
     expect(inicio).not.toHaveClass('bg-primary-50');
   });
 
-  it('folha sem ícone (Previsão de caixa) ativa também é subitem roxo (D-26)', () => {
+  it('folha de grupo (Previsão de caixa) ativa é subitem roxo (D-26)', () => {
     render(
       <MemoryRouter initialEntries={['/financeiro/previsao']}>
         <SidebarNav />

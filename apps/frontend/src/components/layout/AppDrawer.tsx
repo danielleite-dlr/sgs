@@ -163,7 +163,7 @@ function DrawerItem({ item, open, onToggle, lowStockCount, onNavigate, level }: 
               FOCO,
               // Mesmo ativo do menu lateral (D-26): 1º nível lilás claro, subitem roxo.
               isActive
-                ? level >= 2 || !Icon
+                ? level >= 1
                   ? 'bg-primary-800 font-semibold text-white'
                   : 'bg-primary-50 font-semibold text-primary-900 [&>svg:first-child]:text-primary-500'
                 : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900',
@@ -171,7 +171,7 @@ function DrawerItem({ item, open, onToggle, lowStockCount, onNavigate, level }: 
           }
           style={recuo}
         >
-          {Icon && <Icon className="h-5 w-5 shrink-0" />}
+          <Icon className="h-5 w-5 shrink-0" />
           <span className="flex-1 truncate">{item.label}</span>
           {alerta}
         </NavLink>
@@ -195,7 +195,7 @@ function DrawerItem({ item, open, onToggle, lowStockCount, onNavigate, level }: 
         )}
         style={recuo}
       >
-        {Icon && <Icon className="h-5 w-5 shrink-0" />}
+        <Icon className="h-5 w-5 shrink-0" />
         <span className="flex-1 truncate">{item.label}</span>
         {alerta}
         {open ? (

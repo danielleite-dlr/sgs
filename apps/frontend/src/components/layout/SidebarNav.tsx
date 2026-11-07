@@ -158,9 +158,9 @@ function SidebarItem({
   // Menu fechado herda o aviso de estoque baixo de um descendente, para não sumir no acordeão.
   const alerta =
     lowStockCount > 0 && (item.badge === 'lowStock' || (!open && contemAvisoEstoque(item)));
-  // Item com ícone nos níveis 0 e 1 é de 1º nível no Stitch; sem ícone ou do nível 2 em
-  // diante é subitem (D-26).
-  const ehSubitem = level >= 2 || !Icon;
+  // Todo item tem ícone (quick 261107-jvl), então o nível decide o ativo (D-26): folha solta
+  // no topo (Início) é de 1º nível; folha dentro de um grupo é subitem roxo.
+  const ehSubitem = level >= 1;
 
   if (!hasChildren && item.to) {
     return (
@@ -179,7 +179,7 @@ function SidebarItem({
           }
           style={recuo}
         >
-          {Icon && <Icon className="h-5 w-5 shrink-0" />}
+          <Icon className="h-5 w-5 shrink-0" />
           <span className="flex-1 truncate">{item.label}</span>
           {alerta && <AlertaEstoque count={lowStockCount} />}
         </NavLink>
@@ -206,6 +206,7 @@ function SidebarItem({
             FOCO,
           )}
         >
+          <Icon className="h-4 w-4 shrink-0" />
           <span className="flex-1 truncate">{item.label}</span>
           {alerta && <AlertaEstoque count={lowStockCount} />}
           <Chevron className="h-4 w-4 shrink-0" />
@@ -224,7 +225,7 @@ function SidebarItem({
           )}
           style={recuo}
         >
-          {Icon && <Icon className="h-5 w-5 shrink-0" />}
+          <Icon className="h-5 w-5 shrink-0" />
           <span className="flex-1 truncate">{item.label}</span>
           {alerta && <AlertaEstoque count={lowStockCount} />}
           <Chevron className="h-4 w-4 shrink-0 text-neutral-500" />

@@ -119,3 +119,34 @@ describe('gaveta do celular em acordeão', () => {
     expect(botao(nav, 'Clientes')).toHaveAttribute('aria-expanded', 'false');
   });
 });
+
+// Quick 261107-jvl: todo item do menu tem ícone, inclusive os grupos do topo e as folhas.
+describe('ícone em todos os itens do menu', () => {
+  it('cada botão e link do menu lateral, com tudo aberto, mostra um ícone', () => {
+    const nav = renderSidebar('/dashboard');
+    // Abre um ramo por vez (acordeão) e confere cada item visível.
+    const conferir = () =>
+      within(nav)
+        .getAllByRole('link')
+        .concat(within(nav).getAllByRole('button').filter((b) => b.hasAttribute('aria-expanded')))
+        .forEach((el) => {
+          if (el.getAttribute('data-testid') === 'sidebar-brand') return;
+          expect(el.querySelector('svg'), el.getAttribute('aria-label') ?? '').not.toBeNull();
+        });
+    conferir();
+    const grupos = within(nav)
+      .getAllByRole('button')
+      .filter((b) => b.getAttribute('aria-expanded') === 'false');
+    for (const g of grupos) {
+      fireEvent.click(g);
+      conferir();
+      within(nav)
+        .getAllByRole('button')
+        .filter((b) => b.getAttribute('aria-expanded') === 'false')
+        .forEach((sub) => {
+          fireEvent.click(sub);
+          conferir();
+        });
+    }
+  });
+});
