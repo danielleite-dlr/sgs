@@ -286,7 +286,7 @@ Plans:
 - [x] 06-04-novo-agendamento-PLAN.md — Novo agendamento: chips de serviço, controle segmentado de profissional, Data/Hora/Duração, Sinal recolhido
 - [x] 06-05-comanda-PLAN.md — Comanda: cliente, itens e pagamento no padrão novo
 - [x] 06-12-paleta-previsao-PLAN.md — Paleta, linhas e fonte da Previsão de caixa do Stitch em todo o sistema (D-26, executado logo após o 06-05)
-- [ ] 06-06-entradas-e-saidas-PLAN.md — Entradas e saídas (Financeiro): faixa de números, filtros, gráfico e lançamentos
+- [x] 06-06-entradas-e-saidas-PLAN.md — Entradas e saídas (Financeiro): faixa de números, filtros, gráfico e lançamentos
 - [ ] 06-07-previsao-de-caixa-PLAN.md — Previsão de caixa: painel de totais, filtro segmentado, tabelas semanais
 - [ ] 06-08-despesas-fixas-PLAN.md — Despesas fixas: tabela, selos de situação, total mensal das ativas
 - [ ] 06-09-grupo-de-noivas-PLAN.md — Grupo de noivas: ficha do evento, pessoas e cronograma; título com caixa padronizada
@@ -333,6 +333,7 @@ Ideias estacionadas, sem ordem. Entram no roadmap só quando a usuária promover
 - Cerimonial/assessoria e "dossiê" da noiva; status de prova
 - Ações rápidas no painel ("Iniciar", "Check-in", "Fechar" comanda pela lista)
 - Multiunidade (seletor de unidade no topo)
+- Entradas e saídas (06-06): "Exportar diário"; chips "Apenas entradas/saídas"; busca e filtro por forma de pagamento; painel "Estado do Sistema / Diretriz operacional"; "Previsão D+7 / Cartões a compensar / Auditoria fiscal"; selo "Fechamento provisório"; rodapé "Conciliação em dia / Atualizado às"; botão "Lançar" (lançamento manual)
 - Decisão da usuária em 2026-11-06: fase 6 é só o visual com os dados que já existem
 
 ## Progress

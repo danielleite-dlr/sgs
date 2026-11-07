@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 06-12-paleta-previsao-PLAN.md
-last_updated: "2026-11-06T22:26:10.000Z"
+stopped_at: Completed 06-06-entradas-e-saidas-PLAN.md
+last_updated: "2026-11-07T02:36:25.582Z"
 last_activity: 2026-11-06
 progress:
   total_phases: 8
   completed_phases: 7
-  total_plans: 80
-  completed_plans: 87
+  total_plans: 92
+  completed_plans: 88
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 06
-Plan: 06-06 (próximo; 06-01 a 06-05 e 06-12 concluídos, paleta da Previsão de caixa no staging)
+Plan: 06-07 (próximo; 06-01 a 06-06 e 06-12 concluídos, Entradas e saídas no staging)
 Status: Executing
 Last activity: 2026-11-06
 
@@ -86,6 +86,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 05 P12 | 70min | 3 tasks | 7 files |
 | Phase 05 P13 | ~60min | 3 tasks | 9 files |
 | Phase 05 P14 | ~90min | 3 tasks | 12 files |
+| Phase 06 P06 | 75min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -172,6 +173,9 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-15: lista de clientes com nome em link, cartões no celular (com paginação própria) e colunas E-mail/CPF ocultas quando vazias; nome da cliente exibido com toDisplayName na lista, ficha, comanda, financeiro e contratos (só exibição)
 - [Phase 05]: 05-16: tipos de lançamento via cashKindLabel (operations-labels) com fallback 'Outro lançamento'; cartões do Financeiro com texto de apoio fiel ao financial.service (Faturado = comandas não cobertas + pagamentos de contrato; Recebido = soma de cash_movements); filtros juntos; ações da cliente 44 px com rótulo nominal
 - [Phase 05]: 05-20: fase 5 aceita pela usuária em 2026-11-06 ("aprovado"); UX-01 a UX-19 conferidos no staging; previsão conferida contra o banco; usuário de auditoria desativado e senha local apagada
+- [Phase 06]: Gráficos usam chart-theme.ts (Faturado #521873, Recebido/entrada #109868, saída #D85A30, grade #E5E7EB)
+- [Phase 06]: Filtro segmentado selecionado = SEGMENT_SELECTED_CLASS (bg-primary-800 text-white)
+- [Phase 06]: Faixa Saldo/Entradas/Saídas do Financeiro calculada no cliente a partir de cashMovements
 
 ### Pending Todos
 
@@ -217,6 +221,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-06T21:50:00.000Z
-Stopped at: Completed 06-05-comanda-PLAN.md
+Last session: 2026-11-07T02:36:25.574Z
+Stopped at: Completed 06-06-entradas-e-saidas-PLAN.md
 Resume file: None
