@@ -11,7 +11,7 @@ import {
 } from '../support/ui';
 
 const PROFISSIONAIS = ['Meu Estabelecimento', 'Profissionais', 'Todos os profissionais'];
-const AGENDA = ['Agenda', 'Minha agenda'];
+const AGENDA = ['Agenda'];
 const COMISSOES = ['Financeiro', 'Regras de comissão'];
 
 /** Depois de criar o membro: aparece ativo, com Sênior, na agenda e no picker de comissões. */

@@ -18,9 +18,7 @@ import {
   Settings,
   ArrowLeftRight,
   Cake,
-  CalendarCheck,
   CalendarClock,
-  CalendarSearch,
   CreditCard,
   Download,
   FastForward,
@@ -79,25 +77,13 @@ const ALL_MENU: MenuItem[] = [
     searchTerms: ['painel', 'home', 'inicio', 'dashboard'],
   },
   {
+    // Item direto, sem submenu (quick 261107-k9c): "Consultar agendamentos" não tem tela
+    // (flag agendaRelatorio), então o grupo só teria "Minha agenda".
     id: 'agenda',
     label: 'Agenda',
+    to: '/agenda',
     icon: CalendarDays,
-    children: [
-      {
-        id: 'agenda-minha',
-        label: 'Minha agenda',
-        to: '/agenda',
-        icon: CalendarCheck,
-        searchTerms: ['agenda', 'agendamento', 'horario'],
-      },
-      {
-        id: 'agenda-consulta',
-        label: 'Consultar agendamentos',
-        to: '/agenda?modo=relatorio',
-        icon: CalendarSearch,
-        searchTerms: ['relatorio agendamentos', 'consulta'],
-      },
-    ],
+    searchTerms: ['agenda', 'agendamento', 'horario', 'minha agenda'],
   },
   {
     id: 'estabelecimento',

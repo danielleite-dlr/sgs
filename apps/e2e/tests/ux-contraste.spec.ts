@@ -17,7 +17,7 @@ async function cores(el: Locator) {
 test('UX-01: "Dia" selecionado e "Salvar" têm letra branca sobre o roxo', async ({ page }) => {
   const seed = readSeedState();
   await loginViaUi(page, seed.attendant.email, seed.attendant.password);
-  await navigateViaMenu(page, 'Agenda', 'Minha agenda');
+  await navigateViaMenu(page, 'Agenda');
 
   const dia = page.getByTestId('view-day');
   await expect(dia).toBeVisible();

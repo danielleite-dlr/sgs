@@ -296,7 +296,7 @@ test.describe('Fase 4: pacote -> grupo de noivas -> contrato -> aceite público 
     // /agenda no dia do evento mostra os agendamentos
     // Marca do estúdio no topo do menu lateral (leva ao início).
     await page.getByTestId('sidebar-brand').click();
-    await navigateViaMenu(page, 'Agenda', 'Minha agenda');
+    await navigateViaMenu(page, 'Agenda');
     await expect(page.getByTestId('view-day')).toBeVisible();
     const next = page.getByRole('button', { name: 'Próximo dia' });
     const hops = daysBetween(spDate(0), eventDate);

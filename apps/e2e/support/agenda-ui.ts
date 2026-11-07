@@ -3,7 +3,7 @@ import { navigateViaMenu } from './ui';
 
 /** Abre a agenda pelo menu e avança `daysAhead` dias com a seta "Próximo dia". */
 export async function openAgendaAt(page: Page, daysAhead: number): Promise<void> {
-  await navigateViaMenu(page, 'Agenda', 'Minha agenda');
+  await navigateViaMenu(page, 'Agenda');
   await expect(page.getByTestId('view-day')).toBeVisible();
   const next = page.getByRole('button', { name: 'Próximo dia' });
   for (let i = 0; i < daysAhead; i += 1) await next.click();

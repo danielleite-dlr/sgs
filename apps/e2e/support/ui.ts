@@ -30,7 +30,7 @@ export async function expectNoReload(page: Page): Promise<void> {
 
 /**
  * Navega pelo menu lateral (SPA, sem recarregar). `path` são os rótulos em
- * ordem: grupos primeiro, o link por último. Ex.: ['Agenda', 'Minha agenda'].
+ * ordem: grupos primeiro, o link por último. Ex.: ['Financeiro', 'Previsão de caixa'].
  * O menu lateral é fixo (256 px, sempre aberto no computador) e em acordeão: só o ramo da
  * rota atual nasce aberto, então o grupo é clicado quando está fechado.
  */

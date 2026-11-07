@@ -62,10 +62,10 @@ describe('casco Gestor Beauty: menu lateral (D-15)', () => {
     expect(inicio).not.toHaveClass('bg-primary', 'text-white');
 
     // Acordeão (quick 261107-j9q): no Início nenhum grupo contém a rota, todos nascem fechados.
-    const agenda = within(nav).getByRole('button', { name: 'Agenda' });
-    expect(agenda).toHaveAttribute('aria-expanded', 'false');
-    expect(agenda).toHaveAttribute('aria-label', 'Agenda');
-    expect(agenda).toHaveClass('uppercase', 'text-[10px]', 'tracking-widest');
+    const financeiro = within(nav).getByRole('button', { name: 'Financeiro' });
+    expect(financeiro).toHaveAttribute('aria-expanded', 'false');
+    expect(financeiro).toHaveAttribute('aria-label', 'Financeiro');
+    expect(financeiro).toHaveClass('uppercase', 'text-[10px]', 'tracking-widest');
 
     semSombra(nav);
   });

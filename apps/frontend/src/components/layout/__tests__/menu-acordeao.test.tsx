@@ -41,17 +41,17 @@ function renderSidebar(rota: string, props: { lowStockCount?: number } = {}) {
 describe('menu lateral em acordeão', () => {
   it('abrir um grupo fecha o irmão aberto e clicar no aberto fecha', () => {
     const nav = renderSidebar('/dashboard');
-    fireEvent.click(botao(nav, 'Agenda'));
-    expect(botao(nav, 'Agenda')).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(botao(nav, 'Eventos'));
+    expect(botao(nav, 'Eventos')).toHaveAttribute('aria-expanded', 'true');
 
     fireEvent.click(botao(nav, 'Financeiro'));
     expect(botao(nav, 'Financeiro')).toHaveAttribute('aria-expanded', 'true');
-    expect(botao(nav, 'Agenda')).toHaveAttribute('aria-expanded', 'false');
-    expect(within(nav).queryByRole('link', { name: 'Minha agenda' })).toBeNull();
+    expect(botao(nav, 'Eventos')).toHaveAttribute('aria-expanded', 'false');
+    expect(within(nav).queryByRole('link', { name: 'Contratos' })).toBeNull();
 
     fireEvent.click(botao(nav, 'Financeiro'));
     expect(botao(nav, 'Financeiro')).toHaveAttribute('aria-expanded', 'false');
-    expect(botao(nav, 'Agenda')).toHaveAttribute('aria-expanded', 'false');
+    expect(botao(nav, 'Eventos')).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('vale também para os submenus de um mesmo grupo', () => {
@@ -72,7 +72,7 @@ describe('menu lateral em acordeão', () => {
     expect(botao(nav, 'Meu Estabelecimento')).toHaveAttribute('aria-expanded', 'true');
     expect(botao(nav, 'Clientes')).toHaveAttribute('aria-expanded', 'true');
     expect(botao(nav, 'Profissionais')).toHaveAttribute('aria-expanded', 'false');
-    expect(botao(nav, 'Agenda')).toHaveAttribute('aria-expanded', 'false');
+    expect(botao(nav, 'Eventos')).toHaveAttribute('aria-expanded', 'false');
     expect(botao(nav, 'Financeiro')).toHaveAttribute('aria-expanded', 'false');
   });
 
@@ -121,6 +121,19 @@ describe('gaveta do celular em acordeão', () => {
 });
 
 // Quick 261107-jvl: todo item do menu tem ícone, inclusive os grupos do topo e as folhas.
+// Quick 261107-k9c: Agenda é item direto, sem submenu.
+describe('Agenda sem submenu', () => {
+  it('é um link para /agenda no topo, sem botão de abrir', () => {
+    const nav = renderSidebar('/agenda');
+    const agenda = within(nav).getByRole('link', { name: 'Agenda' });
+    expect(agenda).toHaveAttribute('href', '/agenda');
+    expect(agenda).toHaveAttribute('aria-current', 'page');
+    expect(agenda).toHaveClass('bg-primary-50', 'text-primary-900');
+    expect(within(nav).queryByRole('button', { name: 'Agenda' })).toBeNull();
+    expect(within(nav).queryByRole('link', { name: 'Minha agenda' })).toBeNull();
+  });
+});
+
 describe('ícone em todos os itens do menu', () => {
   it('cada botão e link do menu lateral, com tudo aberto, mostra um ícone', () => {
     const nav = renderSidebar('/dashboard');
