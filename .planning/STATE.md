@@ -221,6 +221,7 @@ Recent decisions affecting current work:
 | 261107-in8 | Dashboard operacional no Inicio: KPIs do dia, proximos atendimentos, comandas em aberto, contratos de noivas proximos e previsao de caixa, por permissao | 2026-11-07 | b56cfb4 | [261107-in8-dashboard-operacional-no-inicio](./quick/261107-in8-dashboard-operacional-no-inicio/) |
 | 261107-j9q | Menu lateral e gaveta em acordeao: abrir um menu com submenus fecha o irmao aberto; so o ramo da rota nasce aberto; aviso de estoque no menu fechado | 2026-11-07 | a2e7a2d | [261107-j9q-menu-lateral-em-acordeao](./quick/261107-j9q-menu-lateral-em-acordeao/) |
 | 261107-jvl | Icone em todos os itens do menu (grupos do topo, submenus e folhas); icon obrigatorio no MenuItem | 2026-11-07 | bd2eb91 | [261107-jvl-icone-em-todos-os-itens-do-menu](./quick/261107-jvl-icone-em-todos-os-itens-do-menu/) |
+| 261107-k9c | Agenda como item direto no menu (link para /agenda), sem o submenu Minha agenda | 2026-11-07 | be16ad0 | [261107-k9c-agenda-como-item-direto-no-menu](./quick/261107-k9c-agenda-como-item-direto-no-menu/) |
 
 ## Session Continuity
 
