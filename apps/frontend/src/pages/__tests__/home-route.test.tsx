@@ -9,6 +9,12 @@ vi.mock('@/features/operations/components/ForecastCard', () => ({
   default: () => <div>FORECAST</div>,
 }));
 
+// Os blocos do painel têm teste próprio (inicio-operacional); aqui só o roteamento (D-11).
+vi.mock('@/features/operations/components/dashboard/DayKpiStrip', () => ({ DayKpiStrip: () => null }));
+vi.mock('@/features/operations/components/dashboard/UpcomingAppointmentsCard', () => ({ UpcomingAppointmentsCard: () => null }));
+vi.mock('@/features/operations/components/dashboard/OpenComandasCard', () => ({ OpenComandasCard: () => null }));
+vi.mock('@/features/operations/components/dashboard/UpcomingContractsCard', () => ({ UpcomingContractsCard: () => null }));
+
 function renderAs(roleName: string) {
   useAuthStore.setState({ roleName } as never);
   render(
