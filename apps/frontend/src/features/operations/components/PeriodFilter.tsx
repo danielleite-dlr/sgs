@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { FIELD_LABEL_CLASS } from '@/lib/field-classes';
+import { cn } from '@/lib/utils';
+import { SEGMENT_SELECTED_CLASS } from '../lib/chart-theme';
 import { brDateToIso, isoToBrDate, maskDateBR } from '../lib/input-masks';
 import type { PeriodValue } from '../lib/period-value';
 import {
@@ -41,8 +44,8 @@ export function PeriodFilter({
             <Button
               key={p.value}
               type="button"
-              size="sm"
               variant={active ? 'default' : 'outline'}
+              className={cn(active && SEGMENT_SELECTED_CLASS)}
               aria-pressed={active}
               data-testid={`period-preset-${p.value}`}
               onClick={() => {
@@ -56,8 +59,8 @@ export function PeriodFilter({
         })}
         <Button
           type="button"
-          size="sm"
           variant={customOpen ? 'default' : 'outline'}
+          className={cn(customOpen && SEGMENT_SELECTED_CLASS)}
           aria-pressed={customOpen}
           data-testid="period-preset-custom"
           onClick={() => setCustomOpen(true)}
@@ -67,10 +70,10 @@ export function PeriodFilter({
       </div>
       {customOpen && (
         <div className="flex flex-wrap items-end gap-sm">
-          <label className="flex flex-col gap-xs text-xs font-semibold text-neutral-600">
+          <label className={cn('flex flex-col gap-xs', FIELD_LABEL_CLASS)}>
             De
             <Input
-              className="h-9 w-[130px] text-sm"
+              className="w-[140px] tabular-nums"
               placeholder="dd/mm/aaaa"
               inputMode="numeric"
               value={fromBr}
@@ -78,10 +81,10 @@ export function PeriodFilter({
               data-testid="period-custom-from"
             />
           </label>
-          <label className="flex flex-col gap-xs text-xs font-semibold text-neutral-600">
+          <label className={cn('flex flex-col gap-xs', FIELD_LABEL_CLASS)}>
             Até
             <Input
-              className="h-9 w-[130px] text-sm"
+              className="w-[140px] tabular-nums"
               placeholder="dd/mm/aaaa"
               inputMode="numeric"
               value={toBr}
@@ -91,7 +94,6 @@ export function PeriodFilter({
           </label>
           <Button
             type="button"
-            size="sm"
             disabled={!customValid}
             data-testid="period-custom-apply"
             onClick={() => {

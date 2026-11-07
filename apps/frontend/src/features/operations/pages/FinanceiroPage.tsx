@@ -11,6 +11,7 @@ import {
   YAxis,
 } from 'recharts';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -26,6 +27,14 @@ import { PeriodFilter } from '../components/PeriodFilter';
 import { defaultPeriod, type PeriodValue } from '../lib/period-value';
 import { cashKindLabel, paymentMethodLabel } from '../lib/operations-labels';
 import { toDisplayName } from '@/lib/format-name';
+import { cn } from '@/lib/utils';
+import {
+  CHART_COLORS,
+  CHART_GRID_STROKE,
+  CHART_TICK,
+  CHART_TOOLTIP_STYLE,
+  SEGMENT_SELECTED_CLASS,
+} from '../lib/chart-theme';
 
 type Granularity = 'day' | 'week' | 'month';
 
@@ -36,6 +45,26 @@ const GRANULARITIES: { value: Granularity; label: string }[] = [
 ];
 
 const brl = (v: string) => `R$ ${formatCurrencyDisplay(v)}`;
+
+/** Valor com sinal na frente ("+ R$ 10,00" / "- R$ 10,00"), como no Stitch. */
+function signedBrl(cents: number): string {
+  const abs = (Math.abs(cents) / 100).toFixed(2);
+  return `${cents < 0 ? '-' : '+'} ${brl(abs)}`;
+}
+
+const toCents = (v: string) => Math.round(Number(v) * 100);
+
+// Blocos no padrão da Previsão de caixa (D-26): 8 px, borda #E5E7EB e sombra leve.
+const BLOCK_CLASS = 'rounded-lg border border-neutral-200 bg-white shadow-sm';
+const SECTION_TITLE_CLASS = 'text-headline-sm font-semibold text-neutral-800';
+const TH_CLASS = 'px-sm py-xs text-left text-overline uppercase text-neutral-500';
+const TD_CLASS = 'px-sm py-sm text-body text-neutral-800';
+// Valor em texto pequeno: tons 700 (D-27); saída em laranja, nunca em vermelho de erro.
+const valueColor = (cents: number) => (cents < 0 ? 'text-outflow-700' : 'text-success-700');
+
+function kindVariant(kind: string): 'accent' | 'secondary' {
+  return kind.startsWith('contract') ? 'accent' : 'secondary';
+}
 
 function daysBetween(from: string, to: string): number {
   return Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000);
@@ -62,13 +91,16 @@ function Kpi({
   extra?: string;
 }) {
   return (
-    <article className="rounded-md border border-neutral-200 bg-white p-md">
-      <p className="text-xs text-neutral-500">{label}</p>
-      <p className="text-xl font-semibold text-neutral-800" data-testid={id}>
+    <article className={cn(BLOCK_CLASS, 'p-sm')}>
+      <p className="text-overline uppercase text-neutral-500">{label}</p>
+      <p
+        className="mt-xs text-headline-md font-semibold tabular-nums whitespace-nowrap text-neutral-800"
+        data-testid={id}
+      >
         {value}
       </p>
       {extra && (
-        <p className="text-xs font-semibold text-primary-700 mt-xs" data-testid={`${id}-extra`}>
+        <p className="text-[12px] font-semibold text-primary-700 mt-xs" data-testid={`${id}-extra`}>
           {extra}
         </p>
       )}
@@ -115,6 +147,18 @@ export function FinanceiroPage() {
 
   const receivedTotalNum = Number(summary?.receivedTotal ?? 0);
 
+  const cashList = useMemo(() => movements.data?.cashMovements ?? [], [movements.data]);
+  const totals = useMemo(() => {
+    let inflow = 0;
+    let outflow = 0;
+    for (const mv of cashList) {
+      const c = toCents(mv.amount);
+      if (c < 0) outflow += c;
+      else inflow += c;
+    }
+    return { inflow, outflow, balance: inflow + outflow };
+  }, [cashList]);
+
   return (
     <>
       <PageHeader
@@ -138,8 +182,8 @@ export function FinanceiroPage() {
                 <Button
                   key={g.value}
                   type="button"
-                  size="sm"
                   variant={granularity === g.value ? 'default' : 'outline'}
+                  className={cn(granularity === g.value && SEGMENT_SELECTED_CLASS)}
                   aria-pressed={granularity === g.value}
                   data-testid={`granularity-${g.value}`}
                   onClick={() => setGranularity(g.value)}
@@ -161,7 +205,7 @@ export function FinanceiroPage() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-md">
+              <div data-testid="financeiro-kpis" className="grid grid-cols-2 lg:grid-cols-5 gap-sm">
                 <Kpi
                   id="kpi-billed"
                   label="Faturado"
@@ -204,103 +248,234 @@ export function FinanceiroPage() {
 
               <section
                 aria-label="Faturado e recebido por período"
-                className="rounded-md border border-neutral-200 bg-white p-md"
+                className={cn(BLOCK_CLASS, 'p-md')}
                 data-testid="financial-chart"
               >
+                <h2 className={cn(SECTION_TITLE_CLASS, 'mb-sm')}>Faturado e recebido</h2>
                 <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="label" />
-                    <YAxis />
+                    <CartesianGrid stroke={CHART_GRID_STROKE} strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="label" tick={CHART_TICK} axisLine={false} tickLine={false} />
+                    <YAxis tick={CHART_TICK} axisLine={false} tickLine={false} />
                     <Tooltip
+                      contentStyle={CHART_TOOLTIP_STYLE}
                       formatter={(v: number) =>
                         `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                       }
                     />
                     <Legend />
-                    <Bar dataKey="billed" name="Faturado" fill="#570080" isAnimationActive={false} />
-                    <Bar dataKey="received" name="Recebido" fill="#109868" isAnimationActive={false} />
+                    <Bar
+                      dataKey="billed"
+                      name="Faturado"
+                      fill={CHART_COLORS.billed}
+                      radius={[3, 3, 0, 0]}
+                      isAnimationActive={false}
+                    />
+                    <Bar
+                      dataKey="received"
+                      name="Recebido"
+                      fill={CHART_COLORS.received}
+                      radius={[3, 3, 0, 0]}
+                      isAnimationActive={false}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </section>
 
-              <section className="rounded-md border border-neutral-200 bg-white p-md">
-                <h2 className="text-sm font-semibold text-neutral-800 mb-sm">
-                  Recebido por forma de pagamento
-                </h2>
+              <section className={cn(BLOCK_CLASS, 'p-md')}>
+                <h2 className={cn(SECTION_TITLE_CLASS, 'mb-sm')}>Recebido por forma de pagamento</h2>
                 {summary.receivedByMethod.length === 0 ? (
-                  <p className="text-sm text-neutral-500">Nenhum recebimento no período.</p>
+                  <p className="text-body text-neutral-500">Nenhum recebimento no período.</p>
                 ) : (
-                  <table className="w-full text-sm" data-testid="received-by-method">
-                    <tbody>
-                      {summary.receivedByMethod.map((m) => {
-                        const pct =
-                          receivedTotalNum > 0
-                            ? ((Number(m.total) / receivedTotalNum) * 100).toFixed(1).replace('.', ',')
-                            : '0,0';
-                        return (
-                          <tr
-                            key={m.method}
-                            data-testid={`received-method-${m.method}`}
-                            className="border-t border-neutral-100"
-                          >
-                            <td className="py-xs">{paymentMethodLabel(m.method)}</td>
-                            <td className="py-xs text-right font-medium">{brl(m.total)}</td>
-                            <td className="py-xs text-right text-neutral-500">{pct}%</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                  <div className="overflow-x-auto rounded-md border border-neutral-200">
+                    <table className="w-full" data-testid="received-by-method">
+                      <thead className="bg-neutral-50">
+                        <tr>
+                          <th className={TH_CLASS}>Forma</th>
+                          <th className={cn(TH_CLASS, 'text-right')}>Valor</th>
+                          <th className={cn(TH_CLASS, 'text-right')}>Parte</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {summary.receivedByMethod.map((m) => {
+                          const pct =
+                            receivedTotalNum > 0
+                              ? ((Number(m.total) / receivedTotalNum) * 100).toFixed(1).replace('.', ',')
+                              : '0,0';
+                          return (
+                            <tr
+                              key={m.method}
+                              data-testid={`received-method-${m.method}`}
+                              className="border-t border-neutral-100"
+                            >
+                              <td className={TD_CLASS}>{paymentMethodLabel(m.method)}</td>
+                              <td
+                                className={cn(
+                                  TD_CLASS,
+                                  'text-right font-semibold tabular-nums whitespace-nowrap',
+                                )}
+                              >
+                                {brl(m.total)}
+                              </td>
+                              <td
+                                className={cn(
+                                  TD_CLASS,
+                                  'text-right tabular-nums whitespace-nowrap text-neutral-500',
+                                )}
+                              >
+                                {pct}%
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </section>
             </>
           )}
 
-          <section className="rounded-md border border-neutral-200 bg-white p-md">
-            <h2 className="text-sm font-semibold text-neutral-800 mb-sm">Lançamentos</h2>
+          <section className="flex flex-col gap-sm">
+            <div className="flex flex-col gap-xs md:flex-row md:items-baseline md:justify-between md:gap-md">
+              <h2 className={SECTION_TITLE_CLASS}>Lançamentos</h2>
+              {!movements.loading && !movements.error && cashList.length > 0 && (
+                <p
+                  data-testid="cash-movements-totals"
+                  className="flex flex-wrap items-baseline gap-x-sm gap-y-xs text-body text-neutral-500"
+                >
+                  <span>
+                    Saldo do período{' '}
+                    <span
+                      data-testid="cash-totals-balance"
+                      className={cn(
+                        'font-semibold tabular-nums whitespace-nowrap',
+                        totals.balance < 0 ? 'text-outflow-700' : 'text-neutral-800',
+                      )}
+                    >
+                      {totals.balance < 0 ? signedBrl(totals.balance) : brl((totals.balance / 100).toFixed(2))}
+                    </span>
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  <span>
+                    Entradas{' '}
+                    <span
+                      data-testid="cash-totals-in"
+                      className="font-semibold tabular-nums whitespace-nowrap text-success-700"
+                    >
+                      {signedBrl(totals.inflow)}
+                    </span>
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  <span>
+                    Saídas{' '}
+                    <span
+                      data-testid="cash-totals-out"
+                      className="font-semibold tabular-nums whitespace-nowrap text-outflow-700"
+                    >
+                      {totals.outflow < 0 ? signedBrl(totals.outflow) : brl('0.00')}
+                    </span>
+                  </span>
+                </p>
+              )}
+            </div>
             {movements.loading ? (
               <Skeleton className="h-16 w-full" />
             ) : movements.error ? (
-              <p className="text-sm text-error-600">Não foi possível carregar os lançamentos.</p>
-            ) : (movements.data?.cashMovements ?? []).length === 0 ? (
-              <p className="text-sm text-neutral-500">Nenhum lançamento no período.</p>
+              <p className="text-body text-error-700">Não foi possível carregar os lançamentos.</p>
+            ) : cashList.length === 0 ? (
+              <p className={cn(BLOCK_CLASS, 'p-md text-body text-neutral-500')}>
+                Nenhum lançamento no período.
+              </p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm" data-testid="cash-movements">
-                  <thead>
-                    <tr className="text-left text-xs text-neutral-500">
-                      <th className="py-xs">Data</th>
-                      <th>Tipo</th>
-                      <th>Forma</th>
-                      <th>Cliente</th>
-                      <th>Origem</th>
-                      <th className="text-right">Valor</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {movements.data!.cashMovements.map((mv) => {
-                      const negative = Number(mv.amount) < 0;
-                      const d = new Date(mv.occurredAt);
-                      return (
-                        <tr key={mv.id} className="border-t border-neutral-100">
-                          <td className="py-xs">
-                            {d.toLocaleDateString('pt-BR')}{' '}
-                            {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                          </td>
-                          <td>{cashKindLabel(mv.kind)}</td>
-                          <td>{paymentMethodLabel(mv.method)}</td>
-                          <td>{mv.clientName ? toDisplayName(mv.clientName) : '—'}</td>
-                          <td>{mv.comandaCode ?? mv.contractCode ?? '—'}</td>
-                          <td className={`text-right ${negative ? 'text-outflow-700' : ''}`}>
-                            {brl(mv.amount)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                <ul data-testid="cash-movements-cards" className="flex flex-col gap-sm md:hidden">
+                  {cashList.map((mv) => {
+                    const cents = toCents(mv.amount);
+                    const d = new Date(mv.occurredAt);
+                    const origem = mv.comandaCode ?? mv.contractCode;
+                    return (
+                      <li key={mv.id} className={cn(BLOCK_CLASS, 'p-sm')}>
+                        <div className="flex items-start justify-between gap-sm">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-xs text-[12px] text-neutral-500">
+                              <span className="tabular-nums">
+                                {d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                              </span>
+                              <Badge variant={kindVariant(mv.kind)}>{cashKindLabel(mv.kind)}</Badge>
+                              <span>{paymentMethodLabel(mv.method)}</span>
+                            </div>
+                            {mv.clientName && (
+                              <p className="mt-xs break-words text-body font-medium text-neutral-800">
+                                {toDisplayName(mv.clientName)}
+                              </p>
+                            )}
+                            {origem && (
+                              <p className="text-[12px] text-neutral-500 tabular-nums">{origem}</p>
+                            )}
+                          </div>
+                          <span
+                            className={cn(
+                              'shrink-0 text-body font-semibold tabular-nums whitespace-nowrap',
+                              valueColor(cents),
+                            )}
+                          >
+                            {signedBrl(cents)}
+                          </span>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className={cn(BLOCK_CLASS, 'hidden overflow-x-auto md:block')}>
+                  <table className="w-full" data-testid="cash-movements">
+                    <thead className="bg-neutral-50">
+                      <tr>
+                        <th className={TH_CLASS}>Data</th>
+                        <th className={TH_CLASS}>Tipo</th>
+                        <th className={TH_CLASS}>Forma</th>
+                        <th className={TH_CLASS}>Cliente</th>
+                        <th className={TH_CLASS}>Origem</th>
+                        <th className={cn(TH_CLASS, 'text-right')}>Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cashList.map((mv) => {
+                        const cents = toCents(mv.amount);
+                        const d = new Date(mv.occurredAt);
+                        return (
+                          <tr key={mv.id} className="h-10 border-t border-neutral-100">
+                            <td className={cn(TD_CLASS, 'tabular-nums whitespace-nowrap')}>
+                              {d.toLocaleDateString('pt-BR')}{' '}
+                              {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            </td>
+                            <td className={TD_CLASS}>
+                              <Badge variant={kindVariant(mv.kind)}>{cashKindLabel(mv.kind)}</Badge>
+                            </td>
+                            <td className={TD_CLASS}>{paymentMethodLabel(mv.method)}</td>
+                            <td className={TD_CLASS}>
+                              {mv.clientName ? toDisplayName(mv.clientName) : '—'}
+                            </td>
+                            <td className={cn(TD_CLASS, 'tabular-nums')}>
+                              {mv.comandaCode ?? mv.contractCode ?? '—'}
+                            </td>
+                            <td
+                              data-testid={`cash-movement-value-${mv.id}`}
+                              className={cn(
+                                TD_CLASS,
+                                'text-right font-semibold tabular-nums whitespace-nowrap',
+                                valueColor(cents),
+                              )}
+                            >
+                              {signedBrl(cents)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </section>
         </div>

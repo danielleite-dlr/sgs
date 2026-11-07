@@ -110,7 +110,9 @@ describe('FinanceiroPage', () => {
         maxUsageCount: 5,
       },
     ]);
-    expect(await screen.findByText('Joana Pereira')).toBeInTheDocument();
+    // Cartões do celular + tabela do computador ficam no DOM: a verificação é feita na tabela.
+    const tabela = await screen.findByTestId('cash-movements');
+    expect(within(tabela).getByText('Joana Pereira')).toBeInTheDocument();
     expect(screen.queryByText('joana PEREIRA')).toBeNull();
   });
 
@@ -148,8 +150,9 @@ describe('FinanceiroPage', () => {
 
   it('coluna Tipo em português, nunca o código interno (UX-17)', async () => {
     renderPage(mocksWith([movement('mv1', 'contract_in'), movement('mv2', 'algo_novo')]));
-    expect(await screen.findByText('Entrada de contrato')).toBeInTheDocument();
-    expect(screen.getByText('Outro lançamento')).toBeInTheDocument();
+    const tabela = await screen.findByTestId('cash-movements');
+    expect(within(tabela).getByText('Entrada de contrato')).toBeInTheDocument();
+    expect(within(tabela).getByText('Outro lançamento')).toBeInTheDocument();
     expect(screen.queryByText('contract_in')).toBeNull();
     expect(screen.queryByText('algo_novo')).toBeNull();
   });
