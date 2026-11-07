@@ -218,6 +218,7 @@ Recent decisions affecting current work:
 | 261105-d6k | Previa ao vivo do contrato no formulario: o proprio PDF (modelo Studio JS, timbrado) ao lado do formulario no desktop e Ver previa no celular, via query contractPreviewPdf que roda create/update numa transacao desfeita (nada gravado) | 2026-11-05 | a20e500 | [261105-d6k-previa-do-contrato-ao-vivo-no-formulario](./quick/261105-d6k-previa-do-contrato-ao-vivo-no-formulario/) |
 | 261105-i7x | Sinal do contrato pre-preenchido e editavel com a entrada do pacote (fixa ou %), com botao para restaurar o valor do pacote | 2026-11-05 | 271b726 | [261105-i7x-sinal-pre-preenchido-com-o-valor-de-entr](./quick/261105-i7x-sinal-pre-preenchido-com-o-valor-de-entr/) |
 | 261106-cst | Previsao de caixa: outros custos do pacote (por contrato, na data do evento) e saidas por grupo (profissional/operacional/fixo) | 2026-11-06 | aab7f5a | [261106-cst-previsao-custos-por-grupo](./quick/261106-cst-previsao-custos-por-grupo/) |
+| 261107-in8 | Dashboard operacional no Inicio: KPIs do dia, proximos atendimentos, comandas em aberto, contratos de noivas proximos e previsao de caixa, por permissao | 2026-11-07 | b56cfb4 | [261107-in8-dashboard-operacional-no-inicio](./quick/261107-in8-dashboard-operacional-no-inicio/) |
 
 ## Session Continuity
 
