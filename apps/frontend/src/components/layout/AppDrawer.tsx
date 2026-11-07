@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Bell, ChevronDown, ChevronRight, LogOut, TriangleAlert } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -6,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { brandName } from '@/lib/brand';
 import { FEATURES } from '@/config/features';
 import { MENU, type MenuItem } from './menu-config';
+import { contemAvisoEstoque, useMenuAccordion } from './use-menu-accordion';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { BrandMark } from './BrandMark';
@@ -70,17 +70,13 @@ export function AppDrawer({
         )}
 
         <nav className="flex-1 overflow-y-auto py-sm" aria-label="Menu principal">
-          <ul className="space-y-0">
-            {MENU.map((item) => (
-              <DrawerItem
-                key={item.id}
-                item={item}
-                lowStockCount={lowStockCount}
-                onNavigate={handleNavigate}
-                level={0}
-              />
-            ))}
-          </ul>
+          <DrawerList
+            items={MENU}
+            fallbackId="estabelecimento"
+            lowStockCount={lowStockCount}
+            onNavigate={handleNavigate}
+            level={0}
+          />
         </nav>
 
         <div className="flex items-center justify-between gap-sm border-t border-neutral-200 bg-neutral-100 px-md py-sm">
@@ -106,21 +102,52 @@ export function AppDrawer({
   );
 }
 
-interface DrawerItemProps {
-  item: MenuItem;
+interface DrawerListProps {
+  items: MenuItem[];
+  fallbackId?: string;
   lowStockCount: number;
   onNavigate: () => void;
   level: number;
 }
 
-function DrawerItem({ item, lowStockCount, onNavigate, level }: DrawerItemProps) {
-  const [open, setOpen] = useState(level === 0 && item.id === 'estabelecimento');
+// Lista de irmãos em acordeão (quick 261107-j9q): um menu com submenus aberto por vez. Fora
+// de qualquer ramo, a gaveta continua abrindo Meu Estabelecimento.
+function DrawerList({ items, fallbackId, lowStockCount, onNavigate, level }: DrawerListProps) {
+  const { openId, toggle } = useMenuAccordion(items, fallbackId);
+  return (
+    <ul className="space-y-0">
+      {items.map((item) => (
+        <DrawerItem
+          key={item.id}
+          item={item}
+          open={openId === item.id}
+          onToggle={() => toggle(item.id)}
+          lowStockCount={lowStockCount}
+          onNavigate={onNavigate}
+          level={level}
+        />
+      ))}
+    </ul>
+  );
+}
+
+interface DrawerItemProps {
+  item: MenuItem;
+  open: boolean;
+  onToggle: () => void;
+  lowStockCount: number;
+  onNavigate: () => void;
+  level: number;
+}
+
+function DrawerItem({ item, open, onToggle, lowStockCount, onNavigate, level }: DrawerItemProps) {
   const Icon = item.icon;
   const hasChildren = (item.children?.length ?? 0) > 0;
   const recuo = { paddingLeft: `${16 + level * 16}px` };
-  const alerta = item.badge === 'lowStock' && lowStockCount > 0 && (
-    <TriangleAlert className="h-4 w-4 shrink-0 text-warning-500" />
-  );
+  // Menu fechado herda o aviso de estoque baixo de um descendente, para não sumir no acordeão.
+  const comAviso =
+    lowStockCount > 0 && (item.badge === 'lowStock' || (!open && contemAvisoEstoque(item)));
+  const alerta = comAviso && <TriangleAlert className="h-4 w-4 shrink-0 text-warning-500" />;
 
   if (!hasChildren && item.to) {
     return (
@@ -158,7 +185,7 @@ function DrawerItem({ item, lowStockCount, onNavigate, level }: DrawerItemProps)
     <li>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
         aria-expanded={open}
         aria-label={item.label}
         className={cn(
@@ -178,17 +205,12 @@ function DrawerItem({ item, lowStockCount, onNavigate, level }: DrawerItemProps)
         )}
       </button>
       {open && (
-        <ul className="space-y-0">
-          {item.children!.map((child) => (
-            <DrawerItem
-              key={child.id}
-              item={child}
-              lowStockCount={lowStockCount}
-              onNavigate={onNavigate}
-              level={level + 1}
-            />
-          ))}
-        </ul>
+        <DrawerList
+          items={item.children!}
+          lowStockCount={lowStockCount}
+          onNavigate={onNavigate}
+          level={level + 1}
+        />
       )}
     </li>
   );

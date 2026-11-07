@@ -31,18 +31,24 @@ export async function expectNoReload(page: Page): Promise<void> {
 /**
  * Navega pelo menu lateral (SPA, sem recarregar). `path` são os rótulos em
  * ordem: grupos primeiro, o link por último. Ex.: ['Agenda', 'Minha agenda'].
- * O menu lateral é fixo (256 px, sempre aberto no computador); os grupos de nível 0
- * nascem abertos e os subgrupos abrem pelo acordeão.
+ * O menu lateral é fixo (256 px, sempre aberto no computador) e em acordeão: só o ramo da
+ * rota atual nasce aberto, então o grupo é clicado quando está fechado.
  */
 export async function navigateViaMenu(page: Page, ...path: string[]): Promise<void> {
   const nav = page.getByRole('navigation', { name: 'Navegação principal' });
   await expect(nav).toBeVisible();
 
-  for (const label of path.slice(0, -1)) {
-    const group = nav.getByRole('button', { name: label, exact: true });
-    if ((await group.getAttribute('aria-expanded')) !== 'true') await group.click();
-  }
-  await nav.getByRole('link', { name: path[path.length - 1], exact: true }).click();
+  // Um redirecionamento logo após o login (ex.: Início → Agenda para ATTENDANT) faz o
+  // acordeão seguir a nova rota e recolher o grupo já aberto; por isso o caminho é refeito
+  // até o clique no link passar.
+  await expect(async () => {
+    for (const label of path.slice(0, -1)) {
+      const group = nav.getByRole('button', { name: label, exact: true });
+      if ((await group.getAttribute('aria-expanded')) !== 'true') await group.click();
+    }
+    const link = nav.getByRole('link', { name: path[path.length - 1], exact: true });
+    await link.click({ timeout: 2000 });
+  }).toPass({ timeout: 15_000 });
 }
 
 /** Abre o menu Ações da linha de um membro em /profissionais. */

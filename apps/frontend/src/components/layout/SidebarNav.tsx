@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronRight, LogOut, TriangleAlert } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -8,6 +7,7 @@ import { HOME_PATH } from '@/config/features';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { MENU, type MenuItem } from './menu-config';
+import { contemAvisoEstoque, temRotaAtiva, useMenuAccordion } from './use-menu-accordion';
 import { BrandMark } from './BrandMark';
 import { SessionUser } from './SessionUser';
 
@@ -61,17 +61,13 @@ export function SidebarNav({ lowStockCount = 0, onNavigate }: SidebarNavProps) {
         </Link>
 
         <div className="flex-1 overflow-y-auto px-sm py-md">
-          <ul className="space-y-xs">
-            {MENU.map((item) => (
-              <SidebarItem
-                key={item.id}
-                item={item}
-                lowStockCount={lowStockCount}
-                onNavigate={onNavigate}
-                level={0}
-              />
-            ))}
-          </ul>
+          <SidebarList
+            items={MENU}
+            className="space-y-xs"
+            lowStockCount={lowStockCount}
+            onNavigate={onNavigate}
+            level={0}
+          />
         </div>
 
         <div
@@ -97,17 +93,41 @@ export function SidebarNav({ lowStockCount = 0, onNavigate }: SidebarNavProps) {
   );
 }
 
-interface SidebarItemProps {
-  item: MenuItem;
+interface SidebarListProps {
+  items: MenuItem[];
+  className: string;
   lowStockCount: number;
   onNavigate?: () => void;
   level: number;
 }
 
-function temRotaAtiva(item: MenuItem, pathname: string): boolean {
-  return (item.children ?? []).some(
-    (c) => (c.to !== undefined && c.to.split('?')[0] === pathname) || temRotaAtiva(c, pathname),
+// Lista de irmãos em acordeão (quick 261107-j9q): um menu com submenus aberto por vez.
+function SidebarList({ items, className, lowStockCount, onNavigate, level }: SidebarListProps) {
+  const { openId, toggle } = useMenuAccordion(items);
+  return (
+    <ul className={className}>
+      {items.map((item) => (
+        <SidebarItem
+          key={item.id}
+          item={item}
+          open={openId === item.id}
+          onToggle={() => toggle(item.id)}
+          lowStockCount={lowStockCount}
+          onNavigate={onNavigate}
+          level={level}
+        />
+      ))}
+    </ul>
   );
+}
+
+interface SidebarItemProps {
+  item: MenuItem;
+  open: boolean;
+  onToggle: () => void;
+  lowStockCount: number;
+  onNavigate?: () => void;
+  level: number;
 }
 
 function AlertaEstoque({ count }: { count: number }) {
@@ -123,16 +143,21 @@ function AlertaEstoque({ count }: { count: number }) {
   );
 }
 
-function SidebarItem({ item, lowStockCount, onNavigate, level }: SidebarItemProps) {
+function SidebarItem({
+  item,
+  open,
+  onToggle,
+  lowStockCount,
+  onNavigate,
+  level,
+}: SidebarItemProps) {
   const { pathname } = useLocation();
   const hasChildren = (item.children?.length ?? 0) > 0;
-  // Grupos de nível 0 nascem abertos; subgrupos abrem sozinhos se contêm a rota atual.
-  const [open, setOpen] = useState(
-    hasChildren && (level === 0 || temRotaAtiva(item, pathname)),
-  );
   const Icon = item.icon;
   const recuo = { paddingLeft: 8 + Math.max(level - 1, 0) * 16 };
-  const alerta = item.badge === 'lowStock' && lowStockCount > 0;
+  // Menu fechado herda o aviso de estoque baixo de um descendente, para não sumir no acordeão.
+  const alerta =
+    lowStockCount > 0 && (item.badge === 'lowStock' || (!open && contemAvisoEstoque(item)));
   // Item com ícone nos níveis 0 e 1 é de 1º nível no Stitch; sem ícone ou do nível 2 em
   // diante é subitem (D-26).
   const ehSubitem = level >= 2 || !Icon;
@@ -171,7 +196,7 @@ function SidebarItem({ item, lowStockCount, onNavigate, level }: SidebarItemProp
       {level === 0 ? (
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={onToggle}
           aria-expanded={open}
           aria-label={item.label}
           className={cn(
@@ -188,7 +213,7 @@ function SidebarItem({ item, lowStockCount, onNavigate, level }: SidebarItemProp
       ) : (
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={onToggle}
           aria-expanded={open}
           aria-label={item.label}
           className={cn(
@@ -206,17 +231,13 @@ function SidebarItem({ item, lowStockCount, onNavigate, level }: SidebarItemProp
         </button>
       )}
       {open && (
-        <ul className="mt-xs space-y-xs">
-          {item.children!.map((child) => (
-            <SidebarItem
-              key={child.id}
-              item={child}
-              lowStockCount={lowStockCount}
-              onNavigate={onNavigate}
-              level={level + 1}
-            />
-          ))}
-        </ul>
+        <SidebarList
+          items={item.children!}
+          className="mt-xs space-y-xs"
+          lowStockCount={lowStockCount}
+          onNavigate={onNavigate}
+          level={level + 1}
+        />
       )}
     </li>
   );
