@@ -219,6 +219,7 @@ Recent decisions affecting current work:
 | 261105-i7x | Sinal do contrato pre-preenchido e editavel com a entrada do pacote (fixa ou %), com botao para restaurar o valor do pacote | 2026-11-05 | 271b726 | [261105-i7x-sinal-pre-preenchido-com-o-valor-de-entr](./quick/261105-i7x-sinal-pre-preenchido-com-o-valor-de-entr/) |
 | 261106-cst | Previsao de caixa: outros custos do pacote (por contrato, na data do evento) e saidas por grupo (profissional/operacional/fixo) | 2026-11-06 | aab7f5a | [261106-cst-previsao-custos-por-grupo](./quick/261106-cst-previsao-custos-por-grupo/) |
 | 261107-in8 | Dashboard operacional no Inicio: KPIs do dia, proximos atendimentos, comandas em aberto, contratos de noivas proximos e previsao de caixa, por permissao | 2026-11-07 | b56cfb4 | [261107-in8-dashboard-operacional-no-inicio](./quick/261107-in8-dashboard-operacional-no-inicio/) |
+| 261107-j9q | Menu lateral e gaveta em acordeao: abrir um menu com submenus fecha o irmao aberto; so o ramo da rota nasce aberto; aviso de estoque no menu fechado | 2026-11-07 | a2e7a2d | [261107-j9q-menu-lateral-em-acordeao](./quick/261107-j9q-menu-lateral-em-acordeao/) |
 
 ## Session Continuity
 
