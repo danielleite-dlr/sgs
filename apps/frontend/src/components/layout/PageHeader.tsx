@@ -8,14 +8,50 @@ import {
 } from '@/components/ui/breadcrumb';
 import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
 export interface PageHeaderProps {
   title: string;
   breadcrumbs?: Array<{ label: string; to?: string }>; // last item is current page
   cta?: ReactNode;
+  /** Rótulo curto acima do título (ex.: "Painel do dia"). Sem maiúsculas forçadas (D-13). */
+  eyebrow?: string;
+  /** Linha abaixo do título (ex.: data por extenso). */
+  description?: ReactNode;
+  /** `display`: título de painel em Inter semibold, 28 px no celular e 36 px no computador. */
+  variant?: 'default' | 'display';
 }
 
-export function PageHeader({ title, breadcrumbs, cta }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  breadcrumbs,
+  cta,
+  eyebrow,
+  description,
+  variant = 'default',
+}: PageHeaderProps) {
+  const h1 = (
+    <h1
+      className={cn(
+        'min-w-0 break-words',
+        variant === 'display'
+          ? 'font-sans text-display font-semibold text-neutral-900 lg:text-display-lg'
+          : 'font-serif text-headline-lg text-neutral-800',
+      )}
+    >
+      {title}
+    </h1>
+  );
+  // Sem descrição, o h1 continua filho direto da linha título/ações (HTML igual ao de antes).
+  const heading = description ? (
+    <div className="min-w-0">
+      {h1}
+      <p className="mt-xs text-body text-neutral-500 tabular-nums">{description}</p>
+    </div>
+  ) : (
+    h1
+  );
+
   return (
     <header className="pb-lg">
       {breadcrumbs && breadcrumbs.length > 0 && (
@@ -57,10 +93,9 @@ export function PageHeader({ title, breadcrumbs, cta }: PageHeaderProps) {
           </BreadcrumbList>
         </Breadcrumb>
       )}
+      {eyebrow && <p className="mb-xs text-overline text-neutral-500">{eyebrow}</p>}
       <div className="flex flex-col gap-sm sm:flex-row sm:items-end sm:justify-between">
-        <h1 className="min-w-0 break-words font-serif text-headline-lg text-neutral-800">
-          {title}
-        </h1>
+        {heading}
         {cta && <div className="flex flex-wrap items-center gap-sm">{cta}</div>}
       </div>
     </header>
