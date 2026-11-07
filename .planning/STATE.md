@@ -220,6 +220,7 @@ Recent decisions affecting current work:
 | 261106-cst | Previsao de caixa: outros custos do pacote (por contrato, na data do evento) e saidas por grupo (profissional/operacional/fixo) | 2026-11-06 | aab7f5a | [261106-cst-previsao-custos-por-grupo](./quick/261106-cst-previsao-custos-por-grupo/) |
 | 261107-in8 | Dashboard operacional no Inicio: KPIs do dia, proximos atendimentos, comandas em aberto, contratos de noivas proximos e previsao de caixa, por permissao | 2026-11-07 | b56cfb4 | [261107-in8-dashboard-operacional-no-inicio](./quick/261107-in8-dashboard-operacional-no-inicio/) |
 | 261107-j9q | Menu lateral e gaveta em acordeao: abrir um menu com submenus fecha o irmao aberto; so o ramo da rota nasce aberto; aviso de estoque no menu fechado | 2026-11-07 | a2e7a2d | [261107-j9q-menu-lateral-em-acordeao](./quick/261107-j9q-menu-lateral-em-acordeao/) |
+| 261107-jvl | Icone em todos os itens do menu (grupos do topo, submenus e folhas); icon obrigatorio no MenuItem | 2026-11-07 | bd2eb91 | [261107-jvl-icone-em-todos-os-itens-do-menu](./quick/261107-jvl-icone-em-todos-os-itens-do-menu/) |
 
 ## Session Continuity
 
