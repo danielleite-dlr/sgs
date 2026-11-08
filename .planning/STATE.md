@@ -222,6 +222,7 @@ Recent decisions affecting current work:
 | 261107-j9q | Menu lateral e gaveta em acordeao: abrir um menu com submenus fecha o irmao aberto; so o ramo da rota nasce aberto; aviso de estoque no menu fechado | 2026-11-07 | a2e7a2d | [261107-j9q-menu-lateral-em-acordeao](./quick/261107-j9q-menu-lateral-em-acordeao/) |
 | 261107-jvl | Icone em todos os itens do menu (grupos do topo, submenus e folhas); icon obrigatorio no MenuItem | 2026-11-07 | bd2eb91 | [261107-jvl-icone-em-todos-os-itens-do-menu](./quick/261107-jvl-icone-em-todos-os-itens-do-menu/) |
 | 261107-k9c | Agenda como item direto no menu (link para /agenda), sem o submenu Minha agenda | 2026-11-07 | be16ad0 | [261107-k9c-agenda-como-item-direto-no-menu](./quick/261107-k9c-agenda-como-item-direto-no-menu/) |
+| fast | Modal de novo/editar pacote limitado a 90vh com rolagem interna (nao extrapola a tela) | 2026-11-08 | c951767 | - |
 
 ## Session Continuity
 
