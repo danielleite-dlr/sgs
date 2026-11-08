@@ -223,6 +223,7 @@ Recent decisions affecting current work:
 | 261107-jvl | Icone em todos os itens do menu (grupos do topo, submenus e folhas); icon obrigatorio no MenuItem | 2026-11-07 | bd2eb91 | [261107-jvl-icone-em-todos-os-itens-do-menu](./quick/261107-jvl-icone-em-todos-os-itens-do-menu/) |
 | 261107-k9c | Agenda como item direto no menu (link para /agenda), sem o submenu Minha agenda | 2026-11-07 | be16ad0 | [261107-k9c-agenda-como-item-direto-no-menu](./quick/261107-k9c-agenda-como-item-direto-no-menu/) |
 | fast | Modal de novo/editar pacote limitado a 90vh com rolagem interna (nao extrapola a tela) | 2026-11-08 | c951767 | - |
+| fast | Login: Entrar habilita ao digitar e com autopreenchimento do navegador (sem clicar na pagina); Enter envia o formulario (continua o 261107-kpj) | 2026-11-08 | 38070fe | - |
 
 ## Session Continuity
 
