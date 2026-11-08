@@ -1,6 +1,7 @@
 import {
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsInt,
   IsOptional,
   IsString,
@@ -23,6 +24,11 @@ export class PackageServiceInput {
   @IsInt()
   @Min(1)
   quantity?: number;
+
+  /** Teste incluso no valor do pacote, cobrado no evento (261108-n2o). */
+  @IsOptional()
+  @IsBoolean()
+  includesTrial?: boolean;
 }
 
 export class PackageCostItemInput {

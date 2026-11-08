@@ -16,7 +16,7 @@ const CONTRACT_FIELDS = `id code status groupId brideName eventDate packageId it
   totalAmount depositAmount balanceDueDaysBefore balanceDueDate paid balance depositPaid depositPending
   settled daysToBalanceDue balanceDueSoon balanceOverdue depositOverdue cancellationPolicy
   currentVersion acceptedVersion needsAcceptance currentText currentTextSha256
-  items { id personName description quantity unitPrice total packageId purpose }`;
+  items { id personName serviceId description quantity unitPrice total packageId purpose settledAtEvent }`;
 
 const CREATE = `mutation($input: CreateContractInput!) {
   createContract(input: $input) { contract { ${CONTRACT_FIELDS} } errors { code message field } }
@@ -197,6 +197,176 @@ describe('Fase 4 - núcleo do contrato da noiva', () => {
       const items = r.data.createContract.contract.items;
       expect(items.map((i: { total: string }) => i.total)).toEqual(['33.33', '33.33', '33.34']);
       expect(cents(items).reduce((a, b) => a + b, 0)).toBe(10000);
+    });
+  });
+
+  describe('teste incluso no pacote (261108-n2o)', () => {
+    const created = { services: [] as string[], packages: [] as string[] };
+    const service = async (name: string, basePrice: string) => {
+      const s = await adminPrisma.service.create({
+        data: {
+          organizationId: w.orgId,
+          categoryId: w.childCategoryId,
+          name: `p4core-${name}-${Date.now()}`,
+          basePrice,
+          defaultDurationMinutes: 60,
+        },
+      });
+      created.services.push(s.id);
+      return s.id;
+    };
+    const mkPackage = async (
+      price: string,
+      rows: Array<{ serviceId: string; includesTrial?: boolean }>,
+    ) => {
+      const p = await adminPrisma.package.create({
+        data: {
+          organizationId: w.orgId,
+          name: `p4core-pacote-teste-${Date.now()}`,
+          price,
+          depositKind: 'percent',
+          depositValue: '30.00',
+          services: {
+            create: rows.map((r, i) => ({
+              serviceId: r.serviceId,
+              quantity: 1,
+              displayOrder: i,
+              includesTrial: r.includesTrial ?? false,
+            })),
+          },
+        },
+      });
+      created.packages.push(p.id);
+      return p.id;
+    };
+    type Item = {
+      serviceId: string;
+      description: string;
+      unitPrice: string;
+      total: string;
+      purpose: string;
+      settledAtEvent: boolean;
+      packageId: string | null;
+    };
+    const shape = (items: Item[]) =>
+      items.map((i) => [i.serviceId, i.purpose, i.total, i.settledAtEvent]);
+    /** o que o formulário reenvia ao editar (ContractFormDialog → buildContractSaveInput) */
+    const formItems = (items: Item[]) =>
+      items.map((i) => ({
+        serviceId: i.serviceId,
+        unitPrice: i.unitPrice,
+        quantity: 1,
+        purpose: i.purpose,
+        packageItem: i.packageId != null,
+      }));
+
+    afterEach(async () => {
+      await deletePhase4Rows(orgFilter);
+      await adminPrisma.packageService.deleteMany({ where: { packageId: { in: created.packages } } });
+      await adminPrisma.package.deleteMany({ where: { id: { in: created.packages } } });
+      await adminPrisma.service.deleteMany({ where: { id: { in: created.services } } });
+      created.services = [];
+      created.packages = [];
+    });
+
+    it('divide metade teste/metade evento, centavo ímpar no evento, total igual ao pacote', async () => {
+      const make = await service('make-noiva', '400.01');
+      const massagem = await service('massagem', '100.00');
+      const pkg = await mkPackage('500.01', [
+        { serviceId: make, includesTrial: true },
+        { serviceId: massagem },
+      ]);
+      const grp = await insertBridalGroupRow(w, { companions: 0, eventDate });
+      const r = await gqlAs(w, w.tokens.admin)(CREATE, { input: { groupId: grp.groupId, packageId: pkg } });
+      expect(r.data.createContract.errors).toEqual([]);
+      const c = r.data.createContract.contract;
+      expect(shape(c.items)).toEqual([
+        [make, 'event', '200.01', false],
+        [make, 'trial', '200.00', true],
+        [massagem, 'event', '100.00', false],
+      ]);
+      expect(c.items.every((i: Item) => i.packageId === pkg)).toBe(true);
+      expect(c.items[1].description).toContain('teste incluso, pago no evento');
+      expect(c.itemsTotal).toBe('500.01');
+      expect(c.totalAmount).toBe('500.01');
+      expect(c.depositAmount).toBe('150.00');
+
+      // a noiva ganha também a linha 'trial' do serviço com teste incluso
+      const bms = await adminPrisma.bridalMemberService.findMany({
+        where: { groupMemberId: grp.brideMemberId },
+        select: { serviceId: true, purpose: true },
+      });
+      expect(bms.map((b) => `${b.serviceId}|${b.purpose}`).sort()).toEqual(
+        [`${make}|event`, `${make}|trial`, `${massagem}|event`].sort(),
+      );
+    });
+
+    it('pacote sem nenhuma marca: itens iguais aos de antes (só evento)', async () => {
+      const make = await service('make-noiva', '400.01');
+      const massagem = await service('massagem', '100.00');
+      const pkg = await mkPackage('500.01', [{ serviceId: make }, { serviceId: massagem }]);
+      const grp = await insertBridalGroupRow(w, { companions: 0, eventDate });
+      const r = await gqlAs(w, w.tokens.admin)(CREATE, { input: { groupId: grp.groupId, packageId: pkg } });
+      expect(r.data.createContract.errors).toEqual([]);
+      expect(shape(r.data.createContract.contract.items)).toEqual([
+        [make, 'event', '400.01', false],
+        [massagem, 'event', '100.00', false],
+      ]);
+      const bms = await adminPrisma.bridalMemberService.findMany({
+        where: { groupMemberId: grp.brideMemberId },
+      });
+      expect(bms.every((b) => b.purpose === 'event')).toBe(true);
+    });
+
+    it('editar reenviando os itens do formulário preserva o teste incluso e os valores', async () => {
+      const g = gqlAs(w, w.tokens.admin);
+      const make = await service('make-noiva', '400.01');
+      const massagem = await service('massagem', '100.00');
+      const pkg = await mkPackage('500.01', [
+        { serviceId: make, includesTrial: true },
+        { serviceId: massagem },
+      ]);
+      const grp = await insertBridalGroupRow(w, { companions: 0, eventDate });
+      const r = await g(CREATE, { input: { groupId: grp.groupId, packageId: pkg } });
+      const c = r.data.createContract.contract;
+      const up = await g(UPDATE, {
+        id: c.id,
+        input: { packageId: pkg, items: formItems(c.items), discountAmount: '10.00' },
+      });
+      expect(up.data.updateContract.errors).toEqual([]);
+      const after = up.data.updateContract.contract;
+      expect(shape(after.items)).toEqual(shape(c.items));
+      expect(after.totalAmount).toBe('490.01');
+
+      // tirar o vínculo com o pacote vira teste avulso (cobrado no dia)
+      const items = formItems(after.items).map((i) =>
+        i.purpose === 'trial' ? { ...i, packageItem: false } : i,
+      );
+      const loose = await g(UPDATE, { id: c.id, input: { items } });
+      expect(loose.data.updateContract.errors).toEqual([]);
+      const trial = loose.data.updateContract.contract.items.find((i: Item) => i.purpose === 'trial');
+      expect(trial.settledAtEvent).toBe(false);
+      expect(trial.packageId).toBeNull();
+    });
+
+    it('contrato antigo sem teste não ganha teste ao editar, mesmo com o pacote marcado depois', async () => {
+      const g = gqlAs(w, w.tokens.admin);
+      const make = await service('make-noiva', '400.01');
+      const massagem = await service('massagem', '100.00');
+      const pkg = await mkPackage('500.01', [{ serviceId: make }, { serviceId: massagem }]);
+      const grp = await insertBridalGroupRow(w, { companions: 0, eventDate });
+      const r = await g(CREATE, { input: { groupId: grp.groupId, packageId: pkg } });
+      const c = r.data.createContract.contract;
+      await adminPrisma.packageService.updateMany({
+        where: { packageId: pkg, serviceId: make },
+        data: { includesTrial: true },
+      });
+      const up = await g(UPDATE, { id: c.id, input: { items: formItems(c.items) } });
+      expect(up.data.updateContract.errors).toEqual([]);
+      expect(shape(up.data.updateContract.contract.items)).toEqual(shape(c.items));
+      const disc = await g(UPDATE, { id: c.id, input: { discountAmount: '5.00' } });
+      expect(disc.data.updateContract.errors).toEqual([]);
+      expect(shape(disc.data.updateContract.contract.items)).toEqual(shape(c.items));
     });
   });
 

@@ -79,6 +79,8 @@ type ComandaItem {
   professionalId: UUID!
   contractId: UUID
   contractCode: String
+  "Teste incluso no pacote: cobrado na comanda do evento (item do teste coberto a R$ 0,00)."
+  includedInEvent: Boolean!
   professional: Member!
   name: String!
   quantity: Int!

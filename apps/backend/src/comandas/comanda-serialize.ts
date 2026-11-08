@@ -7,6 +7,7 @@ const COMANDA_INCLUDE = {
   items: {
     include: {
       contract: { select: { code: true } },
+      appointment: { select: { purpose: true } },
       professional: {
         include: {
           user: { select: { email: true } },
@@ -134,6 +135,10 @@ export function serializeComanda(
       professionalId: i.professionalId,
       contractId: i.contractId,
       contractCode: i.contract?.code ?? null,
+      // Teste incluso no pacote (261108-n2o): item do teste coberto pelo contrato a R$ 0,00;
+      // o valor é cobrado na comanda do evento. Heurística só de exibição.
+      includedInEvent:
+        !!i.contractId && i.appointment?.purpose === 'trial' && toCents(i.total) === 0,
       professional: memberView(i.professional),
       name: i.nameSnapshot,
       quantity: i.quantity,

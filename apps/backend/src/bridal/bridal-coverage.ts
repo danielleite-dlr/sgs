@@ -1,6 +1,40 @@
 import { recalcComandaTotal } from '../comandas/comanda-items';
-import { fromCents, toCents } from '../common/money';
+import { fromCents, toCents, type MoneyLike } from '../common/money';
 import type { TenantPrismaClient } from '../database/types';
+
+export interface AgreedItem {
+  groupMemberId: string;
+  serviceId: string;
+  purpose: string;
+  unitPrice: MoneyLike;
+  settledAtEvent: boolean;
+}
+
+/**
+ * Preço acordado no contrato (em centavos) para (pessoa, serviço, finalidade), já com a
+ * regra do teste incluso no pacote (261108-n2o):
+ * - 'trial': 1º item trial do (membro, serviço); teste incluso (settledAtEvent) → 0, porque o
+ *   valor é cobrado no evento; teste avulso → o preço dele.
+ * - 'event': 1º item event do (membro, serviço) + o 1º item trial incluso do mesmo (membro,
+ *   serviço), se houver — a comanda do evento leva as duas metades.
+ * - Sem item da finalidade → undefined (não coberto).
+ * Com quantidade > 1 do mesmo serviço a pareação é pelo primeiro de cada (mesma regra do
+ * `.find` que já decidia a cobertura); caso raro, aceito.
+ * `items` deve vir ordenado por sortOrder.
+ */
+export function agreedUnitCents(
+  items: AgreedItem[],
+  groupMemberId: string,
+  serviceId: string,
+  purpose: string,
+): number | undefined {
+  const same = items.filter((i) => i.groupMemberId === groupMemberId && i.serviceId === serviceId);
+  const own = same.find((i) => i.purpose === purpose);
+  if (!own) return undefined;
+  if (purpose === 'trial') return own.settledAtEvent ? 0 : toCents(own.unitPrice);
+  const includedTrial = same.find((i) => i.purpose === 'trial' && i.settledAtEvent);
+  return toCents(own.unitPrice) + (includedTrial ? toCents(includedTrial.unitPrice) : 0);
+}
 
 /**
  * Preços acordados do contrato para uma pessoa/finalidade (D-08).
@@ -21,20 +55,28 @@ export async function coveragePriceMapTx(
     where: { bridalGroupId: groupId, status: { not: 'cancelled' } },
     select: {
       id: true,
+      // todas as finalidades: o evento soma o teste incluso no pacote
       items: {
-        where: { groupMemberId, purpose },
+        where: { groupMemberId },
         orderBy: { sortOrder: 'asc' },
-        select: { serviceId: true, unitPrice: true },
+        select: {
+          groupMemberId: true,
+          serviceId: true,
+          purpose: true,
+          unitPrice: true,
+          settledAtEvent: true,
+        },
       },
     },
   });
-  if (!contract || contract.items.length === 0) return null;
+  if (!contract) return null;
   const priceByServiceId: Record<string, string> = {};
   for (const it of contract.items) {
-    if (!(it.serviceId in priceByServiceId)) {
-      priceByServiceId[it.serviceId] = fromCents(toCents(it.unitPrice));
-    }
+    if (it.purpose !== purpose || it.serviceId in priceByServiceId) continue;
+    const cents = agreedUnitCents(contract.items, groupMemberId, it.serviceId, purpose);
+    if (cents !== undefined) priceByServiceId[it.serviceId] = fromCents(cents);
   }
+  if (Object.keys(priceByServiceId).length === 0) return null;
   return { contractId: contract.id, priceByServiceId };
 }
 
@@ -53,7 +95,13 @@ export async function syncContractCoverageTx(
     select: {
       id: true,
       items: {
-        select: { groupMemberId: true, serviceId: true, purpose: true, unitPrice: true },
+        select: {
+          groupMemberId: true,
+          serviceId: true,
+          purpose: true,
+          unitPrice: true,
+          settledAtEvent: true,
+        },
         orderBy: { sortOrder: 'asc' },
       },
     },
@@ -104,9 +152,11 @@ export async function syncContractCoverageTx(
       select: { id: true, quantity: true, listUnitPrice: true },
     });
     for (const item of items) {
-      const unitCents = contractItem
-        ? toCents(contractItem.unitPrice)
-        : toCents(item.listUnitPrice);
+      const agreed =
+        contractItem && member
+          ? agreedUnitCents(contract!.items, member.id, appt.serviceId, purpose)
+          : undefined;
+      const unitCents = agreed ?? toCents(item.listUnitPrice);
       await tx.comandaItem.update({
         where: { id: item.id },
         data: {

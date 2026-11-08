@@ -155,6 +155,7 @@ export async function buildLiveSnapshotTx(
       totalCents: toCents(it.total),
       isPackageItem: it.packageId != null,
       sortOrder: it.sortOrder,
+      settledAtEvent: it.settledAtEvent,
     })),
     discount: {
       cents: toCents(c.discountAmount),

@@ -187,11 +187,15 @@ type PackageServiceItem {
   professionalCost: String
   "false quando o serviço não tem comissão (nem por categoria/padrão): repasse conta R$ 0."
   hasCommissionRule: Boolean
+  "Teste incluso no valor do pacote, cobrado no evento (metade teste, metade evento no contrato)."
+  includesTrial: Boolean!
 }
 
 input PackageServiceInput {
   serviceId: UUID!
   quantity: Int
+  "Teste incluso no valor do pacote, cobrado no evento. Omitido = false."
+  includesTrial: Boolean
 }
 
 input CreatePackageInput {

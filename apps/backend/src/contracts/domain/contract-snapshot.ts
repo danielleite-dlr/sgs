@@ -51,7 +51,16 @@ export interface ContractSnapshot {
   debutanteName: string | null;
   event: { date: string; time: string; locationName: string; serviceAddress: string };
   budget: {
-    package: { name: string; description: string | null; cents: number } | null;
+    package: {
+      name: string;
+      description: string | null;
+      cents: number;
+      /**
+       * Serviços cujo teste está incluso no pacote e é pago no evento (261108-n2o). Só existe
+       * quando não vazio, para não mudar snapshots/hashes já gravados.
+       */
+      includedTrials?: string[];
+    } | null;
     extras: { label: string; cents: number }[];
     discount: { label: string; cents: number } | null;
     totalCents: number;
@@ -71,6 +80,8 @@ export interface SnapshotItemInput {
   totalCents: number;
   isPackageItem: boolean;
   sortOrder: number;
+  /** Teste incluso no pacote, pago no evento (261108-n2o). */
+  settledAtEvent?: boolean;
 }
 export interface SnapshotInput {
   code: string;
@@ -130,11 +141,17 @@ export function buildSnapshot(input: SnapshotInput): ContractSnapshot {
   const pkgItems = input.package ? items.filter((i) => i.isPackageItem) : [];
   const extraItems = input.package ? items.filter((i) => !i.isPackageItem) : items;
 
+  const includedTrials = [
+    ...new Set(
+      pkgItems.filter((i) => i.purpose === 'trial' && i.settledAtEvent).map((i) => i.serviceName),
+    ),
+  ];
   const pkg = input.package
     ? {
         name: input.package.name,
         description: input.package.description,
         cents: pkgItems.reduce((a, i) => a + i.totalCents, 0),
+        ...(includedTrials.length ? { includedTrials } : {}),
       }
     : null;
   const extras = extraItems.map((i) => ({ label: extraLabel(i), cents: i.totalCents }));
@@ -206,6 +223,12 @@ export function snapshotHash(s: ContractSnapshot): string {
   return sha256Hex(canonicalJson(s));
 }
 
+/** "Maquiagem noiva (teste — incluso, pago no evento); Penteado noiva (...)" ou ''. */
+export function includedTrialsLabel(s: ContractSnapshot): string {
+  const names = s.budget.package?.includedTrials ?? [];
+  return names.map((n) => `${n} (teste — incluso, pago no evento)`).join('; ');
+}
+
 function installmentLine(s: ContractSnapshot, i: SnapshotInstallment): string {
   const { mode, installments } = s.payment;
   let label: string;
@@ -230,6 +253,8 @@ export function snapshotToPlainText(s: ContractSnapshot): string {
   if (s.budget.package) {
     lines.push(`Pacote contratado: ${s.budget.package.name} — ${formatBRL(s.budget.package.cents)}`);
     if (s.budget.package.description) lines.push(s.budget.package.description);
+    const trials = includedTrialsLabel(s);
+    if (trials) lines.push(`Inclui: ${trials}`);
   }
   for (const e of s.budget.extras) lines.push(`${e.label} — ${formatBRL(e.cents)}`);
   if (s.budget.discount) {

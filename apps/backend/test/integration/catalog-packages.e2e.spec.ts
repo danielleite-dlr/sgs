@@ -474,5 +474,41 @@ describe('Catalog — Packages', () => {
     expect(r.errors[0].field).toBe('contractDescription');
     expect(r.package).toBeNull();
   });
+
+  it('15. "Inclui teste" por serviço: grava, devolve e o update recria com o valor enviado (261108-n2o)', async () => {
+    const svc = buildService();
+    const created = await svc.create(orgAId, {
+      name: 'pkg-test-TesteIncluso',
+      price: '300.00',
+      services: [
+        { serviceId: svc1Id, quantity: 1, includesTrial: true },
+        { serviceId: svc2Id, quantity: 1 },
+      ],
+    });
+    expect(created.errors).toHaveLength(0);
+    const flags = (p: typeof created.package) =>
+      Object.fromEntries(
+        (p!.services as Array<{ serviceId: string; includesTrial: boolean }>).map((s) => [
+          s.serviceId,
+          s.includesTrial,
+        ]),
+      );
+    expect(flags(created.package)).toEqual({ [svc1Id]: true, [svc2Id]: false });
+
+    // update sem services mantém as marcas
+    const kept = await svc.update(orgAId, { id: created.package!.id, name: 'pkg-test-TesteIncluso2' });
+    expect(flags(kept.package)).toEqual({ [svc1Id]: true, [svc2Id]: false });
+
+    // update com services recria as linhas com o valor enviado (omitido = false)
+    const updated = await svc.update(orgAId, {
+      id: created.package!.id,
+      services: [
+        { serviceId: svc1Id, quantity: 1 },
+        { serviceId: svc2Id, quantity: 1, includesTrial: true },
+      ],
+    });
+    expect(updated.errors).toHaveLength(0);
+    expect(flags(updated.package)).toEqual({ [svc1Id]: false, [svc2Id]: true });
+  });
 });
 

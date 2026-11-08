@@ -136,6 +136,7 @@ function serialize(c: ContractRow, timezone: string, today: string, depositUnpai
       unitPrice: money(it.unitPrice),
       total: money(it.total),
       purpose: it.purpose,
+      settledAtEvent: it.settledAtEvent,
       isPackageItem: it.packageId != null,
     })),
     payments: c.payments.map((p) => ({

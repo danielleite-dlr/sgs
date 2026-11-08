@@ -1,5 +1,5 @@
 import { formatBRL, formatDateBR } from '../../domain/contract-template';
-import type { ContractSnapshot } from '../../domain/contract-snapshot';
+import { includedTrialsLabel, type ContractSnapshot } from '../../domain/contract-snapshot';
 import { formatDateLongBR, splitParagraphs, toWinAnsi } from '../../domain/contract-texts';
 import type { ContractPdfData } from '../contract-acceptance.service';
 import {
@@ -101,6 +101,17 @@ function boldExtraLabel(label: string): string {
     : label;
 }
 
+/** Descrição do pacote + teste incluso (261108-n2o), numa linha só (o subText não quebra). */
+export function packageSubText(s: ContractSnapshot): string | undefined {
+  const pkg = s.budget.package;
+  if (!pkg) return undefined;
+  const parts: string[] = [];
+  if (pkg.description) parts.push(`**Descrição:** ${pkg.description}`);
+  const trials = includedTrialsLabel(s);
+  if (trials) parts.push(`**Inclui:** ${trials}`);
+  return parts.length ? parts.join(' · ') : undefined;
+}
+
 function budgetRows(s: ContractSnapshot): TableRow[] {
   const rows: TableRow[] = [];
   const b = s.budget;
@@ -109,7 +120,7 @@ function budgetRows(s: ContractSnapshot): TableRow[] {
       cells: [
         {
           text: `**Pacote contratado:** ${b.package.name}`,
-          subText: b.package.description ? `**Descrição:** ${b.package.description}` : undefined,
+          subText: packageSubText(s),
         },
         { text: formatBRL(b.package.cents) },
       ],

@@ -185,6 +185,8 @@ type ContractItem {
   unitPrice: String!
   total: String!
   purpose: String!
+  "Teste incluso no pacote: o valor deste item (teste) é cobrado na comanda do evento."
+  settledAtEvent: Boolean!
   isPackageItem: Boolean!
 }
 

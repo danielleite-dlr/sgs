@@ -354,6 +354,65 @@ describe("Phase 5 - previsão de caixa (cashForecast)", () => {
       ).toBeDefined();
     });
 
+    it("7b. teste incluso no pacote (261108-n2o): nada na data do teste; receitas iguais às de um contrato sem teste", async () => {
+      // contrato A: maquiagem do pacote dividida em evento 200 + teste 200 (incluso, pago no evento)
+      const a = await makeContract("active");
+      const gA = await adminPrisma.contract.findUniqueOrThrow({
+        where: { id: a.contractId },
+        select: { bridalGroupId: true, brideClientId: true },
+      });
+      const brideA = await adminPrisma.bridalGroupMember.findFirstOrThrow({
+        where: { groupId: gA.bridalGroupId, role: "bride" },
+      });
+      await adminPrisma.contractItem.createMany({
+        data: [
+          { purpose: "event", unitPrice: "200.00", settledAtEvent: false, sortOrder: 0 },
+          { purpose: "trial", unitPrice: "200.00", settledAtEvent: true, sortOrder: 1 },
+        ].map((x) => ({
+          organizationId: w.orgId,
+          contractId: a.contractId,
+          groupMemberId: brideA.id,
+          serviceId: w.serviceId,
+          descriptionSnapshot: `p5fc-make-${x.purpose}`,
+          quantity: 1,
+          unitPrice: x.unitPrice,
+          total: x.unitPrice,
+          purpose: x.purpose,
+          settledAtEvent: x.settledAtEvent,
+          sortOrder: x.sortOrder,
+        })),
+      });
+      const trialAppt = await adminPrisma.appointment.create({
+        data: {
+          organizationId: w.orgId,
+          professionalId: w.members.proA,
+          clientId: gA.brideClientId,
+          serviceId: w.serviceId,
+          startsAt: new Date("2027-03-10T10:00:00-03:00"),
+          endsAt: new Date("2027-03-10T11:00:00-03:00"),
+          status: "scheduled",
+          purpose: "trial",
+          contractId: a.contractId,
+          bridalGroupId: gA.bridalGroupId,
+        },
+      });
+      // contrato B: mesmo total e parcelas, sem item de teste
+      const b = await makeContract("active");
+
+      const f = await forecast();
+      const inflowOn10 = f.items.filter((i) => i.direction === "in" && i.date === "2027-03-10");
+      expect(inflowOn10).toEqual([]);
+      expect(
+        f.items.find((i) => i.refId === trialAppt.id && i.direction === "in"),
+      ).toBeUndefined();
+      const receipts = (id: string) =>
+        mine(f.items, id)
+          .filter((i) => i.direction === "in")
+          .map((i) => [i.kind, i.date, i.amount]);
+      expect(receipts(a.contractId)).toEqual(receipts(b.contractId));
+      expect(receipts(a.contractId).length).toBeGreaterThan(0);
+    });
+
     describe("8. item de contrato sem agendamento", () => {
       async function setup() {
         const g = await insertBridalGroupRow(w, { eventDate: "2027-03-15" });

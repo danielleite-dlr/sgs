@@ -277,6 +277,7 @@ export class PackagesService {
           serviceId: s.serviceId,
           quantity: s.quantity ?? 1,
           displayOrder: i,
+          includesTrial: s.includesTrial ?? false,
         })),
       });
 
@@ -380,6 +381,7 @@ export class PackagesService {
             serviceId: s.serviceId,
             quantity: s.quantity ?? 1,
             displayOrder: i,
+            includesTrial: s.includesTrial ?? false,
           })),
         });
       }

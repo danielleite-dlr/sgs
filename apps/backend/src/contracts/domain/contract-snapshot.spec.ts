@@ -165,3 +165,59 @@ describe('snapshotToPlainText', () => {
     expect(av).toMatch(/À VISTA · 10\/11\/2026/);
   });
 });
+
+describe('teste incluso no pacote (261108-n2o)', () => {
+  const comTesteIncluso = () =>
+    sampleSnapshotInput({
+      items: [
+        { serviceName: 'Maquiagem noiva', personLabel: 'Noiva', purpose: 'event', quantity: 1, totalCents: 75000, isPackageItem: true, sortOrder: 1 },
+        { serviceName: 'Maquiagem noiva', personLabel: 'Noiva', purpose: 'trial', quantity: 1, totalCents: 75000, isPackageItem: true, sortOrder: 2, settledAtEvent: true },
+        { serviceName: 'Penteado noiva', personLabel: 'Noiva', purpose: 'event', quantity: 1, totalCents: 50000, isPackageItem: true, sortOrder: 3 },
+        { serviceName: 'Penteado noiva', personLabel: 'Noiva', purpose: 'trial', quantity: 1, totalCents: 50000, isPackageItem: true, sortOrder: 4, settledAtEvent: true },
+        { serviceName: 'Maquiagem', personLabel: 'Noiva', purpose: 'trial', quantity: 1, totalCents: 60000, isPackageItem: true, sortOrder: 5 },
+        { serviceName: 'Maquiagem', personLabel: 'Mãe', purpose: 'event', quantity: 1, totalCents: 25000, isPackageItem: false, sortOrder: 6 },
+        { serviceName: 'Penteado', personLabel: 'Madrinha', purpose: 'trial', quantity: 1, totalCents: 15000, isPackageItem: false, sortOrder: 7 },
+      ],
+    });
+
+  it('lista os testes inclusos (sem repetir, na ordem) e mantém o total do pacote', () => {
+    const s = buildSnapshot(comTesteIncluso());
+    expect(s.budget.package).toEqual({
+      name: 'PACOTE GLAM',
+      description: 'Maquiagem e penteado da noiva',
+      cents: 310000,
+      includedTrials: ['Maquiagem noiva', 'Penteado noiva'],
+    });
+    expect(s.budget.totalCents).toBe(340000);
+  });
+
+  it('sem teste incluso a chave não existe (snapshot e hash antigos iguais)', () => {
+    const antigo = buildSnapshot(sampleSnapshotInput());
+    expect(antigo.budget.package).not.toHaveProperty('includedTrials');
+    const comFlagFalsa = buildSnapshot(
+      sampleSnapshotInput({
+        items: sampleSnapshotInput().items.map((i) => ({ ...i, settledAtEvent: false })),
+      }),
+    );
+    expect(snapshotHash(comFlagFalsa)).toBe(snapshotHash(antigo));
+  });
+
+  it('teste incluso de item fora do pacote não entra na lista', () => {
+    const input = comTesteIncluso();
+    input.items = input.items.map((i) =>
+      i.serviceName === 'Penteado' ? { ...i, settledAtEvent: true } : i,
+    );
+    expect(buildSnapshot(input).budget.package?.includedTrials).toEqual([
+      'Maquiagem noiva',
+      'Penteado noiva',
+    ]);
+  });
+
+  it('texto mostra o teste como incluso, pago no evento', () => {
+    const txt = snapshotToPlainText(buildSnapshot(comTesteIncluso()));
+    expect(txt).toContain(
+      'Inclui: Maquiagem noiva (teste — incluso, pago no evento); Penteado noiva (teste — incluso, pago no evento)',
+    );
+    expect(snapshotToPlainText(buildSnapshot(sampleSnapshotInput()))).not.toContain('Inclui:');
+  });
+});

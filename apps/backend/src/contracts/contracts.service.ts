@@ -147,6 +147,8 @@ interface ItemDraft {
   quantity: number;
   unitCents: number;
   purpose: "event" | "trial";
+  /** Teste incluso no pacote: o valor é cobrado na comanda do evento (261108-n2o). */
+  settledAtEvent: boolean;
 }
 
 interface ExistingItem {
@@ -154,6 +156,7 @@ interface ExistingItem {
   serviceId: string;
   packageId: string | null;
   purpose: string;
+  settledAtEvent: boolean;
 }
 
 type GroupWithMembers = NonNullable<Awaited<ReturnType<typeof loadGroup>>>;
@@ -308,11 +311,18 @@ async function buildItems(
             ? packageId
             : null;
       }
+      // teste incluso só continua incluso se seguir ligado ao pacote do contrato
+      const settledAtEvent =
+        purpose === "trial" &&
+        itemPackageId != null &&
+        !!matched?.settledAtEvent;
       return {
         groupMemberId: member.id,
         serviceId: service.id,
         packageId: itemPackageId,
-        description: service.name,
+        description: settledAtEvent
+          ? `${service.name} — teste incluso, pago no evento`
+          : service.name,
         quantity,
         unitCents: parseCents(
           it.unitPrice,
@@ -320,6 +330,7 @@ async function buildItems(
           toCents(service.basePrice),
         ) as number,
         purpose,
+        settledAtEvent,
       };
     });
   }
@@ -336,6 +347,7 @@ async function buildItems(
         purpose: (s.purpose === "trial" ? "trial" : "event") as
           | "event"
           | "trial",
+        settledAtEvent: false,
       })),
     );
 
@@ -364,22 +376,59 @@ async function buildItems(
         "groupId",
       );
     const units = pkg.services.flatMap((ps) =>
-      Array.from({ length: ps.quantity }, () => ps.service),
+      Array.from({ length: ps.quantity }, () => ({
+        service: ps.service,
+        includesTrial: ps.includesTrial,
+      })),
     );
     const charged = await prorateServiceUnits(
       tx,
-      units.map((s) => ({ listCents: toCents(s.basePrice), service: s })),
+      units.map((u) => ({
+        listCents: toCents(u.service.basePrice),
+        service: u.service,
+      })),
       toCents(pkg.price),
     );
-    const brideItems: ItemDraft[] = units.map((s, i) => ({
-      groupMemberId: bride.id,
-      serviceId: s.id,
-      packageId: pkg.id,
-      description: `${s.name} (pacote ${pkg.name})`,
-      quantity: 1,
-      unitCents: charged[i],
-      purpose: "event",
-    }));
+    // Teste incluso (261108-n2o): o valor rateado da unidade vira metade evento + metade
+    // teste, com o centavo ímpar no evento. A soma continua igual ao preço do pacote.
+    const brideItems: ItemDraft[] = units.flatMap((u, i) => {
+      const s = u.service;
+      const base = {
+        groupMemberId: bride.id,
+        serviceId: s.id,
+        packageId: pkg.id,
+        quantity: 1,
+      };
+      const name = `${s.name} (pacote ${pkg.name})`;
+      if (!u.includesTrial) {
+        return [
+          {
+            ...base,
+            description: name,
+            unitCents: charged[i],
+            purpose: "event" as const,
+            settledAtEvent: false,
+          },
+        ];
+      }
+      const trialCents = Math.floor(charged[i] / 2);
+      return [
+        {
+          ...base,
+          description: name,
+          unitCents: charged[i] - trialCents,
+          purpose: "event" as const,
+          settledAtEvent: false,
+        },
+        {
+          ...base,
+          description: `${name} — teste incluso, pago no evento`,
+          unitCents: trialCents,
+          purpose: "trial" as const,
+          settledAtEvent: true,
+        },
+      ];
+    });
     return [
       ...brideItems,
       ...planned(covered.filter((m) => m.role !== "bride")),
@@ -767,6 +816,7 @@ export class ContractsService {
             unitPrice: fromCents(d.unitCents),
             total: fromCents(d.unitCents * d.quantity),
             purpose: d.purpose,
+            settledAtEvent: d.settledAtEvent,
             sortOrder: i,
           })),
         },
@@ -976,6 +1026,7 @@ export class ContractsService {
           unitPrice: fromCents(d.unitCents),
           total: fromCents(d.unitCents * d.quantity),
           purpose: d.purpose,
+          settledAtEvent: d.settledAtEvent,
           sortOrder: i,
         })),
       });
