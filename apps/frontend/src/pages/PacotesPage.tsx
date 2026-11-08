@@ -174,7 +174,7 @@ export function PacotesPage() {
 
       {/* Create dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Novo pacote</DialogTitle>
           </DialogHeader>
@@ -185,7 +185,7 @@ export function PacotesPage() {
       {/* Edit dialog */}
       {editTarget && (
         <Dialog open={!!editTarget} onOpenChange={() => setEditTarget(null)}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Editar pacote</DialogTitle>
             </DialogHeader>
