@@ -15,3 +15,13 @@ test('atendente entra e cai na agenda (D-11)', async ({ page }) => {
   await loginViaUi(page, seed.attendant.email, seed.attendant.password);
   await expect(page).toHaveURL(/\/agenda/);
 });
+
+test('Enter na senha entra sem clicar no botão nem fora do campo', async ({ page }) => {
+  const seed = readSeedState();
+  await page.goto('/login');
+  await page.locator('#email').fill(seed.owner.email);
+  await page.locator('#password').fill(seed.owner.password);
+  await expect(page.locator('form button[type="submit"]')).toBeEnabled();
+  await page.locator('#password').press('Enter');
+  await expect(page).toHaveURL(/\/dashboard/);
+});

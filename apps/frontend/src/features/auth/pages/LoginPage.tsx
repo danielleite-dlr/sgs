@@ -26,6 +26,10 @@ export function LoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const emailRef = useRef<HTMLInputElement | null>(null);
+  const passwordRef = useRef<HTMLInputElement | null>(null);
+  // Chrome preenche e-mail/senha salvos mas só entrega o valor ao JS depois de alguma interação;
+  // enquanto isso o campo casa com :-webkit-autofill e tratamos como preenchido.
+  const [autofilled, setAutofilled] = useState(false);
   const [authError, setAuthError] = useState<{ code: string; message: string } | null>(null);
   const [login, { loading }] = useLoginMutation();
   const { applyAuthPayload } = useAuth();
@@ -33,16 +37,70 @@ export function LoginPage() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isValid },
+    getValues,
+    setValue,
+    formState: { errors, isValid, touchedFields, isSubmitted },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    mode: 'onBlur',
+    // Valida a cada tecla para o Entrar habilitar assim que e-mail e senha estiverem ok, sem
+    // precisar clicar fora (quick 261107-kpj). O erro de e-mail só aparece depois de sair do
+    // campo, para não acusar "inválido" enquanto a pessoa ainda digita.
+    mode: 'onChange',
   });
+  const emailError = touchedFields.email || isSubmitted ? errors.email : undefined;
 
   useEffect(() => {
     document.title = t('login.pageTitle');
     emailRef.current?.focus();
   }, [t]);
+
+  // Copia para o formulário o que estiver no DOM e o React Hook Form não viu (autopreenchimento).
+  function syncFromDom() {
+    const fields = [
+      ['email', emailRef.current],
+      ['password', passwordRef.current],
+    ] as const;
+    for (const [name, el] of fields) {
+      if (el && el.value !== (getValues(name) ?? '')) {
+        setValue(name, el.value, { shouldValidate: true, shouldDirty: true });
+      }
+    }
+  }
+
+  // O autopreenchimento chega alguns instantes depois de montar; vigia os primeiros segundos.
+  useEffect(() => {
+    const isAutofilled = (el: HTMLInputElement | null) => {
+      try {
+        return !!el?.matches(':-webkit-autofill');
+      } catch {
+        return false;
+      }
+    };
+    let ticks = 0;
+    const timer = window.setInterval(() => {
+      ticks += 1;
+      syncFromDom();
+      if (isAutofilled(emailRef.current) && isAutofilled(passwordRef.current)) {
+        setAutofilled(true);
+      }
+      if (ticks >= 12) window.clearInterval(timer);
+    }, 250);
+    return () => window.clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const submit = (e?: React.BaseSyntheticEvent) => {
+    syncFromDom();
+    return handleSubmit(onSubmit)(e);
+  };
+
+  // Enter em qualquer campo envia, mesmo que o navegador ainda não tenha liberado o
+  // autopreenchimento (o botão desabilitado bloquearia o envio implícito).
+  function onFormKeyDown(e: React.KeyboardEvent<HTMLFormElement>) {
+    if (e.key !== 'Enter' || !(e.target instanceof HTMLInputElement)) return;
+    e.preventDefault();
+    if (!loading) void submit();
+  }
 
   async function onSubmit(values: FormValues) {
     setAuthError(null);
@@ -82,12 +140,17 @@ export function LoginPage() {
     }
   }
 
-  const { ref: emailRegRef, ...emailRegRest } = register('email');
+  const { ref: emailRegRef, onChange: emailOnChange, ...emailRegRest } = register('email');
+  const {
+    ref: passwordRegRef,
+    onChange: passwordOnChange,
+    ...passwordRegRest
+  } = register('password');
 
   return (
     <AuthShell>
       <AuthCard heading={t('login.cardHeading')}>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-md" noValidate>
+        <form onSubmit={submit} onKeyDown={onFormKeyDown} className="space-y-md" noValidate>
           {authError && (
             <Alert variant="destructive">
               <AlertDescription>
@@ -114,14 +177,18 @@ export function LoginPage() {
               type="email"
               autoComplete="email"
               placeholder={t('login.emailPlaceholder')}
-              aria-invalid={!!errors.email}
+              aria-invalid={!!emailError}
               {...emailRegRest}
+              onChange={(e) => {
+                setAutofilled(false);
+                return emailOnChange(e);
+              }}
               ref={(el) => {
                 emailRegRef(el);
                 emailRef.current = el;
               }}
             />
-            {errors.email && (
+            {emailError && (
               <p className="text-label text-error-500" role="alert">
                 {t('signup.step1.errors.emailFormat')}
               </p>
@@ -135,11 +202,19 @@ export function LoginPage() {
               autoComplete="current-password"
               placeholder={t('login.passwordPlaceholder')}
               aria-invalid={!!errors.password}
-              {...register('password')}
+              {...passwordRegRest}
+              onChange={(e) => {
+                setAutofilled(false);
+                return passwordOnChange(e);
+              }}
+              ref={(el) => {
+                passwordRegRef(el);
+                passwordRef.current = el;
+              }}
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={!isValid || loading}>
+          <Button type="submit" className="w-full" disabled={loading || (!isValid && !autofilled)}>
             {loading ? (
               <>
                 <Loader2 size={16} className="mr-xs animate-spin" aria-hidden="true" />

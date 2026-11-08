@@ -8,8 +8,8 @@ export async function loginViaUi(
   await page.goto('/login');
   await page.locator('#email').fill(email);
   await page.locator('#password').fill(password);
-  // O formulário valida em onBlur: sem sair do campo o botão segue desabilitado.
-  await page.locator('#password').blur();
+  // O Entrar habilita enquanto se digita, sem precisar sair do campo.
+  await expect(page.locator('form button[type="submit"]')).toBeEnabled();
   await page.locator('form button[type="submit"]').click();
   await page.waitForURL((url) => !url.pathname.startsWith('/login'));
 }
