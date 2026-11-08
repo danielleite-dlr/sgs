@@ -723,6 +723,9 @@
         "empty": "Adicione ao menos um serviço.",
         "remove": "Remover {{name}}",
         "quantityLabel": "Quantidade de {{name}}",
+        "includesTrial": "Inclui teste",
+        "includesTrialLabel": "Inclui teste de {{name}}",
+        "includesTrialHint": "metade do valor no teste, cobrado no evento",
         "searchPlaceholder": "Buscar serviço…",
         "noResults": "Nenhum serviço encontrado."
       },

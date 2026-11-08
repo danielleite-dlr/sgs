@@ -18,6 +18,8 @@ import { ServicesQuery } from '../api/servicos.api';
 export interface PackageServiceRow {
   serviceId: string;
   quantity: number;
+  /** Teste incluso no valor do pacote, cobrado no evento (261108-n2o). */
+  includesTrial: boolean;
 }
 
 interface ServiceItem {
@@ -34,7 +36,7 @@ interface ServiceItem {
  * (used in CommissionRuleForm for member/service/product pickers).
  *
  * Props:
- *   value    — controlled array of { serviceId, quantity } rows
+ *   value    — controlled array of { serviceId, quantity, includesTrial } rows
  *   onChange — called with the new array on every add/remove/qty-change
  */
 export function PackageServicesPicker({
@@ -57,7 +59,7 @@ export function PackageServicesPicker({
 
   function add(serviceId: string) {
     if (value.find((v) => v.serviceId === serviceId)) return;
-    onChange([...value, { serviceId, quantity: 1 }]);
+    onChange([...value, { serviceId, quantity: 1, includesTrial: false }]);
     setOpen(false);
   }
 
@@ -65,6 +67,10 @@ export function PackageServicesPicker({
     onChange(
       value.map((v) => (v.serviceId === serviceId ? { ...v, quantity: Math.max(1, q) } : v)),
     );
+  }
+
+  function setTrial(serviceId: string, includesTrial: boolean) {
+    onChange(value.map((v) => (v.serviceId === serviceId ? { ...v, includesTrial } : v)));
   }
 
   function remove(serviceId: string) {
@@ -82,7 +88,7 @@ export function PackageServicesPicker({
           <p className="text-sm text-neutral-500">{t('catalog.pacote.picker.empty')}</p>
         )}
         {selected.map((row) => (
-          <div key={row.serviceId} className="flex items-center gap-2">
+          <div key={row.serviceId} className="flex flex-wrap items-center gap-x-2">
             <span className="flex-1 text-sm">{row.service?.name ?? '—'}</span>
             <Input
               className="w-20"
@@ -103,6 +109,24 @@ export function PackageServicesPicker({
             >
               <Trash2 className="h-4 w-4 text-error-500" />
             </Button>
+            <label
+              className="flex min-h-11 w-full cursor-pointer items-center gap-2 text-sm"
+              data-testid={`package-service-trial-${row.serviceId}`}
+            >
+              <input
+                type="checkbox"
+                className="h-5 w-5"
+                checked={row.includesTrial}
+                onChange={(e) => setTrial(row.serviceId, e.target.checked)}
+                aria-label={t('catalog.pacote.picker.includesTrialLabel', {
+                  name: row.service?.name ?? '',
+                })}
+              />
+              <span>{t('catalog.pacote.picker.includesTrial')}</span>
+              <span className="text-xs text-neutral-500">
+                {t('catalog.pacote.picker.includesTrialHint')}
+              </span>
+            </label>
           </div>
         ))}
       </div>

@@ -204,6 +204,7 @@ export function PacotesPage() {
                 services: editTarget.services.map((s) => ({
                   serviceId: s.serviceId,
                   quantity: s.quantity,
+                  includesTrial: s.includesTrial,
                 })),
               }}
               onClose={() => setEditTarget(null)}

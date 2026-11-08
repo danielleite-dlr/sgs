@@ -304,6 +304,15 @@ export function ComandaPage() {
                             Contrato {item.contractCode}
                           </Badge>
                         )}
+                        {item.includedInEvent && (
+                          <Badge
+                            variant="outline"
+                            data-testid={`item-trial-included-${item.id}`}
+                            className="ml-xs mt-xs"
+                          >
+                            Teste incluso no pacote — pago no evento
+                          </Badge>
+                        )}
                       </div>
                       <div
                         data-testid={`comanda-item-valores-${item.id}`}

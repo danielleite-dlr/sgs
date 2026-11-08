@@ -46,6 +46,7 @@ export const COMANDA_FIELDS = gql`
       total
       contractId
       contractCode
+      includedInEvent
     }
     payments {
       id
@@ -236,6 +237,8 @@ export interface ComandaItemData {
   total: string;
   contractId?: string | null;
   contractCode?: string | null;
+  /** Teste incluso no pacote: cobrado na comanda do evento (261108-n2o). */
+  includedInEvent?: boolean;
 }
 
 export interface ComandaPaymentData {

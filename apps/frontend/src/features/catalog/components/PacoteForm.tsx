@@ -45,6 +45,7 @@ const schema = z.object({
       z.object({
         serviceId: z.string().uuid(),
         quantity: z.number().int().positive(),
+        includesTrial: z.boolean(),
       }),
     )
     .min(1, 'Adicione ao menos um serviço.'),
@@ -89,7 +90,7 @@ export interface PacoteFormInitial {
   id: string;
   name: string;
   price: string;
-  services: Array<{ serviceId: string; quantity: number }>;
+  services: Array<{ serviceId: string; quantity: number; includesTrial?: boolean }>;
   depositKind?: 'fixed' | 'percent' | null;
   depositValue?: string | null;
   contractDescription?: string | null;
@@ -133,7 +134,11 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
     defaultValues: initial
       ? {
           name: initial.name,
-          services: initial.services,
+          services: initial.services.map((s) => ({
+            serviceId: s.serviceId,
+            quantity: s.quantity,
+            includesTrial: s.includesTrial ?? false,
+          })),
           price: formatCurrencyDisplay(initial.price),
           depositKind: initial.depositKind ?? 'none',
           depositValue:

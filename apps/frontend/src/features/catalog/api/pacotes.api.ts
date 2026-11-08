@@ -16,6 +16,7 @@ export const PackagesQuery = gql`
         serviceId
         quantity
         displayOrder
+        includesTrial
         service {
           id
           name
@@ -54,6 +55,7 @@ export const CreatePackageMutation = gql`
           serviceId
           quantity
           displayOrder
+          includesTrial
           service {
             id
             name
@@ -96,6 +98,7 @@ export const UpdatePackageMutation = gql`
           serviceId
           quantity
           displayOrder
+          includesTrial
           service {
             id
             name
@@ -150,6 +153,8 @@ export interface PackageServiceItem {
   serviceId: string;
   quantity: number;
   displayOrder: number;
+  /** Teste incluso no valor do pacote, cobrado no evento (261108-n2o). */
+  includesTrial: boolean;
   service: {
     id: string;
     name: string;

@@ -153,4 +153,29 @@ describe('ComandaPage', () => {
     expect(await screen.findByText('Maria da Souza')).toBeInTheDocument();
     expect(screen.queryByText('MARIA DA SOUZA')).toBeNull();
   });
+
+  it('teste incluso no pacote: item a R$ 0,00 com o aviso "pago no evento" (261108-n2o)', async () => {
+    const covered = {
+      ...items[0],
+      id: 'i3',
+      name: 'Maquiagem noiva',
+      unitPrice: '0.00',
+      total: '0.00',
+      contractId: 'ct1',
+      contractCode: 'CT-2026-001',
+    };
+    renderPage(
+      makeComanda({
+        items: [
+          { ...covered, includedInEvent: true },
+          { ...covered, id: 'i4', name: 'Penteado noiva', includedInEvent: false },
+        ],
+      }),
+    );
+    expect(await screen.findByTestId('item-trial-included-i3')).toHaveTextContent(
+      'Teste incluso no pacote — pago no evento',
+    );
+    expect(screen.getByTestId('item-contract-i3')).toHaveTextContent('Contrato CT-2026-001');
+    expect(screen.queryByTestId('item-trial-included-i4')).toBeNull();
+  });
 });
