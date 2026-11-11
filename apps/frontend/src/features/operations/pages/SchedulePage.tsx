@@ -43,6 +43,7 @@ import {
   type MembersQueryResult,
 } from "@/features/catalog/api/members.api";
 import { cn } from "@/lib/utils";
+import { toDisplayName } from "@/lib/format-name";
 import { NATIVE_SELECT_CLASS } from "@/lib/field-classes";
 import { useAuthStore } from "@/infrastructure/stores/auth.store";
 import {
@@ -64,15 +65,15 @@ import { DayGrid } from "../components/calendar/DayGrid";
 import { WeekGrid } from "../components/calendar/WeekGrid";
 import { maskDateBR } from "../lib/input-masks";
 import { weekRange } from "../lib/week-range";
-import { shortProfessionalName } from "../lib/professional-label";
+import {
+  NEUTRAL_TONE,
+  buildProfessionalToneMap,
+} from "../lib/professional-colors";
 import {
   APPT_STATUSES,
   HIDDEN_STATUSES,
 } from "../components/calendar/appointment-statuses";
-import {
-  PROFESSIONAL_COLORS,
-  type ScheduleProfessional,
-} from "../components/calendar/types";
+import { type ScheduleProfessional } from "../components/calendar/types";
 import {
   canWriteAppointments,
   seesOnlyOwnAppointments,
@@ -263,7 +264,7 @@ function FilterPanel(props: FilterPanelProps) {
 
       {/* Nome do profissional — chips */}
       <CollapsibleSection title="Nome do profissional">
-        <div className="flex flex-wrap gap-xs">
+        <div className="flex flex-col gap-xs">
           <button
             type="button"
             onClick={() => {
@@ -292,15 +293,28 @@ function FilterPanel(props: FilterPanelProps) {
                 type="button"
                 onClick={() => props.onToggleProf(pro.id)}
                 className={cn(
-                  "h-11 w-11 shrink-0 rounded-md text-xs font-semibold border transition-colors flex items-center justify-center",
+                  "w-full min-h-[44px] shrink-0 flex items-center gap-sm rounded-md border px-sm py-xs text-left text-label transition-colors",
                   visible
-                    ? "bg-primary text-white border-primary"
-                    : "bg-white text-neutral-500 border-neutral-200 hover:bg-neutral-50",
+                    ? "bg-neutral-100 border-neutral-200 text-neutral-800"
+                    : "bg-white border-neutral-200 text-neutral-500 hover:bg-neutral-50",
                 )}
                 aria-pressed={visible}
                 aria-label={`${pro.name} — ${visible ? "visível" : "oculto"}`}
               >
-                {pro.initials}
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "h-7 w-7 shrink-0 rounded-full text-[11px] font-semibold flex items-center justify-center",
+                    visible ? "text-neutral-800" : "bg-neutral-100 text-neutral-600",
+                  )}
+                  style={
+                    visible ? { backgroundColor: (pro.tone ?? NEUTRAL_TONE).avatarBg } : undefined
+                  }
+                >
+                  {pro.initials}
+                </span>
+                {/* Nome completo da profissional, nunca só as iniciais (quick-261108-n4s). */}
+                <span className="min-w-0 break-words">{toDisplayName(pro.name)}</span>
               </button>
             );
           })}
@@ -738,24 +752,39 @@ export function SchedulePage() {
   const canSchedule = canWriteAppointments(roleName);
   const ownOnly = seesOnlyOwnAppointments(roleName);
   const { data: membersData } = useQuery<MembersQueryResult>(MembersQuery);
+  // Cor de cada profissional vem da lista COMPLETA (antes do filtro ownOnly e dos chips), para
+  // não mudar ao filtrar nem entre Dia/Semana (quick-261108-n4s).
+  const toneByProfessional = useMemo(
+    () =>
+      buildProfessionalToneMap(
+        (membersData?.members ?? [])
+          .filter((member: MemberData) => member.isProfessional)
+          .map((member: MemberData) => member.id),
+      ),
+    [membersData],
+  );
   const professionals = useMemo<ScheduleProfessional[]>(
     () =>
       (membersData?.members ?? [])
         .filter((member: MemberData) => member.isProfessional)
         .filter((member: MemberData) => !ownOnly || member.id === memberId)
-        .map((member, index) => ({
-          id: member.id,
-          name: member.displayName,
-          initials: member.displayName
-            .split(/\s+/)
-            .slice(0, 2)
-            .map((part) => part[0])
-            .join("")
-            .toUpperCase(),
-          color: PROFESSIONAL_COLORS[index % PROFESSIONAL_COLORS.length],
-          seniorityTier: member.seniorityTier ?? null,
-        })),
-    [membersData, ownOnly, memberId],
+        .map((member) => {
+          const tone = toneByProfessional.get(member.id) ?? NEUTRAL_TONE;
+          return {
+            id: member.id,
+            name: member.displayName,
+            initials: member.displayName
+              .split(/\s+/)
+              .slice(0, 2)
+              .map((part) => part[0])
+              .join("")
+              .toUpperCase(),
+            color: tone.bg,
+            tone,
+            seniorityTier: member.seniorityTier ?? null,
+          };
+        }),
+    [membersData, ownOnly, memberId, toneByProfessional],
   );
   const week = useMemo(() => weekRange(selectedDate), [selectedDate]);
   const range = useMemo(
@@ -1093,13 +1122,19 @@ export function SchedulePage() {
                     <span
                       className={cn(
                         "h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-[11px] font-semibold",
-                        visible ? "bg-primary text-white" : "bg-neutral-100 text-neutral-600",
+                        visible ? "text-neutral-800" : "bg-neutral-100 text-neutral-600",
                       )}
+                      style={
+                        visible
+                          ? { backgroundColor: (pro.tone ?? NEUTRAL_TONE).avatarBg }
+                          : undefined
+                      }
                     >
                       {pro.initials}
                     </span>
-                    <span className="truncate max-w-[120px] text-label">
-                      {shortProfessionalName(pro.name)}
+                    {/* Nome completo, sem reticências: a barra rola na horizontal. */}
+                    <span className="whitespace-nowrap text-label">
+                      {toDisplayName(pro.name)}
                     </span>
                   </button>
                 );
@@ -1125,6 +1160,7 @@ export function SchedulePage() {
                 setView("day");
               }}
               onOpenAppointment={setDetailsId}
+              toneByProfessional={toneByProfessional}
             />
           ) : (
             <DayGrid

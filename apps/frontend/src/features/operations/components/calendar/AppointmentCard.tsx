@@ -65,7 +65,7 @@ export function AppointmentCard({
                 },
               })}
           className={cn(
-            "absolute left-1 right-1 rounded-md border border-neutral-200 bg-white px-[12px] py-[6px] overflow-hidden z-10 transition-colors hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500",
+            "absolute left-1 right-1 rounded-md border border-neutral-200 bg-[var(--appt-bg,#FFFFFF)] px-[12px] py-[6px] overflow-hidden z-10 transition-colors hover:bg-[var(--appt-bg-hover,#F9FAFB)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500",
             draggable ? "cursor-grab touch-none" : "cursor-pointer",
             isDragging &&
               "z-30 cursor-grabbing opacity-90 outline outline-[1.5px] outline-primary-500",
@@ -90,12 +90,12 @@ export function AppointmentCard({
               </span>
             )}
           </div>
-          <p className="truncate text-[12px] leading-4 text-neutral-500">
+          <p className="truncate text-[12px] leading-4 text-neutral-600">
             {appointment.service}
           </p>
           <p
             data-testid={`appointment-time-${appointment.id}`}
-            className="truncate text-[12px] leading-4 tabular-nums text-neutral-500"
+            className="truncate text-[12px] leading-4 tabular-nums text-neutral-600"
           >
             {starts} - {ends} • {appointment.durationMinutes} min
           </p>

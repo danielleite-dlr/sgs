@@ -7,6 +7,10 @@ import {
   minutesFromGridStart,
 } from "../../lib/schedule-grid";
 import { statusSpineColor } from "../../lib/appointment-status-style";
+import {
+  NEUTRAL_TONE,
+  type ProfessionalTone,
+} from "../../lib/professional-colors";
 
 export interface ScheduleProfessional {
   id: string;
@@ -14,6 +18,8 @@ export interface ScheduleProfessional {
   initials: string;
   color: string;
   seniorityTier?: string | null;
+  // Cor automática da profissional (quick-261108-n4s); sem tom = visual neutro (branco).
+  tone?: ProfessionalTone;
 }
 
 export interface ScheduleAppointment {
@@ -62,16 +68,22 @@ export function appointmentToSchedule(
   };
 }
 
+// Fundo por variável CSS para o hover do cartão (classe) continuar funcionando.
+export type AppointmentStyle = CSSProperties &
+  Record<"--appt-bg" | "--appt-bg-hover", string>;
+
 export function getAppointmentStyle(
   appt: ScheduleAppointment,
   slotHeight: number,
-): CSSProperties {
+  tone: ProfessionalTone = NEUTRAL_TONE,
+): AppointmentStyle {
   const top = (minutesFromGridStart(appt.start) / SLOT_MINUTES) * slotHeight;
   const height = (appt.durationMinutes / SLOT_MINUTES) * slotHeight - 4;
   return {
     top: `${top}px`,
     height: `${height}px`,
-    backgroundColor: "#FFFFFF",
+    "--appt-bg": tone.bg,
+    "--appt-bg-hover": tone.bgHover,
     borderLeft: `3px solid ${statusSpineColor(appt.status)}`,
   };
 }

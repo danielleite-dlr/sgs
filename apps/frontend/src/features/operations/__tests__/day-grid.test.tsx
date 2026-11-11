@@ -6,6 +6,7 @@ import type {
   AppointmentData,
   TimeBlockData,
 } from "../api/appointments.api";
+import { NEUTRAL_TONE, PROFESSIONAL_TONES } from "../lib/professional-colors";
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
@@ -132,5 +133,45 @@ describe("DayGrid", () => {
     const label = screen.getByTestId("appointment-card-a1").getAttribute("aria-label");
     expect(label).toBe("Ana Paula, Corte, 10:00 a 11:00");
     expect(label).not.toContain("Pressione espaço");
+  });
+
+  // quick-261108-n4s: fundo do cartão e bolinha na cor da profissional; borda = status.
+  it("cartão e bolinha usam o tom de cada profissional", () => {
+    const toned = [
+      { ...professionals[0], tone: PROFESSIONAL_TONES[0] },
+      { ...professionals[1], tone: PROFESSIONAL_TONES[1] },
+    ];
+    renderGrid({
+      professionals: toned,
+      appointments: [
+        appointment,
+        { ...appointment, id: "a2", professionalId: "p2", startsAt: at(14), endsAt: at(15) },
+      ],
+    });
+    const c1 = screen.getByTestId("appointment-card-a1");
+    const c2 = screen.getByTestId("appointment-card-a2");
+    expect(c1.style.getPropertyValue("--appt-bg")).toBe(PROFESSIONAL_TONES[0].bg);
+    expect(c2.style.getPropertyValue("--appt-bg")).toBe(PROFESSIONAL_TONES[1].bg);
+    expect(c2.style.borderLeft).toContain("3px solid");
+    const avatar = screen.getByTestId("lane-avatar-p2");
+    expect(avatar.style.backgroundColor).toBe("rgb(134, 239, 172)"); // #86EFAC
+    expect(avatar.className).toMatch(/\btext-neutral-800\b/);
+  });
+
+  it("sem tom fica com o visual neutro (cartão branco, bolinha primary-50)", () => {
+    renderGrid();
+    const card = screen.getByTestId("appointment-card-a1");
+    expect(card.style.getPropertyValue("--appt-bg")).toBe(NEUTRAL_TONE.bg);
+    expect(screen.getByTestId("lane-avatar-p1").style.backgroundColor).toBe(
+      "rgb(245, 230, 251)",
+    );
+  });
+
+  it("cabeçalho mostra o nome completo, quebrando linha em vez de cortar", () => {
+    renderGrid();
+    const nome = screen.getByText("Bia Souza", { exact: true });
+    expect(nome.className).not.toMatch(/\btruncate\b/);
+    expect(nome.className).not.toMatch(/line-clamp/);
+    expect(nome.className).toMatch(/\bbreak-words\b/);
   });
 });

@@ -39,7 +39,11 @@ test('despesa fixa cadastrada entra na previsão do painel e no detalhe', async 
   await expect(page.getByTestId('forecast-card').getByText('Previsão de caixa')).toBeVisible();
   const outflow = page.getByText('Saídas previstas').first().locator('xpath=following-sibling::p[1]');
   await expect(outflow).toBeVisible();
-  expect(parseBrl((await outflow.textContent()) ?? '')).toBeGreaterThanOrEqual(1234.56);
+  // O cartão usa cache-and-network: primeiro mostra o valor em cache (sem a despesa nova) e só
+  // depois o da rede. Ler uma vez só pegava às vezes o valor antigo; esperar até atualizar.
+  await expect
+    .poll(async () => parseBrl((await outflow.textContent()) ?? ''))
+    .toBeGreaterThanOrEqual(1234.56);
 
   // Saídas por grupo de custo, bem visíveis no cartão.
   const groups = page.getByTestId('forecast-card').getByTestId('forecast-cost-groups');

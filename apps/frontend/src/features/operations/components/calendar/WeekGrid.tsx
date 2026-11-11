@@ -3,7 +3,11 @@ import { TIME_BLOCK_KINDS } from "../../lib/operations-labels";
 import { cn } from "@/lib/utils";
 import { toDisplayName } from "@/lib/format-name";
 import { statusSpineColor } from "../../lib/appointment-status-style";
-import { formatHM } from "./types";
+import {
+  NEUTRAL_TONE,
+  type ProfessionalTone,
+} from "../../lib/professional-colors";
+import { formatHM, type AppointmentStyle } from "./types";
 
 interface WeekGridProps {
   days: Date[];
@@ -11,6 +15,8 @@ interface WeekGridProps {
   timeBlocks: TimeBlockData[];
   onOpenDay: (d: Date) => void;
   onOpenAppointment?: (id: string) => void;
+  // Tom de cada profissional (lista completa), igual ao da vista Dia (quick-261108-n4s).
+  toneByProfessional?: Map<string, ProfessionalTone>;
 }
 
 function sameDay(iso: string, day: Date): boolean {
@@ -29,6 +35,7 @@ export function WeekGrid({
   timeBlocks,
   onOpenDay,
   onOpenAppointment,
+  toneByProfessional,
 }: WeekGridProps) {
   const holidayClass =
     TIME_BLOCK_KINDS.find((k) => k.value === "feriado")?.className ?? "";
@@ -83,24 +90,34 @@ export function WeekGrid({
               {items.length === 0 ? (
                 <p className="text-xs text-neutral-500 px-xs">Sem agendamentos</p>
               ) : (
-                items.map((a) => (
-                  <button
-                    key={a.id}
-                    type="button"
-                    data-testid={`week-card-${a.id}`}
-                    onClick={() => onOpenAppointment?.(a.id)}
-                    className="w-full text-left rounded-md border border-neutral-200 bg-white px-xs py-xs text-xs text-neutral-800 hover:bg-neutral-50 truncate"
-                    style={{ borderLeft: `3px solid ${statusSpineColor(a.status)}` }}
-                  >
-                    <span className="tabular-nums text-neutral-500">
-                      {formatHM(new Date(a.startsAt))}
-                    </span>
-                    {" · "}
-                    <span className="font-serif font-semibold">{toDisplayName(a.client.fullName)}</span>
-                    {" · "}
-                    {a.service.name}
-                  </button>
-                ))
+                items.map((a) => {
+                  const tone = toneByProfessional?.get(a.professionalId) ?? NEUTRAL_TONE;
+                  const style: AppointmentStyle = {
+                    borderLeft: `3px solid ${statusSpineColor(a.status)}`,
+                    "--appt-bg": tone.bg,
+                    "--appt-bg-hover": tone.bgHover,
+                  };
+                  return (
+                    <button
+                      key={a.id}
+                      type="button"
+                      data-testid={`week-card-${a.id}`}
+                      onClick={() => onOpenAppointment?.(a.id)}
+                      className="w-full text-left rounded-md border border-neutral-200 bg-[var(--appt-bg,#FFFFFF)] px-xs py-xs text-xs text-neutral-800 hover:bg-[var(--appt-bg-hover,#F9FAFB)] truncate"
+                      style={style}
+                    >
+                      <span className="tabular-nums text-neutral-600">
+                        {formatHM(new Date(a.startsAt))}
+                      </span>
+                      {" · "}
+                      <span className="font-serif font-semibold">
+                        {toDisplayName(a.client.fullName)}
+                      </span>
+                      {" · "}
+                      {a.service.name}
+                    </button>
+                  );
+                })
               )}
             </div>
           </section>

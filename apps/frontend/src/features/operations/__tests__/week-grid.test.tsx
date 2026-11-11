@@ -3,6 +3,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { WeekGrid } from "../components/calendar/WeekGrid";
 import { weekRange } from "../lib/week-range";
 import type { AppointmentData, TimeBlockData } from "../api/appointments.api";
+import { PROFESSIONAL_TONES } from "../lib/professional-colors";
 
 const days = weekRange(new Date(2026, 10, 4)).days; // quarta 04/11 -> semana 02/11..08/11
 
@@ -71,5 +72,29 @@ describe("WeekGrid", () => {
     render(<WeekGrid days={days} appointments={[]} timeBlocks={[holiday]} onOpenDay={vi.fn()} />);
     expect(within(screen.getByTestId("week-day-2026-11-08")).getByText("Feriado")).toBeInTheDocument();
     expect(screen.getAllByText("Feriado")).toHaveLength(1);
+  });
+
+  // quick-261108-n4s: mesmo tom da profissional que na vista Dia.
+  it("card usa o tom da profissional e mantém a borda do status", () => {
+    const tones = new Map([["p1", PROFESSIONAL_TONES[2]]]);
+    render(
+      <WeekGrid
+        days={days}
+        appointments={[appt]}
+        timeBlocks={[]}
+        onOpenDay={vi.fn()}
+        toneByProfessional={tones}
+      />,
+    );
+    const card = screen.getByTestId("week-card-a1");
+    expect(card.style.getPropertyValue("--appt-bg")).toBe(PROFESSIONAL_TONES[2].bg);
+    expect(card.style.getPropertyValue("--appt-bg-hover")).toBe(PROFESSIONAL_TONES[2].bgHover);
+    expect(card.style.borderLeft).toContain("3px solid");
+    expect(card.className).toContain("bg-[var(--appt-bg,#FFFFFF)]");
+  });
+
+  it("sem mapa de tons o card fica branco", () => {
+    render(<WeekGrid days={days} appointments={[appt]} timeBlocks={[]} onOpenDay={vi.fn()} />);
+    expect(screen.getByTestId("week-card-a1").style.getPropertyValue("--appt-bg")).toBe("#FFFFFF");
   });
 });

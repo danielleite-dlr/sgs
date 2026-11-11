@@ -29,6 +29,7 @@ import {
   shiftStartBySlots,
   slotsFromDelta,
 } from "../../lib/schedule-grid";
+import { NEUTRAL_TONE } from "../../lib/professional-colors";
 import { AppointmentCard } from "./AppointmentCard";
 import { TimeBlockOverlay } from "./TimeBlockOverlay";
 import {
@@ -165,7 +166,7 @@ function ProfessionalLane({
           <AppointmentCard
             key={a.id}
             appointment={appt}
-            style={getAppointmentStyle(appt, slotHeight)}
+            style={getAppointmentStyle(appt, slotHeight, professional.tone)}
             draggable={canDrag}
             onOpen={onOpenAppointment}
           />
@@ -301,12 +302,15 @@ export function DayGrid({
                   >
                     <span
                       aria-hidden="true"
-                      className="h-8 w-8 shrink-0 rounded-full bg-primary-50 text-primary-700 text-xs font-semibold flex items-center justify-center"
+                      data-testid={`lane-avatar-${pro.id}`}
+                      className="h-8 w-8 shrink-0 rounded-full text-neutral-800 text-xs font-semibold flex items-center justify-center"
+                      style={{ backgroundColor: (pro.tone ?? NEUTRAL_TONE).avatarBg }}
                     >
                       {pro.initials}
                     </span>
                     <div className="min-w-0">
-                      <span className="block truncate font-serif text-[14px] font-semibold leading-5 text-neutral-800">
+                      {/* Nome completo: quebra linha em vez de cortar (quick-261108-n4s). */}
+                      <span className="block whitespace-normal break-words font-serif text-[14px] font-semibold leading-5 text-neutral-800">
                         {toDisplayName(pro.name)}
                       </span>
                       <span

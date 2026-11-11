@@ -24,7 +24,7 @@ test('UX-02: botão "Filtros" com texto e alvos de toque de 44 px', async ({ pag
   await expect(filtros).toHaveText(/Filtros/);
   await expectAlvo44(filtros, 'Filtros');
 
-  // Avatares da barra: alvo de 44 px e nome curto visível (não só iniciais).
+  // Avatares da barra: alvo de 44 px e nome completo visível, não só iniciais (quick-261108-n4s).
   const avatares = page.getByTestId('prof-avatars').getByRole('button');
   await expect(avatares.first()).toBeVisible();
   const n = await avatares.count();
@@ -33,8 +33,10 @@ test('UX-02: botão "Filtros" com texto e alvos de toque de 44 px', async ({ pag
     const av = avatares.nth(i);
     await av.scrollIntoViewIfNeeded();
     await expectAlvo44(av, `avatar ${i}`);
-    await expect(av.locator('span').nth(1)).toBeVisible();
-    await expect(av.locator('span').nth(1)).toHaveText(/^\S+( \S\.)?$/);
+    const nome = av.locator('span').nth(1);
+    await expect(nome).toBeVisible();
+    await expect(nome).not.toHaveText(/ \S\.$/);
+    expect(await nome.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
   }
 
   // Painel de filtros: "Todos" e cada profissional com 44 px.

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import { MemoryRouter } from 'react-router-dom';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -20,6 +20,7 @@ import {
   type ScheduleAppointment,
 } from '../components/calendar/types';
 import { STATUS_SPINE_COLORS, statusSpineColor } from '../lib/appointment-status-style';
+import { PROFESSIONAL_TONES } from '../lib/professional-colors';
 import { SchedulePage } from '../pages/SchedulePage';
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
@@ -59,13 +60,23 @@ describe('cor de status (D-11)', () => {
     expect(Object.keys(STATUS_SPINE_COLORS)).toHaveLength(6);
   });
 
-  it('getAppointmentStyle: fundo branco, borda do status, posição igual à de antes', () => {
+  it('getAppointmentStyle: sem tom fica branco, borda do status, posição igual à de antes', () => {
     const style = getAppointmentStyle(appt({ status: 'in_progress' }), 48);
-    expect(style.backgroundColor).toBe('#FFFFFF');
+    // quick-261108-n4s: o fundo vai por variável CSS (o hover da classe continua valendo).
+    expect(style['--appt-bg']).toBe('#FFFFFF');
+    expect(style['--appt-bg-hover']).toBe('#F9FAFB');
+    expect(style.backgroundColor).toBeUndefined();
     expect(style.borderLeft).toBe('3px solid #0E61A8');
     // 09:00 = 4 slots depois das 07:00; 90 min = 3 slots (- 4 px de respiro).
     expect(style.top).toBe('192px');
     expect(style.height).toBe('140px');
+  });
+
+  it('getAppointmentStyle: com tom da profissional, fundo dela e borda do status', () => {
+    const style = getAppointmentStyle(appt({ status: 'in_progress' }), 48, PROFESSIONAL_TONES[1]);
+    expect(style['--appt-bg']).toBe('#DCFCE7');
+    expect(style['--appt-bg-hover']).toBe(PROFESSIONAL_TONES[1].bgHover);
+    expect(style.borderLeft).toBe('3px solid #0E61A8');
   });
 });
 
@@ -73,17 +84,19 @@ describe('bloco de agendamento (D-11, D-19)', () => {
   it('nome em serifa com toDisplayName, serviço e horário tabular', () => {
     renderCard(appt());
     const card = screen.getByTestId('appointment-card-a1');
-    expect(card.className).toMatch(/\bbg-white\b/);
+    expect(card.className).toContain('bg-[var(--appt-bg,#FFFFFF)]');
+    expect(card.className).toContain('hover:bg-[var(--appt-bg-hover,#F9FAFB)]');
     expect(card.className).toMatch(/\bborder-neutral-200\b/);
     expect(card.className).toMatch(/\brounded-md\b/);
     expect(card.className).not.toMatch(/shadow/);
     expect(card).toHaveAttribute('aria-label', 'maria silva, Penteado, 09:00 a 10:30');
     const nome = within(card).getByText('Maria Silva');
     expect(nome.className).toMatch(/\bfont-serif\b/);
-    expect(within(card).getByText('Penteado')).toBeInTheDocument();
+    expect(within(card).getByText('Penteado').className).toMatch(/\btext-neutral-600\b/);
     const hora = screen.getByTestId('appointment-time-a1');
     expect(hora).toHaveTextContent('09:00 - 10:30 • 90 min');
     expect(hora.className).toMatch(/\btabular-nums\b/);
+    expect(hora.className).toMatch(/\btext-neutral-600\b/);
   });
 
   it('com 60 min ou mais mostra o selo de status com ponto de 6 px', () => {
@@ -237,7 +250,8 @@ describe('semana (D-11)', () => {
     );
     const card = screen.getByTestId('week-card-a1');
     expect(card.style.borderLeft).toContain('3px solid');
-    expect(card.className).toMatch(/\bbg-white\b/);
+    expect(card.className).toContain('bg-[var(--appt-bg,#FFFFFF)]');
+    expect(card.className).toContain('hover:bg-[var(--appt-bg-hover,#F9FAFB)]');
     expect(within(card).getByText('Ana Paula').className).toMatch(/\bfont-serif\b/);
   });
 });
@@ -296,8 +310,25 @@ describe('barra da agenda (D-06, D-19, D-25)', () => {
     expect(botao.className).toMatch(/\bshrink-0\b/);
     expect(botao.className).not.toMatch(/rounded-full|opacity-30/);
     expect(botao).toHaveTextContent('BS');
-    expect(botao).toHaveTextContent('Bia S.');
+    // quick-261108-n4s (adendo): nome completo, sem abreviar nem cortar com reticências.
+    expect(botao).toHaveTextContent('Bia Souza');
+    expect(botao).not.toHaveTextContent('Bia S.');
+    const nome = within(botao).getByText('Bia Souza', { exact: true });
+    expect(nome.className).not.toMatch(/\btruncate\b/);
+    expect(nome.className).not.toMatch(/max-w-\[120px\]/);
     expect(screen.getByTestId('filters-open')).toHaveTextContent('Filtros');
+  });
+
+  it('filtro lateral: uma linha por profissional com bolinha e nome completo', async () => {
+    renderSchedule();
+    const [linha] = await screen.findAllByRole('button', { name: 'Bia Souza — visível' });
+    expect(within(linha).getByText('Bia Souza', { exact: true })).toBeInTheDocument();
+    expect(within(linha).getByText('BS', { exact: true })).toBeInTheDocument();
+    expect(linha).toHaveAttribute('aria-pressed', 'true');
+    expect(linha.className).toMatch(/min-h-\[44px\]/);
+    fireEvent.click(linha);
+    expect(linha).toHaveAttribute('aria-label', 'Bia Souza — oculto');
+    expect(linha).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('sem o rodapé institucional (D-25) e sem textos do design que o SGS não tem (D-02)', async () => {
