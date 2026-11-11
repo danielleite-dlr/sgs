@@ -15,7 +15,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sgs_migrator} -d ${POSTGRES_DB:-sgs_dev}"]
       interval: 10s
@@ -43,7 +43,7 @@ services:
       SERVER_RESET_QUERY: DISCARD ALL
       IGNORE_STARTUP_PARAMETERS: extra_float_digits
     ports:
-      - "${PGBOUNCER_PORT:-5433}:5432"
+      - "127.0.0.1:${PGBOUNCER_PORT:-5433}:5432"
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,7 +64,7 @@ services:
     volumes:
       - valkey_data:/data
     ports:
-      - "${VALKEY_PORT:-6379}:6379"
+      - "127.0.0.1:${VALKEY_PORT:-6379}:6379"
     healthcheck:
       test: ["CMD", "valkey-cli", "ping"]
       interval: 10s
@@ -86,7 +86,7 @@ services:
     volumes:
       - meilisearch_data:/meili_data
     ports:
-      - "${MEILISEARCH_PORT:-7700}:7700"
+      - "127.0.0.1:${MEILISEARCH_PORT:-7700}:7700"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
       interval: 10s
@@ -120,7 +120,7 @@ services:
     # volumes:  # bind-mount disabled — Docker Desktop on D: drive showing empty src
     #   - ./apps/backend/src:/app/src:ro
     ports:
-      - "${BACKEND_PORT:-3000}:3000"
+      - "127.0.0.1:${BACKEND_PORT:-3000}:3000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -147,7 +147,7 @@ services:
     # volumes:  # bind-mount disabled — Docker Desktop on D: drive showing empty src
     #   - ./apps/frontend/src:/app/src:ro
     ports:
-      - "${FRONTEND_PORT:-5173}:5173"
+      - "127.0.0.1:${FRONTEND_PORT:-5173}:5173"
     depends_on:
       - backend
     networks:
