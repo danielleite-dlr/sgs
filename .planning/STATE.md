@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 Phase: 06
 Plan: 06-07 (próximo; 06-01 a 06-06 e 06-12 concluídos, Entradas e saídas no staging)
 Status: Executing
-Last activity: 2026-11-08 - Completed quick task 261108-n2o: Teste de noiva incluso no pacote
+Last activity: 2026-11-10 - Completed quick task 261108-n4s: Cor automatica e nome completo da profissional na agenda
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -222,6 +222,8 @@ Recent decisions affecting current work:
 | 261107-j9q | Menu lateral e gaveta em acordeao: abrir um menu com submenus fecha o irmao aberto; so o ramo da rota nasce aberto; aviso de estoque no menu fechado | 2026-11-07 | a2e7a2d | [261107-j9q-menu-lateral-em-acordeao](./quick/261107-j9q-menu-lateral-em-acordeao/) |
 | 261107-jvl | Icone em todos os itens do menu (grupos do topo, submenus e folhas); icon obrigatorio no MenuItem | 2026-11-07 | bd2eb91 | [261107-jvl-icone-em-todos-os-itens-do-menu](./quick/261107-jvl-icone-em-todos-os-itens-do-menu/) |
 | 261107-k9c | Agenda como item direto no menu (link para /agenda), sem o submenu Minha agenda | 2026-11-07 | be16ad0 | [261107-k9c-agenda-como-item-direto-no-menu](./quick/261107-k9c-agenda-como-item-direto-no-menu/) |
+| 261108-n4s | Cor automatica por profissional na agenda (12 tons, fundo do cartao no Dia e na Semana, bolinha do cabecalho; borda segue o status) e nome completo no filtro lateral, chips e cabecalho da coluna | 2026-11-10 | 9f13aa1 | [261108-n4s-cor-por-profissional-na-agenda](./quick/261108-n4s-cor-por-profissional-na-agenda/) |
+| fast | Compose de dev com portas so em 127.0.0.1 (Valkey exposto foi alterado por terceiros) | 2026-11-10 | fbeae37 | - |
 | 261108-n2o | Teste de noiva incluso no pacote: marca "Inclui teste" por servico do pacote (backfill em Maquiagem/Penteado noiva de Essence, Experience e Glam), contrato divide o valor 50/50 entre teste e evento, comanda do teste a R$ 0 e evento cobra as duas metades, PDF mostra o teste incluso | 2026-11-08 | d53a1fe | [261108-n2o-teste-de-noiva-incluso-no-pacote](./quick/261108-n2o-teste-de-noiva-incluso-no-pacote/) |
 | fast | Modal de novo/editar pacote limitado a 90vh com rolagem interna (nao extrapola a tela) | 2026-11-08 | c951767 | - |
 | fast | Login: Entrar habilita ao digitar e com autopreenchimento do navegador (sem clicar na pagina); Enter envia o formulario (continua o 261107-kpj) | 2026-11-08 | 38070fe | - |
