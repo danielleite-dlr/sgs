@@ -81,8 +81,9 @@ describe("SchedulePage por papel", () => {
     const seen = vi.fn();
     renderSchedule(seen);
 
-    expect(await screen.findByTitle("Ana Prof")).toBeInTheDocument();
-    expect(screen.queryByTitle("Bia Outra")).toBeNull();
+    // Filtro lateral da agenda (a barra do topo não tem mais profissionais — quick 261112-e7v).
+    expect((await screen.findAllByRole("button", { name: /^Ana Prof — / })).length).toBeGreaterThan(0);
+    expect(screen.queryAllByRole("button", { name: /^Bia Outra — / })).toHaveLength(0);
     expect(
       screen.queryAllByRole("button", { name: /^Cadastrar agendamento/ }),
     ).toHaveLength(0);
@@ -101,8 +102,8 @@ describe("SchedulePage por papel", () => {
     const seen = vi.fn();
     renderSchedule(seen);
 
-    expect(await screen.findByTitle("Bia Outra")).toBeInTheDocument();
-    expect(screen.getByTitle("Ana Prof")).toBeInTheDocument();
+    expect((await screen.findAllByRole("button", { name: /^Bia Outra — / })).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: /^Ana Prof — / }).length).toBeGreaterThan(0);
     expect(
       screen.getAllByRole("button", { name: /^Cadastrar agendamento/ }).length,
     ).toBeGreaterThan(0);

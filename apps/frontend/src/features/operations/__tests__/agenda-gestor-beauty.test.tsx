@@ -325,21 +325,11 @@ describe('barra da agenda (D-06, D-19, D-25)', () => {
     expect(agendar.className).not.toMatch(/bg-error/);
   });
 
-  it('profissionais em botões de 44 px com avatar e nome; "Filtros" com texto', async () => {
+  it('sem botões de profissionais na barra; "Filtros" com texto (quick 261112-e7v)', async () => {
     renderSchedule();
-    const grupo = await screen.findByTestId('prof-avatars');
-    const botao = await within(grupo).findByRole('button', { name: 'Agenda de Bia Souza' });
-    expect(botao.className).toMatch(/\brounded-md\b/);
-    expect(botao.className).toMatch(/min-h-\[44px\]/);
-    expect(botao.className).toMatch(/\bshrink-0\b/);
-    expect(botao.className).not.toMatch(/rounded-full|opacity-30/);
-    expect(botao).toHaveTextContent('BS');
-    // quick-261108-n4s (adendo): nome completo, sem abreviar nem cortar com reticências.
-    expect(botao).toHaveTextContent('Bia Souza');
-    expect(botao).not.toHaveTextContent('Bia S.');
-    const nome = within(botao).getByText('Bia Souza', { exact: true });
-    expect(nome.className).not.toMatch(/\btruncate\b/);
-    expect(nome.className).not.toMatch(/max-w-\[120px\]/);
+    await screen.findAllByRole('button', { name: 'Bia Souza — visível' });
+    expect(screen.queryByTestId('prof-avatars')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Agenda de Bia Souza' })).toBeNull();
     expect(screen.getByTestId('filters-open')).toHaveTextContent('Filtros');
   });
 

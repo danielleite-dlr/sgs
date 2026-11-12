@@ -12,8 +12,6 @@ import {
   Ban,
   SlidersHorizontal,
   Search,
-  Eye,
-  EyeOff,
   X,
   Users,
   Gem,
@@ -946,52 +944,6 @@ export function SchedulePage() {
     });
   }
   const slotHeight = ROW_HEIGHTS[rowSize];
-  function renderProfChip(pro: ScheduleProfessional) {
-    const visible = visibleProfIds.has(pro.id);
-    const load = loadByProfessional.get(pro.id) ?? 0;
-    return (
-      <button
-        key={pro.id}
-        type="button"
-        onClick={() => toggleProf(pro.id)}
-        title={pro.name}
-        aria-label={`Agenda de ${pro.name}`}
-        aria-pressed={visible}
-        className={cn(
-          "shrink-0 flex items-center gap-xs rounded-md min-h-[44px] min-w-[44px] px-2.5 border transition-colors",
-          visible
-            ? "bg-neutral-100 border-neutral-200 text-neutral-800"
-            : "bg-white border-transparent text-neutral-500 hover:bg-neutral-50",
-        )}
-      >
-        <span
-          className={cn(
-            "h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-[11px] font-semibold",
-            visible ? "text-neutral-800" : "bg-neutral-100 text-neutral-600",
-          )}
-          style={
-            visible
-              ? { backgroundColor: (pro.tone ?? NEUTRAL_TONE).avatarBg }
-              : undefined
-          }
-        >
-          {pro.initials}
-        </span>
-        {/* Nome completo, sem reticências: a barra rola na horizontal. */}
-        <span className="whitespace-nowrap text-label">
-          {toDisplayName(pro.name)}
-        </span>
-        {load > 0 && (
-          <span
-            aria-hidden="true"
-            className="rounded-full bg-white px-1.5 text-[11px] font-semibold tabular-nums text-neutral-600"
-          >
-            {load}
-          </span>
-        )}
-      </button>
-    );
-  }
   const filterPanel = (
     <FilterPanel
       professionals={professionals}
@@ -1172,57 +1124,7 @@ export function SchedulePage() {
             <SlidersHorizontal className="h-4 w-4" />
             <span className="text-label">Filtros</span>
           </Button>
-
-          {/* Cluster avatares — alinhado à direita */}
-          <div className="flex items-center gap-xs ml-auto min-w-0 max-w-full">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Mostrar/ocultar profissionais"
-              className="h-11 w-11 shrink-0 text-neutral-500"
-              onClick={() => {
-                const allVisible = visibleProfIds.size === professionals.length;
-                if (allVisible) {
-                  setVisibleProfIds(
-                    new Set([sortedProfessionals[0]?.id].filter(Boolean) as string[]),
-                  );
-                } else {
-                  setVisibleProfIds(new Set(professionals.map((p) => p.id)));
-                }
-              }}
-            >
-              {visibleProfIds.size === professionals.length ? (
-                <Eye className="h-4 w-4" />
-              ) : (
-                <EyeOff className="h-4 w-4" />
-              )}
-            </Button>
-            {/* Com o menu da agenda recolhido as profissionais ganham linha própria (abaixo). */}
-            {!sidebarCollapsed && (
-              <div
-                className="flex items-center gap-xs overflow-x-auto"
-                data-testid="prof-avatars"
-              >
-                {sortedProfessionals.slice(0, 4).map(renderProfChip)}
-                {sortedProfessionals.length > 4 && (
-                  <span className="h-11 min-w-[44px] shrink-0 rounded-md border border-neutral-200 bg-white px-xs text-label tabular-nums text-neutral-500 flex items-center justify-center">
-                    +{sortedProfessionals.length - 4}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
         </div>
-
-        {/* Menu da agenda recolhido: todas as profissionais na largura toda (quick 261112-cko). */}
-        {sidebarCollapsed && (
-          <div
-            className="flex flex-wrap items-center gap-xs px-md py-xs border-b border-neutral-200 bg-white shrink-0"
-            data-testid="prof-avatars"
-          >
-            {sortedProfessionals.map(renderProfChip)}
-          </div>
-        )}
 
         {/* Noivas do dia: filtra a noiva e as acompanhantes dela (quick 261112-cko). */}
         {bridalGroups.length > 0 && (

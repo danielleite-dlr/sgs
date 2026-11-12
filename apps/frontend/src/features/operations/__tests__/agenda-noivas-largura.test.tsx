@@ -138,26 +138,21 @@ describe('noivas do dia (quick 261112-cko)', () => {
 });
 
 describe('profissionais na largura toda (quick 261112-cko)', () => {
-  it('colunas e botões começam por quem tem atendimento no dia', async () => {
+  it('colunas começam por quem tem atendimento no dia', async () => {
     renderSchedule();
     await screen.findByTestId('appointment-card-a1');
     expect(laneOrder()).toEqual(['p2', 'p4', 'p5', 'p1', 'p3']);
-    const barra = screen.getByTestId('prof-avatars');
-    const nomes = within(barra)
-      .getAllByRole('button')
-      .map((b) => b.getAttribute('aria-label'));
-    expect(nomes).toEqual(['Agenda de Bia Pente', 'Agenda de Duda Pente', 'Agenda de Eva Make', 'Agenda de Ana Make']);
-    expect(barra).toHaveTextContent('+1');
   });
 
-  it('com o menu da agenda recolhido, todas as profissionais numa linha própria, sem "+N"', async () => {
+  it('sem filtro de profissionais no topo, com o menu da agenda aberto ou recolhido (quick 261112-e7v)', async () => {
     renderSchedule();
     await screen.findByTestId('appointment-card-a1');
+    expect(screen.queryByTestId('prof-avatars')).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Agenda de / })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Ocultar filtros' }));
-    const barra = screen.getByTestId('prof-avatars');
-    expect(barra.className).toMatch(/\bflex-wrap\b/);
-    expect(within(barra).getAllByRole('button')).toHaveLength(5);
-    expect(barra).not.toHaveTextContent('+');
+    expect(screen.queryByTestId('prof-avatars')).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Agenda de / })).toBeNull();
+    expect(laneOrder()).toEqual(['p2', 'p4', 'p5', 'p1', 'p3']);
   });
 });
 

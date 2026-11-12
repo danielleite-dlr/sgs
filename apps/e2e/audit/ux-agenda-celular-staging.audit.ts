@@ -25,14 +25,8 @@ test('UX-02 e UX-03 no staging (celular, somente leitura)', async ({ page }, inf
   const filtros = page.getByTestId('filters-open');
   await expect(filtros).toHaveText(/Filtros/);
   await alvo(filtros, 'Filtros');
-  const avatares = page.getByTestId('prof-avatars').getByRole('button');
-  const n = await avatares.count();
-  const nomes: string[] = [];
-  for (let i = 0; i < n; i++) {
-    await alvo(avatares.nth(i), `avatar ${i}`);
-    nomes.push((await avatares.nth(i).locator('span').nth(1).innerText()).trim());
-  }
-  console.log(`avatares: ${n}, nomes curtos: ${JSON.stringify(nomes.map((x) => x.length > 0))}`);
+  // Sem botões de profissionais na barra do topo (quick 261112-e7v).
+  await expect(page.getByTestId('prof-avatars')).toHaveCount(0);
   await page.screenshot({ path: `${EVID}/05-10-agenda-dia.png` });
 
   await page.getByTestId('view-week').click();
