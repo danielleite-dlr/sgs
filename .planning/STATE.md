@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 Phase: 06
 Plan: 06-09 (próximo; 06-01 a 06-08, 06-10 e 06-12 concluídos, Despesas fixas no staging)
 Status: Executing
-Last activity: 2026-11-12 - Completed 06-08: Despesas fixas no layout Gestor Beauty (CI 43146652884 verde)
+Last activity: 2026-11-12 - Completed quick task 261112-0g4: nome da cliente visível no card da agenda (visão Dia), selo de status abaixo do horário (CI 43150399450 verde)
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -232,6 +232,7 @@ Recent decisions affecting current work:
 | 261108-n2o | Teste de noiva incluso no pacote: marca "Inclui teste" por servico do pacote (backfill em Maquiagem/Penteado noiva de Essence, Experience e Glam), contrato divide o valor 50/50 entre teste e evento, comanda do teste a R$ 0 e evento cobra as duas metades, PDF mostra o teste incluso | 2026-11-08 | d53a1fe | [261108-n2o-teste-de-noiva-incluso-no-pacote](./quick/261108-n2o-teste-de-noiva-incluso-no-pacote/) |
 | fast | Modal de novo/editar pacote limitado a 90vh com rolagem interna (nao extrapola a tela) | 2026-11-08 | c951767 | - |
 | fast | Login: Entrar habilita ao digitar e com autopreenchimento do navegador (sem clicar na pagina); Enter envia o formulario (continua o 261107-kpj) | 2026-11-08 | 38070fe | - |
+| 261112-0g4 | Agenda (visão Dia): nome da cliente sozinho na 1ª linha do card, serviço em letra pequena logo abaixo e selo de status numa linha própria depois do horário (não cobre mais o nome nas colunas estreitas) | 2026-11-12 | 6e35e17 | [261112-0g4-nome-cliente-card-agenda](./quick/261112-0g4-nome-cliente-card-agenda/) |
 
 ## Session Continuity
 
