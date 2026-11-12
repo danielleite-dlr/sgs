@@ -16,6 +16,7 @@ import {
   UpdateMemberInput,
 } from './dto/member.input';
 import { normalizeBrPhone, normalizePixKey } from './member-contact';
+import { recordAudit } from '../common/audit-log';
 import { loadCategoryParents, memberServesCategory } from './member-categories';
 
 export interface UserError {
@@ -28,6 +29,40 @@ const errPayload = (code: string, message: string, field?: string) => ({
   member: null,
   errors: [{ code, message, field: field ?? null }] as UserError[],
 });
+
+const deleteErr = (
+  code: string,
+  message: string,
+  counts: { appointments?: number; comandas?: number } = {},
+) => ({
+  deletedId: null as string | null,
+  openAppointmentCount: counts.appointments ?? 0,
+  openComandaCount: counts.comandas ?? 0,
+  errors: [{ code, message, field: null }] as UserError[],
+});
+
+/**
+ * Mensagem de bloqueio da exclusão definitiva, só com as partes não-zero:
+ * "Ana tem 3 atendimentos agendados e 1 comanda aberta. Conclua ou remaneje antes de excluir."
+ */
+export function openWorkMessage(
+  name: string,
+  appointments: number,
+  comandas: number,
+): string {
+  const parts: string[] = [];
+  if (appointments > 0) {
+    parts.push(
+      `${appointments} ${appointments === 1 ? 'atendimento agendado' : 'atendimentos agendados'}`,
+    );
+  }
+  if (comandas > 0) {
+    parts.push(
+      `${comandas} ${comandas === 1 ? 'comanda aberta' : 'comandas abertas'}`,
+    );
+  }
+  return `${name} tem ${parts.join(' e ')}. Conclua ou remaneje antes de excluir.`;
+}
 
 const createErr = (code: string, message: string, field?: string) => ({
   member: null,
@@ -574,6 +609,88 @@ export class MembersService {
       return {
         member: toMemberDto(row),
         temporaryPassword: temporaryPassword as string | null,
+        errors: [] as UserError[],
+      };
+    });
+  }
+
+  /**
+   * Exclusão definitiva (hard delete) da profissional. Bloqueia só com atendimento
+   * (scheduled/confirmed/in_progress) ou comanda aberta com item dela; o histórico
+   * fechado é apagado/desvinculado pela função SECURITY DEFINER purge_member (as
+   * tabelas append-only não aceitam DELETE do sgs_app). Não exclui a si mesmo nem o
+   * dono (ADMIN mais antigo da organização).
+   */
+  async deletePermanently(orgId: string, callerMemberId: string, id: string) {
+    return this.tenant.runWithTenant(orgId, async (tx: TenantPrismaClient) => {
+      const existing = await tx.member.findFirst({
+        where: { id, organizationId: orgId },
+        select: {
+          id: true,
+          displayName: true,
+          user: { select: { email: true } },
+        },
+      });
+      if (!existing) {
+        return deleteErr('MEMBER_NOT_FOUND', 'Membro não encontrado.');
+      }
+      if (existing.id === callerMemberId) {
+        return deleteErr(
+          'CANNOT_DELETE_SELF',
+          'Você não pode excluir a si mesmo.',
+        );
+      }
+      const owner = await tx.member.findFirst({
+        where: {
+          organizationId: orgId,
+          deletedAt: null,
+          role: { name: ADMIN_ROLE_NAME },
+        },
+        orderBy: { createdAt: 'asc' },
+        select: { id: true },
+      });
+      if (owner?.id === existing.id) {
+        return deleteErr(
+          'CANNOT_DELETE_OWNER',
+          'O dono do salão não pode ser excluído.',
+        );
+      }
+
+      const [appointments, comandas] = await Promise.all([
+        tx.appointment.count({
+          where: {
+            professionalId: id,
+            status: { in: ['scheduled', 'confirmed', 'in_progress'] },
+          },
+        }),
+        tx.comanda.count({
+          where: { status: 'open', items: { some: { professionalId: id } } },
+        }),
+      ]);
+      if (appointments > 0 || comandas > 0) {
+        return deleteErr(
+          'MEMBER_HAS_OPEN_WORK',
+          openWorkMessage(existing.displayName, appointments, comandas),
+          { appointments, comandas },
+        );
+      }
+
+      await tx.$executeRaw`SELECT purge_member(${id}::uuid)`;
+      await recordAudit(tx, {
+        orgId,
+        actorMemberId: callerMemberId,
+        action: 'member.delete_permanent',
+        entityType: 'member',
+        entityId: id,
+        metadata: {
+          displayName: existing.displayName,
+          email: existing.user.email,
+        },
+      });
+      return {
+        deletedId: id as string | null,
+        openAppointmentCount: 0,
+        openComandaCount: 0,
         errors: [] as UserError[],
       };
     });

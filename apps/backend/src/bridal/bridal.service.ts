@@ -917,6 +917,101 @@ export class BridalService {
     }
   }
 
+  /**
+   * Exclusão definitiva e irreversível do grupo e de tudo dele (contratos, parcelas,
+   * pagamentos, caixa, agendamentos, comandas do grupo). Não exige contrato cancelado;
+   * as clientes não são apagadas. A limpeza roda na função SECURITY DEFINER
+   * purge_bridal_group (tabelas append-only).
+   */
+  async deletePermanently(
+    orgId: string,
+    memberId: string,
+    id: string,
+  ): Promise<{ deletedId: string | null; errors: BridalUserError[] }> {
+    try {
+      return await this.tenant.runWithTenant(
+        orgId,
+        async (tx) => {
+          const g = await tx.bridalGroup.findFirst({
+            where: { id },
+            select: { id: true, name: true, eventDate: true },
+          });
+          if (!g) throw new BridalError("NOT_FOUND", "Grupo não encontrado.", "id");
+
+          const [appointments, contracts] = await Promise.all([
+            tx.appointment.findMany({
+              where: { bridalGroupId: id },
+              select: { id: true, comandaId: true },
+            }),
+            tx.contract.findMany({
+              where: { bridalGroupId: id },
+              select: { id: true },
+            }),
+          ]);
+          const apptIds = appointments.map((a) => a.id);
+          const contractIds = contracts.map((c) => c.id);
+          const viaItems = await tx.comandaItem.findMany({
+            where: {
+              OR: [
+                { appointmentId: { in: apptIds } },
+                { contractId: { in: contractIds } },
+              ],
+            },
+            select: { comandaId: true },
+          });
+          const comandaIds = [
+            ...new Set([
+              ...viaItems.map((i) => i.comandaId),
+              ...appointments
+                .map((a) => a.comandaId)
+                .filter((c): c is string => c !== null),
+            ]),
+          ];
+          const apptSet = new Set(apptIds);
+          const contractSet = new Set(contractIds);
+          // Item sem vínculo com o grupo (inclusive avulso, com os dois NULL) = comanda compartilhada.
+          const comandaItems = await tx.comandaItem.findMany({
+            where: { comandaId: { in: comandaIds } },
+            select: { appointmentId: true, contractId: true },
+          });
+          const shared = comandaItems.some(
+            (i) =>
+              !(i.appointmentId && apptSet.has(i.appointmentId)) &&
+              !(i.contractId && contractSet.has(i.contractId)),
+          );
+          if (shared) {
+            throw new BridalError(
+              "BRIDAL_SHARED_COMANDA",
+              "Uma comanda deste grupo também tem itens de outros atendimentos. Separe ou feche essa comanda antes de excluir o grupo.",
+              "id",
+            );
+          }
+
+          await tx.$executeRaw`SELECT purge_bridal_group(${id}::uuid)`;
+          await recordAudit(tx, {
+            orgId,
+            actorMemberId: memberId,
+            action: "bridal.delete_permanent",
+            entityType: "bridal_group",
+            entityId: id,
+            metadata: {
+              name: g.name,
+              eventDate: g.eventDate.toISOString().slice(0, 10),
+              contracts: contractIds.length,
+              appointments: apptIds.length,
+            },
+          });
+          return { deletedId: id as string | null, errors: [] };
+        },
+        BRIDAL_SCHEDULE_TX_OPTIONS,
+      );
+    } catch (e) {
+      const m = mapBridalError(e);
+      if (m) return { deletedId: null, errors: [m] };
+      throw e;
+    }
+  }
+
   async list(
     orgId: string,
     filters: {

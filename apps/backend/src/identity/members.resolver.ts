@@ -98,6 +98,19 @@ export class MembersResolver {
   }
 
   @RequirePermission(PERMISSIONS.MEMBER_REMOVE)
+  @Mutation('deleteMemberPermanently')
+  async deleteMemberPermanently(
+    @Args('id') id: string,
+    @CurrentTenant() tenantCtx: TenantContext,
+  ) {
+    return this.members.deletePermanently(
+      tenantCtx.organizationId,
+      tenantCtx.memberId,
+      id,
+    );
+  }
+
+  @RequirePermission(PERMISSIONS.MEMBER_REMOVE)
   @Mutation('reactivateMember')
   async reactivateMember(
     @Args('id') id: string,

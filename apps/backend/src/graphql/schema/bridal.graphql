@@ -102,6 +102,11 @@ type BridalGroupPayload {
   errors: [UserError!]!
 }
 
+type DeleteBridalGroupPermanentlyPayload {
+  deletedId: UUID
+  errors: [UserError!]!
+}
+
 input BridalScheduleItemInput {
   groupMemberId: UUID!
   serviceId: UUID!
@@ -171,4 +176,6 @@ extend type Mutation {
   scheduleBridalEvent(input: ScheduleBridalEventInput!): BridalSchedulePayload!
   "Exige contrato ja cancelado; cancela os agendamentos e remove os deslocamentos."
   cancelBridalGroup(input: CancelBridalGroupInput!): BridalGroupPayload!
+  "Exclusão definitiva e irreversível do grupo e de tudo dele (contratos, parcelas, pagamentos, caixa, agendamentos). As clientes continuam."
+  deleteBridalGroupPermanently(id: UUID!): DeleteBridalGroupPermanentlyPayload!
 }

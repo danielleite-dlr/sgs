@@ -12,6 +12,8 @@ extend type Mutation {
   revokeInvitation(invitationId: UUID!): RevokeInvitationPayload!
   updateMember(input: UpdateMemberInput!): UpdateMemberPayload!
   deactivateMember(id: UUID!): DeactivateMemberPayload!
+  "Exclusão definitiva e irreversível da profissional (apaga as linhas do banco). Bloqueia com atendimento ou comanda em aberto."
+  deleteMemberPermanently(id: UUID!): DeleteMemberPermanentlyPayload!
   reactivateMember(id: UUID!): ReactivateMemberPayload!
   createMember(input: CreateMemberInput!): CreateMemberPayload!
   resetMemberPassword(input: ResetMemberPasswordInput!): ResetMemberPasswordPayload!
@@ -121,6 +123,15 @@ type DeactivateMemberPayload {
   blockingAppointments: [BlockingAppointment!]!
   "Informativo: regras de comissão vinculadas NÃO bloqueiam (ver MembersService.deactivate)."
   activeCommissionRuleCount: Int!
+  errors: [UserError!]!
+}
+
+type DeleteMemberPermanentlyPayload {
+  deletedId: UUID
+  "Atendimentos scheduled/confirmed/in_progress dela. > 0 junto com errors significa bloqueio."
+  openAppointmentCount: Int!
+  "Comandas abertas com item dela."
+  openComandaCount: Int!
   errors: [UserError!]!
 }
 

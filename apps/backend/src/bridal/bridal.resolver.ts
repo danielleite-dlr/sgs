@@ -72,6 +72,15 @@ export class BridalResolver {
     return this.bridal.cancelGroup(tenant.organizationId, tenant.memberId, input);
   }
 
+  @Mutation('deleteBridalGroupPermanently')
+  @RequirePermission(PERMISSIONS.CONTRACT_CANCEL)
+  deleteGroupPermanently(
+    @CurrentTenant() tenant: TenantContext,
+    @Args('id') id: string,
+  ) {
+    return this.bridal.deletePermanently(tenant.organizationId, tenant.memberId, id);
+  }
+
   @Mutation('addBridalGroupMember')
   @RequirePermission(PERMISSIONS.BRIDAL_WRITE)
   addMember(
