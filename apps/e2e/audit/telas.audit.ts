@@ -266,3 +266,10 @@ test('16-painel', async ({ page }, info) => {
   await go(page, '/dashboard');
   await shoot(page, info.project.name, '16-painel', t, `destino final: ${new URL(page.url()).pathname}`);
 });
+
+// --- 6. Previsão de caixa (06-07) ---
+test('17-financeiro-previsao', async ({ page }, info) => {
+  const t = Date.now();
+  await go(page, '/financeiro/previsao');
+  await shoot(page, info.project.name, '17-financeiro-previsao', t);
+});
