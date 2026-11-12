@@ -25,7 +25,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { FIELD_LABEL_CLASS } from '@/lib/field-classes';
 import {
   formatCurrencyDisplay,
   maskCurrency,
@@ -41,8 +43,16 @@ import {
   type FixedExpenseInput,
   type FixedExpensePayload,
 } from '../api/forecast.api';
+import { sumDecimals } from '../lib/money';
 
 const brl = (v: string) => `R$ ${formatCurrencyDisplay(v)}`;
+
+// Erro de campo do formulário (D-13): 12 px, semibold, vermelho de erro (error-* só aqui e no Excluir).
+// Opção do rádio é texto comum, não rótulo de campo.
+const RADIO_LABEL_CLASS = 'text-body normal-case tracking-normal text-neutral-800';
+const FIELD_ERROR_CLASS = 'text-[12px] leading-4 font-semibold text-error-600';
+// Bloco branco do Gestor Beauty (06-12 Card): cantos de 8 px e sombra leve.
+const BLOCK_CLASS = 'rounded-lg border border-neutral-200 bg-white shadow-sm';
 
 const MSG_NAME = 'Informe o nome da despesa (2 a 120 caracteres).';
 const MSG_AMOUNT = 'Informe um valor maior que zero.';
@@ -149,7 +159,7 @@ function ExpenseDialog({
               onChange={(e) => setName(e.target.value)}
             />
             {errors.name && (
-              <p role="alert" className="text-xs text-error-600">
+              <p role="alert" className={FIELD_ERROR_CLASS}>
                 {errors.name}
               </p>
             )}
@@ -160,12 +170,13 @@ function ExpenseDialog({
               id="fx-amount"
               inputMode="numeric"
               placeholder="R$ 0,00"
+              className="tabular-nums"
               value={amount ? `R$ ${amount}` : ''}
               aria-invalid={errors.amount ? true : undefined}
               onChange={(e) => setAmount(maskCurrency(e.target.value))}
             />
             {errors.amount && (
-              <p role="alert" className="text-xs text-error-600">
+              <p role="alert" className={FIELD_ERROR_CLASS}>
                 {errors.amount}
               </p>
             )}
@@ -182,17 +193,17 @@ function ExpenseDialog({
               aria-describedby="fx-day-help"
               onChange={(e) => setDueDay(e.target.value)}
             />
-            <p id="fx-day-help" className="text-xs text-neutral-500">
+            <p id="fx-day-help" className="text-[12px] leading-4 text-neutral-500">
               Se o mês não tiver esse dia, a despesa vence no último dia do mês.
             </p>
             {errors.dueDay && (
-              <p role="alert" className="text-xs text-error-600">
+              <p role="alert" className={FIELD_ERROR_CLASS}>
                 {errors.dueDay}
               </p>
             )}
           </div>
           <div className="flex flex-col gap-xs">
-            <span id="fx-active-label" className="text-sm font-medium">
+            <span id="fx-active-label" className={FIELD_LABEL_CLASS}>
               Situação
             </span>
             <RadioGroup
@@ -203,11 +214,15 @@ function ExpenseDialog({
             >
               <div className="flex items-center gap-xs">
                 <RadioGroupItem id="fx-active-yes" value="true" />
-                <Label htmlFor="fx-active-yes">Ativa</Label>
+                <Label htmlFor="fx-active-yes" className={RADIO_LABEL_CLASS}>
+                  Ativa
+                </Label>
               </div>
               <div className="flex items-center gap-xs">
                 <RadioGroupItem id="fx-active-no" value="false" />
-                <Label htmlFor="fx-active-no">Inativa</Label>
+                <Label htmlFor="fx-active-no" className={RADIO_LABEL_CLASS}>
+                  Inativa
+                </Label>
               </div>
             </RadioGroup>
           </div>
@@ -250,6 +265,8 @@ export function DespesasFixasPage() {
   const [toDelete, setToDelete] = useState<FixedExpense | null>(null);
 
   const rows = data?.fixedExpenses ?? [];
+  // Total mensal das ativas, somado em centavos a partir da lista já carregada (sem consulta nova).
+  const monthlyTotal = sumDecimals(rows.filter((e) => e.active).map((e) => e.amount));
 
   async function toggleActive(e: FixedExpense) {
     try {
@@ -281,7 +298,7 @@ export function DespesasFixasPage() {
   }
 
   return (
-    <>
+    <div className="flex flex-col gap-md">
       <PageHeader
         title="Despesas fixas"
         breadcrumbs={[{ label: 'Financeiro' }, { label: 'Despesas fixas' }]}
@@ -293,12 +310,12 @@ export function DespesasFixasPage() {
           ) : undefined
         }
       />
-      <p className="-mt-sm mb-lg text-sm text-neutral-600">
+      <p className="-mt-md text-body text-neutral-500">
         Contas que se repetem todo mês. Elas entram nas saídas da previsão de caixa.
       </p>
 
       {!canRead ? (
-        <div className="rounded-md border border-neutral-200 bg-white p-md text-sm text-neutral-600">
+        <div className={`${BLOCK_CLASS} p-md text-body text-neutral-500`}>
           Você não tem acesso ao financeiro.
         </div>
       ) : loading ? (
@@ -307,14 +324,14 @@ export function DespesasFixasPage() {
         <Alert variant="destructive">
           <AlertDescription className="flex items-center justify-between gap-md">
             <span>Não foi possível carregar as despesas fixas.</span>
-            <Button type="button" size="sm" variant="outline" onClick={() => void refetch()}>
+            <Button type="button" variant="outline" onClick={() => void refetch()}>
               Tentar novamente
             </Button>
           </AlertDescription>
         </Alert>
       ) : rows.length === 0 ? (
-        <div className="flex flex-col items-start gap-md rounded-md border border-neutral-200 bg-white p-md">
-          <p className="text-sm text-neutral-600">Nenhuma despesa fixa cadastrada.</p>
+        <div className={`flex flex-col items-start gap-md p-md ${BLOCK_CLASS}`}>
+          <p className="text-body text-neutral-500">Nenhuma despesa fixa cadastrada.</p>
           {canWrite && (
             <Button type="button" onClick={() => setDialog({ open: true, editing: null })}>
               Cadastrar despesa fixa
@@ -322,66 +339,79 @@ export function DespesasFixasPage() {
           )}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-md border border-neutral-200 bg-white">
-          <table className="w-full text-sm" data-testid="fixed-expenses-table">
-            <thead>
-              <tr className="text-left text-xs text-neutral-500">
-                <th className="p-sm">Nome</th>
-                <th className="p-sm text-right">Valor</th>
-                <th className="p-sm">Vence todo dia</th>
-                <th className="p-sm">Situação</th>
-                {canWrite && <th className="p-sm">Ações</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((e) => (
-                <tr key={e.id} className="border-t border-neutral-100">
-                  <td className="p-sm">{e.name}</td>
-                  <td className="p-sm text-right">{brl(e.amount)}</td>
-                  <td className="p-sm">{`dia ${e.dueDay}`}</td>
-                  <td className="p-sm">
-                    <Badge variant={e.active ? 'success' : 'secondary'}>
-                      {e.active ? 'Ativa' : 'Inativa'}
-                    </Badge>
-                  </td>
-                  {canWrite && (
-                    <td className="p-sm">
-                      <div className="flex flex-wrap gap-xs">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          aria-label={`Editar ${e.name}`}
-                          onClick={() => setDialog({ open: true, editing: e })}
-                        >
-                          Editar
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          aria-label={`${e.active ? 'Desativar' : 'Ativar'} ${e.name}`}
-                          onClick={() => void toggleActive(e)}
-                        >
-                          {e.active ? 'Desativar' : 'Ativar'}
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          aria-label={`Excluir ${e.name}`}
-                          onClick={() => setToDelete(e)}
-                        >
-                          Excluir
-                        </Button>
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div className={`flex items-baseline justify-between gap-sm p-md ${BLOCK_CLASS}`}>
+            <p className="text-overline uppercase text-neutral-500">Total mensal (ativas)</p>
+            <p
+              data-testid="fixed-expenses-total"
+              className="text-[22px] leading-7 font-semibold tabular-nums whitespace-nowrap text-outflow-700"
+            >
+              {brl(monthlyTotal)}
+            </p>
+          </div>
+          <div data-testid="fixed-expenses-box" className={`overflow-x-auto ${BLOCK_CLASS}`}>
+            <Table className="min-w-[640px]" data-testid="fixed-expenses-table">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="whitespace-nowrap">Vence todo dia</TableHead>
+                  <TableHead>Situação</TableHead>
+                  {canWrite && <TableHead>Ações</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((e) => (
+                  <TableRow key={e.id}>
+                    <TableCell className="min-w-[160px] font-medium text-neutral-800">{e.name}</TableCell>
+                    <TableCell className="text-right tabular-nums whitespace-nowrap">
+                      {brl(e.amount)}
+                    </TableCell>
+                    <TableCell className="tabular-nums whitespace-nowrap text-neutral-500">
+                      {`dia ${e.dueDay}`}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={e.active ? 'success' : 'neutral'}>
+                        {e.active ? 'Ativa' : 'Inativa'}
+                      </Badge>
+                    </TableCell>
+                    {canWrite && (
+                      <TableCell>
+                        <div className="flex gap-xs">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            aria-label={`Editar ${e.name}`}
+                            onClick={() => setDialog({ open: true, editing: e })}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            aria-label={`${e.active ? 'Desativar' : 'Ativar'} ${e.name}`}
+                            onClick={() => void toggleActive(e)}
+                          >
+                            {e.active ? 'Desativar' : 'Ativar'}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="text-error-600 hover:bg-error-50 hover:text-error-700"
+                            aria-label={`Excluir ${e.name}`}
+                            onClick={() => setToDelete(e)}
+                          >
+                            Excluir
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       {dialog.open && (
@@ -406,6 +436,6 @@ export function DespesasFixasPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }

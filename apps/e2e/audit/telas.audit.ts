@@ -273,3 +273,10 @@ test('17-financeiro-previsao', async ({ page }, info) => {
   await go(page, '/financeiro/previsao');
   await shoot(page, info.project.name, '17-financeiro-previsao', t);
 });
+
+// --- 7. Despesas fixas (06-08) ---
+test('18-financeiro-despesas-fixas', async ({ page }, info) => {
+  const t = Date.now();
+  await go(page, '/financeiro/despesas-fixas');
+  await shoot(page, info.project.name, '18-financeiro-despesas-fixas', t);
+});
