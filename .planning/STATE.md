@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 Phase: 06
 Plan: 06-09 (próximo; 06-01 a 06-08, 06-10 e 06-12 concluídos, Despesas fixas no staging)
 Status: Executing
-Last activity: 2026-11-12 - Completed quick task 261112-0g4: nome da cliente visível no card da agenda (visão Dia), selo de status abaixo do horário (CI 43150399450 verde)
+Last activity: 2026-11-12 - Completed quick task 261112-cko: agenda com filtro por noiva, profissionais na largura toda, rolagem e menu principal recolhível
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -233,6 +233,7 @@ Recent decisions affecting current work:
 | fast | Modal de novo/editar pacote limitado a 90vh com rolagem interna (nao extrapola a tela) | 2026-11-08 | c951767 | - |
 | fast | Login: Entrar habilita ao digitar e com autopreenchimento do navegador (sem clicar na pagina); Enter envia o formulario (continua o 261107-kpj) | 2026-11-08 | 38070fe | - |
 | 261112-0g4 | Agenda (visão Dia): nome da cliente sozinho na 1ª linha do card, serviço em letra pequena logo abaixo e selo de status numa linha própria depois do horário (não cobre mais o nome nas colunas estreitas) | 2026-11-12 | 6e35e17 | [261112-0g4-nome-cliente-card-agenda](./quick/261112-0g4-nome-cliente-card-agenda/) |
+| 261112-cko | Agenda: filtro por noiva + acompanhantes (Appointment expõe o grupo), profissionais com atendimento primeiro e na largura toda com o menu da agenda recolhido, grade com rolagem horizontal/vertical e cabeçalho fixo, menu principal recolhível só com ícones | 2026-11-12 | a698fe7 | [261112-cko-agenda-noivas-profissionais-em-largura-t](./quick/261112-cko-agenda-noivas-profissionais-em-largura-t/) |
 
 ## Session Continuity
 
