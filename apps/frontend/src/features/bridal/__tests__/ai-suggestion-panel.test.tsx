@@ -159,4 +159,41 @@ describe('AiSuggestionPanel', () => {
     // a edição continua na tela
     expect(screen.getAllByTestId(/^schedule-row-\d+$/)).toHaveLength(7);
   });
+
+  it('"Montar manualmente" lista só os serviços do evento (sem duplicar o teste)', () => {
+    useAuthStore.setState({ roleName: 'MANAGER' });
+    const svc = (id: string, serviceId: string, serviceName: string, purpose: string) => ({
+      __typename: 'BridalMemberService',
+      id,
+      serviceId,
+      serviceName,
+      durationMinutes: 60,
+      purpose,
+    });
+    const withTrial = group({
+      id: 'g2',
+      members: [
+        member({
+          id: 'm1',
+          role: 'bride',
+          clientName: 'Ana',
+          services: [
+            svc('s1', 'make', 'Maquiagem', 'event'),
+            svc('s2', 'hair', 'Penteado', 'event'),
+            svc('s3', 'make', 'Maquiagem', 'trial'),
+            svc('s4', 'hair', 'Penteado', 'trial'),
+          ],
+        }),
+      ],
+    });
+    render(
+      <MockedProvider mocks={[profsMock]}>
+        <MemoryRouter>
+          <AiSuggestionPanel group={withTrial} onScheduled={() => undefined} />
+        </MemoryRouter>
+      </MockedProvider>,
+    );
+    fireEvent.click(screen.getByTestId('ai-manual'));
+    expect(screen.getAllByTestId(/^schedule-row-\d+$/)).toHaveLength(2);
+  });
 });

@@ -125,7 +125,9 @@ export function AiSuggestionPanel({ group, onScheduled }: Props) {
     const date = group.eventDate.slice(0, 10);
     const manual: ScheduleRow[] = [];
     for (const m of group.members) {
-      for (const s of m.services) {
+      // Só os serviços do dia do evento, como a sugestão IA: o teste (purpose 'trial') tem
+      // data própria e, incluído aqui, duplicava make e penteado da noiva.
+      for (const s of m.services.filter((x) => x.purpose === 'event')) {
         manual.push({
           key: `${m.id}-${s.serviceId}-${manual.length}`,
           groupMemberId: m.id,
