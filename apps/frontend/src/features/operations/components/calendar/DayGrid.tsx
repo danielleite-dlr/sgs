@@ -52,6 +52,8 @@ export interface DayGridProps {
   timeBlocks: TimeBlockData[];
   slotHeight: number;
   colWidth: string;
+  /** Largura mínima de cada coluna (px): acima disso a grade rola na horizontal. */
+  colMinPx?: number;
   canSchedule: boolean;
   canDrag: boolean;
   showFolga: boolean;
@@ -183,6 +185,7 @@ export function DayGrid({
   timeBlocks,
   slotHeight,
   colWidth,
+  colMinPx = 160,
   canSchedule,
   canDrag,
   showFolga,
@@ -284,12 +287,20 @@ export function DayGrid({
           },
         }}
       >
-        <div ref={gridRef} className="bg-white border border-neutral-200 m-md rounded-md overflow-hidden">
+        {/* quick 261112-cko: `overflow-clip` (e não `hidden`) não cria contêiner de rolagem, então o
+            cabeçalho e a coluna de horas grudam no contêiner da página, e o `minWidth` faz as colunas
+            que não cabem virarem rolagem horizontal em vez de serem cortadas. */}
+        <div
+          ref={gridRef}
+          data-testid="day-grid"
+          className="bg-white border border-neutral-200 m-md rounded-md overflow-clip"
+          style={{ minWidth: 64 + Math.max(professionals.length, 1) * colMinPx }}
+        >
           <div
-            className="grid border-b border-neutral-200 bg-neutral-50 sticky top-0 z-10"
+            className="grid border-b border-neutral-200 bg-neutral-50 sticky top-0 z-40"
             style={{ gridTemplateColumns: columns }}
           >
-            <div className="p-sm border-r border-neutral-200" />
+            <div className="p-sm border-r border-neutral-200 sticky left-0 z-10 bg-neutral-50" />
             {professionals.length === 0 ? (
               <div className="p-md text-xs text-neutral-500">Nenhum profissional selecionado.</div>
             ) : (
@@ -327,7 +338,7 @@ export function DayGrid({
           </div>
 
           <div className="grid relative" style={{ gridTemplateColumns: columns }}>
-            <div className="border-r border-neutral-200 relative">
+            <div className="border-r border-neutral-200 sticky left-0 z-[35] bg-white">
               {GRID_SLOTS.map((slot) => (
                 <div
                   key={slot.label}
@@ -373,7 +384,7 @@ export function DayGrid({
             {isToday && nowLineTop > 0 && nowLineTop < gridHeight && (
               <div
                 data-testid="now-line"
-                className="absolute left-0 right-0 z-20 pointer-events-none flex items-center -translate-y-1/2"
+                className="absolute left-0 right-0 z-[36] pointer-events-none flex items-center -translate-y-1/2"
                 style={{ top: nowLineTop }}
               >
                 <span className="ml-[4px] rounded-md bg-primary px-1 py-0.5 text-[10px] font-semibold leading-none tabular-nums text-white">

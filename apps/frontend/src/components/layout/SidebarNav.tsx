@@ -1,6 +1,15 @@
+import { useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { ChevronDown, ChevronRight, LogOut, TriangleAlert } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
+  TriangleAlert,
+} from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { brandName } from '@/lib/brand';
 import { HOME_PATH } from '@/config/features';
@@ -14,6 +23,10 @@ import { SessionUser } from './SessionUser';
 export interface SidebarNavProps {
   lowStockCount?: number;
   onNavigate?: () => void;
+  /** Recolhido: faixa de 64 px só com os ícones (quick 261112-cko). */
+  collapsed?: boolean;
+  /** Sem ele o botão de recolher não aparece (a gaveta do celular não recolhe). */
+  onToggleCollapsed?: () => void;
 }
 
 const FOCO = 'focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2';
@@ -33,9 +46,25 @@ const ATIVO_SUB = 'bg-primary-800 font-semibold text-white';
  * e ícone roxo; subitem ativo roxo #521873 com texto branco. Rodapé com a usuária logada e o
  * botão Sair. A árvore é a de `menu-config.ts` (já podada).
  */
-export function SidebarNav({ lowStockCount = 0, onNavigate }: SidebarNavProps) {
+export function SidebarNav({
+  lowStockCount = 0,
+  onNavigate,
+  collapsed = false,
+  onToggleCollapsed,
+}: SidebarNavProps) {
   const organizationName = useAuthStore((s) => s.organizationName);
   const { logout } = useAuth();
+
+  if (collapsed) {
+    return (
+      <CollapsedSidebar
+        lowStockCount={lowStockCount}
+        organizationName={organizationName}
+        onExpand={onToggleCollapsed}
+        onLogout={() => logout()}
+      />
+    );
+  }
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -69,6 +98,23 @@ export function SidebarNav({ lowStockCount = 0, onNavigate }: SidebarNavProps) {
             level={0}
           />
         </div>
+
+        {onToggleCollapsed && (
+          <button
+            type="button"
+            onClick={onToggleCollapsed}
+            data-testid="sidebar-collapse"
+            aria-label="Recolher menu"
+            className={cn(
+              'flex min-h-[44px] items-center gap-sm border-t border-neutral-200 px-md text-body',
+              INATIVO,
+              FOCO,
+            )}
+          >
+            <PanelLeftClose className="h-5 w-5 shrink-0" />
+            <span>Recolher menu</span>
+          </button>
+        )}
 
         <div
           data-testid="sidebar-user"
@@ -240,6 +286,165 @@ function SidebarItem({
           level={level + 1}
         />
       )}
+    </li>
+  );
+}
+
+// ─── Menu recolhido (quick 261112-cko) ─────────────────────────────────────────
+
+const ICONE =
+  'flex h-11 w-11 items-center justify-center rounded-md transition-colors [&>svg]:h-5 [&>svg]:w-5';
+
+interface CollapsedSidebarProps {
+  lowStockCount: number;
+  organizationName: string | null;
+  onExpand?: () => void;
+  onLogout: () => void;
+}
+
+/**
+ * Faixa de 64 px com um ícone por item de 1º nível. Link direto (Início, Agenda) navega; grupo
+ * abre um painel ao lado com a mesma árvore do menu aberto, para não ter que expandir o menu.
+ */
+function CollapsedSidebar({
+  lowStockCount,
+  organizationName,
+  onExpand,
+  onLogout,
+}: CollapsedSidebarProps) {
+  return (
+    <TooltipProvider delayDuration={200}>
+      <nav
+        role="navigation"
+        aria-label="Navegação principal"
+        data-testid="sidebar-collapsed"
+        className="flex h-full w-16 flex-col items-center border-r border-neutral-200 bg-white"
+      >
+        <Link
+          to={HOME_PATH}
+          data-testid="sidebar-brand"
+          aria-label={`${brandName(organizationName)} — início`}
+          className={cn(
+            'flex h-14 w-full shrink-0 items-center justify-center border-b border-neutral-200',
+            FOCO,
+          )}
+        >
+          <BrandMark organizationName={organizationName} />
+        </Link>
+
+        <ul className="flex w-full flex-1 flex-col items-center gap-xs overflow-y-auto py-md">
+          {MENU.map((item) => (
+            <CollapsedItem key={item.id} item={item} lowStockCount={lowStockCount} />
+          ))}
+        </ul>
+
+        <div className="flex w-full flex-col items-center gap-xs border-t border-neutral-200 bg-neutral-100 py-sm">
+          {onExpand && (
+            <IconTooltip label="Expandir menu">
+              <button
+                type="button"
+                onClick={onExpand}
+                data-testid="sidebar-collapse"
+                aria-label="Expandir menu"
+                className={cn(ICONE, INATIVO, FOCO)}
+              >
+                <PanelLeftOpen />
+              </button>
+            </IconTooltip>
+          )}
+          <IconTooltip label="Sair">
+            <button
+              type="button"
+              aria-label="Sair"
+              onClick={onLogout}
+              className={cn(ICONE, 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800', FOCO)}
+            >
+              <LogOut />
+            </button>
+          </IconTooltip>
+        </div>
+      </nav>
+    </TooltipProvider>
+  );
+}
+
+function IconTooltip({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="right">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function CollapsedItem({ item, lowStockCount }: { item: MenuItem; lowStockCount: number }) {
+  const { pathname } = useLocation();
+  const [open, setOpen] = useState(false);
+  const Icon = item.icon;
+  const alerta = lowStockCount > 0 && (item.badge === 'lowStock' || contemAvisoEstoque(item));
+  const ponto = alerta && (
+    <span
+      aria-hidden="true"
+      className="absolute right-1 top-1 h-2 w-2 rounded-full bg-warning-500"
+    />
+  );
+
+  if (!item.children?.length) {
+    if (!item.to) return null;
+    // Link comum com className em texto: o Slot do Tooltip (asChild) concatena a className e
+    // estragaria a função do NavLink.
+    const ativoLink = pathname === item.to.split('?')[0];
+    return (
+      <li>
+        <IconTooltip label={item.label}>
+          <Link
+            to={item.to}
+            aria-label={item.label}
+            aria-current={ativoLink ? 'page' : undefined}
+            className={cn(ICONE, 'relative', FOCO, ativoLink ? ATIVO_1 : INATIVO)}
+          >
+            <Icon />
+            {ponto}
+          </Link>
+        </IconTooltip>
+      </li>
+    );
+  }
+
+  const ativo = temRotaAtiva(item, pathname);
+  return (
+    <li>
+      <Popover open={open} onOpenChange={setOpen}>
+        <IconTooltip label={item.label}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              aria-label={item.label}
+              className={cn(ICONE, 'relative', FOCO, ativo ? ATIVO_1 : INATIVO)}
+            >
+              <Icon />
+              {ponto}
+            </button>
+          </PopoverTrigger>
+        </IconTooltip>
+        <PopoverContent
+          side="right"
+          align="start"
+          sideOffset={8}
+          className="max-h-[80vh] w-64 overflow-y-auto p-sm"
+        >
+          <p className="px-sm pb-xs text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
+            {item.label}
+          </p>
+          <SidebarList
+            items={item.children}
+            className="space-y-xs"
+            lowStockCount={lowStockCount}
+            onNavigate={() => setOpen(false)}
+            level={1}
+          />
+        </PopoverContent>
+      </Popover>
     </li>
   );
 }

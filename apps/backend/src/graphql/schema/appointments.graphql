@@ -45,6 +45,13 @@ type Appointment {
   cancelReason: String
   cancelReasonTag: String
   cancelledAt: DateTime
+  "Grupo de noiva/debutante do atendimento (null para atendimento social)."
+  bridalGroupId: UUID
+  bridalGroupName: String
+  "noiva | debutante"
+  bridalEventKind: String
+  "Papel da cliente no grupo: bride | companion (null se não for membro)."
+  bridalRole: String
   professional: Member!
   client: Client!
   service: Service!

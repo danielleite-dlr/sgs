@@ -54,17 +54,46 @@ const APPOINTMENT_INCLUDE = {
   client: true,
   service: true,
   comanda: { select: { code: true, status: true } },
+  // Noiva/debutante do atendimento (quick 261112-cko): a agenda filtra por grupo e mostra quem é a noiva.
+  bridalGroup: {
+    select: {
+      id: true,
+      name: true,
+      eventKind: true,
+      members: { select: { clientId: true, role: true } },
+    },
+  },
 } as const;
+
+type BridalGroupInclude = {
+  name: string;
+  eventKind: string;
+  members?: { clientId: string; role: string }[];
+} | null;
 
 /** depositAmount sempre com 2 casas (Decimal do Prisma serializa sem zeros). */
 export function serializeAppointment<
   T extends {
     depositAmount?: unknown;
     comanda?: { code: string; status: string } | null;
+    clientId?: string;
+    bridalGroup?: BridalGroupInclude;
   },
->(row: T): T & { depositAmount: string } {
+>(
+  row: T,
+): T & {
+  depositAmount: string;
+  bridalGroupName: string | null;
+  bridalEventKind: string | null;
+  bridalRole: string | null;
+} {
+  const group = row.bridalGroup ?? null;
   return {
     ...row,
+    bridalGroupName: group?.name ?? null,
+    bridalEventKind: group?.eventKind ?? null,
+    bridalRole:
+      group?.members?.find((m) => m.clientId === row.clientId)?.role ?? null,
     comandaCode: row.comanda?.code ?? null,
     comandaStatus: row.comanda?.status ?? null,
     depositAmount: fromCents(

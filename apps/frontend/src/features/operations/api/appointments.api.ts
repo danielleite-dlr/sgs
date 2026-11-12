@@ -18,6 +18,10 @@ export const APPOINTMENT_FIELDS = gql`
     cancelReason
     cancelReasonTag
     cancelledAt
+    bridalGroupId
+    bridalGroupName
+    bridalEventKind
+    bridalRole
     client {
       id
       fullName
@@ -131,6 +135,12 @@ export interface AppointmentData {
   cancelReason: string | null;
   cancelReasonTag: string | null;
   cancelledAt: string | null;
+  /** Grupo de noiva/debutante (quick 261112-cko); ausente/null no atendimento social. */
+  bridalGroupId?: string | null;
+  bridalGroupName?: string | null;
+  bridalEventKind?: string | null;
+  /** bride | companion */
+  bridalRole?: string | null;
   client: { id: string; fullName: string };
   professional: { id: string; displayName: string };
   service: {

@@ -16,6 +16,7 @@ import {
   EyeOff,
   X,
   Users,
+  Gem,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,6 +76,11 @@ import {
 } from "../components/calendar/appointment-statuses";
 import { type ScheduleProfessional } from "../components/calendar/types";
 import {
+  bridalGroupsOf,
+  countByProfessional,
+  sortProfessionalsByLoad,
+} from "../lib/schedule-professionals";
+import {
   canWriteAppointments,
   seesOnlyOwnAppointments,
 } from "../schedule-permissions";
@@ -91,6 +97,7 @@ const ROW_HEIGHTS: Record<DensitySize, number> = {
   M: 48,
   G: 64,
 };
+const COL_MIN_PX: Record<DensitySize, number> = { PP: 96, P: 120, M: 160, G: 220 };
 const COL_WIDTHS: Record<DensitySize, string> = {
   PP: "minmax(96px,1fr)",
   P: "minmax(120px,1fr)",
@@ -736,6 +743,8 @@ export function SchedulePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // Filtro "só esta noiva e as acompanhantes" (quick 261112-cko).
+  const [bridalFilter, setBridalFilter] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalSeed, setModalSeed] = useState<
     { hour: number; minute: number; profId?: string } | undefined
@@ -826,18 +835,57 @@ export function SchedulePage() {
       );
   }, [professionals]);
 
+  // Atendimentos do período sem cancelados: base da ordem das profissionais e das noivas do dia.
+  const periodAppointments = useMemo(
+    () =>
+      (appointmentsData?.appointments ?? []).filter(
+        (appointment) => !HIDDEN_STATUSES.has(appointment.status),
+      ),
+    [appointmentsData],
+  );
+  const loadByProfessional = useMemo(
+    () => countByProfessional(periodAppointments),
+    [periodAppointments],
+  );
+  // Quem tem atendimento no dia vem primeiro, nos botões e nas colunas (quick 261112-cko).
+  const sortedProfessionals = useMemo(
+    () => sortProfessionalsByLoad(professionals, loadByProfessional),
+    [professionals, loadByProfessional],
+  );
+  const bridalGroups = useMemo(
+    () => bridalGroupsOf(periodAppointments),
+    [periodAppointments],
+  );
+  // Ao trocar de dia o grupo escolhido some da lista e o filtro se desfaz sozinho.
+  const activeBridal = bridalGroups.some((g) => g.id === bridalFilter)
+    ? bridalFilter
+    : null;
+  const bridalProfIds = useMemo(
+    () =>
+      activeBridal
+        ? new Set(
+            periodAppointments
+              .filter((a) => a.bridalGroupId === activeBridal)
+              .map((a) => a.professionalId),
+          )
+        : null,
+    [periodAppointments, activeBridal],
+  );
   const visibleProfs = useMemo(
     () =>
-      professionals.filter((professional) =>
-        visibleProfIds.has(professional.id),
+      sortedProfessionals.filter(
+        (professional) =>
+          visibleProfIds.has(professional.id) &&
+          (!bridalProfIds || bridalProfIds.has(professional.id)),
       ),
-    [professionals, visibleProfIds],
+    [sortedProfessionals, visibleProfIds, bridalProfIds],
   );
   const dayAppointments = useMemo(
     () =>
       (appointmentsData?.appointments ?? []).filter(
         (appointment) =>
           !HIDDEN_STATUSES.has(appointment.status) &&
+          (!activeBridal || appointment.bridalGroupId === activeBridal) &&
           visibleProfIds.has(appointment.professionalId) &&
           activeStatuses.has(appointment.status) &&
           (!searchQuery ||
@@ -845,7 +893,7 @@ export function SchedulePage() {
               .toLowerCase()
               .includes(searchQuery.toLowerCase())),
       ),
-    [appointmentsData, visibleProfIds, activeStatuses, searchQuery],
+    [appointmentsData, visibleProfIds, activeStatuses, searchQuery, activeBridal],
   );
 
   function toggleProf(id: string) {
@@ -898,6 +946,52 @@ export function SchedulePage() {
     });
   }
   const slotHeight = ROW_HEIGHTS[rowSize];
+  function renderProfChip(pro: ScheduleProfessional) {
+    const visible = visibleProfIds.has(pro.id);
+    const load = loadByProfessional.get(pro.id) ?? 0;
+    return (
+      <button
+        key={pro.id}
+        type="button"
+        onClick={() => toggleProf(pro.id)}
+        title={pro.name}
+        aria-label={`Agenda de ${pro.name}`}
+        aria-pressed={visible}
+        className={cn(
+          "shrink-0 flex items-center gap-xs rounded-md min-h-[44px] min-w-[44px] px-2.5 border transition-colors",
+          visible
+            ? "bg-neutral-100 border-neutral-200 text-neutral-800"
+            : "bg-white border-transparent text-neutral-500 hover:bg-neutral-50",
+        )}
+      >
+        <span
+          className={cn(
+            "h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-[11px] font-semibold",
+            visible ? "text-neutral-800" : "bg-neutral-100 text-neutral-600",
+          )}
+          style={
+            visible
+              ? { backgroundColor: (pro.tone ?? NEUTRAL_TONE).avatarBg }
+              : undefined
+          }
+        >
+          {pro.initials}
+        </span>
+        {/* Nome completo, sem reticências: a barra rola na horizontal. */}
+        <span className="whitespace-nowrap text-label">
+          {toDisplayName(pro.name)}
+        </span>
+        {load > 0 && (
+          <span
+            aria-hidden="true"
+            className="rounded-full bg-white px-1.5 text-[11px] font-semibold tabular-nums text-neutral-600"
+          >
+            {load}
+          </span>
+        )}
+      </button>
+    );
+  }
   const filterPanel = (
     <FilterPanel
       professionals={professionals}
@@ -937,7 +1031,12 @@ export function SchedulePage() {
         type="button"
         onClick={() => setSidebarCollapsed((v) => !v)}
         aria-label={sidebarCollapsed ? "Mostrar filtros" : "Ocultar filtros"}
-        className="hidden lg:flex h-8 w-6 self-start mt-md -ml-3 z-20 items-center justify-center rounded-r-md border border-l-0 border-neutral-200 bg-white text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800"
+        className={cn(
+          "hidden lg:flex h-8 w-6 self-start mt-md z-20 items-center",
+          // Recolhido, encostaria no menu principal: sem a margem negativa (quick 261112-cko).
+          !sidebarCollapsed && "-ml-3",
+          "justify-center rounded-r-md border border-l-0 border-neutral-200 bg-white text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800",
+        )}
       >
         {sidebarCollapsed ? (
           <ChevronsRight className="h-4 w-4" />
@@ -1085,7 +1184,7 @@ export function SchedulePage() {
                 const allVisible = visibleProfIds.size === professionals.length;
                 if (allVisible) {
                   setVisibleProfIds(
-                    new Set([professionals[0]?.id].filter(Boolean) as string[]),
+                    new Set([sortedProfessionals[0]?.id].filter(Boolean) as string[]),
                   );
                 } else {
                   setVisibleProfIds(new Set(professionals.map((p) => p.id)));
@@ -1098,58 +1197,97 @@ export function SchedulePage() {
                 <EyeOff className="h-4 w-4" />
               )}
             </Button>
-            <div
-              className="flex items-center gap-xs overflow-x-auto"
-              data-testid="prof-avatars"
-            >
-              {professionals.slice(0, 4).map((pro) => {
-                const visible = visibleProfIds.has(pro.id);
-                return (
-                  <button
-                    key={pro.id}
-                    type="button"
-                    onClick={() => toggleProf(pro.id)}
-                    title={pro.name}
-                    aria-label={`Agenda de ${pro.name}`}
-                    aria-pressed={visible}
-                    className={cn(
-                      "shrink-0 flex items-center gap-xs rounded-md min-h-[44px] min-w-[44px] px-2.5 border transition-colors",
-                      visible
-                        ? "bg-neutral-100 border-neutral-200 text-neutral-800"
-                        : "bg-white border-transparent text-neutral-500 hover:bg-neutral-50",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-[11px] font-semibold",
-                        visible ? "text-neutral-800" : "bg-neutral-100 text-neutral-600",
-                      )}
-                      style={
-                        visible
-                          ? { backgroundColor: (pro.tone ?? NEUTRAL_TONE).avatarBg }
-                          : undefined
-                      }
-                    >
-                      {pro.initials}
-                    </span>
-                    {/* Nome completo, sem reticências: a barra rola na horizontal. */}
-                    <span className="whitespace-nowrap text-label">
-                      {toDisplayName(pro.name)}
-                    </span>
-                  </button>
-                );
-              })}
-              {professionals.length > 4 && (
-                <span className="h-11 min-w-[44px] shrink-0 rounded-md border border-neutral-200 bg-white px-xs text-label tabular-nums text-neutral-500 flex items-center justify-center">
-                  +{professionals.length - 4}
-                </span>
-              )}
-            </div>
+            {/* Com o menu da agenda recolhido as profissionais ganham linha própria (abaixo). */}
+            {!sidebarCollapsed && (
+              <div
+                className="flex items-center gap-xs overflow-x-auto"
+                data-testid="prof-avatars"
+              >
+                {sortedProfessionals.slice(0, 4).map(renderProfChip)}
+                {sortedProfessionals.length > 4 && (
+                  <span className="h-11 min-w-[44px] shrink-0 rounded-md border border-neutral-200 bg-white px-xs text-label tabular-nums text-neutral-500 flex items-center justify-center">
+                    +{sortedProfessionals.length - 4}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
+        {/* Menu da agenda recolhido: todas as profissionais na largura toda (quick 261112-cko). */}
+        {sidebarCollapsed && (
+          <div
+            className="flex flex-wrap items-center gap-xs px-md py-xs border-b border-neutral-200 bg-white shrink-0"
+            data-testid="prof-avatars"
+          >
+            {sortedProfessionals.map(renderProfChip)}
+          </div>
+        )}
+
+        {/* Noivas do dia: filtra a noiva e as acompanhantes dela (quick 261112-cko). */}
+        {bridalGroups.length > 0 && (
+          <div
+            className="flex items-center gap-xs px-md py-xs border-b border-neutral-200 bg-white shrink-0 overflow-x-auto"
+            role="group"
+            aria-label={view === "week" ? "Noivas da semana" : "Noivas do dia"}
+            data-testid="bridal-filter"
+          >
+            <span className="shrink-0 flex items-center gap-xs text-overline uppercase text-neutral-500">
+              <Gem aria-hidden="true" className="h-4 w-4" />
+              {view === "week" ? "Noivas da semana" : "Noivas do dia"}
+            </span>
+            <button
+              type="button"
+              aria-pressed={activeBridal === null}
+              onClick={() => setBridalFilter(null)}
+              className={cn(
+                "shrink-0 min-h-[44px] px-md rounded-md text-label border transition-colors",
+                activeBridal === null
+                  ? "bg-primary text-white border-primary"
+                  : "bg-white text-neutral-800 border-neutral-200 hover:bg-neutral-50",
+              )}
+            >
+              Todas
+            </button>
+            {bridalGroups.map((g) => {
+              const active = activeBridal === g.id;
+              return (
+                <button
+                  key={g.id}
+                  type="button"
+                  aria-pressed={active}
+                  data-testid={`bridal-filter-${g.id}`}
+                  onClick={() => setBridalFilter(active ? null : g.id)}
+                  title={
+                    g.clientCount > 1
+                      ? `${g.name}: noiva e ${g.clientCount - 1} acompanhante(s)`
+                      : g.name
+                  }
+                  className={cn(
+                    "shrink-0 flex items-center gap-xs min-h-[44px] px-md rounded-md text-label border transition-colors",
+                    active
+                      ? "bg-primary text-white border-primary"
+                      : "bg-white text-neutral-800 border-neutral-200 hover:bg-neutral-50",
+                  )}
+                >
+                  <span className="whitespace-nowrap">{g.name}</span>
+                  <span
+                    className={cn(
+                      "rounded-full px-1.5 text-[11px] font-semibold tabular-nums",
+                      active ? "bg-white/20 text-white" : "bg-neutral-100 text-neutral-600",
+                    )}
+                    aria-label={`${g.clientCount} cliente(s)`}
+                  >
+                    {g.clientCount}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* GRID — single scroll container */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto scrollbar-visible" data-testid="schedule-scroll">
           {view === "week" ? (
             <WeekGrid
               days={week.days}
@@ -1170,6 +1308,7 @@ export function SchedulePage() {
               timeBlocks={timeBlocksData?.timeBlocks ?? []}
               slotHeight={slotHeight}
               colWidth={COL_WIDTHS[colSize]}
+              colMinPx={COL_MIN_PX[colSize]}
               canSchedule={canSchedule}
               canDrag={canSchedule}
               showFolga={showFolga}

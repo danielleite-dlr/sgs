@@ -49,3 +49,43 @@ describe('SidebarNav (Trinks hierarchy)', () => {
     expect(screen.getAllByLabelText(/3 produto/).length).toBeGreaterThan(0);
   });
 });
+
+// quick 261112-cko: menu principal recolhível só com os ícones.
+describe('SidebarNav recolhido', () => {
+  it('faixa de 64 px com ícones (nome no aria-label) e botão para expandir', async () => {
+    const { fireEvent } = await import('@testing-library/react');
+    useAuthStore.setState({ roleName: 'Ana' });
+    const onToggle = vi.fn();
+    render(
+      <MemoryRouter initialEntries={['/agenda']}>
+        <SidebarNav collapsed onToggleCollapsed={onToggle} />
+      </MemoryRouter>,
+    );
+    const nav = screen.getByTestId('sidebar-collapsed');
+    expect(nav).toHaveClass('w-16');
+    expect(screen.queryByText('Agenda')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Agenda' })).toHaveAttribute('href', '/agenda');
+    // Grupo abre painel ao lado com os subitens.
+    fireEvent.click(screen.getByRole('button', { name: 'Meu Estabelecimento' }));
+    expect(await screen.findByRole('button', { name: 'Clientes' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Expandir menu' }));
+    expect(onToggle).toHaveBeenCalledOnce();
+  });
+
+  it('aberto, mostra "Recolher menu" só quando há onToggleCollapsed', () => {
+    useAuthStore.setState({ roleName: 'Ana' });
+    const { unmount } = render(
+      <MemoryRouter>
+        <SidebarNav />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByRole('button', { name: 'Recolher menu' })).toBeNull();
+    unmount();
+    render(
+      <MemoryRouter>
+        <SidebarNav onToggleCollapsed={vi.fn()} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('button', { name: 'Recolher menu' })).toBeInTheDocument();
+  });
+});
