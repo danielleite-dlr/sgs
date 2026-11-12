@@ -109,6 +109,30 @@ describe('bloco de agendamento (D-11, D-19)', () => {
     expect(ponto?.className).toMatch(/\brounded-full\b/);
   });
 
+  it('nome sozinho na 1ª linha, serviço pequeno logo abaixo e selo depois do horário (visão Dia estreita)', () => {
+    renderCard(appt());
+    const card = screen.getByTestId('appointment-card-a1');
+    const nome = screen.getByTestId('appointment-name-a1');
+    const selo = screen.getByTestId('appointment-status-a1');
+    expect(nome).toHaveTextContent('Maria Silva');
+    expect(nome.className).toMatch(/\btruncate\b/);
+    // o selo não divide a linha com o nome
+    expect(nome.parentElement).toBe(card);
+    const servico = within(card).getByText('Penteado');
+    expect(servico.className).toMatch(/text-\[12px\]/);
+    expect(servico.className).toMatch(/\btruncate\b/);
+    const hora = screen.getByTestId('appointment-time-a1');
+    // ordem no DOM: nome → serviço → horário → selo
+    const segue = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(segue(nome, servico)).toBe(true);
+    expect(nome.nextElementSibling).toBe(servico);
+    expect(segue(servico, hora)).toBe(true);
+    expect(segue(hora, selo)).toBe(true);
+    expect(nome.contains(selo)).toBe(false);
+    expect(selo.parentElement).not.toBe(nome.parentElement);
+  });
+
   it('com menos de 60 min não mostra o selo', () => {
     renderCard(appt({ durationMinutes: 30, end: new Date(2026, 10, 12, 9, 30) }));
     expect(screen.queryByTestId('appointment-status-a1')).toBeNull();

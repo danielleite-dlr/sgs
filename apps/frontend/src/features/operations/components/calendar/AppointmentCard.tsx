@@ -72,11 +72,23 @@ export function AppointmentCard({
           )}
           style={merged}
         >
-          <div className="flex items-start justify-between gap-xs">
-            <p className="truncate font-serif text-[15px] font-semibold leading-5 text-neutral-800">
-              {displayName}
-            </p>
-            {appointment.durationMinutes >= 60 && (
+          <p
+            data-testid={`appointment-name-${appointment.id}`}
+            className="truncate font-serif text-[15px] font-semibold leading-5 text-neutral-800"
+          >
+            {displayName}
+          </p>
+          <p className="truncate text-[12px] leading-4 text-neutral-600">
+            {appointment.service}
+          </p>
+          <p
+            data-testid={`appointment-time-${appointment.id}`}
+            className="truncate text-[12px] leading-4 tabular-nums text-neutral-600"
+          >
+            {starts} - {ends} • {appointment.durationMinutes} min
+          </p>
+          {appointment.durationMinutes >= 60 && (
+            <div className="mt-[2px] flex">
               <span
                 data-testid={`appointment-status-${appointment.id}`}
                 className="inline-flex shrink-0 items-center gap-1 rounded-md border border-neutral-200 bg-neutral-50 px-1.5 text-[11px] font-semibold leading-5 text-neutral-800"
@@ -88,17 +100,8 @@ export function AppointmentCard({
                 />
                 {APPOINTMENT_STATUS_LABELS[appointment.status] ?? appointment.status}
               </span>
-            )}
-          </div>
-          <p className="truncate text-[12px] leading-4 text-neutral-600">
-            {appointment.service}
-          </p>
-          <p
-            data-testid={`appointment-time-${appointment.id}`}
-            className="truncate text-[12px] leading-4 tabular-nums text-neutral-600"
-          >
-            {starts} - {ends} • {appointment.durationMinutes} min
-          </p>
+            </div>
+          )}
         </div>
       </TooltipTrigger>
       <TooltipContent>
