@@ -241,6 +241,30 @@ export interface DeactivateMemberResult {
   };
 }
 
+export const DeleteMemberPermanentlyMutation = gql`
+  mutation DeleteMemberPermanently($id: UUID!) {
+    deleteMemberPermanently(id: $id) {
+      deletedId
+      openAppointmentCount
+      openComandaCount
+      errors {
+        code
+        message
+        field
+      }
+    }
+  }
+`;
+
+export interface DeleteMemberPermanentlyResult {
+  deleteMemberPermanently: {
+    deletedId: string | null;
+    openAppointmentCount: number;
+    openComandaCount: number;
+    errors: UserErrorData[];
+  };
+}
+
 export const ReactivateMemberMutation = gql`
   mutation ReactivateMember($id: UUID!) {
     reactivateMember(id: $id) {

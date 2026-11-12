@@ -24,14 +24,17 @@ import { CreateMemberDialog } from '@/features/identity/components/CreateMemberD
 import { ResetMemberPasswordDialog } from '@/features/identity/components/ResetMemberPasswordDialog';
 import { MemberEditDialog } from '@/features/identity/components/MemberEditDialog';
 import { DeactivateMemberDialog } from '@/features/identity/components/DeactivateMemberDialog';
+import { ConfirmByNameDialog } from '@/components/ui/confirm-by-name-dialog';
 import { maskBrPhone } from '@/features/identity/member-validation';
 import {
   AllMembersQuery,
+  DeleteMemberPermanentlyMutation,
   ReactivateMemberMutation,
 } from '@/features/catalog/api/members.api';
 import type {
   AdminMemberData,
   AllMembersResult,
+  DeleteMemberPermanentlyResult,
   ReactivateMemberResult,
 } from '@/features/catalog/api/members.api';
 
@@ -47,12 +50,15 @@ function roleLabel(t: (key: string) => string, roleName: string): string {
 export function ProfissionaisPage() {
   const { t } = useTranslation();
   const roleName = useAuthStore((s) => s.roleName);
+  const currentMemberId = useAuthStore((s) => s.memberId);
   const canInvite = canInviteMembers(roleName);
   const canManage = canManageMembers(roleName);
   const [createOpen, setCreateOpen] = useState(false);
   const [resettingMember, setResettingMember] = useState<AdminMemberData | null>(null);
   const [editingMember, setEditingMember] = useState<AdminMemberData | null>(null);
   const [deactivatingMember, setDeactivatingMember] = useState<AdminMemberData | null>(null);
+  const [deletingMember, setDeletingMember] = useState<AdminMemberData | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = t('pages.profissionais.tab');
@@ -88,6 +94,30 @@ export function ProfissionaisPage() {
     toast.success(
       t('team.toasts.memberReactivated', { name: member.displayName }),
     );
+  }
+
+  const [deleteMemberPermanently, { loading: deleting }] =
+    useMutation<DeleteMemberPermanentlyResult>(DeleteMemberPermanentlyMutation, {
+      refetchQueries: ['AllMembers', 'Members'],
+      awaitRefetchQueries: true,
+    });
+
+  function closeDelete() {
+    setDeletingMember(null);
+    setDeleteError(null);
+  }
+
+  async function handleDeletePermanently() {
+    if (!deletingMember) return;
+    const res = await deleteMemberPermanently({ variables: { id: deletingMember.id } });
+    const payload = res.data?.deleteMemberPermanently;
+    if (!payload) return;
+    if (payload.errors.length) {
+      setDeleteError(payload.errors[0].message);
+      return;
+    }
+    toast.success(t('team.toasts.memberDeleted', { name: deletingMember.displayName }));
+    closeDelete();
   }
 
   const showEmpty = !loading && members.length === 0;
@@ -223,6 +253,16 @@ export function ProfissionaisPage() {
                               {t('team.actions.reactivate')}
                             </DropdownMenuItem>
                           )}
+                          {r.id !== currentMemberId && (
+                            <DropdownMenuItem
+                              onSelect={() => setDeletingMember(r)}
+                              className="text-destructive"
+                              data-testid="member-delete-permanent"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {t('team.actions.deletePermanent')}
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     ),
@@ -261,6 +301,28 @@ export function ProfissionaisPage() {
           member={deactivatingMember}
           open
           onClose={() => setDeactivatingMember(null)}
+        />
+      )}
+      {canManage && deletingMember && (
+        <ConfirmByNameDialog
+          open
+          onOpenChange={(o) => {
+            if (!o) closeDelete();
+          }}
+          title={t('team.deletePermanent.title', { name: deletingMember.displayName })}
+          description={
+            <>
+              <p className="font-semibold text-error-500">
+                {t('team.deletePermanent.irreversible')}
+              </p>
+              <p>{t('team.deletePermanent.body', { name: deletingMember.displayName })}</p>
+            </>
+          }
+          expectedName={deletingMember.displayName}
+          confirmLabel={t('team.deletePermanent.confirmAction')}
+          loading={deleting}
+          error={deleteError}
+          onConfirm={() => void handleDeletePermanently()}
         />
       )}
     </>

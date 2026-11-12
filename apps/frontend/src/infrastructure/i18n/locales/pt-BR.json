@@ -887,6 +887,7 @@
     "actions": {
       "edit": "Editar",
       "deactivate": "Desativar",
+      "deletePermanent": "Excluir definitivamente",
       "reactivate": "Reativar",
       "resetPassword": "Gerar nova senha provisória",
       "invite": "Convidar profissional",
@@ -905,6 +906,7 @@
       "memberUpdated": "{{name}} atualizado com sucesso.",
       "memberDeactivated": "{{name}} foi desativado.",
       "memberReactivated": "{{name}} foi reativado.",
+      "memberDeleted": "{{name}} foi excluído definitivamente.",
       "invitationSent": "Convite enviado para {{email}}.",
       "invitationRevoked": "Convite revogado."
     },
@@ -988,6 +990,12 @@
       "cancel": "Cancelar",
       "submit": "Convidar",
       "submitting": "Enviando…"
+    },
+    "deletePermanent": {
+      "title": "Excluir {{name}} definitivamente?",
+      "irreversible": "Esta ação é irreversível.",
+      "body": "Vamos apagar do banco o cadastro de {{name}}, o acesso (se não trabalhar em outro salão), os atendimentos já encerrados, os itens de comanda, as comissões, as regras e os bloqueios de agenda dela. Os valores recebidos nas comandas e no caixa continuam, sem o nome dela.",
+      "confirmAction": "Excluir definitivamente"
     },
     "deactivate": {
       "confirmTitle": "Desativar {{name}}?",

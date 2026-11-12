@@ -215,6 +215,19 @@ export const CancelBridalGroupMutation = gql`
   ${BRIDAL_GROUP_FIELDS}
 `;
 
+export const DeleteBridalGroupPermanentlyMutation = gql`
+  mutation DeleteBridalGroupPermanently($id: UUID!) {
+    deleteBridalGroupPermanently(id: $id) {
+      deletedId
+      errors {
+        code
+        message
+        field
+      }
+    }
+  }
+`;
+
 // ---- Tipos manuais ----
 
 export interface BridalUserError {
@@ -352,4 +365,11 @@ export interface BridalDepositInput {
   groupMemberId: string;
   amount: string;
   method: string;
+}
+
+export interface DeleteBridalGroupPermanentlyResult {
+  deleteBridalGroupPermanently: {
+    deletedId: string | null;
+    errors: BridalUserError[];
+  };
 }
