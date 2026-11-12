@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 06-07-previsao-de-caixa-PLAN.md
-last_updated: "2026-11-12T02:17:34.288Z"
-last_activity: "2026-11-10 - Completed quick task 261108-n4s: Cor automatica e nome completo da profissional na agenda"
+stopped_at: Completed 06-08-despesas-fixas-PLAN.md
+last_updated: "2026-11-12T03:17:58.797Z"
+last_activity: "2026-11-12 - Completed 06-08: Despesas fixas no layout Gestor Beauty (CI 43146652884 verde)"
 progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 92
-  completed_plans: 90
+  completed_plans: 91
   percent: 100
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 06
-Plan: 06-08 (próximo; 06-01 a 06-07, 06-10 e 06-12 concluídos, Previsão de caixa no staging)
+Plan: 06-09 (próximo; 06-01 a 06-08, 06-10 e 06-12 concluídos, Despesas fixas no staging)
 Status: Executing
-Last activity: 2026-11-11 - Completed 06-07: Previsão de caixa no layout Gestor Beauty (CI 43139617868 verde)
+Last activity: 2026-11-12 - Completed 06-08: Despesas fixas no layout Gestor Beauty (CI 43146652884 verde)
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -88,6 +88,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 05 P14 | ~90min | 3 tasks | 12 files |
 | Phase 06 P06 | 75min | 2 tasks | 9 files |
 | Phase 06 P07 | 70min | 2 tasks | 4 files |
+| Phase 06 P08 | 80min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -178,6 +179,8 @@ Recent decisions affecting current work:
 - [Phase 06]: Filtro segmentado selecionado = SEGMENT_SELECTED_CLASS (bg-primary-800 text-white)
 - [Phase 06]: Faixa Saldo/Entradas/Saídas do Financeiro calculada no cliente a partir de cashMovements
 - [Phase 06]: 06-07: valores da Previsão em success-700/outflow-700 (inclusive totais de 22 px, por causa do contraste-valores.test); Badge novo outflow para origem de saída
+- [Phase 06]: 06-08: total mensal das despesas fixas ativas em text-outflow-700 22 px (saída), somado em centavos da lista carregada; Inativa com Badge neutral (ponto grafite)
+- [Phase 06]: 06-08: tabelas largas no celular rolam de lado (min-w + ações sem flex-wrap) em vez de empilhar botões
 
 ### Pending Todos
 
@@ -232,6 +235,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-12T02:17:34.281Z
-Stopped at: Completed 06-07-previsao-de-caixa-PLAN.md
+Last session: 2026-11-12T03:17:58.788Z
+Stopped at: Completed 06-08-despesas-fixas-PLAN.md
 Resume file: None
