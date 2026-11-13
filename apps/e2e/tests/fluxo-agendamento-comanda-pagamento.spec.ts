@@ -76,8 +76,9 @@ test.describe('Fluxo: agendamento com sinal, comanda, pagamento dividido e comis
     await card.click();
     await expect(page.getByTestId('appointment-details')).toBeVisible();
     await page.getByTestId('appointment-open-comanda').click();
-    await page.waitForURL(/\/comanda\/[0-9a-f-]+$/);
-    const comandaId = page.url().split('/').pop()!;
+    await page.waitForURL(/\/comanda\/[0-9a-f-]+\?agenda=\d{4}-\d{2}-\d{2}&visao=day$/);
+    expect(page.url()).toContain(`agenda=${spDate(ahead)}&visao=day`);
+    const comandaId = new URL(page.url()).pathname.split('/').pop()!;
     const comandaCode = (await text(page.getByRole('heading', { level: 1 }))).match(/C-\d{4}-\d+/)![0];
 
     // ---- produto ----
@@ -117,6 +118,14 @@ test.describe('Fluxo: agendamento com sinal, comanda, pagamento dividido e comis
     const commissions = page.getByTestId('comanda-commissions');
     await expect(commissions).toContainText(pro.name);
     await expect(commissions).toContainText(brl(Number(servicePrice) * 0.4)); // 40% do preço cheio
+
+    // ---- volta para a agenda no mesmo dia ----
+    await page.getByTestId('comanda-back-to-agenda').click();
+    await page.waitForURL(new RegExp(`/agenda\\?data=${spDate(ahead)}&visao=day$`));
+    await expect(page.getByTestId('view-day')).toHaveAttribute('aria-pressed', 'true');
+    await expect(
+      page.getByTestId(`lane-${pro.id}`).locator('[data-testid^="appointment-card-"]'),
+    ).toHaveCount(1);
 
     // ---- verificações pela API ----
     expect(await readStock()).toBe(stockBefore - 1);
