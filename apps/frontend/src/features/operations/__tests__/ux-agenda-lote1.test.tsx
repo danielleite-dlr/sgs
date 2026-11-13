@@ -104,3 +104,42 @@ describe('UX-02: filtros da agenda com equipe grande', () => {
     for (const b of pros) expect(b.className).toMatch(/\bshrink-0\b/);
   });
 });
+
+describe('agenda abre no dia e na visão da query', () => {
+  function renderAgenda(entry: string) {
+    useAuthStore.setState({ roleName: 'ADMIN', memberId: 'x' });
+    const mocks: MockedResponse[] = [
+      { request: { query: MembersQuery }, result: { data: { members: [] } }, maxUsageCount: 10 },
+      {
+        request: { query: AppointmentsQuery },
+        variableMatcher: () => true,
+        result: { data: { appointments: [] } },
+        maxUsageCount: 10,
+      },
+    ];
+    return render(
+      <MockedProvider mocks={mocks}>
+        <MemoryRouter initialEntries={[entry]}>
+          <SchedulePage />
+        </MemoryRouter>
+      </MockedProvider>,
+    );
+  }
+
+  it('?data&visao=week abre a semana de 02/11 a 08/11', async () => {
+    const { container } = renderAgenda('/agenda?data=2026-11-04&visao=week');
+    expect(await screen.findByTestId('view-week')).toHaveAttribute('aria-pressed', 'true');
+    expect(container.textContent).toContain('02/11 – 08/11');
+  });
+
+  it('?data sem visão abre o dia 4 nov 2026', async () => {
+    const { container } = renderAgenda('/agenda?data=2026-11-04');
+    expect(await screen.findByTestId('view-day')).toHaveAttribute('aria-pressed', 'true');
+    expect(container.textContent).toMatch(/4 nov 2026/i);
+  });
+
+  it('valores inválidos caem em hoje e visão dia', async () => {
+    renderAgenda('/agenda?data=lixo&visao=mes');
+    expect(await screen.findByTestId('view-day')).toHaveAttribute('aria-pressed', 'true');
+  });
+});

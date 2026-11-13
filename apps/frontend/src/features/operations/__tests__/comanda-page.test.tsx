@@ -22,7 +22,7 @@ function withTypenames(c: ComandaData) {
   };
 }
 
-function renderPage(comanda: ComandaData | null) {
+function renderPage(comanda: ComandaData | null, entry = '/comanda/cm1') {
   const mocks: MockedResponse[] = [
     {
       request: { query: ComandaQuery, variables: { id: 'cm1' } },
@@ -31,7 +31,7 @@ function renderPage(comanda: ComandaData | null) {
   ];
   return render(
     <MockedProvider mocks={mocks}>
-      <MemoryRouter initialEntries={['/comanda/cm1']}>
+      <MemoryRouter initialEntries={[entry]}>
         <Routes>
           <Route path="/comanda/:id" element={<ComandaPage />} />
         </Routes>
@@ -136,6 +136,22 @@ describe('ComandaPage', () => {
     useAuthStore.setState({ permissions: ['comanda.read', 'comanda.reopen'] });
     renderPage(closed);
     expect(await screen.findByTestId('comanda-reopen')).toBeInTheDocument();
+  });
+
+  it('Voltar para a agenda leva ao dia e à visão de origem', async () => {
+    renderPage(
+      makeComanda({ items }),
+      '/comanda/cm1?agenda=2026-11-04&visao=week',
+    );
+    const back = await screen.findByTestId('comanda-back-to-agenda');
+    expect(back).toHaveTextContent('Voltar para a agenda');
+    expect(back).toHaveAttribute('href', '/agenda?data=2026-11-04&visao=week');
+  });
+
+  it('sem origem, Voltar para a agenda leva a /agenda', async () => {
+    renderPage(makeComanda({ items }));
+    const back = await screen.findByTestId('comanda-back-to-agenda');
+    expect(back).toHaveAttribute('href', '/agenda');
   });
 
   it('comanda inexistente mostra mensagem e link de volta', async () => {

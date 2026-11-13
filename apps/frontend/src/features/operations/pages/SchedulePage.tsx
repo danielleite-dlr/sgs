@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
 import {
   CalendarDays,
   ChevronLeft,
@@ -64,6 +65,7 @@ import { DayGrid } from "../components/calendar/DayGrid";
 import { WeekGrid } from "../components/calendar/WeekGrid";
 import { maskDateBR } from "../lib/input-masks";
 import { weekRange } from "../lib/week-range";
+import { parseAgendaDate, parseAgendaView } from "../lib/agenda-link";
 import {
   NEUTRAL_TONE,
   buildProfessionalToneMap,
@@ -724,8 +726,13 @@ function SelecaoProfissionaisModal({
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export function SchedulePage() {
-  const [selectedDate, setSelectedDate] = useState(() => new Date());
-  const [view, setView] = useState<"day" | "week">("day");
+  const [searchParams] = useSearchParams();
+  const [selectedDate, setSelectedDate] = useState(
+    () => parseAgendaDate(searchParams.get("data")) ?? new Date(),
+  );
+  const [view, setView] = useState<"day" | "week">(
+    () => parseAgendaView(searchParams.get("visao")) ?? "day",
+  );
   const [visibleProfIds, setVisibleProfIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -1251,6 +1258,8 @@ export function SchedulePage() {
           ) ?? null
         }
         open={detailsId !== null}
+        agendaDate={selectedDate}
+        agendaView={view}
         onOpenChange={(o) => {
           if (!o) setDetailsId(null);
         }}

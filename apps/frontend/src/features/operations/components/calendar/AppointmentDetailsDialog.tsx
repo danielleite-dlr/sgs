@@ -13,6 +13,7 @@ import {
 } from '../../api/appointments.api';
 import { APPOINTMENT_STATUS_LABELS, COMANDA_STATUS_LABELS } from '../../lib/operations-labels';
 import { CancelAppointmentDialog } from './CancelAppointmentDialog';
+import { comandaHrefFromAgenda, type AgendaView } from '../../lib/agenda-link';
 import { formatHM } from './types';
 
 interface Props {
@@ -21,6 +22,8 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   canWrite: boolean;
   onChanged: () => void;
+  agendaDate?: Date;
+  agendaView?: AgendaView;
 }
 
 export function AppointmentDetailsDialog({
@@ -29,6 +32,8 @@ export function AppointmentDetailsDialog({
   onOpenChange,
   canWrite,
   onChanged,
+  agendaDate,
+  agendaView,
 }: Props) {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [updateStatus, { loading }] =
@@ -115,7 +120,11 @@ export function AppointmentDetailsDialog({
             {comandaLinkEnabled && (
               <Button asChild variant="outline" size="sm">
                 <Link
-                  to={`/comanda/${appointment.comandaId}`}
+                  to={comandaHrefFromAgenda(
+                    appointment.comandaId as string,
+                    agendaDate ?? start,
+                    agendaView ?? 'day',
+                  )}
                   data-testid="appointment-open-comanda"
                 >
                   Abrir comanda

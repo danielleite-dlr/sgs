@@ -31,7 +31,10 @@ const appointment: AppointmentData = {
   service: { id: "s1", name: "Corte" },
 };
 
-function renderDialog(canWrite = true) {
+function renderDialog(
+  canWrite = true,
+  agenda: { agendaDate?: Date; agendaView?: "day" | "week" } = {},
+) {
   render(
     <MockedProvider mocks={[]}>
       <MemoryRouter>
@@ -41,6 +44,7 @@ function renderDialog(canWrite = true) {
           onOpenChange={vi.fn()}
           canWrite={canWrite}
           onChanged={vi.fn()}
+          {...agenda}
         />
       </MemoryRouter>
     </MockedProvider>,
@@ -62,8 +66,19 @@ describe("AppointmentDetailsDialog", () => {
     renderDialog();
     expect(screen.getByTestId("appointment-open-comanda")).toHaveAttribute(
       "href",
-      "/comanda/cm1",
+      "/comanda/cm1?agenda=2026-11-04&visao=day",
     );
+    flag.enabled = false;
+  });
+
+  it("o link da comanda leva a data e a visão da agenda de origem", () => {
+    flag.enabled = true;
+    renderDialog(true, { agendaDate: new Date(2026, 10, 6), agendaView: "week" });
+    expect(screen.getByTestId("appointment-open-comanda")).toHaveAttribute(
+      "href",
+      "/comanda/cm1?agenda=2026-11-06&visao=week",
+    );
+    flag.enabled = false;
   });
 
   it("sem permissão de escrita não mostra ações", () => {

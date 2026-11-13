@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
+  ArrowLeft,
   User,
   Phone,
   Clock,
@@ -23,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useHasPermission } from '../operations-permissions';
+import { agendaHrefFromComanda } from '../lib/agenda-link';
 import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
 import {
   AddComandaPaymentMutation,
@@ -64,6 +66,7 @@ function firstError(p: ComandaPayloadResult | undefined): string | null {
 export function ComandaPage() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const canWrite = useHasPermission('comanda.write');
   const canClose = useHasPermission('comanda.close');
   const canReopen = useHasPermission('comanda.reopen');
@@ -188,6 +191,12 @@ export function ComandaPage() {
         ]}
         cta={
           <>
+            <Button asChild variant="outline" size="sm" className="min-h-[44px] gap-xs">
+              <Link to={agendaHrefFromComanda(searchParams)} data-testid="comanda-back-to-agenda">
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                Voltar para a agenda
+              </Link>
+            </Button>
             <Badge
               variant={STATUS_BADGE[comanda.status] ?? 'neutral'}
               data-testid="comanda-status"
