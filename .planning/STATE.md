@@ -243,3 +243,4 @@ Last session: 2026-11-12T03:17:58.788Z
 Stopped at: Completed 06-08-despesas-fixas-PLAN.md
 Resume file: None
 | 2026-11-12 | fast | Montar manualmente (noivas) sem duplicar serviços do teste | ✅ |
+| 2026-11-13 | fast | Comanda: crédito do cliente em destaque no pagamento e no card da cliente | ✅ |
