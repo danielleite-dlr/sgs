@@ -14,6 +14,7 @@ import {
   Package,
   AlertTriangle,
   Percent,
+  Wallet,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -238,12 +239,22 @@ export function ComandaPage() {
                   })}
                 </span>
               </div>
-              <div
-                className="text-body tabular-nums text-neutral-500"
-                data-testid="comanda-client-credit"
-              >
-                Crédito do cliente: {brl(comanda.clientCreditBalance)}
-              </div>
+              {Number(comanda.clientCreditBalance) > 0 ? (
+                <div
+                  className="flex items-center gap-xs rounded-md border border-primary-300 bg-primary-50 px-sm py-xs text-body font-semibold tabular-nums text-primary-900"
+                  data-testid="comanda-client-credit"
+                >
+                  <Wallet className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  <span>Crédito do cliente: {brl(comanda.clientCreditBalance)}</span>
+                </div>
+              ) : (
+                <div
+                  className="text-body tabular-nums text-neutral-500"
+                  data-testid="comanda-client-credit"
+                >
+                  Crédito do cliente: {brl(comanda.clientCreditBalance)}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

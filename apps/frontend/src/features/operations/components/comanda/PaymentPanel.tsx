@@ -80,8 +80,14 @@ export function PaymentPanel({
 
   const hasCreditLine = comanda.payments.some((p) => p.method === CLIENT_CREDIT_METHOD.value);
   const creditCents = decimalToCents(comanda.clientCreditBalance);
+  // O saldo só é baixado no fechamento: o que já foi lançado nesta comanda ainda conta nele.
+  const creditAppliedCents = comanda.payments
+    .filter((p) => p.method === CLIENT_CREDIT_METHOD.value)
+    .reduce((acc, p) => acc + decimalToCents(p.amount), 0);
   const remainingCents = decimalToCents(base.remaining);
   const creditSuggestion = Math.min(creditCents, remainingCents);
+  const remainingAfterCredit = centsToDecimal(remainingCents - creditSuggestion);
+  const showCreditCallout = isOpen && (creditCents > 0 || hasCreditLine);
   const showCreditShortcut =
     isOpen && canWrite && creditCents > 0 && remainingCents > 0 && !hasCreditLine;
 
@@ -164,12 +170,45 @@ export function PaymentPanel({
           </ul>
         )}
 
-        {isOpen && canWrite && (
-          <div className="space-y-sm">
+        {showCreditCallout && (
+          <div
+            data-testid="payment-credit-callout"
+            className="space-y-xs rounded-md border border-primary-300 bg-primary-50 px-sm py-sm"
+          >
+            {hasCreditLine ? (
+              <>
+                <p className="flex items-center gap-xs font-semibold tabular-nums text-primary-900">
+                  <CircleCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  Crédito aplicado: {brl(centsToDecimal(creditAppliedCents))}
+                </p>
+                <p className="text-[12px] leading-4 text-primary-700">
+                  Valor pago antes pela cliente (sinal ou pacote). O saldo é baixado ao fechar a
+                  comanda.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="flex items-center gap-xs font-semibold tabular-nums text-primary-900">
+                  <Wallet className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  Crédito disponível: {brl(comanda.clientCreditBalance)}
+                </p>
+                <p className="text-[12px] leading-4 text-primary-700">
+                  Valor pago antes pela cliente (sinal ou pacote). Use o crédito antes de receber o
+                  restante.
+                </p>
+                {showCreditShortcut && (
+                  <p
+                    data-testid="payment-after-credit"
+                    className="text-body tabular-nums text-primary-900"
+                  >
+                    Depois do crédito, falta <strong>{brl(remainingAfterCredit)}</strong>
+                  </p>
+                )}
+              </>
+            )}
             {showCreditShortcut && (
               <Button
                 type="button"
-                variant="outline"
                 className="w-full min-h-[44px] tabular-nums"
                 disabled={busy}
                 data-testid="payment-use-credit"
@@ -178,6 +217,11 @@ export function PaymentPanel({
                 Usar crédito do cliente ({brl(centsToDecimal(creditSuggestion))})
               </Button>
             )}
+          </div>
+        )}
+
+        {isOpen && canWrite && (
+          <div className="space-y-sm">
             <div className="grid grid-cols-1 gap-sm sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
               <div>
                 <Label htmlFor="payment-method-select" className={FIELD_LABEL_CLASS}>

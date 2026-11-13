@@ -31,6 +31,37 @@ describe('PaymentPanel', () => {
     expect(onAddPayment).toHaveBeenCalledWith({ method: 'client_credit', amount: '50.00' });
   });
 
+  it('destaca o crédito disponível e mostra quanto falta depois dele', () => {
+    renderPanel(makeComanda({ clientCreditBalance: '50.00' }));
+    const callout = screen.getByTestId('payment-credit-callout');
+    expect(callout).toHaveTextContent('Crédito disponível: R$ 50,00');
+    expect(screen.getByTestId('payment-after-credit')).toHaveTextContent(
+      'Depois do crédito, falta R$ 85,00',
+    );
+  });
+
+  it('com o crédito lançado, o destaque mostra o valor aplicado', () => {
+    renderPanel(
+      makeComanda({
+        clientCreditBalance: '50.00',
+        paid: '50.00',
+        remaining: '85.00',
+        payments: [
+          { id: 'p1', method: 'client_credit', amount: '50.00', paidAt: '', memberId: null },
+        ],
+      }),
+    );
+    expect(screen.getByTestId('payment-credit-callout')).toHaveTextContent(
+      'Crédito aplicado: R$ 50,00',
+    );
+    expect(screen.queryByTestId('payment-use-credit')).toBeNull();
+  });
+
+  it('sem crédito não mostra o destaque', () => {
+    renderPanel(makeComanda({ clientCreditBalance: '0.00' }));
+    expect(screen.queryByTestId('payment-credit-callout')).toBeNull();
+  });
+
   it('preview de troco com dinheiro digitado e envia o pagamento', async () => {
     const { onAddPayment } = renderPanel(
       makeComanda({
