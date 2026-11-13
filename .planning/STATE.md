@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 Phase: 06
 Plan: 06-09 (próximo; 06-01 a 06-08, 06-10 e 06-12 concluídos, Despesas fixas no staging)
 Status: Executing
-Last activity: 2026-11-12 - Completed quick task 261112-gei: exclusão definitiva de profissional e de noiva
+Last activity: 2026-11-13 - Completed quick task 261113-k6j: comanda com botão Voltar para a agenda
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -236,6 +236,7 @@ Recent decisions affecting current work:
 | 261112-cko | Agenda: filtro por noiva + acompanhantes (Appointment expõe o grupo), profissionais com atendimento primeiro e na largura toda com o menu da agenda recolhido, grade com rolagem horizontal/vertical e cabeçalho fixo, menu principal recolhível só com ícones | 2026-11-12 | a698fe7 | [261112-cko-agenda-noivas-profissionais-em-largura-t](./quick/261112-cko-agenda-noivas-profissionais-em-largura-t/) |
 | 261112-e7v | Agenda: filtro de profissionais removido da barra do topo (olho + chips) e da linha que aparecia com o menu da agenda recolhido; filtro fica no menu lateral e em Filtros no celular | 2026-11-12 | 90ecb59 | [261112-e7v-remover-filtro-de-profissionais-do-topo-](./quick/261112-e7v-remover-filtro-de-profissionais-do-topo-/) |
 | 261112-gei | Exclusão definitiva (hard delete) de profissional (bloqueia só com atendimento/comanda em aberto) e de grupo de noiva (contrato, pagamentos, caixa), via funções purge_* SECURITY DEFINER; confirmação digitando o nome | 2026-11-12 | f742d7d | [261112-gei-exclusao-definitiva-de-profissional-e-de](./quick/261112-gei-exclusao-definitiva-de-profissional-e-de/) |
+| 261113-k6j | Comanda: botão "Voltar para a agenda" que reabre a agenda no mesmo dia e visão de onde veio (?agenda=&visao= na comanda, ?data=&visao= na agenda) | 2026-11-13 | 370deb7 | [261113-k6j-comanda-voltar-para-a-agenda](./quick/261113-k6j-comanda-voltar-para-a-agenda/) |
 
 ## Session Continuity
 
