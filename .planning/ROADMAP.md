@@ -232,6 +232,30 @@ Plans:
 - [x] 04.1-16-e2e-verification-PLAN.md — RLS/RBAC das tabelas novas, E2E noiva (sinal parcelado) e debutante (à vista), gate completo, VALIDATION.md
 - [ ] 04.1-17-deploy-human-verification-PLAN.md — Push + deploy staging + CI, conferência do seed e verificação humana do PDF vs. gerador do Studio
 
+### Phase 04.2: Cronograma da noiva e das acompanhantes (modelo Studio JS) (INSERTED)
+
+**Goal:** O grupo de noivas ganha o cronograma do dia do evento, calculado a partir do horário de saída e do pacote (Experience, Glam, Elegance), conforme as regras do Studio JS (referência em `phases/04.2-.../04.2-REFERENCE-cronograma-studio-js.md`). As madrinhas e acompanhantes só podem ser agendadas em horários que respeitem esse cronograma, já que elas também participam das fotos e do making of. O texto sai pronto para mandar no WhatsApp.
+
+**Decisões do usuário (2026-11-14):**
+- A feature fica junto da vertical de noivas (grupo de noivas da fase 4), não em tela separada.
+- Base do cálculo: horário de saída (S). Cada etapa = S − offset do pacote, e os fotógrafos chegam 20 min antes do registro (fotos/making of). Os offsets só mudam com instrução explícita.
+- As profissionais de make e penteado não são fixas por pacote. Quem indica é o studio em cada cronograma; sem indicação, aparece "[a definir]" com aviso. O sistema nunca preenche nem repete nomes por conta própria.
+- Acompanhantes: o atendimento delas precisa terminar antes do início do registro (making of/fotos) e não pode colidir com as profissionais ocupadas na noiva.
+
+**Requirements**: BRI-01, BRI-02
+**Depends on:** Phase 04.1
+**Plans:** 0 plans
+
+**Success Criteria** (what must be TRUE):
+1. Informando pacote, saída, noiva e data, o sistema gera o cronograma com os horários dos três casos de teste da referência (Experience 15h → chegada 08h; Glam 15:30 → 08h; Elegance 17:30 → 11:30) e o exemplo Glam 17h idêntico ao texto de referência
+2. A hora segue o formato do Studio (08h, 17h, 12:30), as etapas aparecem em ordem e os extras (chegada dos fotógrafos) vêm depois de uma linha em branco; o texto é copiável para o WhatsApp
+3. Chegada antes das 06h gera aviso antes de devolver o cronograma; profissional não indicada aparece como "[a definir]" com aviso de pendência
+4. Ao agendar uma madrinha ou acompanhante do grupo, o sistema bloqueia (ou avisa) horários que terminem depois do início do making of/fotos ou que usem uma profissional já alocada na noiva naquele intervalo
+5. Alterar a saída ou o pacote recalcula o cronograma e sinaliza os agendamentos de acompanhantes que deixaram de caber
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 04.2 to break down)
+
 ### Phase 5: Uso no dia a dia
 
 **Goal:** O SGS é usável na rotina diária do Studio JS: as telas mais usadas (agenda, comanda e caixa, noivas e contratos, clientes e financeiro, painel) não travam nem confundem, e a dona vê no painel quanto deve entrar e sair nos próximos 30 dias.
