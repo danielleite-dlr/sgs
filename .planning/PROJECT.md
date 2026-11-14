@@ -12,7 +12,7 @@ Profissional do beleza consegue agendar, atender, cobrar e comunicar com cliente
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Cronograma do dia da noiva por pacote (Experience, Glam, Elegance) com texto para WhatsApp, "ok do studio" na agenda e trava das madrinhas/acompanhantes (BRI-01, BRI-02) — Validated in Phase 04.2: Cronograma da noiva e das acompanhantes (aprovado no staging em 2026-11-14)
 
 ### Active
 
@@ -85,7 +85,7 @@ Profissional do beleza consegue agendar, atender, cobrar e comunicar com cliente
 | Plataforma modular por nichos | Templates de onboarding ativam módulos específicos; catálogo permite adicionar módulos depois sem duplicar domínio | — Accepted |
 
 ---
-*Last updated: 2026-05-02 after initialization*
+*Last updated: 2026-11-14 after Phase 04.2*
 
 ## Evolution
 
