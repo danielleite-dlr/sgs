@@ -28,6 +28,7 @@ import { EntityAvatar } from '@/components/ui/entity-avatar';
 import { PackagePriceSummary } from '@/features/catalog/components/PackagePriceSummary';
 import { PackageCostSummary } from '@/features/catalog/components/PackageCostSummary';
 import { PacoteForm } from '@/features/catalog/components/PacoteForm';
+import { PackageTimelineDialog } from '@/features/catalog/components/PackageTimelineDialog';
 import type {
   PackageData} from '@/features/catalog/api/pacotes.api';
 import {
@@ -47,6 +48,7 @@ export function PacotesPage() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<PackageData | null>(null);
+  const [timelineTarget, setTimelineTarget] = useState<PackageData | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PackageData | null>(null);
 
   useEffect(() => {
@@ -126,6 +128,9 @@ export function PacotesPage() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => setEditTarget(row)}>Editar</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTimelineTarget(row)}>
+              Cronograma do dia
+            </DropdownMenuItem>
             <DropdownMenuItem
               className="text-error-500"
               onClick={() => setDeleteTarget(row)}
@@ -211,6 +216,15 @@ export function PacotesPage() {
             />
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Cronograma do dia (regras do pacote) */}
+      {timelineTarget && (
+        <PackageTimelineDialog
+          pkg={timelineTarget}
+          open
+          onOpenChange={(v) => !v && setTimelineTarget(null)}
+        />
       )}
 
       {/* Delete confirmation */}
