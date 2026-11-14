@@ -2,7 +2,7 @@ import { gql } from '@apollo/client';
 import type { BridalUserError } from './bridal.api';
 
 export const TIMELINE_ROW_FIELDS = gql`
-  fragment TimelineRowFields on BridalTimelineRow {
+  fragment TimelineRowFields on TimelineRow {
     time
     minutes
     name

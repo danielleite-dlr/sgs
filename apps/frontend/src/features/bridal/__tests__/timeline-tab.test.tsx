@@ -78,7 +78,7 @@ const profsMock: MockedResponse = {
 
 function row(time: string, name: string) {
   return {
-    __typename: 'BridalTimelineRow',
+    __typename: 'TimelineRow',
     time,
     minutes: 0,
     name,
