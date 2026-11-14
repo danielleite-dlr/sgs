@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 06-08-despesas-fixas-PLAN.md
-last_updated: "2026-11-14T18:30:47.342Z"
+stopped_at: Completed 04.2-01-PLAN.md
+last_updated: "2026-11-14T18:33:49.680Z"
 last_activity: 2026-11-14 -- Phase 04.2 execution started
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 104
-  completed_plans: 91
+  completed_plans: 92
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-02)
 
 **Core value:** Profissional do beleza consegue agendar, atender, cobrar e comunicar com cliente em um único fluxo — sem sair da plataforma.
-**Current focus:** Phase 04.2 — cronograma-da-noiva-e-das-acompanhantes-modelo-studio-js
+**Current focus:** Phase 05 — uso-no-dia-a-dia
 
 ## Current Position
 
-Phase: 04.2 (cronograma-da-noiva-e-das-acompanhantes-modelo-studio-js) — EXECUTING
-Plan: 1 of 12
-Status: Executing Phase 04.2
-Last activity: 2026-11-14 -- Phase 04.2 execution started
+Phase: 06
+Plan: 06-09 (próximo; 06-01 a 06-08, 06-10 e 06-12 concluídos, Despesas fixas no staging)
+Status: Executing
+Last activity: 2026-11-13 - Completed quick task 261113-k6j: comanda com botão Voltar para a agenda
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -89,6 +89,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 06 P06 | 75min | 2 tasks | 9 files |
 | Phase 06 P07 | 70min | 2 tasks | 4 files |
 | Phase 06 P08 | 80min | 2 tasks | 3 files |
+| Phase 04.2 P01 | 20min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -181,6 +182,7 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-07: valores da Previsão em success-700/outflow-700 (inclusive totais de 22 px, por causa do contraste-valores.test); Badge novo outflow para origem de saída
 - [Phase 06]: 06-08: total mensal das despesas fixas ativas em text-outflow-700 22 px (saída), somado em centavos da lista carregada; Inativa com Badge neutral (ponto grafite)
 - [Phase 06]: 06-08: tabelas largas no celular rolam de lado (min-w + ações sem flex-wrap) em vez de empilhar botões
+- [Phase 04.2]: D-06: texto Glam 17h usa Chegada fotógrafos 15:10 (fotos 15:30 - 20min)
 
 ### Pending Todos
 
@@ -242,8 +244,8 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-12T03:17:58.788Z
-Stopped at: Completed 06-08-despesas-fixas-PLAN.md
+Last session: 2026-11-14T18:33:49.671Z
+Stopped at: Completed 04.2-01-PLAN.md
 Resume file: None
 | 2026-11-12 | fast | Montar manualmente (noivas) sem duplicar serviços do teste | ✅ |
 | 2026-11-13 | fast | Comanda: crédito do cliente em destaque no pagamento e no card da cliente | ✅ |
