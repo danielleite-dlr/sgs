@@ -255,7 +255,7 @@ Plans:
 
 Plans:
 - [x] 04.2-01-timeline-domain-tdd-PLAN.md — Domínio puro com TDD: horários, formato 08h/12:30, texto do WhatsApp, avisos e janelas da noiva (4 casos da referência, Glam 17h com fotógrafos 15:10)
-- [ ] 04.2-02-database-schema-seed-PLAN.md — Migration: package_timeline_steps e bridal_timelines com RLS, permissão bridal.scheduleOverride, seed Experience/Glam/Elegance do Studio JS (90 min)
+- [x] 04.2-02-database-schema-seed-PLAN.md — Migration: package_timeline_steps e bridal_timelines com RLS, permissão bridal.scheduleOverride, seed Experience/Glam/Elegance do Studio JS (90 min)
 - [ ] 04.2-03-backend-package-timeline-PLAN.md — API packageTimeline/setPackageTimeline com validação e RBAC
 - [ ] 04.2-04-backend-companion-guard-PLAN.md — Guarda das acompanhantes em createVisitTx e moveAppointmentTx, override Gerente/Admin com auditoria (nunca dispensa SLOT_TAKEN), bloqueio do arrastar da noiva
 - [ ] 04.2-05-backend-timeline-preview-PLAN.md — Simulação sem persistência, buildTimelineTx, conflitos com quem ocupa, findAdoptableBrideAppointmentsTx, cronograma confirmado com acompanhantes fora da janela

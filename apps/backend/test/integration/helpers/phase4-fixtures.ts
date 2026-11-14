@@ -315,3 +315,146 @@ export async function attachPackage(w: Phase4World, contractId: string): Promise
     data: { packageId: w.bridalPackageId },
   });
 }
+
+// ─── Fase 04.2: cronograma da noiva ───────────────────────────────────────────
+
+export interface TimelineStepFixture {
+  name: string;
+  offsetMinutes: number;
+  isExtra: boolean;
+  kind: 'make' | 'hair' | null;
+  startsRegistry: boolean;
+  durationMinutes: number | null;
+}
+
+const step = (
+  name: string,
+  offsetMinutes: number,
+  o: Partial<Omit<TimelineStepFixture, 'name' | 'offsetMinutes'>> = {},
+): TimelineStepFixture => ({
+  name,
+  offsetMinutes,
+  isExtra: false,
+  kind: null,
+  startsRegistry: false,
+  durationMinutes: null,
+  ...o,
+});
+
+/** Regras da referência (04.2-REFERENCE): make/penteado com 90 min (D-06). */
+export const GLAM_STEPS: TimelineStepFixture[] = [
+  step('chegada - coffee', 450),
+  step('massagem', 390),
+  step('banheira', 330),
+  step('make', 270, { kind: 'make', durationMinutes: 90 }),
+  step('penteado', 180, { kind: 'hair', durationMinutes: 90 }),
+  step('fotos', 90, { startsRegistry: true }),
+  step('saída', 0),
+  step('Chegada fotógrafos', 110, { isExtra: true }),
+];
+
+export const EXPERIENCE_STEPS: TimelineStepFixture[] = [
+  step('chegada - coffee', 420),
+  step('massagem', 360),
+  step('banheira', 300),
+  step('make', 240, { kind: 'make', durationMinutes: 90 }),
+  step('penteado', 150, { kind: 'hair', durationMinutes: 90 }),
+  step('making of', 60, { startsRegistry: true }),
+  step('saída', 0),
+  step('Chegada fotógrafos', 80, { isExtra: true }),
+];
+
+export const ELEGANCE_STEPS: TimelineStepFixture[] = [
+  step('chegada - coffee', 360),
+  step('lavar cabelo', 300),
+  step('make', 270, { kind: 'make', durationMinutes: 90 }),
+  step('penteado', 180, { kind: 'hair', durationMinutes: 90 }),
+  step('fotos', 90, { startsRegistry: true }),
+  step('saída', 0),
+  step('Chegada fotógrafos', 110, { isExtra: true }),
+];
+
+/** Grava as regras de cronograma de um pacote (displayOrder = índice). */
+export async function insertPackageTimelineRows(
+  w: Phase3World,
+  packageId: string,
+  steps: typeof GLAM_STEPS,
+  services: { makeServiceId: string | null; hairServiceId: string | null },
+): Promise<void> {
+  await adminPrisma.packageTimelineStep.createMany({
+    data: steps.map((s, i) => ({
+      organizationId: w.orgId,
+      packageId,
+      displayOrder: i,
+      isExtra: s.isExtra,
+      name: s.name,
+      offsetMinutes: s.offsetMinutes,
+      kind: s.kind,
+      serviceId:
+        s.kind === 'make' ? services.makeServiceId : s.kind === 'hair' ? services.hairServiceId : null,
+      durationMinutes: s.durationMinutes,
+      startsRegistry: s.startsRegistry,
+    })),
+  });
+}
+
+export interface TimelineSlotFixture {
+  professionalId: string;
+  serviceId: string;
+  /** ISO 8601 */
+  startsAt: string;
+  endsAt: string;
+  appointmentId?: string | null;
+}
+
+export interface InsertTimelineOpts {
+  groupId: string;
+  packageId?: string | null;
+  packageName?: string;
+  /** "HH:MM" */
+  departureTime: string;
+  /** ISO 8601 */
+  departureAt: string;
+  registryStartsAt: string;
+  registryLabel?: string;
+  brideLabel?: string;
+  make?: TimelineSlotFixture;
+  hair?: TimelineSlotFixture;
+  version?: number;
+}
+
+/** Grava um cronograma confirmado direto no banco (sem passar pela mutation de confirmação). */
+export async function insertConfirmedTimelineRow(
+  w: Phase3World,
+  o: InsertTimelineOpts,
+): Promise<{ timelineId: string }> {
+  const row = await adminPrisma.bridalTimeline.create({
+    data: {
+      organizationId: w.orgId,
+      groupId: o.groupId,
+      packageId: o.packageId ?? null,
+      packageName: o.packageName ?? 'Glam',
+      departureTime: o.departureTime,
+      departureAt: new Date(o.departureAt),
+      registryStartsAt: new Date(o.registryStartsAt),
+      registryLabel: o.registryLabel ?? 'fotos',
+      brideLabel: o.brideLabel ?? 'NOIVA',
+      makeProfessionalId: o.make?.professionalId ?? null,
+      makeServiceId: o.make?.serviceId ?? null,
+      makeStartsAt: o.make ? new Date(o.make.startsAt) : null,
+      makeEndsAt: o.make ? new Date(o.make.endsAt) : null,
+      makeAppointmentId: o.make?.appointmentId ?? null,
+      hairProfessionalId: o.hair?.professionalId ?? null,
+      hairServiceId: o.hair?.serviceId ?? null,
+      hairStartsAt: o.hair ? new Date(o.hair.startsAt) : null,
+      hairEndsAt: o.hair ? new Date(o.hair.endsAt) : null,
+      hairAppointmentId: o.hair?.appointmentId ?? null,
+      rows: [],
+      text: 'CRONOGRAMA TESTE',
+      warnings: [],
+      confirmedBy: w.members.admin,
+      version: o.version ?? 1,
+    },
+  });
+  return { timelineId: row.id };
+}
