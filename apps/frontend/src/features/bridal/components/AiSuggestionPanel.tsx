@@ -21,6 +21,10 @@ import {
   type BridalGroupPayload,
   type BridalUserError,
 } from '../api/bridal.api';
+import {
+  isOverridableTimelineError,
+  requestTimelineOverride,
+} from '@/features/operations/lib/timeline-override';
 import { useBridalPermission } from '../bridal-permissions';
 import { FALLBACK_REASON_LABEL, errorMessage, formatEventDate } from '../lib/bridal-labels';
 import {
@@ -47,6 +51,7 @@ export function AiSuggestionPanel({ group, onScheduled }: Props) {
   const client = useApolloClient();
   const canSuggest = useBridalPermission('bridal.aiSuggest');
   const canWrite = useBridalPermission('bridal.write');
+  const canOverride = useBridalPermission('bridal.scheduleOverride');
   const [mode, setMode] = useState<Mode>('idle');
   const [suggestion, setSuggestion] = useState<AiScheduleSuggestion | null>(null);
   const [rows, setRows] = useState<ScheduleRow[]>([]);
@@ -154,17 +159,26 @@ export function AiSuggestionPanel({ group, onScheduled }: Props) {
     const items = rowsToScheduleItems(rows);
     const deps = depositsToInput(deposits);
     try {
-      let errs: BridalUserError[];
-      if (mode === 'ai') {
-        const res = await confirm({
-          variables: { input: { groupId: group.id, items, deposits: deps } },
-        });
-        errs = res.data?.confirmBridalSchedule.errors ?? [];
-      } else {
-        const res = await scheduleManual({
-          variables: { input: { groupId: group.id, items, deposits: deps } },
-        });
-        errs = res.data?.scheduleBridalEvent.errors ?? [];
+      const send = async (timelineOverride?: { reason: string }): Promise<BridalUserError[]> => {
+        const input = {
+          groupId: group.id,
+          items,
+          deposits: deps,
+          ...(timelineOverride ? { timelineOverride } : {}),
+        };
+        if (mode === 'ai') {
+          const res = await confirm({ variables: { input } });
+          return res.data?.confirmBridalSchedule.errors ?? [];
+        }
+        const res = await scheduleManual({ variables: { input } });
+        return res.data?.scheduleBridalEvent.errors ?? [];
+      };
+      let errs = await send();
+      // Gerente/Administrador podem forçar com motivo quando o servidor recusa por causa do
+      // cronograma da noiva (mesmo tratamento do arrastar na agenda, 04.2-09).
+      if (errs.length > 0 && canOverride && isOverridableTimelineError(errs[0])) {
+        const reason = await requestTimelineOverride(errs[0].message);
+        if (reason) errs = await send({ reason });
       }
       if (errs.length > 0) {
         setErrors(errs.map(errorMessage)); // mantém as linhas editadas
