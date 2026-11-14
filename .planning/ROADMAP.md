@@ -244,7 +244,7 @@ Plans:
 
 **Requirements**: BRI-01, BRI-02
 **Depends on:** Phase 04.1
-**Plans:** 3/12 plans executed
+**Plans:** 5/12 plans executed
 
 **Success Criteria** (what must be TRUE):
 1. Informando pacote, saída, noiva e data, o sistema gera o cronograma com os horários dos três casos de teste da referência (Experience 15h → chegada 08h; Glam 15:30 → 08h; Elegance 17:30 → 11:30) e o exemplo Glam 17h idêntico ao texto de referência
@@ -261,7 +261,7 @@ Plans:
 - [ ] 04.2-05-backend-timeline-preview-PLAN.md — Simulação sem persistência, buildTimelineTx, conflitos com quem ocupa, findAdoptableBrideAppointmentsTx, cronograma confirmado com acompanhantes fora da janela
 - [ ] 04.2-06-backend-timeline-confirm-PLAN.md — "Ok do studio": cria/move make e penteado (90 min), adota agendamento importado, reconfirmar sem duplicar, readyBy = saída, refaz deslocamentos
 - [ ] 04.2-07-backend-ai-schedule-timeline-PLAN.md — Sugestão IA após o cronograma: sem ALREADY_SCHEDULED, limite no início do registro
-- [ ] 04.2-08-frontend-package-timeline-PLAN.md — Frontend: diálogo "Cronograma do dia" nas regras do pacote
+- [x] 04.2-08-frontend-package-timeline-PLAN.md — Frontend: diálogo "Cronograma do dia" nas regras do pacote
 - [ ] 04.2-09-frontend-timeline-override-PLAN.md — Frontend: mensagem da guarda e "Forçar mesmo assim" (Gerente/Admin) no novo agendamento e no arrastar; pendência registrada no 06-09
 - [ ] 04.2-10-frontend-timeline-tab-PLAN.md — Frontend: aba "Cronograma do dia" no grupo de noivas (simulações, copiar, confirmar, acompanhantes que não cabem)
 - [ ] 04.2-11-e2e-rbac-gate-PLAN.md — RLS/RBAC phase42, E2E cronograma-noiva e gate completo
