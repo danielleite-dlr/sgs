@@ -324,7 +324,7 @@ Plans:
 - [x] 06-06-entradas-e-saidas-PLAN.md — Entradas e saídas (Financeiro): faixa de números, filtros, gráfico e lançamentos
 - [x] 06-07-previsao-de-caixa-PLAN.md — Previsão de caixa: painel de totais, filtro segmentado, tabelas semanais
 - [x] 06-08-despesas-fixas-PLAN.md — Despesas fixas: tabela, selos de situação, total mensal das ativas
-- [ ] 06-09-grupo-de-noivas-PLAN.md — Grupo de noivas: ficha do evento, pessoas e cronograma; título com caixa padronizada
+- [x] 06-09-grupo-de-noivas-PLAN.md — Grupo de noivas: ficha do evento, pessoas e cronograma; título com caixa padronizada
 - [x] 06-10-inicio-PLAN.md — Início: cabeçalho do painel e previsão de 30 dias no padrão novo
 - [ ] 06-11-fechamento-PLAN.md — Auditoria completa, roteiro de conferência e aceite da usuária
 
