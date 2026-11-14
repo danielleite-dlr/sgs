@@ -1,8 +1,5 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import {
-  CurrentTenant,
-  TenantContext,
-} from '../../authz/decorators/current-tenant.decorator';
+import { CurrentTenant, TenantContext } from '../../authz/decorators/current-tenant.decorator';
 import { RequirePermission } from '../../authz/decorators/require-permission.decorator';
 import { PERMISSIONS } from '../../authz/permissions.catalog';
 import { BridalTimelineService, type BridalTimelineInput } from './timeline.service';
@@ -23,10 +20,9 @@ export class BridalTimelineResolver {
     return this.timeline.get(tenant.organizationId, groupId);
   }
 
-  /** Implementada no 04.2-06. */
   @Mutation('confirmBridalTimeline')
   @RequirePermission(PERMISSIONS.BRIDAL_WRITE, PERMISSIONS.APPOINTMENT_WRITE)
-  confirm() {
-    return this.timeline.confirm();
+  confirm(@CurrentTenant() tenant: TenantContext, @Args('input') input: BridalTimelineInput) {
+    return this.timeline.confirm(tenant.organizationId, tenant.memberId, input);
   }
 }
