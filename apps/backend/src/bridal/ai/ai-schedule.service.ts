@@ -82,6 +82,7 @@ export interface ConfirmBridalScheduleInput {
     endsAt: Date | string;
   }[];
   deposits?: BridalDepositInput[] | null;
+  timelineOverride?: { reason: string } | null;
 }
 
 interface StoredProposal {
@@ -360,6 +361,7 @@ export class AiScheduleService {
         groupId: input.groupId,
         items: items.map((i) => ({ ...i, purpose: 'event' })),
         deposits: input.deposits,
+        timelineOverride: input.timelineOverride ?? null,
       });
     } catch (e) {
       const m = mapBridalError(e);
