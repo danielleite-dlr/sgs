@@ -6,6 +6,11 @@ import {
   type AppointmentData,
   type MoveAppointmentResult,
 } from "../api/appointments.api";
+import { useBridalPermission } from "@/features/bridal/bridal-permissions";
+import {
+  isOverridableTimelineError,
+  requestTimelineOverride,
+} from "../lib/timeline-override";
 
 export interface MoveTarget {
   professionalId: string;
@@ -21,6 +26,7 @@ export interface MoveTarget {
  */
 export function useMoveAppointment() {
   const [mutate] = useMutation<MoveAppointmentResult>(MoveAppointmentMutation);
+  const canOverride = useBridalPermission("bridal.scheduleOverride");
 
   return useCallback(
     async (appointment: AppointmentData, target: MoveTarget): Promise<boolean> => {
@@ -29,35 +35,50 @@ export function useMoveAppointment() {
         new Date(appointment.startsAt).getTime();
       const startsAt = target.startsAt.toISOString();
       const endsAt = new Date(target.startsAt.getTime() + duration).toISOString();
-      try {
-        const { data } = await mutate({
+      const send = (timelineOverride?: { reason: string }) =>
+        mutate({
           variables: {
             input: {
               id: appointment.id,
               professionalId: target.professionalId,
               startsAt,
+              ...(timelineOverride ? { timelineOverride } : {}),
             },
           },
-          optimisticResponse: {
-            moveAppointment: {
-              __typename: "AppointmentPayload",
-              appointment: {
-                ...appointment,
-                __typename: "Appointment",
-                professionalId: target.professionalId,
-                professional: {
-                  __typename: "Member",
-                  id: target.professionalId,
-                  displayName: target.professionalName,
-                },
-                startsAt,
-                endsAt,
-              },
-              errors: [],
-            },
-          } as unknown as MoveAppointmentResult,
+          // No reenvio com override não há otimismo: o card só anda se o servidor aceitar.
+          ...(timelineOverride
+            ? {}
+            : {
+                optimisticResponse: {
+                  moveAppointment: {
+                    __typename: "AppointmentPayload",
+                    appointment: {
+                      ...appointment,
+                      __typename: "Appointment",
+                      professionalId: target.professionalId,
+                      professional: {
+                        __typename: "Member",
+                        id: target.professionalId,
+                        displayName: target.professionalName,
+                      },
+                      startsAt,
+                      endsAt,
+                    },
+                    errors: [],
+                  },
+                } as unknown as MoveAppointmentResult,
+              }),
         });
-        const errors = data?.moveAppointment.errors ?? [];
+      try {
+        let { data } = await send();
+        let errors = data?.moveAppointment.errors ?? [];
+        if (errors.length > 0 && canOverride && isOverridableTimelineError(errors[0])) {
+          const reason = await requestTimelineOverride(errors[0].message);
+          if (reason) {
+            ({ data } = await send({ reason }));
+            errors = data?.moveAppointment.errors ?? [];
+          }
+        }
         if (errors.length > 0) {
           toast.error(`Não foi possível mover: ${errors[0].message}`);
           return false;
@@ -71,6 +92,6 @@ export function useMoveAppointment() {
         return false;
       }
     },
-    [mutate],
+    [mutate, canOverride],
   );
 }
