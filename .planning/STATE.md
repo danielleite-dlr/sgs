@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04.2-11-e2e-rbac-gate-PLAN.md
+stopped_at: Completed 04.2-12-PLAN.md
 last_updated: "2026-11-14T20:24:35.326Z"
 last_activity: "2026-11-13 - Completed quick task 261113-k6j: comanda com botão Voltar para a agenda"
 progress:
