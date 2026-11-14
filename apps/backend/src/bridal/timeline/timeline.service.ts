@@ -1,4 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
+import { MOVABLE_STATUSES } from '../../appointments/appointment-status';
+import { moveAppointmentTx } from '../../appointments/appointment-move';
+import { acquireScheduleLocks, mapSchedulingError } from '../../appointments/scheduling-guard';
+import { recordAudit } from '../../common/audit-log';
+import {
+  BRIDAL_SCHEDULE_TX_OPTIONS,
+  createBridalScheduleTx,
+  rebuildTravelBlocksTx,
+} from '../bridal-schedule';
+import { syncContractCoverageTx } from '../bridal-coverage';
 import { TenantContextService } from '../../database/tenant-context.service';
 import type { TenantPrismaClient } from '../../database/types';
 import { professionalServesCategory } from '../../identity/member-categories';
@@ -68,6 +79,9 @@ export interface BuiltTimeline {
   canConfirm: boolean;
   /** agendamentos da noiva já ligados ao cronograma atual ou adotáveis (ignorados na checagem de conflito) */
   ownAppointmentIds: string[];
+  /** limites do dia do evento no fuso do salão (usados na adoção) */
+  eventDayStart: Date;
+  eventDayEnd: Date;
 }
 
 const firstName = (n: string) => n.trim().split(/\s+/)[0] ?? n;
@@ -106,7 +120,9 @@ export async function buildTimelineTx(
   }
   const eventDay = group.eventDate.toISOString().slice(0, 10);
 
-  const pkg = await tx.package.findFirst({ where: { id: input.packageId, deletedAt: null } });
+  const pkg = await tx.package.findFirst({
+    where: { id: input.packageId, deletedAt: null },
+  });
   if (!pkg) throw new BridalError('NOT_FOUND', 'Pacote não encontrado.', 'packageId');
   const steps = await loadPackageTimelineTx(tx, pkg.id);
 
@@ -160,8 +176,7 @@ export async function buildTimelineTx(
     FROM organizations o LIMIT 1`;
   if (!dep[0]) throw new BridalError('NOT_FOUND', 'Organização não encontrada.');
   const departureAt = dep[0].d;
-  const toInstant = (m: number) =>
-    new Date(departureAt.getTime() - (departureMinutes - m) * 60000);
+  const toInstant = (m: number) => new Date(departureAt.getTime() - (departureMinutes - m) * 60000);
 
   const registryStartsAt =
     result.registryStartMinutes != null ? toInstant(result.registryStartMinutes) : null;
@@ -192,7 +207,9 @@ export async function buildTimelineTx(
   });
 
   const own = new Set<string>();
-  const current = await tx.bridalTimeline.findFirst({ where: { groupId: group.id } });
+  const current = await tx.bridalTimeline.findFirst({
+    where: { groupId: group.id },
+  });
   for (const id of [current?.makeAppointmentId, current?.hairAppointmentId]) {
     if (id) own.add(id);
   }
@@ -277,6 +294,8 @@ export async function buildTimelineTx(
     missing,
     canConfirm: missing.length === 0 && conflicts.length === 0,
     ownAppointmentIds,
+    eventDayStart: dep[0].day_start,
+    eventDayEnd: dep[0].day_end,
   };
 }
 
@@ -333,6 +352,52 @@ function toErrors(e: unknown): BridalUserError[] {
   return [m];
 }
 
+async function loadTimelineViewTx(tx: TenantPrismaClient, groupId: string) {
+  const t = await tx.bridalTimeline.findFirst({ where: { groupId } });
+  if (!t) return null;
+  const by = t.confirmedBy
+    ? await tx.member.findFirst({
+        where: { id: t.confirmedBy },
+        select: { displayName: true },
+      })
+    : null;
+  const companionIssues: TimelineCompanionIssue[] = await findCompanionIssuesTx(tx, groupId);
+  return {
+    id: t.id,
+    groupId: t.groupId,
+    packageId: t.packageId,
+    packageName: t.packageName,
+    departureTime: t.departureTime,
+    brideLabel: t.brideLabel,
+    makeProfessionalId: t.makeProfessionalId,
+    hairProfessionalId: t.hairProfessionalId,
+    rows: t.rows,
+    text: t.text,
+    warnings: t.warnings,
+    registryStartsAt: t.registryStartsAt,
+    registryLabel: t.registryLabel,
+    confirmedAt: t.confirmedAt,
+    confirmedByName: by?.displayName ?? null,
+    version: t.version,
+    companionIssues,
+  };
+}
+
+/** Lançado dentro da transação para desfazer tudo quando há profissional ocupada. */
+class TimelineConflictError extends Error {
+  constructor(public readonly conflicts: BuiltTimelineConflict[]) {
+    super('TIMELINE_CONFLICT');
+  }
+}
+
+export interface BridalTimelineConfirmPayload {
+  timeline: Awaited<ReturnType<typeof loadTimelineViewTx>>;
+  conflicts: BuiltTimelineConflict[];
+  errors: BridalUserError[];
+}
+
+const overlaps = (a0: Date, a1: Date, b0: Date, b1: Date) => a0 < b1 && b0 < a1;
+
 @Injectable()
 export class BridalTimelineService {
   constructor(private readonly tenant: TenantContextService) {}
@@ -349,46 +414,258 @@ export class BridalTimelineService {
   }
 
   async get(orgId: string, groupId: string) {
-    return this.tenant.runWithTenant(orgId, async (tx) => {
-      const t = await tx.bridalTimeline.findFirst({
-        where: { groupId },
-      });
-      if (!t) return null;
-      const by = t.confirmedBy
-        ? await tx.member.findFirst({
-            where: { id: t.confirmedBy },
-            select: { displayName: true },
-          })
-        : null;
-      const companionIssues: TimelineCompanionIssue[] = await findCompanionIssuesTx(tx, groupId);
-      return {
-        id: t.id,
-        groupId: t.groupId,
-        packageId: t.packageId,
-        packageName: t.packageName,
-        departureTime: t.departureTime,
-        brideLabel: t.brideLabel,
-        makeProfessionalId: t.makeProfessionalId,
-        hairProfessionalId: t.hairProfessionalId,
-        rows: t.rows,
-        text: t.text,
-        warnings: t.warnings,
-        registryStartsAt: t.registryStartsAt,
-        registryLabel: t.registryLabel,
-        confirmedAt: t.confirmedAt,
-        confirmedByName: by?.displayName ?? null,
-        version: t.version,
-        companionIssues,
-      };
-    });
+    return this.tenant.runWithTenant(orgId, (tx) => loadTimelineViewTx(tx, groupId));
   }
 
-  /** Stub até o 04.2-06. */
-  confirm() {
-    return {
-      timeline: null,
-      conflicts: [],
-      errors: [{ code: 'NOT_IMPLEMENTED', message: 'Em construção.', field: null }],
-    };
+  /** Ok do studio (D-02, D-06): recalcula no servidor e cria/move/adota make e penteado da noiva. */
+  async confirm(
+    orgId: string,
+    memberId: string,
+    input: BridalTimelineInput,
+  ): Promise<BridalTimelineConfirmPayload> {
+    try {
+      return await this.tenant.runWithTenant(
+        orgId,
+        (tx) => confirmTimelineTx(tx, orgId, memberId, input),
+        BRIDAL_SCHEDULE_TX_OPTIONS,
+      );
+    } catch (e) {
+      if (e instanceof TimelineConflictError) {
+        return {
+          timeline: null,
+          conflicts: e.conflicts,
+          errors: [
+            {
+              code: 'TIMELINE_CONFLICT',
+              message: 'Há profissional ocupada no horário da noiva.',
+              field: null,
+            },
+          ],
+        };
+      }
+      const m = mapBridalError(e) ?? mapSchedulingError(e);
+      if (!m) throw e;
+      return { timeline: null, conflicts: [], errors: [m] };
+    }
   }
+}
+
+async function confirmTimelineTx(
+  tx: TenantPrismaClient,
+  orgId: string,
+  memberId: string,
+  input: BridalTimelineInput,
+): Promise<BridalTimelineConfirmPayload> {
+  const b = await buildTimelineTx(tx, orgId, input);
+  if (b.missing.length > 0) {
+    throw new BridalError('TIMELINE_INCOMPLETE', b.missing.join(' '), null);
+  }
+  if (b.conflicts.length > 0) throw new TimelineConflictError(b.conflicts);
+
+  const groupId = b.group.id;
+  const existing = await tx.bridalTimeline.findFirst({ where: { groupId } });
+  if (existing) {
+    await tx.$queryRaw`SELECT id FROM bridal_timelines WHERE group_id = ${groupId}::uuid FOR UPDATE`;
+  }
+
+  // Alvos: agendamento ligado (ainda movível), adoção (D-06) ou criação.
+  const movable = MOVABLE_STATUSES as readonly string[];
+  const linkedIds = [existing?.makeAppointmentId, existing?.hairAppointmentId].filter(
+    (x): x is string => !!x,
+  );
+  const linked = linkedIds.length
+    ? await tx.appointment.findMany({
+        where: { id: { in: linkedIds } },
+        select: {
+          id: true,
+          professionalId: true,
+          startsAt: true,
+          endsAt: true,
+          status: true,
+        },
+      })
+    : [];
+  const linkedById = new Map(linked.map((a) => [a.id, a]));
+
+  interface Target {
+    slot: BuiltTimelineSlot;
+    id: string | null;
+    adopted: boolean;
+    cur: { professionalId: string; startsAt: Date; endsAt: Date } | null;
+  }
+  const targets: Target[] = [];
+  for (const slot of b.slots) {
+    const linkedId =
+      slot.kind === 'make' ? existing?.makeAppointmentId : existing?.hairAppointmentId;
+    const lk = linkedId ? linkedById.get(linkedId) : undefined;
+    if (lk && movable.includes(lk.status)) {
+      targets.push({ slot, id: lk.id, adopted: false, cur: lk });
+      continue;
+    }
+    const adoptable = await findAdoptableBrideAppointmentsTx(tx, {
+      groupId,
+      brideClientId: b.group.brideClientId,
+      serviceId: slot.serviceId!,
+      eventDayStart: b.eventDayStart,
+      eventDayEnd: b.eventDayEnd,
+    });
+    if (adoptable.length > 1) {
+      throw new BridalError(
+        'TIMELINE_AMBIGUOUS_APPOINTMENTS',
+        `A noiva tem ${adoptable.length} agendamentos de ${slot.serviceName} neste evento; cancele os que sobram antes de confirmar.`,
+        null,
+      );
+    }
+    const one = adoptable[0];
+    targets.push(
+      one
+        ? { slot, id: one.id, adopted: true, cur: one }
+        : { slot, id: null, adopted: false, cur: null },
+    );
+  }
+
+  await acquireScheduleLocks(tx, orgId, [
+    b.makeProfessionalId!,
+    b.hairProfessionalId!,
+    ...targets.filter((t) => t.cur).map((t) => t.cur!.professionalId),
+  ]);
+  // Deslocamentos do próprio grupo seriam vistos como TIME_BLOCKED; são reconstruídos adiante.
+  await tx.timeBlock.deleteMany({
+    where: { bridalGroupId: groupId, kind: 'deslocamento' },
+  });
+
+  // Ordem dos movimentos: make antes do penteado, salvo cruzamento com o intervalo atual do outro.
+  const toMove = targets.filter((t) => t.id);
+  if (toMove.length === 2) {
+    const [first, second] = toMove as [Target, Target];
+    const blocks = (a: Target, other: Target) =>
+      other.cur != null &&
+      other.cur.professionalId === a.slot.professionalId &&
+      overlaps(a.slot.startsAt, a.slot.endsAt, other.cur.startsAt, other.cur.endsAt);
+    if (blocks(first, second)) {
+      if (blocks(second, first)) {
+        throw new BridalError(
+          'TIMELINE_REORDER_CONFLICT',
+          'Não foi possível reorganizar make e penteado; cancele um dos agendamentos da noiva e confirme de novo.',
+          null,
+        );
+      }
+      toMove.reverse();
+    }
+  }
+  for (const t of toMove) {
+    if (t.adopted) {
+      await tx.appointment.update({
+        where: { id: t.id! },
+        data: { bridalGroupId: groupId, purpose: 'event' },
+      });
+    }
+    await moveAppointmentTx(
+      tx,
+      orgId,
+      memberId,
+      {
+        id: t.id!,
+        professionalId: t.slot.professionalId!,
+        startsAt: t.slot.startsAt,
+        endsAt: t.slot.endsAt,
+      },
+      { fromTimeline: true },
+    );
+  }
+
+  const toCreate = targets.filter((t) => !t.id);
+  const created: string[] = [];
+  const idByKind = new Map<string, string>(
+    targets.filter((t) => t.id).map((t) => [t.slot.kind, t.id!]),
+  );
+  if (toCreate.length > 0) {
+    const res = await createBridalScheduleTx(tx, orgId, memberId, {
+      groupId,
+      items: toCreate.map((t) => ({
+        groupMemberId: b.group.brideMemberId,
+        serviceId: t.slot.serviceId!,
+        professionalId: t.slot.professionalId!,
+        startsAt: t.slot.startsAt,
+        endsAt: t.slot.endsAt,
+        purpose: 'event',
+      })),
+    });
+    const rows = await tx.appointment.findMany({
+      where: { id: { in: res.appointmentIds } },
+      select: { id: true, serviceId: true },
+    });
+    for (const t of toCreate) {
+      const r = rows.find((x) => x.serviceId === t.slot.serviceId);
+      if (r) {
+        idByKind.set(t.slot.kind, r.id);
+        created.push(r.id);
+      }
+    }
+  }
+
+  await syncContractCoverageTx(tx, orgId, groupId);
+  await rebuildTravelBlocksTx(tx, orgId, memberId, groupId);
+
+  const make = b.slots.find((s) => s.kind === 'make')!;
+  const hair = b.slots.find((s) => s.kind === 'hair')!;
+  const version = existing ? existing.version + 1 : 1;
+  const data = {
+    packageId: b.packageId,
+    packageName: b.packageName,
+    departureTime: b.departureTime,
+    departureAt: b.departureAt,
+    registryStartsAt: b.registryStartsAt!,
+    registryLabel: b.registryLabel ?? '',
+    brideLabel: b.brideLabel,
+    makeProfessionalId: make.professionalId,
+    hairProfessionalId: hair.professionalId,
+    makeServiceId: make.serviceId,
+    hairServiceId: hair.serviceId,
+    makeStartsAt: make.startsAt,
+    makeEndsAt: make.endsAt,
+    hairStartsAt: hair.startsAt,
+    hairEndsAt: hair.endsAt,
+    makeAppointmentId: idByKind.get('make') ?? null,
+    hairAppointmentId: idByKind.get('hair') ?? null,
+    rows: b.result.rows as unknown as Prisma.InputJsonValue,
+    text: b.result.text,
+    warnings: b.result.warnings as unknown as Prisma.InputJsonValue,
+    confirmedBy: memberId,
+    confirmedAt: new Date(),
+    version,
+  };
+  await tx.bridalTimeline.upsert({
+    where: { groupId },
+    create: { organizationId: orgId, groupId, ...data },
+    update: data,
+  });
+
+  await tx.bridalGroup.update({
+    where: { id: groupId },
+    data: { readyBy: b.departureAt },
+  });
+
+  await recordAudit(tx, {
+    orgId,
+    actorMemberId: memberId,
+    action: existing ? 'bridal.timeline.reconfirm' : 'bridal.timeline.confirm',
+    entityType: 'bridal_group',
+    entityId: groupId,
+    metadata: {
+      version,
+      packageId: b.packageId,
+      departureTime: b.departureTime,
+      makeAppointmentId: idByKind.get('make') ?? null,
+      hairAppointmentId: idByKind.get('hair') ?? null,
+      adopted: targets.filter((t) => t.adopted).map((t) => t.id),
+      created,
+    },
+  });
+
+  return {
+    timeline: await loadTimelineViewTx(tx, groupId),
+    conflicts: [],
+    errors: [],
+  };
 }
