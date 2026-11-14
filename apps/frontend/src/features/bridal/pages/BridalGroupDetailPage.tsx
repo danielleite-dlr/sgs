@@ -18,6 +18,7 @@ import { useBridalPermission } from '../bridal-permissions';
 import { AiSuggestionPanel } from '../components/AiSuggestionPanel';
 import { BridalGroupFormDialog } from '../components/BridalGroupFormDialog';
 import { BridalMembersCard } from '../components/BridalMembersCard';
+import { BridalTimelineTab } from '../components/BridalTimelineTab';
 import { CancelBridalGroupDialog } from '../components/CancelBridalGroupDialog';
 import {
   CONTRACT_STATUS_CAPTION,
@@ -201,12 +202,16 @@ export function BridalGroupDetailPage() {
         <TabsList>
           <TabsTrigger value="people">Pessoas</TabsTrigger>
           <TabsTrigger value="schedule">Agenda do evento</TabsTrigger>
+          <TabsTrigger value="timeline">Cronograma do dia</TabsTrigger>
         </TabsList>
         <TabsContent value="people">
           <BridalMembersCard group={group} />
         </TabsContent>
         <TabsContent value="schedule">
           <AiSuggestionPanel group={group} onScheduled={() => void refetch()} />
+        </TabsContent>
+        <TabsContent value="timeline">
+          <BridalTimelineTab group={group} onChanged={() => void refetch()} />
         </TabsContent>
       </Tabs>
 
