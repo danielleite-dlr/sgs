@@ -11,6 +11,11 @@ import { recordCashMovement } from "../financial/cash-ledger";
 import type { CashMethod } from "../financial/cash-ledger";
 import { lockClient, recordCreditMovement } from "../financial/client-credit";
 import { professionalServesCategory } from "../identity/member-categories";
+import {
+  assertTimelineRulesTx,
+  recordTimelineOverrideTx,
+  type TimelineOverrideInput,
+} from "../bridal/timeline/timeline-guard";
 import { parseAppointmentInterval } from "./appointments.service";
 import {
   SchedulingError,
@@ -34,6 +39,8 @@ export interface CreateVisitInput {
   packageId?: string | null;
   deposit?: { amount: string; method: string } | null;
   notes?: string | null;
+  /** Força o horário fora do cronograma da noiva (Gerente/Administrador; auditado). */
+  timelineOverride?: TimelineOverrideInput | null;
   /** Visita de um grupo de noivas (04-08): finalidade e cobertura do contrato (D-08). */
   bridal?: {
     groupId: string;
@@ -189,6 +196,15 @@ export async function createVisitTx(
       startsAt: intervals[idx].startsAt,
       endsAt: intervals[idx].endsAt,
     });
+    const guard = await assertTimelineRulesTx(tx, {
+      clientId: input.clientId,
+      professionalId: item.professionalId,
+      startsAt: intervals[idx].startsAt,
+      endsAt: intervals[idx].endsAt,
+      purpose: input.bridal?.purpose ?? null,
+      actorMemberId: memberId,
+      override: input.timelineOverride ?? null,
+    });
     const appointment = await tx.appointment.create({
       data: {
         organizationId: orgId,
@@ -212,6 +228,16 @@ export async function createVisitTx(
       },
       select: { id: true },
     });
+    if (guard.overridden) {
+      await recordTimelineOverrideTx(
+        tx,
+        orgId,
+        memberId,
+        appointment.id,
+        input.timelineOverride!.reason,
+        guard.overridden,
+      );
+    }
     created.push({ id: appointment.id, item });
   }
   const ids = created.map((c) => c.id);

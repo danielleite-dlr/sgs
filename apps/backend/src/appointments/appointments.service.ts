@@ -1,20 +1,18 @@
 import { Injectable } from "@nestjs/common";
 import { fromCents, toCents } from "../common/money";
 import { TenantContextService } from "../database/tenant-context.service";
-import { professionalServesCategory } from "../identity/member-categories";
 import {
-  MOVABLE_STATUSES,
   SETTABLE_STATUSES,
   canTransition,
 } from "./appointment-status";
 import {
   SCHEDULE_TX_OPTIONS,
   SchedulingError,
-  acquireScheduleLocks,
-  assertSlotFree,
   mapSchedulingError,
 } from "./scheduling-guard";
 import { cancelAppointmentTx } from "./appointment-cancel";
+import { moveAppointmentTx } from "./appointment-move";
+import type { TimelineOverrideInput } from "../bridal/timeline/timeline-guard";
 import { createVisitTx, type CreateVisitInput } from "./visits";
 
 export interface CreateAppointmentInput {
@@ -24,6 +22,7 @@ export interface CreateAppointmentInput {
   startsAt: Date | string;
   endsAt: Date | string;
   notes?: string | null;
+  timelineOverride?: TimelineOverrideInput | null;
 }
 
 export interface AppointmentUserError {
@@ -177,6 +176,7 @@ export class AppointmentsService {
     const r = await this.createVisit(orgId, memberId, {
       clientId: input.clientId,
       notes: input.notes ?? null,
+      timelineOverride: input.timelineOverride ?? null,
       items: [
         {
           serviceId: input.serviceId,
@@ -228,8 +228,13 @@ export class AppointmentsService {
 
   async move(
     orgId: string,
-    _memberId: string,
-    input: { id: string; professionalId: string; startsAt: Date | string },
+    memberId: string,
+    input: {
+      id: string;
+      professionalId: string;
+      startsAt: Date | string;
+      timelineOverride?: TimelineOverrideInput | null;
+    },
   ): Promise<AppointmentPayload> {
     const newStart = new Date(input.startsAt);
     if (Number.isNaN(newStart.getTime())) {
@@ -249,107 +254,17 @@ export class AppointmentsService {
       .runWithTenant(
         orgId,
         async (tx) => {
-          const peek = await tx.appointment.findFirst({
-            where: { id: input.id },
-            select: { professionalId: true },
-          });
-          if (!peek) throw notFound();
-
-          await acquireScheduleLocks(tx, orgId, [
-            peek.professionalId,
-            input.professionalId,
-          ]);
-          await tx.$queryRaw`SELECT id FROM appointments WHERE id = ${input.id}::uuid FOR UPDATE`;
-          const current = await tx.appointment.findFirst({
-            where: { id: input.id },
-          });
-          if (!current) throw notFound();
-          if (
-            current.professionalId !== peek.professionalId &&
-            current.professionalId !== input.professionalId
-          ) {
-            // Moveu para outra raia entre a leitura e o lock: o cliente deve tentar de novo.
-            throw new SchedulingError(
-              "SLOT_TAKEN",
-              "Horário já reservado por outra pessoa — escolha outro slot",
-              "startsAt",
-            );
-          }
-          if (!isIn(MOVABLE_STATUSES, current.status)) {
-            throw new SchedulingError(
-              "INVALID_STATUS",
-              "Este agendamento não pode ser movido.",
-              "id",
-            );
-          }
-
-          const professionalChanged =
-            current.professionalId !== input.professionalId;
-          if (professionalChanged) {
-            const professional = await tx.member.findFirst({
-              where: {
-                id: input.professionalId,
-                status: "active",
-                deletedAt: null,
-                isProfessional: true,
-              },
-            });
-            if (!professional) {
-              throw new SchedulingError(
-                "PROFESSIONAL_NOT_FOUND",
-                "Profissional ativo não encontrado.",
-                "professionalId",
-              );
-            }
-            const service = await tx.service.findFirst({
-              where: { id: current.serviceId },
-              select: { categoryId: true },
-            });
-            if (
-              service &&
-              !(await professionalServesCategory(
-                tx,
-                input.professionalId,
-                service.categoryId,
-              ))
-            ) {
-              throw new SchedulingError(
-                "PROFESSIONAL_DOES_NOT_SERVE_CATEGORY",
-                "Este profissional não atende a categoria deste serviço.",
-                "professionalId",
-              );
-            }
-          }
-
-          const duration = current.endsAt.getTime() - current.startsAt.getTime();
-          const newEnd = new Date(newStart.getTime() + duration);
-          await assertSlotFree(tx, {
+          const { id } = await moveAppointmentTx(tx, orgId, memberId, {
+            id: input.id,
             professionalId: input.professionalId,
             startsAt: newStart,
-            endsAt: newEnd,
-            ignoreAppointmentId: current.id,
+            timelineOverride: input.timelineOverride ?? null,
           });
-
-          const updated = await tx.appointment.update({
-            where: { id: current.id },
-            data: {
-              professionalId: input.professionalId,
-              startsAt: newStart,
-              endsAt: newEnd,
-            },
+          const updated = await tx.appointment.findFirst({
+            where: { id },
             include: APPOINTMENT_INCLUDE,
           });
-
-          if (current.comandaId && professionalChanged) {
-            // D-13: a comissão segue quem atende.
-            await tx.comandaItem.updateMany({
-              where: {
-                appointmentId: current.id,
-                comanda: { status: "open" },
-              },
-              data: { professionalId: input.professionalId },
-            });
-          }
+          if (!updated) throw notFound();
           return ok(updated);
         },
         SCHEDULE_TX_OPTIONS,

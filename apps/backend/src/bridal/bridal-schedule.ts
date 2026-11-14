@@ -5,6 +5,7 @@ import { acquireScheduleLocks, assertSlotFree } from '../appointments/scheduling
 import { createVisitTx } from '../appointments/visits';
 import type { TenantPrismaClient } from '../database/types';
 import { BridalError } from './bridal-errors';
+import type { TimelineOverrideInput } from './timeline/timeline-guard';
 import { coveragePriceMapTx } from './bridal-coverage';
 
 /** Transação maior que a da fase 3: até 150 itens + bloqueios (Pitfall 6). */
@@ -31,6 +32,7 @@ export interface BridalScheduleInput {
   groupId: string;
   items: BridalScheduleItemInput[];
   deposits?: BridalDepositInput[] | null;
+  timelineOverride?: TimelineOverrideInput | null;
 }
 
 export function localDate(instant: Date, timeZone: string): string {
@@ -186,6 +188,7 @@ export async function createBridalScheduleTx(
     const deposit = bucket.purpose === 'event' ? depositByMember.get(m.id) : undefined;
     const visit = await createVisitTx(tx, orgId, memberId, {
       clientId: m.clientId,
+      timelineOverride: input.timelineOverride ?? null,
       items: bucket.items.map((i) => ({
         serviceId: i.serviceId,
         professionalId: i.professionalId,
