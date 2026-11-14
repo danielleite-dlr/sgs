@@ -194,7 +194,7 @@ export function BridalMembersCard({ group }: Props) {
           <p key={e}>{e}</p>
         ))}
       </div>
-      <div className="overflow-x-auto rounded-md border border-neutral-200">
+      <div className="relative overflow-x-auto rounded-md border border-neutral-200">
         <table className="w-full text-sm">
           <thead className="bg-neutral-100 text-left text-overline uppercase text-neutral-500">
             <tr>
