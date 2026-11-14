@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"on-primary-container":"#ca7ff3","inverse-primary":"#e7b4ff","on-surface-variant":"#4d4351","surface":"#faf9f6","surface-container-lowest":"#ffffff","error-container":"#ffdad6","on-tertiary-fixed-variant":"#49454e","background":"#faf9f6","on-primary-fixed":"#30004a","on-tertiary-container":"#a29ca7","tertiary-fixed-dim":"#cbc4cf","secondary":"#625c66","on-tertiary":"#ffffff","on-surface":"#1b1c1a","outline-variant":"#d0c2d2","surface-tint":"#853cad","on-primary-fixed-variant":"#6b2093","surface-variant":"#e3e2df","on-tertiary-fixed":"#1d1a22","on-secondary":"#ffffff","primary-fixed":"#f5d9ff","inverse-surface":"#2f312f","surface-dim":"#dbdad7","secondary-fixed-dim":"#ccc4cf","on-secondary-fixed-variant":"#4a454e","error":"#ba1a1a","secondary-container":"#e5dde8","surface-container":"#efeeeb","tertiary":"#221f27","surface-container-high":"#e9e8e5","on-secondary-fixed":"#1e1a22","primary":"#370053","outline":"#7f7382","inverse-on-surface":"#f2f1ee","surface-bright":"#faf9f6","primary-fixed-dim":"#e7b4ff","surface-container-highest":"#e3e2df","tertiary-container":"#38343d","primary-container":"#570080","on-error":"#ffffff","on-primary":"#ffffff","on-secondary-container":"#66606a","on-error-container":"#93000a","tertiary-fixed":"#e7e0ec","secondary-fixed":"#e8e0eb","surface-container-low":"#f4f3f0","on-background":"#1b1c1a"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"space-sm":"0.5rem","margin":"1.5rem","gutter-dense":"0.5rem","space-lg":"1.25rem","space-md":"0.75rem","space-xl":"2rem","margin-mobile":"1rem","space-xs":"0.25rem","gutter":"1rem"},"fontFamily":{"body-sm":["Public Sans"],"display-lg":["\"Source Serif 4\""],"headline-sm":["\"Source Serif 4\""],"headline-lg":["\"Source Serif 4\""],"body-lg":["Public Sans"],"display-lg-mobile":["\"Source Serif 4\""],"label-md":["Public Sans"],"headline-md":["\"Source Serif 4\""],"data-tabular":["Public Sans"],"body-md":["Public Sans"],"label-sm":["Public Sans"]},"fontSize":{"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"display-lg":["36px",{"lineHeight":"44px","letterSpacing":"-0.02em","fontWeight":"600"}],"headline-sm":["17px",{"lineHeight":"24px","fontWeight":"600"}],"headline-lg":["26px",{"lineHeight":"32px","letterSpacing":"-0.015em","fontWeight":"600"}],"body-lg":["15px",{"lineHeight":"22px","fontWeight":"400"}],"display-lg-mobile":["28px",{"lineHeight":"36px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["12px",{"lineHeight":"16px","letterSpacing":"0.04em","fontWeight":"600"}],"headline-md":["20px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"data-tabular":["13px",{"lineHeight":"18px","letterSpacing":"0.02em","fontWeight":"500"}],"body-md":["13px",{"lineHeight":"18px","fontWeight":"400"}],"label-sm":["10px",{"lineHeight":"14px","letterSpacing":"0.05em","fontWeight":"600"}]}}}}</script></head><body class="bg-background font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-screen w-64 bg-surface-container-lowest z-50 flex flex-col justify-between border-r border-outline-variant"><div class="flex flex-col"><div class="h-14 px-margin border-b border-outline-variant flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded bg-primary-container flex items-center justify-center"><span class="font-headline-sm text-headline-sm text-on-primary font-semibold">JS</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight leading-none">Studio JS</span><span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider mt-0.5">SGS Atelier v2.4</span></div></div><span class="material-symbols-outlined text-secondary text-[18px]">lock</span></div><div class="px-space-md pt-space-md"><span class="px-space-sm font-label-sm text-label-sm text-secondary uppercase tracking-wider block mb-space-xs">Operação &amp; Agenda</span></div><nav class="flex flex-col gap-0.5 px-space-md" data-active-classes="bg-primary-container text-on-primary font-semibold"><a class="min-h-[44px] px-space-sm flex items-center gap-space-sm rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="dashboard-visao-geral" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span class="font-body-md text-body-md">Dashboard</span></a><a class="min-h-[44px] px-space-sm flex items-center gap-space-sm rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="agenda-do-dia-multi-profissional" href="#"><span class="material-symbols-outlined text-[20px]">calendar_today</span><span class="font-body-md text-body-md">Agenda do Dia</span></a><a class="min-h-[44px] px-space-sm flex items-center gap-space-sm rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="comandas" href="#"><span class="material-symbols-outlined text-[20px]">receipt_long</span><span class="font-body-md text-body-md">Comandas</span></a><a class="min-h-[44px] px-space-sm flex items-center gap-space-sm rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="clientes" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span class="font-body-md text-body-md">Clientes</span></a><a class="min-h-[44px] px-space-sm flex items-center gap-space-sm rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="noivas-e-contratos" href="#"><span class="material-symbols-outlined text-[20px]">diamond</span><span class="font-body-md text-body-md">Noivas &amp; Contratos</span></a></nav><div class="px-space-md pt-space-lg"><span class="px-space-sm font-label-sm text-label-sm text-secondary uppercase tracking-wider block mb-space-xs">Controladoria</span></div><nav class="flex flex-col gap-0.5 px-space-md" data-active-classes="bg-primary-container text-on-primary font-semibold"><a class="min-h-[44px] px-space-sm flex items-center gap-space-sm rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="financeiro" href="#"><span class="material-symbols-outlined text-[20px]">account_balance_wallet</span><span class="font-body-md text-body-md">Financeiro</span></a><a class="min-h-[44px] px-space-sm flex items-center gap-space-sm rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="relatorios" href="#"><span class="material-symbols-outlined text-[20px]">insights</span><span class="font-body-md text-body-md">Relatórios</span></a><a class="min-h-[44px] px-space-sm flex items-center gap-space-sm rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="configuracoes" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="font-body-md text-body-md">Configurações</span></a></nav></div><div class="border-t border-outline-variant p-space-md bg-surface-container-low"><div class="flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col"><span class="font-body-md text-body-md font-semibold text-on-surface leading-none">Juliana S.</span><span class="font-label-sm text-label-sm text-secondary mt-0.5">Diretora Criativa</span></div></div><button aria-label="Desconectar" class="w-8 h-8 flex items-center justify-center text-secondary hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[18px]">logout</span></button></div></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-14 bg-surface-container-lowest border-b border-outline-variant z-40 flex items-center justify-between px-margin"><div class="flex items-center gap-margin"><div class="flex items-center gap-space-sm"><span class="w-2 h-2 rounded-full bg-primary-container inline-block"></span><span class="font-label-md text-label-md uppercase tracking-wider text-secondary">Sistema Operacional</span><span class="text-outline-variant">/</span><span class="font-data-tabular text-data-tabular text-on-surface">Quinta-feira, 12 de novembro de 2026</span></div><div class="h-4 w-px bg-outline-variant"></div><div class="flex items-center gap-space-xs text-secondary"><span class="material-symbols-outlined text-[16px]">schedule</span><span class="font-data-tabular text-data-tabular text-secondary">10:42 BRT</span></div></div><div class="flex items-center gap-space-lg"><div class="flex items-center border border-outline-variant rounded px-space-sm py-1 bg-surface"><span class="material-symbols-outlined text-secondary text-[16px] mr-space-xs">storefront</span><span class="font-body-sm text-body-sm text-on-surface font-medium pr-space-sm">Atelier Jardins • Matriz</span><span class="material-symbols-outlined text-secondary text-[16px]">unfold_more</span></div><div class="flex items-center gap-space-xs"><button aria-label="Buscar no sistema" class="w-9 h-9 flex items-center justify-center rounded border border-outline-variant hover:bg-surface-container text-secondary hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[18px]">search</span></button><button aria-label="Notificações" class="w-9 h-9 flex items-center justify-center rounded border border-outline-variant hover:bg-surface-container text-secondary hover:text-on-surface transition-colors relative"><span class="material-symbols-outlined text-[18px]">notifications</span><span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary-container"></span></button></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="w-full pt-14 px-margin bg-background min-h-screen"><div class="flex flex-col w-full pb-margin text-on-surface">
+<!-- Top Context Header -->
+<header class="w-full bg-surface-container-lowest border border-outline-variant rounded p-space-lg mb-gutter">
+<!-- Breadcrumb & Status Pill -->
+<div class="flex items-center justify-between gap-space-md mb-space-sm">
+<nav class="flex items-center gap-space-xs font-body-sm text-body-sm text-secondary">
+<a class="hover:text-primary transition-colors" href="#">Noivas &amp; Contratos</a>
+<span class="text-outline-variant font-data-tabular">/</span>
+<span class="font-medium text-on-surface">Larissa Fontes</span>
+<span class="font-data-tabular text-secondary text-body-sm">(Contrato #CT-2026-089)</span>
+</nav>
+<div class="flex items-center gap-space-sm">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface-container-low border border-outline-variant rounded text-on-surface text-label-sm font-label-sm tracking-wider uppercase">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span>Ativo</span>
+</div>
+<span class="font-data-tabular text-body-sm text-secondary bg-surface-container px-2 py-1 rounded">Rascunho de Minuta</span>
+</div>
+</div>
+<!-- Main Title Block & Key Meta -->
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-space-md pt-space-xs border-b border-outline-variant pb-space-md">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-space-md">
+<h1 class="font-headline-lg text-headline-lg text-tertiary font-semibold tracking-tight">Larissa Fontes</h1>
+<div class="inline-flex items-center gap-1 px-2.5 py-1 bg-surface-container-low border border-outline-variant rounded text-tertiary font-data-tabular text-body-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">schedule</span>
+<span>Pronta até <strong>15:30</strong></span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-secondary flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary">church</span>
+          Casamento • Sábado, 20/12/2026 • Espaço Villa Jardim, Campinas (SP)
+        </p>
+</div>
+<!-- Action Group -->
+<div class="flex flex-wrap items-center gap-space-xs">
+<button class="h-11 px-3.5 bg-surface-container-lowest border border-outline-variant hover:bg-surface-container text-tertiary rounded font-label-md text-label-md transition-colors flex items-center gap-1.5" title="Baixar minuta técnica" type="button">
+<span class="material-symbols-outlined text-[17px] text-secondary">picture_as_pdf</span>
+<span>Visualizar minuta PDF</span>
+</button>
+<button class="h-11 px-3.5 bg-surface-container-lowest border border-outline-variant hover:bg-surface-container text-tertiary rounded font-label-md text-label-md transition-colors flex items-center gap-1.5" title="Copiar link de aprovação" type="button">
+<span class="material-symbols-outlined text-[17px] text-secondary">link</span>
+<span>Copiar link WhatsApp</span>
+</button>
+<button class="h-11 px-5 bg-primary-container hover:bg-primary text-on-primary rounded font-label-md text-label-md tracking-wider uppercase transition-colors flex items-center gap-2 shadow-none font-semibold" type="button">
+<span class="material-symbols-outlined text-[18px]">send</span>
+<span>Enviar contrato</span>
+</button>
+</div>
+</div>
+<!-- Quick Meta Ribbon (Editorial Spec Sheet) -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-space-md pt-space-md font-body-sm text-body-sm">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Assessoria Responsável</span>
+<span class="font-data-tabular text-on-surface font-medium mt-0.5">Mariana Prado Eventos (Campinas)</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Horário da Cerimônia</span>
+<span class="font-data-tabular text-on-surface font-medium mt-0.5">17:00 (Início fotográfico 15:30)</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Local da Produção</span>
+<span class="font-data-tabular text-on-surface font-medium mt-0.5">Suíte Exclusiva • Espaço Villa Jardim</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Capacidade / Cadeiras</span>
+<span class="font-data-tabular text-on-surface font-medium mt-0.5">4 Integrantes confirmadas</span>
+</div>
+</div>
+</header>
+<!-- 2-Column Split: 60% Left / 40% Right -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start">
+<!-- LEFT COLUMN (60% ~ 7 cols of 12) -->
+<div class="lg:col-span-7 flex flex-col gap-gutter">
+<!-- SECTION A: Integrantes do Grupo (Linear-styled table) -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded flex flex-col">
+<div class="px-space-md py-space-sm border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px] text-secondary">groups</span>
+<h2 class="font-headline-sm text-headline-sm text-tertiary">Integrantes &amp; Escalação Técnica</h2>
+</div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-data-tabular">4 Serviços • R$ 2.080,00</span>
+</div>
+<div class="overflow-x-auto w-full">
+<table class="w-full text-left border-collapse font-body-sm text-body-sm">
+<thead>
+<tr class="border-b border-outline-variant bg-surface-container-low/60 font-label-sm text-label-sm text-secondary uppercase tracking-wider">
+<th class="py-2.5 px-space-md font-semibold">Integrante / Papel</th>
+<th class="py-2.5 px-space-md font-semibold">Serviços Técnicos</th>
+<th class="py-2.5 px-space-md font-semibold">Profissional</th>
+<th class="py-2.5 px-space-md font-semibold text-right">Valor (R$)</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Linha 1: Noiva -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span class="font-headline-sm text-body-lg text-tertiary font-semibold">Larissa Fontes</span>
+<span class="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-surface-container text-tertiary border border-outline-variant">Noiva</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-on-surface">
+<span class="font-medium text-tertiary">Maquiagem HD + Penteado</span>
+<div class="text-[11px] text-secondary font-data-tabular">Prévia inclusa • Suíte Master</div>
+</td>
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-1.5">
+<span class="font-data-tabular text-on-surface font-medium">Jéssica Santos</span>
+<span class="text-[10px] text-secondary uppercase tracking-wider">(Master)</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-right font-data-tabular text-on-surface font-semibold">
+                  1.200,00
+                </td>
+</tr>
+<!-- Linha 2: Mãe -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-medium text-on-surface">Ana Fontes</span>
+<span class="px-1.5 py-0.5 rounded text-[11px] bg-surface text-secondary border border-outline-variant">Mãe da Noiva</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-on-surface">
+<span>Maquiagem Social Blindada</span>
+</td>
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-1.5">
+<span class="font-data-tabular text-on-surface">Camila Ribeiro</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-right font-data-tabular text-on-surface">
+                  280,00
+                </td>
+</tr>
+<!-- Linha 3: Madrinha 1 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-medium text-on-surface">Júlia Prado</span>
+<span class="px-1.5 py-0.5 rounded text-[11px] bg-surface text-secondary border border-outline-variant">Madrinha</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-on-surface">
+<span>Maquiagem + Penteado Express</span>
+</td>
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-1.5">
+<span class="font-data-tabular text-on-surface">Jéssica Santos</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-right font-data-tabular text-on-surface">
+                  380,00
+                </td>
+</tr>
+<!-- Linha 4: Madrinha 2 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-medium text-on-surface">Carol Lima</span>
+<span class="px-1.5 py-0.5 rounded text-[11px] bg-surface text-secondary border border-outline-variant">Madrinha</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-on-surface">
+<span>Maquiagem Social Blindada</span>
+</td>
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-1.5">
+<span class="font-data-tabular text-on-surface">Camila Ribeiro</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-right font-data-tabular text-on-surface">
+                  220,00
+                </td>
+</tr>
+</tbody>
+<tfoot>
+<tr class="bg-surface-container-low border-t border-outline-variant font-data-tabular">
+<td class="py-3 px-space-md font-semibold text-tertiary" colspan="3">
+                  Total do Contrato (4 Integrantes cadastradas)
+                </td>
+<td class="py-3 px-space-md text-right font-semibold text-tertiary text-body-lg">
+                  R$ 2.080,00
+                </td>
+</tr>
+</tfoot>
+</table>
+</div>
+<div class="p-space-sm bg-surface-container-lowest border-t border-outline-variant flex items-center justify-between">
+<button class="h-9 px-3 text-primary hover:text-primary-container font-label-md text-label-md flex items-center gap-1 hover:bg-surface-container rounded transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">person_add</span>
+<span>+ Adicionar integrante ao grupo</span>
+</button>
+<span class="text-secondary text-body-sm font-data-tabular">Bancadas alocadas: 2 de 2 disponíveis</span>
+</div>
+</section>
+<!-- SECTION B: Cronograma do Dia (Paper Ledger Style) -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded flex flex-col">
+<div class="px-space-md py-space-sm border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px] text-secondary">view_timeline</span>
+<h2 class="font-headline-sm text-headline-sm text-tertiary">Cronograma do Dia do Casamento</h2>
+</div>
+<span class="font-data-tabular text-body-sm text-secondary">Sábado, 20/12/2026 • Duração: 4h30</span>
+</div>
+<div class="p-space-lg flex flex-col gap-0 relative">
+<!-- Baseline Hairline Grid Rules -->
+<div class="space-y-4">
+<!-- Item 1: 11:00 -->
+<div class="flex items-start gap-space-md group">
+<div class="w-16 pt-1 text-right font-data-tabular text-body-sm font-semibold text-secondary flex-shrink-0">
+                11:00
+              </div>
+<div class="flex flex-col items-center flex-shrink-0 self-stretch">
+<div class="w-2.5 h-2.5 rounded-full border-2 border-outline-variant bg-surface mt-1.5 group-hover:border-primary"></div>
+<div class="w-px flex-1 bg-outline-variant my-1"></div>
+</div>
+<div class="flex-1 bg-surface-container-low border border-outline-variant rounded p-space-sm flex items-center justify-between">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-medium text-on-surface">Carol Lima</span>
+<span class="text-[11px] text-secondary font-label-sm uppercase">(Madrinha)</span>
+</div>
+<div class="font-body-sm text-body-sm text-secondary mt-0.5">
+                    Maquiagem • Bancada 02 • Profissional Camila Ribeiro
+                  </div>
+</div>
+<span class="font-data-tabular text-[11px] text-secondary px-2 py-0.5 bg-surface border border-outline-variant rounded">45 min</span>
+</div>
+</div>
+<!-- Item 2: 11:45 -->
+<div class="flex items-start gap-space-md group">
+<div class="w-16 pt-1 text-right font-data-tabular text-body-sm font-semibold text-secondary flex-shrink-0">
+                11:45
+              </div>
+<div class="flex flex-col items-center flex-shrink-0 self-stretch">
+<div class="w-2.5 h-2.5 rounded-full border-2 border-outline-variant bg-surface mt-1.5 group-hover:border-primary"></div>
+<div class="w-px flex-1 bg-outline-variant my-1"></div>
+</div>
+<div class="flex-1 bg-surface-container-low border border-outline-variant rounded p-space-sm flex items-center justify-between">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-medium text-on-surface">Júlia Prado</span>
+<span class="text-[11px] text-secondary font-label-sm uppercase">(Madrinha)</span>
+</div>
+<div class="font-body-sm text-body-sm text-secondary mt-0.5">
+                    Maquiagem + Penteado • Bancada 01 &amp; Penteados • Profissional Jéssica Santos
+                  </div>
+</div>
+<span class="font-data-tabular text-[11px] text-secondary px-2 py-0.5 bg-surface border border-outline-variant rounded">55 min</span>
+</div>
+</div>
+<!-- Item 3: 12:40 -->
+<div class="flex items-start gap-space-md group">
+<div class="w-16 pt-1 text-right font-data-tabular text-body-sm font-semibold text-secondary flex-shrink-0">
+                12:40
+              </div>
+<div class="flex flex-col items-center flex-shrink-0 self-stretch">
+<div class="w-2.5 h-2.5 rounded-full border-2 border-outline-variant bg-surface mt-1.5 group-hover:border-primary"></div>
+<div class="w-px flex-1 bg-outline-variant my-1"></div>
+</div>
+<div class="flex-1 bg-surface-container-low border border-outline-variant rounded p-space-sm flex items-center justify-between">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-medium text-on-surface">Ana Fontes</span>
+<span class="text-[11px] text-secondary font-label-sm uppercase">(Mãe da Noiva)</span>
+</div>
+<div class="font-body-sm text-body-sm text-secondary mt-0.5">
+                    Maquiagem Social • Bancada 02 • Profissional Camila Ribeiro
+                  </div>
+</div>
+<span class="font-data-tabular text-[11px] text-secondary px-2 py-0.5 bg-surface border border-outline-variant rounded">50 min</span>
+</div>
+</div>
+<!-- Item 4: 13:30 (Bride Focus) -->
+<div class="flex items-start gap-space-md group">
+<div class="w-16 pt-1 text-right font-data-tabular text-body-sm font-semibold text-primary flex-shrink-0">
+                13:30
+              </div>
+<div class="flex flex-col items-center flex-shrink-0 self-stretch">
+<div class="w-2.5 h-2.5 rounded-full border-2 border-primary-container bg-primary-container mt-1.5"></div>
+<div class="w-px flex-1 bg-outline-variant my-1"></div>
+</div>
+<div class="flex-1 bg-surface-container border-l-4 border-l-primary-container border-r border-t border-b border-outline-variant rounded p-space-sm flex items-center justify-between">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-body-lg text-tertiary font-semibold">Larissa Fontes</span>
+<span class="px-1.5 py-0.5 text-[11px] font-semibold bg-surface-container-lowest text-primary border border-outline-variant rounded">Produção da Noiva</span>
+</div>
+<div class="font-body-sm text-body-sm text-secondary mt-0.5">
+                    Suíte Noiva Master • Produção Completa (Jéssica S. + Auxiliar de Penteado)
+                  </div>
+</div>
+<span class="font-data-tabular text-body-sm text-primary font-semibold px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded">120 min</span>
+</div>
+</div>
+<!-- Milestone: 15:30 (Ready Milestone) -->
+<div class="flex items-start gap-space-md">
+<div class="w-16 pt-1 text-right font-data-tabular text-body-sm font-bold text-on-surface flex-shrink-0">
+                15:30
+              </div>
+<div class="flex flex-col items-center flex-shrink-0">
+<span class="material-symbols-outlined text-[18px] text-primary mt-0.5">check_circle</span>
+</div>
+<div class="flex-1 bg-surface-container-high border border-outline-variant rounded p-space-sm flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-secondary">photo_camera</span>
+<div>
+<span class="font-data-tabular font-semibold text-on-surface text-body-md">Pronta para Fotos</span>
+<span class="font-body-sm text-secondary block text-[11px]">Encontro com fotógrafo, colocação de véu e assessoria Villa Jardim</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-secondary uppercase font-semibold">Término Operacional</span>
+</div>
+</div>
+</div>
+<!-- Bottom Notice -->
+<div class="mt-space-md pt-space-sm border-t border-outline-variant flex items-center justify-between font-body-sm text-body-sm text-secondary">
+<span>Intervalos de biossegurança de 10 min inclusos entre atendimentos.</span>
+<button class="text-secondary hover:text-tertiary underline transition-colors" type="button">Exportar espelho de horários</button>
+</div>
+</div>
+</section>
+</div>
+<!-- RIGHT COLUMN (40% ~ 5 cols of 12) -->
+<div class="lg:col-span-5 flex flex-col gap-gutter">
+<!-- SECTION A: Condições de Pagamento & Parcelas -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded flex flex-col">
+<div class="px-space-md py-space-sm border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px] text-secondary">account_balance_wallet</span>
+<h2 class="font-headline-sm text-headline-sm text-tertiary">Plano Financeiro &amp; Parcelas</h2>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-data-tabular">Auditado #CT-089</span>
+</div>
+<div class="p-space-md flex flex-col gap-space-md">
+<!-- Resumo de Saldos em Cartões Lineares -->
+<div class="grid grid-cols-3 gap-space-xs border border-outline-variant rounded bg-surface-container-low p-2">
+<div class="flex flex-col p-1.5 bg-surface-container-lowest rounded border border-outline-variant/60">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Total</span>
+<span class="font-data-tabular text-body-lg font-semibold text-tertiary mt-0.5">R$ 2.080</span>
+</div>
+<div class="flex flex-col p-1.5 bg-surface-container-lowest rounded border border-outline-variant/60">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Liquidado</span>
+<span class="font-data-tabular text-body-lg font-semibold text-on-surface mt-0.5">R$ 500</span>
+</div>
+<div class="flex flex-col p-1.5 bg-surface-container-lowest rounded border border-outline-variant/60">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Saldo Aberto</span>
+<span class="font-data-tabular text-body-lg font-semibold text-error mt-0.5">R$ 1.580</span>
+</div>
+</div>
+<!-- Sinal de Entrada -->
+<div class="border border-outline-variant rounded p-space-sm bg-surface-container-lowest flex items-start justify-between">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-medium text-on-surface font-body-md">Sinal de Reserva</span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-surface-container text-on-surface border border-outline-variant">Conciliado</span>
+</div>
+<span class="font-data-tabular text-body-sm text-secondary mt-0.5">Recebido em 02/09 via Pix • Aut. 98124</span>
+</div>
+<div class="text-right">
+<span class="font-data-tabular text-body-md font-semibold text-on-surface">R$ 500,00</span>
+<span class="block text-[11px] text-secondary font-data-tabular">Quitado</span>
+</div>
+</div>
+<!-- Grade de Parcelas Restantes -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between font-label-sm text-label-sm text-secondary uppercase tracking-wider px-1">
+<span>Parcelamento Restante (2x R$ 790,00)</span>
+<span>Regra de Contrato</span>
+</div>
+<!-- 1ª Parcela (Vencida) -->
+<div class="border border-outline-variant rounded p-space-sm bg-surface-container-lowest flex items-center justify-between relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
+<div class="pl-2 flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-medium text-tertiary font-body-md">1ª Parcela</span>
+<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[11px] font-bold text-error bg-error-container border border-error/30">
+                    Vencida (05/11)
+                  </span>
+</div>
+<span class="font-data-tabular text-body-sm text-secondary mt-0.5">Vencimento há 7 dias • Boleto / Pix</span>
+</div>
+<div class="text-right flex flex-col items-end">
+<span class="font-data-tabular text-body-md font-semibold text-tertiary">R$ 790,00</span>
+<button class="text-error hover:underline text-[11px] font-semibold mt-0.5 flex items-center gap-0.5" type="button">
+<span class="material-symbols-outlined text-[13px]">notification_important</span>
+                  Cobrança
+                </button>
+</div>
+</div>
+<!-- 2ª Parcela (Pendente) -->
+<div class="border border-outline-variant rounded p-space-sm bg-surface-container-lowest flex items-center justify-between">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-medium text-on-surface font-body-md">2ª Parcela</span>
+<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[11px] text-secondary bg-surface-container border border-outline-variant">
+                    Pendente
+                  </span>
+</div>
+<span class="font-data-tabular text-body-sm text-secondary mt-0.5">Vencimento em 05/12/2026 (15 dias antes)</span>
+</div>
+<div class="text-right">
+<span class="font-data-tabular text-body-md font-semibold text-on-surface">R$ 790,00</span>
+<span class="block text-[11px] text-secondary font-data-tabular">Programado</span>
+</div>
+</div>
+</div>
+<!-- Auditoria Contratual -->
+<div class="p-2.5 bg-surface-container-low border border-outline-variant rounded font-body-sm text-body-sm text-secondary flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] text-secondary mt-0.5">info</span>
+<div class="flex-1 leading-tight">
+              A reserva das bancadas é garantida mediante assinatura e compensação das parcelas até 10 dias corridos antes da data final.
+            </div>
+</div>
+</div>
+</section>
+<!-- SECTION B: Central de Envio e Formalização -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded flex flex-col">
+<div class="px-space-md py-space-sm border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px] text-secondary">mail</span>
+<h2 class="font-headline-sm text-headline-sm text-tertiary">Envio &amp; Comunicação</h2>
+</div>
+<span class="font-label-sm text-label-sm text-secondary uppercase font-data-tabular">Canal Direto</span>
+</div>
+<div class="p-space-md flex flex-col gap-space-md">
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Destinatária Principal</label>
+<div class="h-11 px-3 bg-surface-container-low border border-outline-variant rounded flex items-center justify-between text-body-md">
+<span class="font-medium text-tertiary">Larissa Fontes (Noiva)</span>
+<span class="font-data-tabular text-secondary text-body-sm">+55 (19) 99841-2044</span>
+</div>
+</div>
+<!-- Preview Message Box -->
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Pré-visualização da Mensagem</label>
+<div class="p-3 bg-surface-container-low border border-outline-variant rounded font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+              "Olá Larissa! Segue a minuta final do seu Grupo de Noivas no Studio JS (CT-2026-089) com o cronograma completo para 20/12 no Espaço Villa Jardim. Acesse o link seguro para validação e assinatura digital."
+            </div>
+</div>
+<!-- Checklist de Validação -->
+<div class="space-y-1.5 pt-1">
+<div class="flex items-center gap-2 text-body-sm text-secondary">
+<span class="material-symbols-outlined text-[16px] text-primary">check_box</span>
+<span>4 integrantes e serviços especificados</span>
+</div>
+<div class="flex items-center gap-2 text-body-sm text-secondary">
+<span class="material-symbols-outlined text-[16px] text-primary">check_box</span>
+<span>Cronograma de 11:00 às 15:30 aprovado pela equipe</span>
+</div>
+<div class="flex items-center gap-2 text-body-sm text-secondary">
+<span class="material-symbols-outlined text-[16px] text-primary">check_box</span>
+<span>Cláusula de rescisão e taxa de deslocamento anexadas</span>
+</div>
+</div>
+<!-- Botões Finais de Ação -->
+<div class="flex flex-col gap-2 pt-space-xs border-t border-outline-variant">
+<button class="w-full h-11 bg-primary-container hover:bg-primary text-on-primary rounded font-label-md text-label-md tracking-wider uppercase transition-colors flex items-center justify-center gap-2 font-semibold shadow-none" type="button">
+<span class="material-symbols-outlined text-[18px]">send</span>
+<span>Enviar contrato para noiva</span>
+</button>
+<button class="w-full h-11 bg-surface-container-lowest border border-outline-variant hover:bg-surface-container text-tertiary rounded font-label-md text-label-md transition-colors flex items-center justify-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px] text-secondary">chat</span>
+<span>Notificar via WhatsApp Oficial</span>
+</button>
+</div>
+</div>
+</section>
+<!-- SECTION C: Notas Operacionais / Observações -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded p-space-md flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Notas da Diretora Criativa</span>
+<span class="text-[11px] text-secondary font-data-tabular">Juliana S. • 10/11</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-normal">
+          A noiva solicitou acabamento de pele glow e penteado semi-preso estruturado com acessório próprio de pérolas. Madrinhas com tons neutros/terrosos. Levar kit de retoque extra para o local da festa.
+        </p>
+</section>
+</div>
+</div>
+</div></main></div></body></html>
