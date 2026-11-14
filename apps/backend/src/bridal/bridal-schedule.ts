@@ -33,7 +33,7 @@ export interface BridalScheduleInput {
   deposits?: BridalDepositInput[] | null;
 }
 
-function localDate(instant: Date, timeZone: string): string {
+export function localDate(instant: Date, timeZone: string): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone,
     year: 'numeric',
@@ -42,7 +42,7 @@ function localDate(instant: Date, timeZone: string): string {
   }).format(instant);
 }
 
-async function orgTimezone(tx: TenantPrismaClient): Promise<string> {
+export async function orgTimezone(tx: TenantPrismaClient): Promise<string> {
   const rows = await tx.$queryRaw<
     { timezone: string }[]
   >`SELECT timezone FROM organizations LIMIT 1`;
