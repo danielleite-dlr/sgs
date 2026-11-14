@@ -1,0 +1,41 @@
+type PackageTimelineStep {
+  id: UUID!
+  displayOrder: Int!
+  isExtra: Boolean!
+  name: String!
+  offsetMinutes: Int!
+  "make | hair | null"
+  kind: String
+  serviceId: UUID
+  durationMinutes: Int
+  startsRegistry: Boolean!
+}
+
+input PackageTimelineStepInput {
+  isExtra: Boolean!
+  name: String!
+  offsetMinutes: Int!
+  kind: String
+  serviceId: UUID
+  durationMinutes: Int
+  startsRegistry: Boolean
+}
+
+input SetPackageTimelineInput {
+  packageId: UUID!
+  "Lista completa (etapas e extras). Vazia = remove a regra. A ordem vira displayOrder."
+  steps: [PackageTimelineStepInput!]!
+}
+
+type PackageTimelinePayload {
+  steps: [PackageTimelineStep!]!
+  errors: [UserError!]!
+}
+
+extend type Query {
+  packageTimeline(packageId: UUID!): [PackageTimelineStep!]!
+}
+
+extend type Mutation {
+  setPackageTimeline(input: SetPackageTimelineInput!): PackageTimelinePayload!
+}
