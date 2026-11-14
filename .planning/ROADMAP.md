@@ -244,7 +244,7 @@ Plans:
 
 **Requirements**: BRI-01, BRI-02
 **Depends on:** Phase 04.1
-**Plans:** 10/12 plans executed
+**Plans:** 11/12 plans executed
 
 **Success Criteria** (what must be TRUE):
 1. Informando pacote, saída, noiva e data, o sistema gera o cronograma com os horários dos três casos de teste da referência (Experience 15h → chegada 08h; Glam 15:30 → 08h; Elegance 17:30 → 11:30) e o exemplo Glam 17h idêntico ao texto de referência
@@ -264,7 +264,7 @@ Plans:
 - [x] 04.2-08-frontend-package-timeline-PLAN.md — Frontend: diálogo "Cronograma do dia" nas regras do pacote
 - [x] 04.2-09-frontend-timeline-override-PLAN.md — Frontend: mensagem da guarda e "Forçar mesmo assim" (Gerente/Admin) no novo agendamento e no arrastar; pendência registrada no 06-09
 - [x] 04.2-10-frontend-timeline-tab-PLAN.md — Frontend: aba "Cronograma do dia" no grupo de noivas (simulações, copiar, confirmar, acompanhantes que não cabem)
-- [ ] 04.2-11-e2e-rbac-gate-PLAN.md — RLS/RBAC phase42, E2E cronograma-noiva e gate completo
+- [x] 04.2-11-e2e-rbac-gate-PLAN.md — RLS/RBAC phase42, E2E cronograma-noiva e gate completo
 - [ ] 04.2-12-deploy-human-verification-PLAN.md — Backup, push, deploy staging, CI e verificação humana (texto no WhatsApp, regras dos pacotes)
 
 ### Phase 5: Uso no dia a dia
