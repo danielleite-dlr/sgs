@@ -47,7 +47,7 @@ export function TimelineSimulationCard({
       data-testid={`timeline-sim-${index}`}
     >
       <header className="mb-sm flex flex-wrap items-center justify-between gap-sm">
-        <h3 className="text-sm font-semibold text-neutral-900">
+        <h3 className="font-serif text-[15px] font-semibold text-neutral-800">
           Simulação {index + 1} — {sim.packageName}, saída {sim.departureTime}
         </h3>
         <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
@@ -55,7 +55,7 @@ export function TimelineSimulationCard({
         </Button>
       </header>
 
-      <ul className="mb-sm space-y-0.5 text-sm">
+      <ul className="mb-sm space-y-0.5 text-body">
         {sim.rows.map((r, i) =>
           r.name === '' && r.time === '' ? (
             <li key={i} className="h-sm" aria-hidden="true" data-testid={`timeline-row-${i}`} />
@@ -66,7 +66,7 @@ export function TimelineSimulationCard({
                 {r.name}
                 {r.label ? ` ${r.label}` : ''}
                 {r.professionalName ? (
-                  <span className="text-neutral-600"> — {r.professionalName}</span>
+                  <span className="text-neutral-500"> — {r.professionalName}</span>
                 ) : null}
               </span>
             </li>
@@ -85,7 +85,7 @@ export function TimelineSimulationCard({
       )}
 
       {conflicts.length > 0 && (
-        <ul className="mb-sm space-y-0.5 text-sm text-error-600" data-testid="timeline-conflicts">
+        <ul className="mb-sm space-y-0.5 text-[12px] font-semibold text-error-600" data-testid="timeline-conflicts">
           {conflicts.map((c, i) => (
             <li key={i}>
               {c.professionalName} ocupada das {hhmm(c.startsAt)} às {hhmm(c.endsAt)}: {c.blockedBy}
@@ -95,7 +95,7 @@ export function TimelineSimulationCard({
       )}
 
       {sim.missing.length > 0 && (
-        <div className="mb-sm text-sm" data-testid="timeline-missing">
+        <div className="mb-sm text-body" data-testid="timeline-missing">
           <p className="font-semibold text-neutral-800">Falta para confirmar</p>
           <ul className="list-disc pl-lg text-neutral-700">
             {sim.missing.map((m) => (
@@ -106,14 +106,14 @@ export function TimelineSimulationCard({
       )}
 
       {serverError && (
-        <p role="alert" className="mb-sm text-sm text-error-600" data-testid="timeline-error">
+        <p role="alert" className="mb-sm text-[12px] font-semibold text-error-600" data-testid="timeline-error">
           {serverError}
         </p>
       )}
 
       <pre
         data-testid="timeline-text"
-        className="mb-sm whitespace-pre-wrap rounded-md bg-neutral-50 p-sm text-sm tabular-nums"
+        className="mb-sm whitespace-pre-wrap rounded-md border border-neutral-200 bg-neutral-50 p-sm text-body tabular-nums text-neutral-800"
       >
         {sim.text}
       </pre>
@@ -132,7 +132,7 @@ export function TimelineSimulationCard({
           {hasOfficial ? 'Confirmar e atualizar a agenda' : 'Confirmar (ok do studio)'}
         </Button>
       </div>
-      {reason && canConfirm && <p className="mt-xs text-xs text-neutral-600">{reason}</p>}
+      {reason && canConfirm && <p className="mt-xs text-[12px] text-neutral-500">{reason}</p>}
     </section>
   );
 }

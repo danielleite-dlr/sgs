@@ -198,7 +198,7 @@ export function AiSuggestionPanel({ group, onScheduled }: Props) {
       <section aria-label="Agenda do evento" className="space-y-sm">
         <div className="overflow-x-auto rounded-md border border-neutral-200">
           <table className="w-full text-sm">
-            <thead className="bg-neutral-50 text-left text-xs text-neutral-700">
+            <thead className="bg-neutral-100 text-left text-overline uppercase text-neutral-500">
               <tr>
                 <th className="p-sm">Pessoa</th>
                 <th className="p-sm">Serviço</th>
@@ -213,7 +213,7 @@ export function AiSuggestionPanel({ group, onScheduled }: Props) {
                   <td className="p-sm">{a.clientName}</td>
                   <td className="p-sm">{a.serviceName}</td>
                   <td className="p-sm">{a.professionalName}</td>
-                  <td className="p-sm">
+                  <td className="p-sm tabular-nums">
                     {formatEventDate(toZoned(a.startsAt).date)} {toZoned(a.startsAt).time}–
                     {toZoned(a.endsAt).time}
                   </td>
@@ -236,7 +236,7 @@ export function AiSuggestionPanel({ group, onScheduled }: Props) {
 
   return (
     <section aria-label="Agenda do evento" className="space-y-sm" aria-busy={suggesting}>
-      <p className="text-sm text-neutral-700">Nada é gravado na agenda até você confirmar.</p>
+      <p className="text-body text-neutral-500">Nada é gravado na agenda até você confirmar.</p>
 
       {mode === 'idle' && group.status === 'active' && (
         <div className="flex flex-wrap gap-sm">

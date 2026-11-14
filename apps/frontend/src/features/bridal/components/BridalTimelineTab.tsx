@@ -20,6 +20,7 @@ import {
   ProfessionalsForServiceQuery,
   type ProfessionalsForServiceResult,
 } from '@/features/operations/api/appointments.api';
+import { NATIVE_SELECT_CLASS } from '@/lib/field-classes';
 import type { BridalGroupData } from '../api/bridal.api';
 import {
   BridalTimelinePreviewQuery,
@@ -51,8 +52,7 @@ interface Simulation {
 }
 
 const MAX_SIMULATIONS = 10;
-const SELECT_CLASS =
-  'mt-xs w-full rounded-md border border-neutral-200 bg-white px-sm py-xs text-sm disabled:opacity-50';
+const SELECT_CLASS = `mt-xs ${NATIVE_SELECT_CLASS}`;
 
 function formatDateTime(iso: string): string {
   const { date, time } = toZoned(iso, SALON_TZ);
@@ -86,7 +86,7 @@ function ProfessionalSelect({
   });
   return (
     <div>
-      <Label htmlFor={id} className="text-xs font-semibold text-neutral-700">
+      <Label htmlFor={id} className="text-overline uppercase text-neutral-500">
         {label}
       </Label>
       <select
@@ -230,22 +230,22 @@ export function BridalTimelineTab({ group, onChanged }: Props) {
         className="rounded-md border border-neutral-200 bg-white p-md"
         data-testid="timeline-official"
       >
-        <h2 className="mb-sm text-base font-semibold text-neutral-900">Cronograma oficial</h2>
+        <h2 className="mb-sm font-serif text-headline-sm text-neutral-800">Cronograma oficial</h2>
         {!official ? (
-          <p className="text-sm text-neutral-700">
+          <p className="text-body text-neutral-500">
             Ainda não há cronograma confirmado. Gere uma simulação e confirme quando o studio der o
             ok.
           </p>
         ) : (
           <div className="space-y-sm">
-            <p className="text-sm text-neutral-700" data-testid="timeline-official-meta">
+            <p className="text-body text-neutral-500" data-testid="timeline-official-meta">
               Versão {official.version} — {official.packageName}, saída {official.departureTime}.
               Confirmado por {official.confirmedByName ?? 'usuário'} em{' '}
               {formatDateTime(official.confirmedAt)}.
             </p>
             <pre
               data-testid="timeline-official-text"
-              className="whitespace-pre-wrap rounded-md bg-neutral-50 p-sm text-sm tabular-nums"
+              className="whitespace-pre-wrap rounded-md border border-neutral-200 bg-neutral-50 p-sm text-body tabular-nums text-neutral-800"
             >
               {official.text}
             </pre>
@@ -257,10 +257,10 @@ export function BridalTimelineTab({ group, onChanged }: Props) {
                 className="rounded-md border border-warning-500 bg-warning-50 p-sm"
                 data-testid="timeline-companion-issues"
               >
-                <p className="mb-xs text-sm font-semibold text-neutral-900">
+                <p className="mb-xs text-body font-semibold text-neutral-800">
                   Acompanhantes que não cabem mais no cronograma
                 </p>
-                <ul className="space-y-xs text-sm">
+                <ul className="space-y-xs text-body">
                   {official.companionIssues.map((i) => (
                     <li key={i.appointmentId} className="flex flex-wrap items-center gap-xs">
                       <Badge variant="warning">{RULE_LABEL[i.rule] ?? i.rule}</Badge>
@@ -282,11 +282,11 @@ export function BridalTimelineTab({ group, onChanged }: Props) {
         className="rounded-md border border-neutral-200 bg-white p-md"
         data-testid="timeline-form"
       >
-        <h2 className="mb-sm text-base font-semibold text-neutral-900">Nova simulação</h2>
-        {!active && <p className="mb-sm text-sm text-neutral-700">O grupo não está ativo.</p>}
+        <h2 className="mb-sm font-serif text-headline-sm text-neutral-800">Nova simulação</h2>
+        {!active && <p className="mb-sm text-body text-neutral-500">O grupo não está ativo.</p>}
         <div className="grid gap-sm sm:grid-cols-2">
           <div>
-            <Label htmlFor="timeline-package" className="text-xs font-semibold text-neutral-700">
+            <Label htmlFor="timeline-package" className="text-overline uppercase text-neutral-500">
               Pacote
             </Label>
             <select
@@ -306,7 +306,7 @@ export function BridalTimelineTab({ group, onChanged }: Props) {
             </select>
           </div>
           <div>
-            <Label htmlFor="timeline-departure" className="text-xs font-semibold text-neutral-700">
+            <Label htmlFor="timeline-departure" className="text-overline uppercase text-neutral-500">
               Saída
             </Label>
             <Input
@@ -318,13 +318,13 @@ export function BridalTimelineTab({ group, onChanged }: Props) {
               disabled={formDisabled}
               onChange={(e) => setDeparture(e.target.value)}
             />
-            <p className="mt-xs text-xs text-neutral-600">
+            <p className="mt-xs text-[12px] text-neutral-500">
               Sugerido a partir de &quot;Pronta até&quot;. Ao confirmar, &quot;Pronta até&quot; passa
               a ser esta saída.
             </p>
           </div>
           <div>
-            <Label htmlFor="timeline-label" className="text-xs font-semibold text-neutral-700">
+            <Label htmlFor="timeline-label" className="text-overline uppercase text-neutral-500">
               Nome no título
             </Label>
             <Input
@@ -358,7 +358,7 @@ export function BridalTimelineTab({ group, onChanged }: Props) {
           )}
         </div>
         {formError && (
-          <p role="alert" className="mt-sm text-sm text-error-600" data-testid="timeline-form-error">
+          <p role="alert" className="mt-sm text-[12px] font-semibold text-error-600" data-testid="timeline-form-error">
             {formError}
           </p>
         )}
@@ -371,7 +371,7 @@ export function BridalTimelineTab({ group, onChanged }: Props) {
           >
             Gerar simulação
           </Button>
-          <p className="text-xs text-neutral-600">
+          <p className="text-[12px] text-neutral-500">
             As simulações não ficam salvas ao sair da página.
           </p>
         </div>

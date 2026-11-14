@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { formatPhoneBr } from '@/lib/format-phone';
+import { toDisplayName } from '@/lib/format-name';
+import { NATIVE_SELECT_CLASS } from '@/lib/field-classes';
 import { ServicesQuery, type ServicesQueryResult } from '@/features/catalog/api/servicos.api';
 import {
   AddBridalGroupMemberMutation,
@@ -62,12 +65,12 @@ function ServicesDialog({
         <DialogDescription className="text-sm text-neutral-600">
           Serviços planejados para o evento e para o teste.
         </DialogDescription>
-        <Label className="text-xs font-semibold text-neutral-700" htmlFor="member-add-service">
+        <Label className="text-overline uppercase text-neutral-500" htmlFor="member-add-service">
           Adicionar serviço
         </Label>
         <select
           id="member-add-service"
-          className="w-full rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white"
+          className={NATIVE_SELECT_CLASS}
           value=""
           onChange={(e) => {
             if (e.target.value)
@@ -180,14 +183,20 @@ export function BridalMembersCard({ group }: Props) {
 
   return (
     <section aria-label="Pessoas do grupo" className="space-y-sm">
-      <div aria-live="polite" role="alert" className="text-sm text-error" data-testid="members-errors">
+      <h2 className="font-serif text-headline-sm text-neutral-800">Pessoas do grupo</h2>
+      <div
+        aria-live="polite"
+        role="alert"
+        className="text-[12px] font-semibold text-error-600"
+        data-testid="members-errors"
+      >
         {errors.map((e) => (
           <p key={e}>{e}</p>
         ))}
       </div>
       <div className="overflow-x-auto rounded-md border border-neutral-200">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-left text-xs text-neutral-700">
+          <thead className="bg-neutral-100 text-left text-overline uppercase text-neutral-500">
             <tr>
               <th className="p-sm">Pessoa</th>
               <th className="p-sm">Papel</th>
@@ -204,16 +213,18 @@ export function BridalMembersCard({ group }: Props) {
               const locked = m.hasClosedComanda;
               return (
                 <tr key={m.id} className="border-t border-neutral-200" data-testid={`member-${m.id}`}>
-                  <td className="p-sm font-semibold">
-                    {m.clientName}
+                  <td className="p-sm">
+                    <span className="font-serif text-[15px] font-semibold text-neutral-800">
+                      {toDisplayName(m.clientName)}
+                    </span>
                     {m.relationLabel && (
-                      <span className="block text-xs font-normal text-neutral-600">
+                      <span className="block text-[12px] font-normal text-neutral-500">
                         {m.relationLabel}
                       </span>
                     )}
                   </td>
                   <td className="p-sm">{ROLE_LABEL[m.role] ?? m.role}</td>
-                  <td className="whitespace-nowrap p-sm">
+                  <td className="whitespace-nowrap p-sm tabular-nums text-neutral-500">
                     {m.clientPhone ? formatPhoneBr(m.clientPhone) : '—'}
                   </td>
                   <td className="p-sm">
@@ -255,7 +266,12 @@ export function BridalMembersCard({ group }: Props) {
                         data-testid={`coverage-${m.id}`}
                         aria-label={`Incluída no contrato: ${m.clientName}`}
                       />
-                      {m.coveredByContract ? 'Incluída no contrato' : 'Paga avulso'}
+                      <Badge
+                        variant={m.coveredByContract ? 'success' : 'neutral'}
+                        data-testid={`coverage-badge-${m.id}`}
+                      >
+                        {m.coveredByContract ? 'Incluída no contrato' : 'Paga avulso'}
+                      </Badge>
                     </label>
                   </td>
                   <td className="p-sm">

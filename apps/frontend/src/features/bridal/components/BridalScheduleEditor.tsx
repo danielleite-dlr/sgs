@@ -1,4 +1,6 @@
 import { Input } from '@/components/ui/input';
+import { NATIVE_SELECT_CLASS } from '@/lib/field-classes';
+import { cn } from '@/lib/utils';
 import { DEPOSIT_METHODS } from '../lib/bridal-labels';
 import {
   addMinutes,
@@ -58,7 +60,7 @@ export function BridalScheduleEditor({
     <div className="space-y-sm" data-testid="schedule-editor">
       <div className="overflow-x-auto rounded-md border border-neutral-200">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-left text-xs text-neutral-700">
+          <thead className="bg-neutral-100 text-left text-overline uppercase text-neutral-500">
             <tr>
               <th className="p-sm">Pessoa</th>
               <th className="p-sm">Serviço</th>
@@ -94,7 +96,7 @@ export function BridalScheduleEditor({
                       id={`row-${i}-prof`}
                       data-testid={`row-${i}-prof`}
                       disabled={readOnly}
-                      className="rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white"
+                      className={cn(NATIVE_SELECT_CLASS, 'min-w-40')}
                       value={r.professionalId}
                       onChange={(e) => {
                         const opt = options.find((o) => o.id === e.target.value);
@@ -118,7 +120,7 @@ export function BridalScheduleEditor({
                       data-testid={`row-${i}-start`}
                       type="time"
                       disabled={readOnly}
-                      className="w-28"
+                      className="w-28 tabular-nums"
                       value={r.start}
                       onChange={(e) => {
                         const start = e.target.value;
@@ -130,10 +132,10 @@ export function BridalScheduleEditor({
                       }}
                     />
                   </td>
-                  <td className="p-sm" data-testid={`row-${i}-end`}>
+                  <td className="p-sm tabular-nums text-neutral-500" data-testid={`row-${i}-end`}>
                     {r.end || '—'}
                     {conflict && (
-                      <span className="block text-xs font-semibold text-error" role="alert">
+                      <span className="block text-[12px] font-semibold text-error-600" role="alert">
                         Conflito com a linha {conflict.map((c) => c + 1).join(', ')}
                       </span>
                     )}
@@ -147,7 +149,7 @@ export function BridalScheduleEditor({
 
       {!readOnly && depositMembers.length > 0 && onDepositsChange && (
         <fieldset className="rounded-md border border-neutral-200 p-sm space-y-sm">
-          <legend className="px-xs text-sm font-bold text-neutral-800">
+          <legend className="px-xs font-serif text-headline-sm text-neutral-800">
             Sinal de quem paga avulso (opcional)
           </legend>
           {depositMembers.map((m) => {
@@ -156,7 +158,7 @@ export function BridalScheduleEditor({
               <div key={m.id} className="flex flex-wrap items-end gap-sm">
                 <span className="w-48 text-sm">{m.name}</span>
                 <div>
-                  <label className="text-xs font-semibold text-neutral-700" htmlFor={`dep-${m.id}-amount`}>
+                  <label className="text-overline uppercase text-neutral-500" htmlFor={`dep-${m.id}-amount`}>
                     Valor do sinal de {m.name}
                   </label>
                   <Input
@@ -169,12 +171,12 @@ export function BridalScheduleEditor({
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-neutral-700" htmlFor={`dep-${m.id}-method`}>
+                  <label className="text-overline uppercase text-neutral-500" htmlFor={`dep-${m.id}-method`}>
                     Forma
                   </label>
                   <select
                     id={`dep-${m.id}-method`}
-                    className="mt-xs block rounded-md border border-neutral-200 px-sm py-xs text-sm bg-white"
+                    className={cn(NATIVE_SELECT_CLASS, 'mt-xs')}
                     value={d.method}
                     onChange={(e) => setDeposit({ ...d, method: e.target.value })}
                   >

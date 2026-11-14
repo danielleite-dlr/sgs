@@ -10,12 +10,13 @@ import {
 } from '../api/ai-schedule.api';
 import { ScheduleBridalEventMutation } from '../api/bridal.api';
 import { AiSuggestionPanel } from '../components/AiSuggestionPanel';
+import type * as TimelineOverrideLib from '@/features/operations/lib/timeline-override';
 import { group, member } from './bridal-fixtures';
 
 const requestOverride = vi.fn<(message: string) => Promise<string | null>>();
 
 vi.mock('@/features/operations/lib/timeline-override', async (importOriginal) => {
-  const real = await importOriginal<typeof import('@/features/operations/lib/timeline-override')>();
+  const real = await importOriginal<typeof TimelineOverrideLib>();
   return { ...real, requestTimelineOverride: (m: string) => requestOverride(m) };
 });
 
@@ -30,7 +31,6 @@ const g = group({
       clientName: 'Ana',
       services: [
         {
-          __typename: 'BridalMemberService',
           id: 's1',
           serviceId: 'sv1',
           serviceName: 'Maquiagem',

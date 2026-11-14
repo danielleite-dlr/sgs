@@ -7,9 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 // Arquivos que ainda têm paleta padrão ou sombra e são refeitos num lote seguinte.
 // Cada lote remove a sua entrada; o teste falha se uma entrada ficar sobrando.
-const PALETA_PENDENTE: Record<string, string> = {
-  'features/bridal/pages/BridalGroupDetailPage.tsx': '06-09',
-};
+const PALETA_PENDENTE: Record<string, string> = {};
 const SOMBRA_PENDENTE: Record<string, string> = {};
 
 const SRC = join(__dirname, '../..');
