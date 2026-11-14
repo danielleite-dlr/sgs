@@ -244,7 +244,7 @@ Plans:
 
 **Requirements**: BRI-01, BRI-02
 **Depends on:** Phase 04.1
-**Plans:** 12 plans
+**Plans:** 1/12 plans executed
 
 **Success Criteria** (what must be TRUE):
 1. Informando pacote, saída, noiva e data, o sistema gera o cronograma com os horários dos três casos de teste da referência (Experience 15h → chegada 08h; Glam 15:30 → 08h; Elegance 17:30 → 11:30) e o exemplo Glam 17h idêntico ao texto de referência
@@ -254,7 +254,7 @@ Plans:
 5. Alterar a saída ou o pacote recalcula o cronograma e sinaliza os agendamentos de acompanhantes que deixaram de caber
 
 Plans:
-- [ ] 04.2-01-timeline-domain-tdd-PLAN.md — Domínio puro com TDD: horários, formato 08h/12:30, texto do WhatsApp, avisos e janelas da noiva (4 casos da referência, Glam 17h com fotógrafos 15:10)
+- [x] 04.2-01-timeline-domain-tdd-PLAN.md — Domínio puro com TDD: horários, formato 08h/12:30, texto do WhatsApp, avisos e janelas da noiva (4 casos da referência, Glam 17h com fotógrafos 15:10)
 - [ ] 04.2-02-database-schema-seed-PLAN.md — Migration: package_timeline_steps e bridal_timelines com RLS, permissão bridal.scheduleOverride, seed Experience/Glam/Elegance do Studio JS (90 min)
 - [ ] 04.2-03-backend-package-timeline-PLAN.md — API packageTimeline/setPackageTimeline com validação e RBAC
 - [ ] 04.2-04-backend-companion-guard-PLAN.md — Guarda das acompanhantes em createVisitTx e moveAppointmentTx, override Gerente/Admin com auditoria (nunca dispensa SLOT_TAKEN), bloqueio do arrastar da noiva
