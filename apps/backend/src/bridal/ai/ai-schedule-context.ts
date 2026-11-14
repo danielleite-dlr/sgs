@@ -29,8 +29,27 @@ export class AiScheduleContextBuilder {
       throw new BridalError('GROUP_NOT_ACTIVE', 'O grupo não está ativo.', 'groupId');
     }
 
+    // Cronograma confirmado (fase 4.2): os agendamentos da noiva não bloqueiam a sugestão.
+    const timeline = await tx.bridalTimeline.findFirst({
+      where: { groupId },
+      select: {
+        registryStartsAt: true,
+        makeAppointmentId: true,
+        hairAppointmentId: true,
+        makeServiceId: true,
+        hairServiceId: true,
+      },
+    });
+    const linkedIds = [timeline?.makeAppointmentId, timeline?.hairAppointmentId].filter(
+      Boolean,
+    ) as string[];
     const already = await tx.appointment.count({
-      where: { bridalGroupId: groupId, purpose: 'event', status: { in: [...BLOCKING_STATUSES] } },
+      where: {
+        bridalGroupId: groupId,
+        purpose: 'event',
+        status: { in: [...BLOCKING_STATUSES] },
+        ...(linkedIds.length ? { id: { notIn: linkedIds } } : {}),
+      },
     });
     if (already > 0) {
       throw new BridalError(
@@ -47,6 +66,14 @@ export class AiScheduleContextBuilder {
         services: { where: { purpose: 'event' }, orderBy: { sortOrder: 'asc' } },
       },
     });
+    if (timeline) {
+      const done = new Set<string>();
+      if (timeline.makeAppointmentId && timeline.makeServiceId) done.add(timeline.makeServiceId);
+      if (timeline.hairAppointmentId && timeline.hairServiceId) done.add(timeline.hairServiceId);
+      for (const m of members) {
+        if (m.role === 'bride') m.services = m.services.filter((s) => !done.has(s.serviceId));
+      }
+    }
     members.sort((a, b) => {
       if (a.role !== b.role) return a.role === 'bride' ? -1 : 1;
       return a.sortOrder - b.sortOrder;
@@ -163,9 +190,12 @@ export class AiScheduleContextBuilder {
       };
     });
 
+    const readyLimit = group.readyBy ?? dayEnd;
+    const readyBy =
+      timeline && timeline.registryStartsAt < readyLimit ? timeline.registryStartsAt : readyLimit;
     const ctx: ScheduleContext = {
       eventDate,
-      readyBy: (group.readyBy ?? dayEnd).toISOString(),
+      readyBy: readyBy.toISOString(),
       dayStart: dayStart.toISOString(),
       dayEnd: dayEnd.toISOString(),
       travelBeforeMinutes: external ? group.travelMinutesBefore : 0,

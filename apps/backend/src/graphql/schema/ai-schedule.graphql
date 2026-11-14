@@ -43,6 +43,7 @@ input ConfirmBridalScheduleInput {
   groupId: UUID!
   items: [BridalScheduleItemInput!]!
   deposits: [BridalDepositInput!]
+  timelineOverride: TimelineOverrideInput
 }
 
 extend type Mutation {

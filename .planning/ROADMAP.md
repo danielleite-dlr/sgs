@@ -260,7 +260,7 @@ Plans:
 - [x] 04.2-04-backend-companion-guard-PLAN.md — Guarda das acompanhantes em createVisitTx e moveAppointmentTx, override Gerente/Admin com auditoria (nunca dispensa SLOT_TAKEN), bloqueio do arrastar da noiva
 - [x] 04.2-05-backend-timeline-preview-PLAN.md — Simulação sem persistência, buildTimelineTx, conflitos com quem ocupa, findAdoptableBrideAppointmentsTx, cronograma confirmado com acompanhantes fora da janela
 - [ ] 04.2-06-backend-timeline-confirm-PLAN.md — "Ok do studio": cria/move make e penteado (90 min), adota agendamento importado, reconfirmar sem duplicar, readyBy = saída, refaz deslocamentos
-- [ ] 04.2-07-backend-ai-schedule-timeline-PLAN.md — Sugestão IA após o cronograma: sem ALREADY_SCHEDULED, limite no início do registro
+- [x] 04.2-07-backend-ai-schedule-timeline-PLAN.md — Sugestão IA após o cronograma: sem ALREADY_SCHEDULED, limite no início do registro
 - [ ] 04.2-08-frontend-package-timeline-PLAN.md — Frontend: diálogo "Cronograma do dia" nas regras do pacote
 - [ ] 04.2-09-frontend-timeline-override-PLAN.md — Frontend: mensagem da guarda e "Forçar mesmo assim" (Gerente/Admin) no novo agendamento e no arrastar; pendência registrada no 06-09
 - [ ] 04.2-10-frontend-timeline-tab-PLAN.md — Frontend: aba "Cronograma do dia" no grupo de noivas (simulações, copiar, confirmar, acompanhantes que não cabem)
