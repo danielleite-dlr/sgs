@@ -60,7 +60,8 @@ test.describe('Contrato que começa pela noiva: Novo contrato cria o grupo por t
     await page.waitForURL(/\/noivas\/[0-9a-f-]{36}$/);
     const members = page.locator('[data-testid^="member-"]:not([data-testid="members-errors"])');
     await expect(members).toHaveCount(1);
-    await expect(members.first()).toContainText(brideName);
+    // O nome da pessoa aparece em caixa padronizada (toDisplayName, D-13): compara sem diferenciar caixa.
+    await expect(members.first()).toContainText(new RegExp(brideName, 'i'));
     await expect(members.first()).toContainText('Incluída no contrato');
   });
 
