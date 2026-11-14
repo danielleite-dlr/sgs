@@ -256,7 +256,10 @@ describe('Fase 04.2 - guarda das acompanhantes no cronograma confirmado', () => 
     expect(audit[0].actorMemberId).toBe(w.members.admin);
   });
 
-  it('7. confirmBridalSchedule passa pela mesma guarda', async () => {
+  // Desde o 04.2-07, a revalidação da IA limita o "pronta até" ao início do registro e
+  // barra o item antes da guarda geral: o código vira INVALID_PROPOSAL (AFTER_READY_BY),
+  // mas o efeito é o mesmo — nada é agendado. TIMELINE_AFTER_REGISTRY segue coberto nos casos 1-6.
+  it('7. confirmBridalSchedule barra acompanhante depois do registro', async () => {
     const g = await groupWithTimeline();
     const plan = (groupMemberId: string, serviceId: string, sortOrder: number) =>
       adminPrisma.bridalMemberService.create({
@@ -287,7 +290,9 @@ describe('Fase 04.2 - guarda das acompanhantes no cronograma confirmado', () => 
         },
       })
     ).data.confirmBridalSchedule as { appointmentIds: string[]; errors: Err[] };
-    expect(r.errors[0].code).toBe('TIMELINE_AFTER_REGISTRY');
+    expect(r.appointmentIds).toHaveLength(0);
+    expect(r.errors.length).toBeGreaterThan(0);
+    expect(r.errors.every((e) => e.code === 'INVALID_PROPOSAL')).toBe(true);
     expect(await adminPrisma.appointment.count({ where: { bridalGroupId: g.groupId } })).toBe(0);
   });
 
