@@ -317,6 +317,16 @@ Plans:
 - [x] 06-10-inicio-PLAN.md — Início: cabeçalho do painel e previsão de 30 dias no padrão novo
 - [ ] 06-11-fechamento-PLAN.md — Auditoria completa, roteiro de conferência e aceite da usuária
 
+### Phase 7: App Android Gestor Beauty com Capacitor
+
+**Goal:** A equipe do salão instala o app Android "Gestor Beauty" pela Play Store e usa o SGS no celular com as mesmas telas do sistema web, empacotado com Capacitor (sem PWA — decisão da usuária em 2026-11-14). Escopo: appId estável `br.com.gestorbeauty.app` e keystore guardada em local seguro, para que o futuro app React Native/Expo saia como atualização do mesmo app na loja; ajustes de celular (área segura/notch, teclado, botão voltar do Android, login persistente com refresh token, splash e ícone); push de novo agendamento via FCM, com registro de tokens de aparelho no backend de forma neutra (reaproveitável pelo Expo); build AAB assinado e publicação na Play Store. Preparar `packages/shared` (queries GraphQL, tipos gerados, validações) para o Expo. Fora do escopo: iOS e o app Expo (fases futuras), app para clientes/noivas.
+**Requirements**: TBD
+**Depends on:** Phase 6
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 7 to break down)
+
 ---
 
 ## Backlog
