@@ -127,6 +127,8 @@ input ScheduleBridalEventInput {
   groupId: UUID!
   items: [BridalScheduleItemInput!]!
   deposits: [BridalDepositInput!]
+  "Forçar o horário fora do cronograma da noiva; só Gerente/Administrador (auditado)."
+  timelineOverride: TimelineOverrideInput
 }
 
 type BridalSchedulePayload {
