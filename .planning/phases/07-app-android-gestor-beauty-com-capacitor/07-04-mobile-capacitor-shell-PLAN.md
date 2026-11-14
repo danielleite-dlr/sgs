@@ -20,6 +20,7 @@ requirements: [C-01, C-02, C-05]
 
 must_haves:
   truths:
+    - "O app mostra as mesmas telas do SGS web, sem telas exclusivas, para a equipe do salão (D-01); só Android nesta fase, sem projeto iOS (D-02)"
     - "O app se chama 'Gestor Beauty' e usa o appId estável br.com.gestorbeauty.app (D-03)"
     - "O app abre https://sgs.jessicaseixasmakeup.com.br (server.url) e as telas vêm do servidor: melhoria no staging aparece sem nova versão (D-06, D-07)"
     - "Sem internet (ou servidor fora), o app mostra a página local 'Sem conexão' com 'Tentar novamente', em HTML puro sem plugins (D-08)"
@@ -52,7 +53,7 @@ must_haves:
 <objective>
 Criar a casca nativa `apps/mobile` com Capacitor 8: configuração (`server.url` do staging, `errorPath` com a tela "Sem conexão"), projeto Android gerado por `cap add android` e commitado, ajustes de Gradle (assinatura por env, versionCode por propriedade) e do manifesto (canal/cor do push), e um teste de configuração rodando no CI.
 
-Purpose: C-01/C-02 — a casca é o mínimo nativo possível (D-07); todo o resto vem do servidor.
+Purpose: C-01/C-02 — a casca é o mínimo nativo possível (D-07); todo o resto vem do servidor, então as telas são as mesmas do web (D-01). Só Android: NÃO rodar `cap add ios` (D-02).
 Output: `apps/mobile` completo menos ícones/splash e workflow (07-06).
 </objective>
 

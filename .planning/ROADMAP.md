@@ -333,10 +333,22 @@ Plans:
 **Goal:** A equipe do salão instala o app Android "Gestor Beauty" pela Play Store e usa o SGS no celular com as mesmas telas do sistema web, empacotado com Capacitor (sem PWA — decisão da usuária em 2026-11-14). Escopo: appId estável `br.com.gestorbeauty.app` e keystore guardada em local seguro, para que o futuro app React Native/Expo saia como atualização do mesmo app na loja; ajustes de celular (área segura/notch, teclado, botão voltar do Android, login persistente com refresh token, splash e ícone); push de novo agendamento via FCM, com registro de tokens de aparelho no backend de forma neutra (reaproveitável pelo Expo); build AAB assinado e publicação na Play Store. Preparar `packages/shared` (queries GraphQL, tipos gerados, validações) para o Expo. Fora do escopo: iOS e o app Expo (fases futuras), app para clientes/noivas.
 **Requirements**: TBD
 **Depends on:** Phase 6
-**Plans:** 0 plans
+**Plans:** 13 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 7 to break down)
+- [ ] 07-01-monorepo-shared-deps-PLAN.md — packages/shared (rotas do push, validações, documentos GraphQL) e todas as dependências da fase num lockfile só, sem quebrar Docker
+- [ ] 07-02-backend-device-tokens-PLAN.md — tabela device_tokens com RLS, registerDeviceToken/unregisterDeviceToken e integração
+- [ ] 07-03-backend-push-engine-PLAN.md — destinatários (D-12/D-13), textos e rotas dos avisos (D-14/D-15) e cliente FCM HTTP v1
+- [ ] 07-04-mobile-capacitor-shell-PLAN.md — casca Capacitor 8 (server.url do staging, tela Sem conexão), projeto Android e check-config
+- [ ] 07-05-frontend-native-libs-deeplink-PLAN.md — camada nativa do frontend (push, rota segura, token) e agenda abrindo ?agendamento=
+- [ ] 07-06-mobile-assets-ci-build-PLAN.md — ícone GB e splash, workflow android.yml (APK debug e AAB assinado) e runbook da keystore
+- [ ] 07-07-backend-push-processor-PLAN.md — fila push-notifications, PushService/processor e PushModule global
+- [ ] 07-08-frontend-native-bridge-PLAN.md — NativeAppBridge (splash, voltar, push, registro por sessão), logout e rota pendente no login
+- [ ] 07-09-backend-push-hooks-PLAN.md — ganchos pós-commit em agendamento, cancelamento, noivas, cronograma e contrato
+- [ ] 07-10-frontend-offline-safe-area-PLAN.md — sobreposição Sem conexão e área segura no layout Gestor Beauty
+- [ ] 07-11-gate-deploy-staging-PLAN.md — gate completo, backup, deploy no staging e CI verde com APK debug
+- [ ] 07-12-firebase-keystore-secrets-PLAN.md — Firebase, conta Play, keystore com backup e secrets (ações humanas)
+- [ ] 07-13-device-verification-play-PLAN.md — teste no aparelho e teste interno da Play Console
 
 ---
 
