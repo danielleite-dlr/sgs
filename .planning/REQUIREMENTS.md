@@ -58,7 +58,7 @@
 - [ ] **CONT-02**: Sistema rastreia status de cada parcela e alerta sobre vencimentos próximos e atrasos
 - [ ] **CONT-03**: Contrato suporta política de cancelamento configurável com regras de retenção de valor _(Fase 4: parcelamento reinterpretado como entrada + restante livre até D-10 — 04 D-10/D-11; retenção = cliente cancela retém tudo o que foi pago, estúdio cancela devolve tudo — 04 D-22, sem faixas por antecedência)_
 - [x] **BRI-01**: Proprietário gera o cronograma do dia da noiva a partir do pacote (Experience/Glam/Elegance) e do horário de saída, com etapas, profissionais de make e penteado indicadas pelo studio, chegada dos fotógrafos e texto pronto para WhatsApp _(regras: phases/04.2-.../04.2-REFERENCE-cronograma-studio-js.md)_
-- [ ] **BRI-02**: O agendamento de madrinhas e acompanhantes do grupo respeita o cronograma da noiva: termina antes do making of/fotos (de que elas participam) e não colide com as profissionais alocadas na noiva
+- [x] **BRI-02**: O agendamento de madrinhas e acompanhantes do grupo respeita o cronograma da noiva: termina antes do making of/fotos (de que elas participam) e não colide com as profissionais alocadas na noiva
 
 ### Comunicação
 
@@ -155,7 +155,7 @@
 | COMM-02 | Backlog | Deferred |
 | AI-01 | Phase 4 | Pending |
 | BRI-01 | Phase 04.2 | Complete |
-| BRI-02 | Phase 04.2 | Pending |
+| BRI-02 | Phase 04.2 | Complete |
 | QA-01 | Backlog | Deferred |
 | QA-02 | Backlog | Deferred |
 | QA-03 | Backlog | Deferred |

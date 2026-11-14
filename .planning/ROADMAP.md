@@ -244,7 +244,7 @@ Plans:
 
 **Requirements**: BRI-01, BRI-02
 **Depends on:** Phase 04.1
-**Plans:** 1/12 plans executed
+**Plans:** 3/12 plans executed
 
 **Success Criteria** (what must be TRUE):
 1. Informando pacote, saída, noiva e data, o sistema gera o cronograma com os horários dos três casos de teste da referência (Experience 15h → chegada 08h; Glam 15:30 → 08h; Elegance 17:30 → 11:30) e o exemplo Glam 17h idêntico ao texto de referência
@@ -257,7 +257,7 @@ Plans:
 - [x] 04.2-01-timeline-domain-tdd-PLAN.md — Domínio puro com TDD: horários, formato 08h/12:30, texto do WhatsApp, avisos e janelas da noiva (4 casos da referência, Glam 17h com fotógrafos 15:10)
 - [x] 04.2-02-database-schema-seed-PLAN.md — Migration: package_timeline_steps e bridal_timelines com RLS, permissão bridal.scheduleOverride, seed Experience/Glam/Elegance do Studio JS (90 min)
 - [ ] 04.2-03-backend-package-timeline-PLAN.md — API packageTimeline/setPackageTimeline com validação e RBAC
-- [ ] 04.2-04-backend-companion-guard-PLAN.md — Guarda das acompanhantes em createVisitTx e moveAppointmentTx, override Gerente/Admin com auditoria (nunca dispensa SLOT_TAKEN), bloqueio do arrastar da noiva
+- [x] 04.2-04-backend-companion-guard-PLAN.md — Guarda das acompanhantes em createVisitTx e moveAppointmentTx, override Gerente/Admin com auditoria (nunca dispensa SLOT_TAKEN), bloqueio do arrastar da noiva
 - [ ] 04.2-05-backend-timeline-preview-PLAN.md — Simulação sem persistência, buildTimelineTx, conflitos com quem ocupa, findAdoptableBrideAppointmentsTx, cronograma confirmado com acompanhantes fora da janela
 - [ ] 04.2-06-backend-timeline-confirm-PLAN.md — "Ok do studio": cria/move make e penteado (90 min), adota agendamento importado, reconfirmar sem duplicar, readyBy = saída, refaz deslocamentos
 - [ ] 04.2-07-backend-ai-schedule-timeline-PLAN.md — Sugestão IA após o cronograma: sem ALREADY_SCHEDULED, limite no início do registro
