@@ -75,18 +75,44 @@ e textos monoespaçados em `text-body`, erros `text-error-600`; testids e compor
 
 ## Comparação com o Stitch
 
-Não feita: as ferramentas do MCP do Stitch (download das telas `c5f9c23d…` e `3694705c…`) não estavam
-disponíveis nesta execução, então os 4 arquivos `design/grupo-noivas-*` não foram baixados e a
-comparação visual com screenshots (passo D-24, auditoria `10-noivas-detalhe`) fica para a orquestração
-ou para o checkpoint 06-11. A implementação seguiu o texto do plano e o UI-SPEC.
+Feita depois da execução do plano (o executor não tinha o MCP do Stitch). As telas foram baixadas com o
+MCP para `design/grupo-noivas-computador.html|.png` (2560×2760) e `design/grupo-noivas-celular.html|.png`
+(780×3058).
 
-| Bloco | Como ficou | Omitido por D-02? |
+Auditoria local (`AUDIT_TARGET=local`, evidência em `06-audit-evidence/06-09/`, ignorada pelo git):
+- Slug oficial `10-noivas-detalhe`: 3 passaram (setup, desktop, mobile), sem erro de console e sem
+  rolagem lateral; mas a organização do seed local não tem grupo, então a nota é "sem grupos" e a
+  captura mostra a lista `/noivas`.
+- Por isso, como no 06-08, um audit temporário (não commitado) criou pelo fluxo de
+  `noivas-contrato.spec.ts` um grupo com noiva + 3 acompanhantes (mãe incluída no contrato, telefones,
+  serviços) e fotografou o detalhe: `desktop|mobile/10-com-dados.png`, `10-com-dados-agenda.png` e
+  `10-com-dados-cronograma.png`.
+
+| Bloco do Stitch | Como ficou | Omitido por D-02? |
 | --- | --- | --- |
-| Título + trilha | Nome padronizado em serifa; trilha sem maiúsculas | não |
-| Ficha do evento | Cartão branco com rótulos pequenos, valores em texto principal | não |
-| Pessoas | Tabela com nome serifa, telefone formatado, selo de cobertura | não |
-| Agenda / cronograma | Tabelas com cabeçalho cinza e campos de 44 px | não |
-| Cerimonial/assessoria, dossiê, status de prova, contagem regressiva | não implementados | sim |
+| Trilha "Noivas / nome" + título em serifa | Igual (PageHeader): trilha sem maiúsculas, nome com `toDisplayName` em serifa | não |
+| Ações no cabeçalho (botão principal roxo + contornados) | Editar / Cancelar grupo / Excluir em contorno (excluir e cancelar em vermelho) e "Criar contrato" roxo, 44 px; no celular quebram abaixo do título | não (ações atuais; não há "Enviar contrato" nesta tela) |
+| Selo "Ativo" com ponto e "Pronta até 15:30" | Na ficha: "STATUS" com selo de ponto e "PRONTA ATÉ" | não |
+| Faixa de dados do evento (rótulo pequeno em maiúsculas + valor) | Ficha branca com tipo, horário, data, pronta até, local, pacote, status (dados que já existiam) | não |
+| Tabela de integrantes (cabeçalho cinza em maiúsculas, nome em serifa, papel) | Igual no computador; colunas reais (telefone, serviços, contrato/cobertura, remover) | não |
+| Integrantes no celular como lista empilhada | Mantida a tabela com rolagem lateral dentro da caixa (mesma decisão do 06-08); virar cartões seria mudança de estrutura | não (divergência aceita) |
+| Cronograma em linha do tempo | Aba "Cronograma do dia" (04.2-10) no mesmo padrão de cartões; sem cronograma confirmado mostra o texto atual e a simulação | não |
+| Coluna "Profissional", valor por pessoa, total/subtotal do grupo | — (o grupo não tem preço por pessoa; valores ficam no contrato) | sim (dado novo) |
+| Assessoria responsável, local da produção/suíte, bancadas/cadeiras, "Cadeira principal" | — | sim |
+| Plano financeiro e parcelas, envio/WhatsApp, checklist, pré-visualização da mensagem | — (pertencem ao contrato, outra tela) | sim |
+| Notas da diretora criativa, ID/código do contrato no cabeçalho, "Contrato em rascunho" | — (o status do contrato já aparece onde existia) | sim |
+| Barra lateral/topo do Stitch (Atelier, hora, "Sistema operacional") | Casco do 06-02 | sim (casco já decidido) |
+
+**Corrigido nesta comparação:** no celular a página inteira ficava com 569 px de largura num viewport de
+412 px (rolagem lateral e tela "encolhida" no screenshot). Causa: o `<span className="sr-only">Ações</span>`
+do cabeçalho da tabela de pessoas é `position: absolute` e, sem ancestral posicionado, escapava da caixa
+`overflow-x-auto` e alargava o documento. A tabela da agenda do evento tem rótulos `sr-only` na mesma
+situação (não medida antes; corrigida junto). Correção só visual: `relative` na caixa de rolagem de
+`BridalMembersCard.tsx` e `BridalScheduleEditor.tsx`. Depois: 412/412 nas abas Pessoas, Agenda do
+evento e Cronograma do dia; computador 1366/1366.
+
+Gate depois da correção: frontend typecheck e lint limpos; vitest 110 arquivos, 808 testes verdes;
+Playwright noivas-contrato, cronograma-noiva, contrato-pela-noiva e debutante-contrato: 15 + 3 verdes.
 
 ## Deploy
 
