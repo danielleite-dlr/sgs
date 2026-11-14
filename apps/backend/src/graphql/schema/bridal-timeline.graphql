@@ -1,0 +1,119 @@
+type TimelineRow {
+  time: String!
+  minutes: Int!
+  name: String!
+  label: String!
+  "make | hair | null"
+  kind: String
+  professionalName: String
+  isExtra: Boolean!
+  isRegistry: Boolean!
+}
+
+type TimelineWarning {
+  code: String!
+  message: String!
+}
+
+type TimelineConflict {
+  stepName: String!
+  professionalName: String!
+  startsAt: DateTime!
+  endsAt: DateTime!
+  "Quem/o que ocupa: 'Ana Souza — Escova (12:30–13:30)' ou 'Bloqueio: folga'"
+  blockedBy: String!
+}
+
+type TimelineBrideSlot {
+  "make | hair"
+  kind: String!
+  stepName: String!
+  serviceId: UUID
+  serviceName: String
+  professionalId: UUID
+  professionalName: String
+  startsAt: DateTime!
+  endsAt: DateTime!
+}
+
+type TimelineCompanionIssue {
+  appointmentId: UUID!
+  clientName: String!
+  professionalName: String!
+  serviceName: String!
+  startsAt: DateTime!
+  endsAt: DateTime!
+  rule: String!
+  message: String!
+}
+
+type BridalTimelinePreview {
+  groupId: UUID!
+  packageId: UUID!
+  packageName: String!
+  departureTime: String!
+  brideLabel: String!
+  makeProfessionalId: UUID
+  hairProfessionalId: UUID
+  rows: [TimelineRow!]!
+  text: String!
+  warnings: [TimelineWarning!]!
+  registryStartsAt: DateTime
+  brideSlots: [TimelineBrideSlot!]!
+  conflicts: [TimelineConflict!]!
+  "O que falta para confirmar (vazio + conflicts vazio = pode confirmar)"
+  missing: [String!]!
+  canConfirm: Boolean!
+}
+
+type BridalTimelinePreviewPayload {
+  preview: BridalTimelinePreview
+  errors: [UserError!]!
+}
+
+type BridalTimeline {
+  id: UUID!
+  groupId: UUID!
+  packageId: UUID
+  packageName: String!
+  departureTime: String!
+  brideLabel: String!
+  makeProfessionalId: UUID
+  hairProfessionalId: UUID
+  rows: [TimelineRow!]!
+  text: String!
+  warnings: [TimelineWarning!]!
+  registryStartsAt: DateTime!
+  registryLabel: String!
+  confirmedAt: DateTime!
+  confirmedByName: String
+  version: Int!
+  companionIssues: [TimelineCompanionIssue!]!
+}
+
+type BridalTimelinePayload {
+  timeline: BridalTimeline
+  conflicts: [TimelineConflict!]!
+  errors: [UserError!]!
+}
+
+input BridalTimelineInput {
+  groupId: UUID!
+  packageId: UUID!
+  "HH:MM local do salão"
+  departureTime: String!
+  "Nome no título; vazio = primeiro nome da noiva"
+  brideLabel: String
+  makeProfessionalId: UUID
+  hairProfessionalId: UUID
+}
+
+extend type Query {
+  bridalTimelinePreview(input: BridalTimelineInput!): BridalTimelinePreviewPayload!
+  bridalTimeline(groupId: UUID!): BridalTimeline
+}
+
+extend type Mutation {
+  "Ok do studio: grava o cronograma oficial e cria/atualiza make e penteado da noiva (D-02)"
+  confirmBridalTimeline(input: BridalTimelineInput!): BridalTimelinePayload!
+}
