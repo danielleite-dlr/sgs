@@ -55,6 +55,8 @@ model Organization {
   auditLogs                   AuditLog[]
   contractSettings            ContractSettings?
   bridalGroups                BridalGroup[]
+  packageTimelineSteps        PackageTimelineStep[]
+  bridalTimelines             BridalTimeline[]
   bridalGroupMembers          BridalGroupMember[]
   bridalMemberServices        BridalMemberService[]
   contractSequences           ContractSequence[]
@@ -358,6 +360,8 @@ model Package {
   contracts     Contract[]
   contractItems ContractItem[]
   bridalGroups  BridalGroup[]
+  timelineSteps   PackageTimelineStep[]
+  bridalTimelines BridalTimeline[]
 
   @@index([organizationId], name: "ix_packages_org")
   @@map("packages")
@@ -850,6 +854,7 @@ model BridalGroup {
   appointments    Appointment[]
   timeBlocks      TimeBlock[]
   suggestions     AiScheduleSuggestion[]
+  timeline        BridalTimeline?
 
   @@index([organizationId, eventDate], name: "ix_bg_org_event")
   @@index([packageId], name: "ix_bg_package")
@@ -1162,4 +1167,69 @@ model FixedExpense {
 
   @@index([organizationId], name: "ix_fe_org")
   @@map("fixed_expenses")
+}
+
+/// Regra de cronograma por pacote (04.2): etapas com offset antes da saída,
+/// extras (ex.: chegada dos fotógrafos) e marcação de make/penteado/início do registro.
+model PackageTimelineStep {
+  id              String   @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId  String   @map("organization_id") @db.Uuid
+  packageId       String   @map("package_id") @db.Uuid
+  displayOrder    Int      @default(0) @map("display_order")
+  isExtra         Boolean  @default(false) @map("is_extra")
+  name            String   @db.VarChar(120)
+  offsetMinutes   Int      @map("offset_minutes")
+  /// 'make' | 'hair' | null
+  kind            String?  @db.VarChar(10)
+  serviceId       String?  @map("service_id") @db.Uuid
+  durationMinutes Int?     @map("duration_minutes")
+  startsRegistry  Boolean  @default(false) @map("starts_registry")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  package      Package      @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, packageId, displayOrder], name: "ix_pts_org_package")
+  @@map("package_timeline_steps")
+}
+
+/// Cronograma confirmado do grupo (snapshot; um por grupo). FKs de profissional,
+/// serviço, agendamento e confirmed_by existem só no SQL.
+model BridalTimeline {
+  id                  String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId      String    @map("organization_id") @db.Uuid
+  groupId             String    @unique @map("group_id") @db.Uuid
+  packageId           String?   @map("package_id") @db.Uuid
+  packageName         String    @map("package_name") @db.VarChar(160)
+  departureTime       String    @map("departure_time") @db.VarChar(5)
+  departureAt         DateTime  @map("departure_at") @db.Timestamptz(6)
+  registryStartsAt    DateTime  @map("registry_starts_at") @db.Timestamptz(6)
+  registryLabel       String    @map("registry_label") @db.VarChar(120)
+  brideLabel          String    @map("bride_label") @db.VarChar(160)
+  makeProfessionalId  String?   @map("make_professional_id") @db.Uuid
+  hairProfessionalId  String?   @map("hair_professional_id") @db.Uuid
+  makeServiceId       String?   @map("make_service_id") @db.Uuid
+  hairServiceId       String?   @map("hair_service_id") @db.Uuid
+  makeStartsAt        DateTime? @map("make_starts_at") @db.Timestamptz(6)
+  makeEndsAt          DateTime? @map("make_ends_at") @db.Timestamptz(6)
+  hairStartsAt        DateTime? @map("hair_starts_at") @db.Timestamptz(6)
+  hairEndsAt          DateTime? @map("hair_ends_at") @db.Timestamptz(6)
+  makeAppointmentId   String?   @map("make_appointment_id") @db.Uuid
+  hairAppointmentId   String?   @map("hair_appointment_id") @db.Uuid
+  rows                Json      @default("[]") @db.JsonB
+  text                String    @db.Text
+  warnings            Json      @default("[]") @db.JsonB
+  confirmedBy         String?   @map("confirmed_by") @db.Uuid
+  confirmedAt         DateTime  @default(now()) @map("confirmed_at") @db.Timestamptz(6)
+  version             Int       @default(1)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  group        BridalGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  package      Package?     @relation(fields: [packageId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId], name: "ix_bt_org")
+  @@map("bridal_timelines")
 }
