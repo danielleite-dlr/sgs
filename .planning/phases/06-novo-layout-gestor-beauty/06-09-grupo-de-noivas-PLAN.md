@@ -151,3 +151,9 @@ Lote Grupo de noivas entregue no staging.
 <output>
 After completion, create `.planning/phases/06-novo-layout-gestor-beauty/06-09-SUMMARY.md`
 </output>
+
+<pending_from_04.2>
+Pendência herdada do plano 04.2-09 (só nota; não altera as tarefas deste plano).
+O backend aceita `timelineOverride` em `scheduleBridalEvent` (04.2-04) e `confirmBridalSchedule` (04.2-07), mas o 04.2-09 não deu tela de override para esses dois caminhos, porque `BridalScheduleEditor.tsx` e `AiSuggestionPanel.tsx` são reescritos aqui.
+Ao executar este plano, acrescentar ao `BridalScheduleEditor` (agenda do evento) e ao `AiSuggestionPanel` (confirmação da IA) o mesmo tratamento de `useMoveAppointment`/`VisitFormDialog`: erro `isOverridableTimelineError` + `useBridalPermission('bridal.scheduleOverride')` -> `requestTimelineOverride(message)` (de `features/operations/lib/timeline-override`) -> reenviar com `timelineOverride: { reason }`.
+</pending_from_04.2>

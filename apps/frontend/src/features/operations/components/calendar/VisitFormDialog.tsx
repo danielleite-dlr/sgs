@@ -35,6 +35,8 @@ import {
 } from '@/features/clients/api/clients.api';
 import { maskBrPhone, normalizeBrPhone } from '@/features/identity/member-validation';
 import { useHasPermission } from '../../operations-permissions';
+import { useBridalPermission } from '@/features/bridal/bridal-permissions';
+import { isOverridableTimelineError, requestTimelineOverride } from '../../lib/timeline-override';
 import {
   ServicesQuery,
   type ServiceData,
@@ -433,6 +435,7 @@ export function VisitFormDialog({
     skip: !open,
   });
   const [createVisit, { loading }] = useMutation<CreateVisitResult>(CreateVisitMutation);
+  const canOverrideTimeline = useBridalPermission('bridal.scheduleOverride');
   const [createClient, { loading: creatingClient }] = useMutation<CreateClientResult>(
     CreateClientMutation,
     { refetchQueries: ['ClientsList'] },
@@ -582,7 +585,17 @@ export function VisitFormDialog({
     }
     try {
       const result = await createVisit({ variables: { input: built.input } });
-      const payload = result.data?.createVisit;
+      let payload = result.data?.createVisit;
+      const first = payload?.errors[0];
+      if (first && canOverrideTimeline && isOverridableTimelineError(first)) {
+        const reason = await requestTimelineOverride(first.message);
+        if (reason) {
+          const retry = await createVisit({
+            variables: { input: { ...built.input, timelineOverride: { reason } } },
+          });
+          payload = retry.data?.createVisit;
+        }
+      }
       if (!payload || payload.errors.length > 0) {
         setError(payload?.errors[0]?.message ?? 'Não foi possível criar o agendamento.');
         return;

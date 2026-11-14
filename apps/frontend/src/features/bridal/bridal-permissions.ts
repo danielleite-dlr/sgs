@@ -18,6 +18,7 @@ const MANAGER_PERMISSIONS = [
   'contract.write',
   'contract.payment',
   'contract.cancel',
+  'bridal.scheduleOverride',
 ];
 
 export const BRIDAL_ROLE_PERMISSIONS: Record<string, readonly string[]> = {

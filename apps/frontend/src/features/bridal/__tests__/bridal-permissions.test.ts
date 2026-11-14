@@ -9,8 +9,18 @@ const ALL = [
   'contract.write',
   'contract.payment',
   'contract.cancel',
+  'bridal.scheduleOverride',
   'contract.settings',
 ];
+
+describe('bridal.scheduleOverride', () => {
+  it('só ADMIN e MANAGER podem forçar o cronograma', () => {
+    expect(roleHasBridalPermission('ADMIN', 'bridal.scheduleOverride')).toBe(true);
+    expect(roleHasBridalPermission('MANAGER', 'bridal.scheduleOverride')).toBe(true);
+    expect(roleHasBridalPermission('ATTENDANT', 'bridal.scheduleOverride')).toBe(false);
+    expect(roleHasBridalPermission('PROFESSIONAL', 'bridal.scheduleOverride')).toBe(false);
+  });
+});
 
 describe('roleHasBridalPermission (espelha ROLE_PERMISSIONS do backend)', () => {
   it('ADMIN tem todas as permissões de noivas e contratos', () => {

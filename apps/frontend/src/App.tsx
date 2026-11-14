@@ -2,6 +2,7 @@ import { ApolloProvider } from '@apollo/client';
 import { RouterProvider } from 'react-router-dom';
 import { Suspense } from 'react';
 import { Toaster } from '@/components/ui/sonner';
+import { TimelineOverrideHost } from '@/features/operations/components/TimelineOverrideHost';
 import { apolloClient } from '@/infrastructure/apollo/client';
 import { router } from '@/router';
 
@@ -15,6 +16,7 @@ export default function App() {
         <RouterProvider router={router} />
       </Suspense>
       <Toaster richColors position="top-right" />
+      <TimelineOverrideHost />
     </ApolloProvider>
   );
 }
