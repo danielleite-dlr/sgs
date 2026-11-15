@@ -10,6 +10,13 @@ export type ForecastKind =
   | "fixed_expense";
 
 export type ForecastCostGroup = "professional" | "operational" | "fixed";
+export type ForecastNature = "ALL" | "IN" | "OUT";
+export type ForecastOrigin =
+  | "ALL"
+  | "BRIDAL_PAYMENT"
+  | "SOCIAL_APPOINTMENT"
+  | "FIXED_EXPENSE"
+  | "PROFESSIONAL_PAYMENT";
 
 export interface ForecastItem {
   date: string;
@@ -58,6 +65,13 @@ export interface CashForecastResult {
   cashForecast: CashForecast;
 }
 
+export interface CashForecastVariables {
+  from: string;
+  to: string;
+  nature: ForecastNature;
+  origin: ForecastOrigin;
+}
+
 export interface FixedExpense {
   id: string;
   name: string;
@@ -87,8 +101,13 @@ export interface FixedExpensePayload {
 }
 
 export const CashForecastQuery = gql`
-  query CashForecast($from: String!, $to: String!) {
-    cashForecast(from: $from, to: $to) {
+  query CashForecast(
+    $from: String!
+    $to: String!
+    $nature: ForecastNature = ALL
+    $origin: ForecastOrigin = ALL
+  ) {
+    cashForecast(from: $from, to: $to, nature: $nature, origin: $origin) {
       from
       to
       timezone

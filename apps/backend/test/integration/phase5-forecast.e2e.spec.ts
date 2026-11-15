@@ -14,8 +14,8 @@ import { deletePhase5Rows } from "./helpers/phase5-cleanup";
 const FROM = "2027-03-01";
 const TO = "2027-03-31";
 
-const QUERY = `query($from: String!, $to: String!) {
-  cashForecast(from: $from, to: $to) {
+const QUERY = `query($from: String!, $to: String!, $nature: ForecastNature, $origin: ForecastOrigin) {
+  cashForecast(from: $from, to: $to, nature: $nature, origin: $origin) {
     from to timezone inflowTotal outflowTotal balance overdueInflowTotal noRuleCount withoutProfessionalCount
     professionalOutflowTotal operationalOutflowTotal fixedOutflowTotal
     buckets { start end inflow outflow balance overdueInflow professionalOutflow operationalOutflow fixedOutflow }
@@ -64,8 +64,13 @@ describe("Phase 5 - previsão de caixa (cashForecast)", () => {
 
   beforeEach(reset);
 
-  const forecast = async () => {
-    const res = await gqlAs(w, w.tokens.admin)(QUERY, { from: FROM, to: TO });
+  const forecast = async (nature = "ALL", origin = "ALL") => {
+    const res = await gqlAs(w, w.tokens.admin)(QUERY, {
+      from: FROM,
+      to: TO,
+      nature,
+      origin,
+    });
     expect(res.errors).toBeUndefined();
     return res.data.cashForecast as {
       inflowTotal: string;
@@ -80,6 +85,7 @@ describe("Phase 5 - previsão de caixa (cashForecast)", () => {
       buckets: {
         start: string;
         end: string;
+        outflow: string;
         overdueInflow: string;
         professionalOutflow: string;
         operationalOutflow: string;
@@ -152,6 +158,25 @@ describe("Phase 5 - previsão de caixa (cashForecast)", () => {
 
   const byKind = (items: Item[], kind: string) =>
     items.filter((i) => i.kind === kind);
+
+  it("combina natureza e origem e recalcula totais para os itens filtrados", async () => {
+    const a = await appt({ startsAt: "2027-03-02T10:00:00-03:00" });
+
+    const f = await forecast("IN", "SOCIAL_APPOINTMENT");
+
+    expect(f.items).toEqual([
+      expect.objectContaining({
+        refId: a.id,
+        kind: "appointment",
+        direction: "in",
+      }),
+    ]);
+    expect(f.inflowTotal).toBe("100.00");
+    expect(f.outflowTotal).toBe("0.00");
+    expect(f.balance).toBe("100.00");
+    expect(f.professionalOutflowTotal).toBe("0.00");
+    expect(f.buckets.every((bucket) => bucket.outflow === "0.00")).toBe(true);
+  });
 
   it("1. agendamento scheduled sem comanda: preço base menos o sinal", async () => {
     const a = await appt({
