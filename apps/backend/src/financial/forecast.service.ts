@@ -76,6 +76,12 @@ export class ForecastService {
 
     return this.tenant.runWithTenant(orgId, async (tx) => {
       const tz = await orgTimezone(tx, orgId);
+      const today = new Intl.DateTimeFormat("en-CA", {
+        timeZone: tz,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date());
 
       const ruleRows = await tx.commissionRule.findMany({
         where: { deletedAt: null },
@@ -195,6 +201,7 @@ export class ForecastService {
             },
             from,
             to,
+            today,
           ),
         );
       }

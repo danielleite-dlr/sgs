@@ -166,11 +166,12 @@ export function contractReceivables(
   },
   from: string,
   to: string,
+  today = from,
 ): ForecastItemCents[] {
   const items: ForecastItemCents[] = [];
   const place = (dueDate: string) =>
     dueDate < from
-      ? { date: from, overdue: true }
+      ? { date: from, overdue: dueDate < today }
       : { date: dueDate, overdue: false };
 
   for (const i of allocateInstallments(c.installments, c.netPaidCents, from)) {

@@ -96,6 +96,12 @@ describe("contractReceivables", () => {
     expect(r[0].overdue).toBe(true);
     expect(r[1].overdue).toBe(false);
   });
+  it("parcela antes da janela futura não vira atraso antes do vencimento", () => {
+    const r = contractReceivables(base, from, to, "2027-02-15").filter(
+      (i) => i.kind === "contract_installment",
+    );
+    expect(r[0]).toMatchObject({ date: from, overdue: false });
+  });
   it("parcela em/depois de to não entra", () => {
     const r = contractReceivables(
       { ...base, installments: [{ seq: 1, dueDate: to, cents: 100 }] },
