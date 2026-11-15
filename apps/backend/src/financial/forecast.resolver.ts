@@ -17,7 +17,9 @@ export class ForecastResolver {
     @CurrentTenant() tenant: TenantContext,
     @Args('from') from: string,
     @Args('to') to: string,
+    @Args('nature') nature: string,
+    @Args('origin') origin: string,
   ) {
-    return this.forecast.forecast(tenant.organizationId, from, to);
+    return this.forecast.forecast(tenant.organizationId, from, to, nature, origin);
   }
 }

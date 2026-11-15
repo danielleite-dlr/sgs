@@ -53,4 +53,12 @@ describe("grupos de custo da previsão", () => {
       expect(text).toContain(f);
     }
   });
+
+  it("a consulta envia os filtros combináveis de natureza e origem", () => {
+    const text = CashForecastQuery.loc?.source.body ?? "";
+    expect(text).toContain("$nature: ForecastNature = ALL");
+    expect(text).toContain("$origin: ForecastOrigin = ALL");
+    expect(text).toContain("nature: $nature");
+    expect(text).toContain("origin: $origin");
+  });
 });

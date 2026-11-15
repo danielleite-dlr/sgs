@@ -1,6 +1,20 @@
 extend type Query {
   "Previsão de caixa. from/to = YYYY-MM-DD no fuso da org (to exclusivo). Pendências vencidas antes de from entram em from com overdue = true. Requer financial.read"
-  cashForecast(from: String!, to: String!): CashForecast!
+  cashForecast(from: String!, to: String!, nature: ForecastNature = ALL, origin: ForecastOrigin = ALL): CashForecast!
+}
+
+enum ForecastNature {
+  ALL
+  IN
+  OUT
+}
+
+enum ForecastOrigin {
+  ALL
+  BRIDAL_PAYMENT
+  SOCIAL_APPOINTMENT
+  FIXED_EXPENSE
+  PROFESSIONAL_PAYMENT
 }
 
 type CashForecast {

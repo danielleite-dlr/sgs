@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -22,6 +23,8 @@ import {
   forecastWindow,
   weekLabel,
   type CashForecastResult,
+  type ForecastNature,
+  type ForecastOrigin,
 } from '../api/forecast.api';
 
 // Entrada e saída (D-26/D-27): os valores são texto, então usam os tons 700 (4,5:1, WCAG AA);
@@ -44,6 +47,20 @@ const FORECAST_PRESETS: { value: 7 | 15 | 30; label: string }[] = [
   { value: 7, label: '7 dias' },
   { value: 15, label: '15 dias' },
   { value: 30, label: '30 dias' },
+];
+
+const NATURE_OPTIONS: { value: ForecastNature; label: string }[] = [
+  { value: 'ALL', label: 'Todos' },
+  { value: 'IN', label: 'Entradas' },
+  { value: 'OUT', label: 'Saídas' },
+];
+
+const ORIGIN_OPTIONS: { value: ForecastOrigin; label: string }[] = [
+  { value: 'ALL', label: 'Todos os tipos' },
+  { value: 'BRIDAL_PAYMENT', label: 'Quitação de noiva' },
+  { value: 'SOCIAL_APPOINTMENT', label: 'Agendamento social' },
+  { value: 'FIXED_EXPENSE', label: 'Custo fixo' },
+  { value: 'PROFESSIONAL_PAYMENT', label: 'Pagamento de profissionais' },
 ];
 
 /** Período da previsão: 7, 15 ou 30 dias a partir de hoje (padrão 30) ou personalizado. `to` é exclusivo. */
@@ -139,8 +156,10 @@ export function PrevisaoPage() {
   const canRead = useHasPermission('financial.read');
   const [preset, setPreset] = useState<ForecastPreset>(30);
   const [range, setRange] = useState(() => forecastWindow());
+  const [nature, setNature] = useState<ForecastNature>('ALL');
+  const [origin, setOrigin] = useState<ForecastOrigin>('ALL');
   const { data, error, refetch } = useQuery<CashForecastResult>(CashForecastQuery, {
-    variables: range,
+    variables: { ...range, nature, origin },
     skip: !canRead,
   });
   const forecast = data?.cashForecast;
@@ -164,6 +183,34 @@ export function PrevisaoPage() {
               setRange(r);
             }}
           />
+          <div className="flex flex-wrap gap-sm" aria-label="Filtros da previsão">
+            <label className="flex min-w-[180px] flex-col gap-xs text-label">
+              Natureza
+              <Select value={nature} onValueChange={(value) => setNature(value as ForecastNature)}>
+                <SelectTrigger aria-label="Natureza" data-testid="forecast-nature-filter">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {NATURE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </label>
+            <label className="flex min-w-[240px] flex-col gap-xs text-label">
+              Origem/tipo
+              <Select value={origin} onValueChange={(value) => setOrigin(value as ForecastOrigin)}>
+                <SelectTrigger aria-label="Origem/tipo" data-testid="forecast-origin-filter">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ORIGIN_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </label>
+          </div>
           <p className="text-data tabular-nums text-neutral-500" data-testid="forecast-range">
             Período: {rangeLabel}
           </p>

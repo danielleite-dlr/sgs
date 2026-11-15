@@ -73,12 +73,16 @@ const data = {
   ],
 };
 
-function renderPage(seen: Array<{ from: string; to: string }> = []) {
+function renderPage(
+  seen: Array<{ from: string; to: string }> = [],
+  seenVariables: Array<Record<string, string>> = [],
+) {
   // Um mock por consulta esperada (30 dias + trocas de período); cada um registra as variáveis recebidas.
   const mock = () => ({
     request: { query: CashForecastQuery },
-    variableMatcher: (v: { from: string; to: string }) => {
-      seen.push(v);
+    variableMatcher: (v: Record<string, string>) => {
+      seenVariables.push(v);
+      seen.push({ from: v.from, to: v.to });
       return true;
     },
     result: { data: { cashForecast: data } },
@@ -168,5 +172,25 @@ describe('PrevisaoPage', () => {
     useAuthStore.setState({ roleName: 'ATTENDANT', permissions: [] });
     renderPage();
     expect(screen.getByText('Você não tem acesso ao financeiro.')).toBeInTheDocument();
+  });
+
+  it('combina os filtros de natureza e origem sem perder o período', async () => {
+    const seenVariables: Array<Record<string, string>> = [];
+    renderPage([], seenVariables);
+    await screen.findByTestId('forecast-totals');
+
+    fireEvent.click(screen.getByTestId('forecast-nature-filter'));
+    fireEvent.click(await screen.findByRole('option', { name: 'Saídas' }));
+    fireEvent.click(screen.getByTestId('forecast-origin-filter'));
+    fireEvent.click(await screen.findByRole('option', { name: 'Pagamento de profissionais' }));
+
+    await waitFor(() =>
+      expect(seenVariables).toContainEqual({
+        from: expect.any(String),
+        to: expect.any(String),
+        nature: 'OUT',
+        origin: 'PROFESSIONAL_PAYMENT',
+      }),
+    );
   });
 });

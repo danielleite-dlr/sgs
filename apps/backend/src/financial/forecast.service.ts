@@ -65,7 +65,13 @@ const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 export class ForecastService {
   constructor(private readonly tenant: TenantContextService) {}
 
-  async forecast(orgId: string, from: string, to: string) {
+  async forecast(
+    orgId: string,
+    from: string,
+    to: string,
+    nature = "ALL",
+    origin = "ALL",
+  ) {
     validateRange(from, to);
 
     return this.tenant.runWithTenant(orgId, async (tx) => {
@@ -284,15 +290,33 @@ export class ForecastService {
         ),
       );
 
-      // f. Ordenação, buckets e totais
-      items.sort(
+      // f. Os itens são construídos primeiro para que filtros combinem entre si
+      // e os totais/buckets reflitam exatamente o conjunto exibido.
+      const filteredItems = items.filter((item) => {
+        const matchesNature =
+          nature === "ALL" ||
+          (nature === "IN" && item.direction === "in") ||
+          (nature === "OUT" && item.direction === "out");
+        const matchesOrigin =
+          origin === "ALL" ||
+          (origin === "BRIDAL_PAYMENT" &&
+            (item.kind === "contract_installment" || item.kind === "contract_balance")) ||
+          (origin === "SOCIAL_APPOINTMENT" && item.kind === "appointment") ||
+          (origin === "FIXED_EXPENSE" && item.kind === "fixed_expense") ||
+          (origin === "PROFESSIONAL_PAYMENT" && item.kind === "commission");
+        return matchesNature && matchesOrigin;
+      });
+
+      // g. Ordenação, buckets e totais
+      const selectedItems = filteredItems;
+      selectedItems.sort(
         (x, y) =>
           (x.date < y.date ? -1 : x.date > y.date ? 1 : 0) ||
           (x.direction === y.direction ? 0 : x.direction === "in" ? -1 : 1) ||
           (x.label < y.label ? -1 : x.label > y.label ? 1 : 0),
       );
-      const buckets = buildWeeklyBuckets(items, from, to);
-      const totals = summarizeForecast(items);
+      const buckets = buildWeeklyBuckets(selectedItems, from, to);
+      const totals = summarizeForecast(selectedItems);
 
       return {
         from,
@@ -305,9 +329,9 @@ export class ForecastService {
         professionalOutflowTotal: fromCents(totals.professionalOutflowCents),
         operationalOutflowTotal: fromCents(totals.operationalOutflowCents),
         fixedOutflowTotal: fromCents(totals.fixedOutflowCents),
-        noRuleCount: items.filter((i) => i.kind === "commission" && i.noRule)
+        noRuleCount: selectedItems.filter((i) => i.kind === "commission" && i.noRule)
           .length,
-        withoutProfessionalCount: items.filter((i) => i.withoutProfessional)
+        withoutProfessionalCount: selectedItems.filter((i) => i.withoutProfessional)
           .length,
         buckets: buckets.map((b) => ({
           start: b.start,
@@ -320,7 +344,7 @@ export class ForecastService {
           operationalOutflow: fromCents(b.operationalOutflowCents),
           fixedOutflow: fromCents(b.fixedOutflowCents),
         })),
-        items: items.map((i) => ({
+        items: selectedItems.map((i) => ({
           date: i.date,
           kind: i.kind,
           direction: i.direction,
