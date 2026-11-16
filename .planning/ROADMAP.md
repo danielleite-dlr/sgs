@@ -391,7 +391,14 @@ Ideias estacionadas, sem ordem. Entram no roadmap só quando a usuária promover
 - Ações rápidas no painel ("Iniciar", "Check-in", "Fechar" comanda pela lista)
 - Multiunidade (seletor de unidade no topo)
 - Entradas e saídas (06-06): "Exportar diário"; chips "Apenas entradas/saídas"; busca e filtro por forma de pagamento; painel "Estado do Sistema / Diretriz operacional"; "Previsão D+7 / Cartões a compensar / Auditoria fiscal"; selo "Fechamento provisório"; rodapé "Conciliação em dia / Atualizado às"; botão "Lançar" (lançamento manual)
-- Painel (Início, 06-10): ticket médio diário, noivas no mês/semana, contratos críticos de noivas, comandas em aberto para conferência e "Filtrar período"; relógio e status "Sincronizado" no topo (atendimentos do dia ficam no UX-20 do 999.6)
+- Painel (Início, 06-10): "Filtrar período", relógio e status "Sincronizado" no topo, barras de progresso de meta e ocupação das bancadas em tempo real (ticket médio, noivas, comandas em aberto e contratos próximos já aparecem no Início; conferido na auditoria local do 06-11; atendimentos do dia ficam no UX-20 do 999.6)
+- Casco (06-02): versão "SGS Atelier" e cadeado no menu; relógio, "Sistema operacional/Online" e nome da unidade no topo
+- Agenda (06-03): selo de verificado e especialidade no cabeçalho da profissional; rótulo "Agora" no indicador de hora; lista de espera e bloqueio técnico no painel; "Exibir bloqueios internos"; "Horário livre/Preparação de bancada/Higienização"; cadeira, sala e valor no bloco do atendimento
+- Novo agendamento (06-04): selo do cliente (Noiva/VIP); "(Ativa)" e ícone no profissional; comprovante, "Recebido em" e selo "Pago" no sinal; aviso prévio de conflito de horário antes de salvar
+- Comanda (06-05): botão WhatsApp, observações do atendimento, histórico rápido e pontualidade; NF-e e menu de ações; filtro Quitada/Pendente; atalho de teclado para adicionar item; transferir bancada; conciliação e autorização de pagamento; comprovantes e recibo por WhatsApp; protocolo de fechamento; situação contábil; terminal e operador
+- Previsão de caixa (06-07): total e "% do desembolso" por grupo de custo; selo "Semana corrente"; busca por atalho de teclado
+- Despesas fixas (06-08): categorias, centro de custo, fornecedor e anexos; recorrência diferente de mensal e "pago no mês"; exportar e meta
+- Grupo de noivas (06-09): coluna profissional e valor por pessoa; assessoria responsável e local da produção; plano financeiro, envio e checklist do contrato; notas da diretora criativa e código do contrato no cabeçalho
 - Decisão da usuária em 2026-11-06: fase 6 é só o visual com os dados que já existem
 
 ## Progress
