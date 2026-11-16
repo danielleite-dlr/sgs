@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { recordAudit } from "../common/audit-log";
 import { TenantContextService } from "../database/tenant-context.service";
+import { PushEventsService } from "../push/push-events.service";
+import type { PushJob } from "../push/push.types";
 import type { TenantPrismaClient } from "../database/types";
 import { syncContractCoverageTx } from "./bridal-coverage";
 import { applyPackageToBrideTx } from "./bridal-package";
@@ -595,7 +597,19 @@ export async function createBridalGroupTx(
 
 @Injectable()
 export class BridalService {
-  constructor(private readonly tenant: TenantContextService) {}
+  constructor(
+    private readonly tenant: TenantContextService,
+    private readonly push: PushEventsService,
+  ) {}
+
+  /** Push sai depois do commit e nunca derruba a agenda (fase 7). */
+  private notify(job: PushJob): void {
+    try {
+      this.push.enqueue(job);
+    } catch {
+      // PushEventsService já não lança; isto é só cinto de segurança.
+    }
+  }
 
   private async write(
     orgId: string,
@@ -822,7 +836,7 @@ export class BridalService {
     input: BridalScheduleInput,
   ): Promise<BridalSchedulePayload> {
     try {
-      return await this.tenant.runWithTenant(
+      const result = await this.tenant.runWithTenant(
         orgId,
         async (tx) => {
           const { appointmentIds } = await createBridalScheduleTx(
@@ -840,6 +854,15 @@ export class BridalService {
         },
         BRIDAL_SCHEDULE_TX_OPTIONS,
       );
+      if (result.errors.length === 0 && result.appointmentIds.length > 0) {
+        this.notify({
+          kind: "bridal.scheduled",
+          orgId,
+          actorMemberId: memberId,
+          appointmentIds: result.appointmentIds,
+        });
+      }
+      return result;
     } catch (e) {
       const m = mapBridalError(e);
       if (m) return { group: null, appointmentIds: [], errors: [m] };
@@ -866,8 +889,9 @@ export class BridalService {
         ],
       };
     }
+    const since = new Date().toISOString();
     try {
-      return await this.tenant.runWithTenant(
+      const result = await this.tenant.runWithTenant(
         orgId,
         async (tx) => {
           await requireActiveGroup(tx, input.id);
@@ -912,6 +936,16 @@ export class BridalService {
         },
         BRIDAL_SCHEDULE_TX_OPTIONS,
       );
+      if (result.errors.length === 0) {
+        this.notify({
+          kind: "bridal.cancelled",
+          orgId,
+          actorMemberId: memberId,
+          since,
+          groupId: input.id,
+        });
+      }
+      return result;
     } catch (e) {
       return fail(e);
     }

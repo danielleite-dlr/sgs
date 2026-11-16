@@ -11,6 +11,7 @@ import {
 } from '../bridal-schedule';
 import { syncContractCoverageTx } from '../bridal-coverage';
 import { TenantContextService } from '../../database/tenant-context.service';
+import { PushEventsService } from '../../push/push-events.service';
 import type { TenantPrismaClient } from '../../database/types';
 import { professionalServesCategory } from '../../identity/member-categories';
 import { BridalError, mapBridalError, type BridalUserError } from '../bridal-errors';
@@ -400,7 +401,10 @@ const overlaps = (a0: Date, a1: Date, b0: Date, b1: Date) => a0 < b1 && b0 < a1;
 
 @Injectable()
 export class BridalTimelineService {
-  constructor(private readonly tenant: TenantContextService) {}
+  constructor(
+    private readonly tenant: TenantContextService,
+    private readonly push: PushEventsService,
+  ) {}
 
   async preview(orgId: string, input: BridalTimelineInput): Promise<BridalTimelinePreviewPayload> {
     try {
@@ -424,11 +428,29 @@ export class BridalTimelineService {
     input: BridalTimelineInput,
   ): Promise<BridalTimelineConfirmPayload> {
     try {
-      return await this.tenant.runWithTenant(
+      // Só os atendimentos CRIADOS avisam; mover/adotar (reconfirmar) é remarcação (D-11).
+      const createdIds: string[] = [];
+      const result = await this.tenant.runWithTenant(
         orgId,
-        (tx) => confirmTimelineTx(tx, orgId, memberId, input),
+        (tx) => {
+          createdIds.length = 0; // a transação pode ser repetida
+          return confirmTimelineTx(tx, orgId, memberId, input, createdIds);
+        },
         BRIDAL_SCHEDULE_TX_OPTIONS,
       );
+      if (result.errors.length === 0 && createdIds.length > 0) {
+        try {
+          this.push.enqueue({
+            kind: 'bridal.scheduled',
+            orgId,
+            actorMemberId: memberId,
+            appointmentIds: [...createdIds],
+          });
+        } catch {
+          // PushEventsService já não lança; cinto de segurança.
+        }
+      }
+      return result;
     } catch (e) {
       if (e instanceof TimelineConflictError) {
         return {
@@ -455,6 +477,7 @@ async function confirmTimelineTx(
   orgId: string,
   memberId: string,
   input: BridalTimelineInput,
+  createdOut: string[] = [],
 ): Promise<BridalTimelineConfirmPayload> {
   const b = await buildTimelineTx(tx, orgId, input);
   if (b.missing.length > 0) {
@@ -604,6 +627,7 @@ async function confirmTimelineTx(
     }
   }
 
+  createdOut.push(...created);
   await syncContractCoverageTx(tx, orgId, groupId);
   await rebuildTravelBlocksTx(tx, orgId, memberId, groupId);
 

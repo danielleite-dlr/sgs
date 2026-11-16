@@ -14,6 +14,8 @@ import { cancelAppointmentTx } from "./appointment-cancel";
 import { moveAppointmentTx } from "./appointment-move";
 import type { TimelineOverrideInput } from "../bridal/timeline/timeline-guard";
 import { createVisitTx, type CreateVisitInput } from "./visits";
+import { PushEventsService } from "../push/push-events.service";
+import type { PushJob } from "../push/push.types";
 
 export interface CreateAppointmentInput {
   professionalId: string;
@@ -139,7 +141,10 @@ export function parseAppointmentInterval(
  */
 @Injectable()
 export class AppointmentsService {
-  constructor(private readonly tenant: TenantContextService) {}
+  constructor(
+    private readonly tenant: TenantContextService,
+    private readonly push: PushEventsService,
+  ) {}
 
   async list(
     orgId: string,
@@ -198,7 +203,7 @@ export class AppointmentsService {
     memberId: string,
     input: CreateVisitInput,
   ): Promise<VisitPayload> {
-    return this.tenant
+    const result = await this.tenant
       .runWithTenant(
         orgId,
         async (tx) => {
@@ -224,6 +229,15 @@ export class AppointmentsService {
         if (m) return { appointments: [], comandaId: null, errors: [m] };
         throw e;
       });
+    if (result.errors.length === 0 && result.appointments.length > 0) {
+      this.notify({
+        kind: "appointment.created",
+        orgId,
+        actorMemberId: memberId,
+        appointmentIds: result.appointments.map((a) => String(a.id)),
+      });
+    }
+    return result;
   }
 
   async move(
@@ -335,7 +349,7 @@ export class AppointmentsService {
       };
     }
 
-    return this.tenant
+    const result = await this.tenant
       .runWithTenant(orgId, async (tx) => {
         await cancelAppointmentTx(tx, {
           appointmentId: input.id,
@@ -351,6 +365,24 @@ export class AppointmentsService {
         return ok(updated);
       })
       .catch(fail);
+    if (result.errors.length === 0 && result.appointment && tag !== "no_show") {
+      this.notify({
+        kind: "appointment.cancelled",
+        orgId,
+        actorMemberId: memberId,
+        appointmentIds: [input.id],
+      });
+    }
+    return result;
+  }
+
+  /** Push sai depois do commit e nunca derruba a agenda (fase 7). */
+  private notify(job: PushJob): void {
+    try {
+      this.push.enqueue(job);
+    } catch {
+      // PushEventsService já não lança; isto é só cinto de segurança.
+    }
   }
 }
 

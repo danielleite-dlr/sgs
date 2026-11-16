@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { mapSchedulingError } from '../../appointments/scheduling-guard';
 import { fromCents } from '../../common/money';
 import { TenantContextService } from '../../database/tenant-context.service';
+import { PushEventsService } from '../../push/push-events.service';
 import { BRIDAL_SCHEDULE_TX_OPTIONS } from '../../bridal/bridal-schedule';
 import { mapContractError } from '../contract-errors';
 import { loadContractView } from '../contract-serialize';
@@ -28,7 +29,10 @@ export interface CancelContractInput {
 
 @Injectable()
 export class ContractPaymentsService {
-  constructor(private readonly tenant: TenantContextService) {}
+  constructor(
+    private readonly tenant: TenantContextService,
+    private readonly push: PushEventsService,
+  ) {}
 
   private fail(e: unknown): ContractPayload {
     const m = mapContractError(e) ?? mapSchedulingError(e);
@@ -84,8 +88,9 @@ export class ContractPaymentsService {
     memberId: string,
     input: CancelContractInput,
   ): Promise<ContractPayload> {
+    const since = new Date().toISOString();
     try {
-      return await this.tenant.runWithTenant(
+      const result = await this.tenant.runWithTenant(
         orgId,
         async (tx) => {
           await cancelContractTx(tx, orgId, memberId, input);
@@ -93,6 +98,20 @@ export class ContractPaymentsService {
         },
         BRIDAL_SCHEDULE_TX_OPTIONS,
       );
+      if (result.errors.length === 0) {
+        try {
+          this.push.enqueue({
+            kind: 'bridal.cancelled',
+            orgId,
+            actorMemberId: memberId,
+            since,
+            contractId: input.contractId,
+          });
+        } catch {
+          // PushEventsService já não lança; cinto de segurança.
+        }
+      }
+      return result;
     } catch (e) {
       return this.fail(e);
     }
