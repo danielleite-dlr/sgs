@@ -726,7 +726,7 @@ function SelecaoProfissionaisModal({
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export function SchedulePage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedDate, setSelectedDate] = useState(
     () => parseAgendaDate(searchParams.get("data")) ?? new Date(),
   );
@@ -808,8 +808,11 @@ export function SchedulePage() {
         : dayRange(selectedDate),
     [view, week, selectedDate],
   );
-  const { data: appointmentsData, refetch: refetchAppointments } =
-    useQuery<AppointmentsQueryResult>(AppointmentsQuery, {
+  const {
+    data: appointmentsData,
+    loading: appointmentsLoading,
+    refetch: refetchAppointments,
+  } = useQuery<AppointmentsQueryResult>(AppointmentsQuery, {
       variables: {
         startsAt: range.from,
         endsAt: range.to,
@@ -818,6 +821,35 @@ export function SchedulePage() {
         professionalId: ownOnly ? memberId : null,
       },
     });
+
+  // Fase 7 (D-14): toque na notificação abre o atendimento no dia.
+  const deepLinkId = searchParams.get("agendamento");
+  useEffect(() => {
+    if (!deepLinkId) return;
+    const d = parseAgendaDate(searchParams.get("data"));
+    if (d) setSelectedDate(d);
+    const v = parseAgendaView(searchParams.get("visao"));
+    if (v) setView(v);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLinkId]);
+  useEffect(() => {
+    if (!deepLinkId || appointmentsLoading || !appointmentsData) return;
+    // Espera o período da URL estar selecionado, senão os dados são do dia anterior.
+    const urlDate = parseAgendaDate(searchParams.get("data"));
+    if (urlDate && urlDate.toDateString() !== selectedDate.toDateString()) return;
+    if (appointmentsData.appointments.some((a) => a.id === deepLinkId)) {
+      setDetailsId(deepLinkId);
+    }
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("agendamento");
+        return next;
+      },
+      { replace: true },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLinkId, appointmentsLoading, appointmentsData, selectedDate]);
 
   const { data: timeBlocksData, refetch: refetchTimeBlocks } =
     useQuery<TimeBlocksQueryResult>(
