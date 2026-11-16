@@ -16,6 +16,8 @@ Construir um SaaS multi-tenant completo para salões de beleza, partindo da fund
 - [ ] **Phase 3: Core Operations** - Loop atômico de agendamento + POS + financeiro + comissões
 - [x] **Phase 4: Bridal & Contracts** - Vertical de noivas, contratos de evento e IA de otimização de agenda (completed 2026-11-05)
 - [x] **Phase 5: Uso no dia a dia** - Rodada de usabilidade das telas principais e previsão financeira de 30 dias (completed 2026-11-06)
+- [x] **Phase 6: Novo layout Gestor Beauty** - O sistema inteiro com a cara do Stitch "Gestor Beauty", só visual (completed 2026-11-16)
+- [ ] **Phase 7: App Android Gestor Beauty com Capacitor** - App Android com avisos push, publicado na Play
 
 ## Phase Details
 
@@ -312,7 +314,7 @@ Plans:
 **Goal:** O SGS ganha a cara do projeto Stitch "Gestor Beauty" (projects/5888991241990799272, sistema de design "Studio Editorial Density"): papel #F7F6F3, superfícies brancas com borda de 1 px, roxo #570080 só na ação principal (texto branco), Source Serif 4 em títulos e nomes de cliente, Public Sans no resto com números tabulares, raio 6 px, sem sombras, alvos de 44 px e status por borda esquerda de 3 px. Só o visual, com os dados que o SGS já tem (decisão da usuária em 2026-11-06); bancadas/cadeiras, meta de faturamento, exportar DRE, ocupação em tempo real, cerimonial e status de prova vão para o backlog. Ordem: lote base (tokens, componentes, menu lateral e barra inferior) e depois um lote por tela: Agenda do dia, Novo agendamento, Comanda, Entradas e saídas, Previsão de caixa, Despesas fixas, Grupo de noivas, Início.
 **Requirements**: UI-LAYOUT (fase só visual, decidida pela usuária em 2026-11-06)
 **Depends on:** Phase 5
-**Plans:** 11 plans
+**Plans:** 12 plans (completed 2026-11-16)
 
 Plans:
 - [x] 06-01-base-tokens-componentes-PLAN.md — Lote base 1/2: tokens (cores, fontes, raio, sem sombra), componentes compartilhados e varredura de cores antigas (commit local)
@@ -326,7 +328,7 @@ Plans:
 - [x] 06-08-despesas-fixas-PLAN.md — Despesas fixas: tabela, selos de situação, total mensal das ativas
 - [x] 06-09-grupo-de-noivas-PLAN.md — Grupo de noivas: ficha do evento, pessoas e cronograma; título com caixa padronizada
 - [x] 06-10-inicio-PLAN.md — Início: cabeçalho do painel e previsão de 30 dias no padrão novo
-- [ ] 06-11-fechamento-PLAN.md — Auditoria completa, roteiro de conferência e aceite da usuária
+- [x] 06-11-fechamento-PLAN.md — Auditoria completa, roteiro de conferência e aceite da usuária
 
 ### Phase 7: App Android Gestor Beauty com Capacitor
 

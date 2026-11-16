@@ -61,4 +61,8 @@ celular). Evidência em `06-audit-evidence/06-11/` (ignorada pelo git).
 
 ## Aceite
 
-(a preencher na Task 3, depois da resposta da usuária)
+- **Data:** 2026-11-16
+- **Forma:** resposta na conversa, depois de receber o resumo e a tabela "Roteiro no staging"
+- **Resposta da usuária:** "aprovado"
+- **Ajustes pedidos:** nenhum. As omissões do design seguem no backlog 999.7; os alvos de toque menores que 44 px já conhecidos (marca, trilha, filtro de Noivas, cartão do dia na semana, código e nome na lista de comandas) continuam como observação, sem pedido de correção.
+- **Staging conferido:** build `index-D7kMf1cp.js` (deploy de 2026-11-15), que contém todos os lotes 06-01 a 06-10 e 06-12; os commits seguintes só alteraram testes e documentação.
