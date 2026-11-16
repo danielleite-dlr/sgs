@@ -2,8 +2,8 @@
 phase: 7
 slug: app-android-gestor-beauty-com-capacitor
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-11-14
 ---
 
@@ -39,18 +39,18 @@ created: 2026-11-14
 
 | Behavior | Req | Test Type | Automated Command | File Exists | Status |
 |----------|-----|-----------|-------------------|-------------|--------|
-| `resolvePushTargets`: profissional só os dela; ADMIN/MANAGER todos; exclui o autor (D-12/D-13); dedup | C-03 | unit | `corepack pnpm --filter @sgs/backend test -- resolve-push-targets` | ❌ W0 | ⬜ pending |
-| Noivas D-15: um aviso por profissional + resumo para gestoras ("3 atendimentos no casamento da Vitória, 08/11") | C-03 | unit | `corepack pnpm --filter @sgs/backend test -- push-bridal` | ❌ W0 | ⬜ pending |
-| `FcmPushProvider` (fetch/GoogleAuth mockados): payload string + `channel_id`, 404 UNREGISTERED → token inválido, 5xx → retry | C-03 | unit | `corepack pnpm --filter @sgs/backend test -- fcm-push` | ❌ W0 | ⬜ pending |
-| Processor apaga token inválido; sem credencial = no-op | C-03 | unit | `corepack pnpm --filter @sgs/backend test -- push.processor` | ❌ W0 | ⬜ pending |
-| Enfileirar pós-commit em `createVisit`/`cancel`/agenda de noivas; falha da fila não falha a mutation | C-03 | unit | `corepack pnpm --filter @sgs/backend test -- appointments.service` | ✅ (ajustar construtores) | ⬜ pending |
-| `device_tokens` com RLS: org B não vê token da org A; upsert move token entre membros; unregister apaga | C-03 | integration | `corepack pnpm --filter @sgs/backend test:integration -- device-tokens` | ❌ W0 | ⬜ pending |
-| Rota do toque: allowlist só `/agenda`, `buildAgendaRoute` | C-04 | unit | `corepack pnpm --filter @sgs/frontend test -- push-route` | ❌ W0 | ⬜ pending |
-| `SchedulePage` abre o atendimento com `?agendamento=<id>` | C-04 | unit (RTL) | `corepack pnpm --filter @sgs/frontend test -- schedule` | ❌ W0 | ⬜ pending |
-| `setupNativePush` com `@capacitor/*` mockado: permissão, register, token → mutation, toque → navigate | C-03/C-04 | unit | `corepack pnpm --filter @sgs/frontend test -- use-native-push` | ❌ W0 | ⬜ pending |
-| Logout remove o token (falha não impede logout) | C-03 | unit | `corepack pnpm --filter @sgs/frontend test -- useAuth` | ❌ W0 | ⬜ pending |
-| Overlay "Sem conexão" (online/offline) + "Tentar novamente" | C-02 | unit | `corepack pnpm --filter @sgs/frontend test -- offline` | ❌ W0 | ⬜ pending |
-| `capacitor.config.ts`: appId `br.com.gestorbeauty.app`, `server.url` https do staging, `errorPath` existe em `www/`; ícones/splash gerados presentes | C-01/C-02/C-05 | script | `corepack pnpm --filter @sgs/mobile test` | ❌ W0 | ⬜ pending |
+| `resolvePushTargets`: profissional só os dela; ADMIN/MANAGER todos; exclui o autor (D-12/D-13); dedup | C-03 | unit | `corepack pnpm --filter @sgs/backend test -- resolve-push-targets` | ✅ | ✅ green |
+| Noivas D-15: um aviso por profissional + resumo para gestoras ("3 atendimentos no casamento da Vitória, 08/11") | C-03 | unit | `corepack pnpm --filter @sgs/backend test -- push-bridal` | ✅ | ✅ green |
+| `FcmPushProvider` (fetch/GoogleAuth mockados): payload string + `channel_id`, 404 UNREGISTERED → token inválido, 5xx → retry | C-03 | unit | `corepack pnpm --filter @sgs/backend test -- fcm-push` | ✅ | ✅ green |
+| Processor apaga token inválido; sem credencial = no-op | C-03 | unit | `corepack pnpm --filter @sgs/backend test -- push.processor` | ✅ | ✅ green |
+| Enfileirar pós-commit em `createVisit`/`cancel`/agenda de noivas; falha da fila não falha a mutation | C-03 | unit | `corepack pnpm --filter @sgs/backend test -- appointments.service` | ✅ (ajustar construtores) | ✅ green |
+| `device_tokens` com RLS: org B não vê token da org A; upsert move token entre membros; unregister apaga | C-03 | integration | `corepack pnpm --filter @sgs/backend test:integration -- device-tokens` | ✅ | ✅ green |
+| Rota do toque: allowlist só `/agenda`, `buildAgendaRoute` | C-04 | unit | `corepack pnpm --filter @sgs/frontend test -- push-route` | ✅ | ✅ green |
+| `SchedulePage` abre o atendimento com `?agendamento=<id>` | C-04 | unit (RTL) | `corepack pnpm --filter @sgs/frontend test -- schedule` | ✅ | ✅ green |
+| `setupNativePush` com `@capacitor/*` mockado: permissão, register, token → mutation, toque → navigate | C-03/C-04 | unit | `corepack pnpm --filter @sgs/frontend test -- use-native-push` | ✅ | ✅ green |
+| Logout remove o token (falha não impede logout) | C-03 | unit | `corepack pnpm --filter @sgs/frontend test -- useAuth` | ✅ | ✅ green |
+| Overlay "Sem conexão" (online/offline) + "Tentar novamente" | C-02 | unit | `corepack pnpm --filter @sgs/frontend test -- offline` | ✅ | ✅ green |
+| `capacitor.config.ts`: appId `br.com.gestorbeauty.app`, `server.url` https do staging, `errorPath` existe em `www/`; ícones/splash gerados presentes | C-01/C-02/C-05 | script | `corepack pnpm --filter @sgs/mobile test` | ✅ | ✅ green |
 | Projeto Android compila (debug APK) | C-01 | CI | job `android` (`assembleDebug`) | ❌ W0 | ⬜ pending |
 | `packages/shared` não quebra install/typecheck nem os builds Docker do staging | C-06 | CI + manual | `corepack pnpm install --frozen-lockfile && corepack pnpm -r typecheck`; `docker compose -f docker-compose.staging.yml build` | ❌ W0 | ⬜ pending |
 
@@ -60,12 +60,12 @@ created: 2026-11-14
 
 ## Wave 0 Requirements
 
-- [ ] `apps/backend/src/push/*.spec.ts` — targets, FCM client, processor, hooks
-- [ ] `apps/backend/test/integration/device-tokens.e2e.spec.ts` — RLS + upsert
-- [ ] `apps/frontend/src/infrastructure/native/__tests__/*` — mocks de `@capacitor/*`
-- [ ] `apps/mobile/scripts/check-config.mjs` + script `test` no `package.json` do mobile
-- [ ] `packages/shared` com `typecheck` e testes; `pnpm-workspace.yaml` e `pnpm-lock.yaml` atualizados
-- [ ] `.github/workflows/android.yml` (debug APK em PR; AAB/APK assinado em dispatch/tag `android-v*`)
+- [x] `apps/backend/src/push/*.spec.ts` — targets, FCM client, processor, hooks
+- [x] `apps/backend/test/integration/device-tokens.e2e.spec.ts` — RLS + upsert
+- [x] `apps/frontend/src/infrastructure/native/__tests__/*` — mocks de `@capacitor/*`
+- [x] `apps/mobile/scripts/check-config.mjs` + script `test` no `package.json` do mobile
+- [x] `packages/shared` com `typecheck` e testes; `pnpm-workspace.yaml` e `pnpm-lock.yaml` atualizados
+- [x] `.github/workflows/android.yml` (debug APK em PR; AAB/APK assinado em dispatch/tag `android-v*`)
 
 ---
 
@@ -89,6 +89,6 @@ created: 2026-11-14
 - [ ] Wave 0 covers all MISSING references
 - [ ] No watch-mode flags
 - [ ] Feedback latency < 180s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending
