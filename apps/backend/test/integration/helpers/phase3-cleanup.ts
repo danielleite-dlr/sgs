@@ -9,6 +9,7 @@ import { adminPrisma } from '../setup';
 export async function deletePhase3Rows(orgFilterSql: string): Promise<void> {
   const org = `organization_id IN (${orgFilterSql})`;
   const statements = [
+    `DELETE FROM device_tokens WHERE ${org}`,
     `DELETE FROM commission_records WHERE ${org}`,
     `DELETE FROM audit_log WHERE ${org}`,
     `DELETE FROM cash_movements WHERE ${org}`,

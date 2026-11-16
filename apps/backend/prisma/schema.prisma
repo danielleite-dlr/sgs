@@ -44,6 +44,7 @@ model Organization {
   clients                     Client[]
   appointments                Appointment[]
   notifications               Notification[]
+  deviceTokens                DeviceToken[]
   timeBlocks                  TimeBlock[]
   comandas                    Comanda[]
   comandaSequences            ComandaSequence[]
@@ -150,6 +151,7 @@ model Member {
   role                        Role                   @relation(fields: [roleId], references: [id])
   stockMovements              StockMovement[]
   notifications               Notification[]
+  deviceTokens                DeviceToken[]
   commissionRules             CommissionRule[]
   appointments                Appointment[]
   categories                  MemberCategory[]
@@ -562,6 +564,27 @@ model Notification {
   member       Member?      @relation(fields: [memberId], references: [id])
 
   @@map("notifications")
+}
+
+// ===== Device tokens (push) =====
+
+model DeviceToken {
+  id             String   @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  memberId       String   @map("member_id") @db.Uuid
+  provider       String   @default("fcm") @db.VarChar(10)
+  platform       String   @db.VarChar(10)
+  token          String   @db.Text
+  appVersion     String?  @map("app_version") @db.VarChar(20)
+  lastSeenAt     DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  member       Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, provider, token], name: "uq_device_tokens_org_provider_token")
+  @@index([organizationId, memberId], name: "ix_device_tokens_org_member")
+  @@map("device_tokens")
 }
 
 // ===== Phase 3: Operations =====
