@@ -313,7 +313,9 @@ describe("Phase 5 - previsão de caixa (cashForecast)", () => {
     const mine = (items: Item[], id: string) =>
       items.filter((i) => i.refId === id);
 
-    it("6. parcelas e restante; vencida entra em from em atraso", async () => {
+    // Parcela com vencimento antes de `from`, mas ainda no futuro (hoje < 2027-02-20),
+    // entra em `from` sem atraso; o atraso real (vencimento < hoje) fica no unitário.
+    it("6. parcelas e restante; anterior à janela entra em from sem atraso", async () => {
       const c = await makeContract("active");
       const f = await forecast();
       const its = mine(f.items, c.contractId);
@@ -328,7 +330,7 @@ describe("Phase 5 - previsão de caixa (cashForecast)", () => {
       const bal = its.find((i) => i.kind === "contract_balance");
       expect(p1).toMatchObject({
         date: "2027-03-01",
-        overdue: true,
+        overdue: false,
         amount: "500.00",
       });
       expect(p2).toMatchObject({
@@ -337,8 +339,8 @@ describe("Phase 5 - previsão de caixa (cashForecast)", () => {
         amount: "500.00",
       });
       expect(bal).toMatchObject({ date: "2027-03-20", amount: "1000.00" });
-      expect(f.overdueInflowTotal).toBe("500.00");
-      expect(f.buckets[0].overdueInflow).toBe("500.00");
+      expect(f.overdueInflowTotal).toBe("0.00");
+      expect(f.buckets[0].overdueInflow).toBe("0.00");
     });
 
     it("6b. pagamento de 600.00 abate parcela 1 e parte da 2", async () => {

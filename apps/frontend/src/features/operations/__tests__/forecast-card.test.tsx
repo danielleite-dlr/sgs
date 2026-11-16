@@ -158,6 +158,11 @@ describe('ForecastCard', () => {
     });
     await screen.findByText('Saldo previsto');
     await screen.findAllByText('R$ 1.100,00');
-    expect(vars).toEqual({ from: '2026-11-05', to: '2026-12-05' });
+    expect(vars).toEqual({
+      from: '2026-11-05',
+      to: '2026-12-05',
+      nature: 'ALL',
+      origin: 'ALL',
+    });
   });
 });
