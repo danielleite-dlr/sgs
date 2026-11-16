@@ -338,7 +338,7 @@ Plans:
 **Plans:** 13 plans
 
 Plans:
-- [ ] 07-01-monorepo-shared-deps-PLAN.md — packages/shared (rotas do push, validações, documentos GraphQL) e todas as dependências da fase num lockfile só, sem quebrar Docker
+- [x] 07-01-monorepo-shared-deps-PLAN.md — packages/shared (rotas do push, validações, documentos GraphQL) e todas as dependências da fase num lockfile só, sem quebrar Docker
 - [ ] 07-02-backend-device-tokens-PLAN.md — tabela device_tokens com RLS, registerDeviceToken/unregisterDeviceToken e integração
 - [ ] 07-03-backend-push-engine-PLAN.md — destinatários (D-12/D-13), textos e rotas dos avisos (D-14/D-15) e cliente FCM HTTP v1
 - [ ] 07-04-mobile-capacitor-shell-PLAN.md — casca Capacitor 8 (server.url do staging, tela Sem conexão), projeto Android e check-config
