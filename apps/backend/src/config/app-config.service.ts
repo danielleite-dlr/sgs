@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Env } from './env.schema';
+import { FcmServiceAccount, parseFcmServiceAccount } from '../push/fcm-credentials';
 
 /**
  * Typed wrapper around ConfigService for SGS application configuration.
@@ -76,6 +77,14 @@ export class AppConfigService {
 
   get contractAlertsSchedulerEnabled(): boolean {
     return this.config.get('CONTRACT_ALERTS_SCHEDULER', { infer: true });
+  }
+
+  get fcmServiceAccount(): FcmServiceAccount | null {
+    return parseFcmServiceAccount(this.config.get('FCM_SERVICE_ACCOUNT_JSON', { infer: true }));
+  }
+
+  get pushWorkerEnabled(): boolean {
+    return this.config.get('PUSH_NOTIFICATIONS_WORKER', { infer: true });
   }
 
   get frontendUrl(): string {
