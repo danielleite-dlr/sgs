@@ -44,7 +44,7 @@ export function TopHeader({ notificationsOpen, onNotificationsOpenChange }: TopH
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-14 items-center gap-md border-b border-neutral-200 bg-white px-md lg:px-lg">
+      <header className="sticky top-0 z-40 box-content safe-top flex h-14 items-center gap-md border-b border-neutral-200 bg-white px-md lg:px-lg">
         <Link
           to={HOME_PATH}
           aria-label={`${marca} — início`}

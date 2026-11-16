@@ -29,7 +29,7 @@ export function BottomNav({ onOpenMenu }: BottomNavProps) {
       role="navigation"
       aria-label="Navegação principal"
       data-testid="bottom-nav"
-      className="fixed inset-x-0 bottom-0 z-30 flex h-16 items-stretch border-t border-neutral-200 bg-white lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 box-content safe-bottom flex h-16 items-stretch border-t border-neutral-200 bg-white lg:hidden"
     >
       {canAgenda && <BottomNavLink to="/agenda" label="Agenda" icon={CalendarDays} />}
       {canComanda && <BottomNavLink to="/comanda" label="Comanda" icon={Receipt} />}

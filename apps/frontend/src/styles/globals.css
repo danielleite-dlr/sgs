@@ -4,6 +4,11 @@
 
 @layer base {
   :root {
+    /* Fase 7 — área segura (entalhe/barra de gestos). O SystemBars do Capacitor injeta
+       --safe-area-inset-*; no navegador vale env(); sem entalhe, 0px. */
+    --sgs-safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+    --sgs-safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+
     /* Cores — Previsão de caixa do Stitch (D-26) */
     --color-primary-50:  #F5E6FB;
     --color-primary-500: #570080;
@@ -66,6 +71,12 @@
    mouse para, e a agenda parecia não ter rolagem. Com ::-webkit-scrollbar estilizado o Chrome e o
    Safari desenham a barra clássica; o Firefox usa scrollbar-width/scrollbar-color. */
 @layer utilities {
+  .safe-top {
+    padding-top: var(--sgs-safe-top);
+  }
+  .safe-bottom {
+    padding-bottom: var(--sgs-safe-bottom);
+  }
   /* Chrome ignora ::-webkit-scrollbar quando scrollbar-color existe, e só o pseudo-elemento
      desliga a barra overlay; por isso as propriedades padrão ficam só para o Firefox. */
   @supports not selector(::-webkit-scrollbar) {
