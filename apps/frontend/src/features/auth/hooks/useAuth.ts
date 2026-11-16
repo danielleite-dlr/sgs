@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { unregisterCurrentDeviceToken } from '@/infrastructure/native/device-token.api';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
 import type { AuthSession as StoredSession } from '@/infrastructure/stores/auth.store';
 import { useLogoutMutation, useRefreshMutation } from '../api/auth.api';
@@ -100,6 +101,9 @@ export function useAuth() {
       await exitClient();
       return;
     }
+
+    // Fase 7: o aparelho deixa de receber push desta usuária. Sem rede/erro, segue o logout.
+    await unregisterCurrentDeviceToken().catch(() => {});
 
     if (refreshToken) {
       await logoutMutation({

@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLoginMutation } from '../api/auth.api';
 import { useAuth } from '../hooks/useAuth';
+import { consumePendingRoute } from '@/infrastructure/native/push-route';
 
 const schema = z.object({
   email: z.string().email(),
@@ -131,9 +132,12 @@ export function LoginPage() {
         }
         // Platform admin não tem organização: o lugar dele é o painel de
         // clientes, não o dashboard de salão.
-        navigate(payload.session?.isPlatformAdmin ? '/admin' : '/dashboard', {
-          replace: true,
-        });
+        if (payload.session?.isPlatformAdmin) {
+          navigate('/admin', { replace: true });
+          return;
+        }
+        // Toque numa notificação com a sessão vencida: volta para o atendimento (fase 7).
+        navigate(consumePendingRoute() ?? '/dashboard', { replace: true });
       }
     } catch {
       setAuthError({ code: 'UNKNOWN', message: t('login.errors.serverGeneric') });
