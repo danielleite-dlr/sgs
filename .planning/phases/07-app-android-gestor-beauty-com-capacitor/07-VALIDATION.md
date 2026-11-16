@@ -51,8 +51,8 @@ created: 2026-11-14
 | Logout remove o token (falha não impede logout) | C-03 | unit | `corepack pnpm --filter @sgs/frontend test -- useAuth` | ✅ | ✅ green |
 | Overlay "Sem conexão" (online/offline) + "Tentar novamente" | C-02 | unit | `corepack pnpm --filter @sgs/frontend test -- offline` | ✅ | ✅ green |
 | `capacitor.config.ts`: appId `br.com.gestorbeauty.app`, `server.url` https do staging, `errorPath` existe em `www/`; ícones/splash gerados presentes | C-01/C-02/C-05 | script | `corepack pnpm --filter @sgs/mobile test` | ✅ | ✅ green |
-| Projeto Android compila (debug APK) | C-01 | CI | job `android` (`assembleDebug`) | ❌ W0 | ⬜ pending |
-| `packages/shared` não quebra install/typecheck nem os builds Docker do staging | C-06 | CI + manual | `corepack pnpm install --frozen-lockfile && corepack pnpm -r typecheck`; `docker compose -f docker-compose.staging.yml build` | ❌ W0 | ⬜ pending |
+| Projeto Android compila (debug APK) | C-01 | CI | job `android` (`assembleDebug`) | ✅ | ✅ green |
+| `packages/shared` não quebra install/typecheck nem os builds Docker do staging | C-06 | CI + manual | `corepack pnpm install --frozen-lockfile && corepack pnpm -r typecheck`; `docker compose -f docker-compose.staging.yml build` | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
