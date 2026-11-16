@@ -1,0 +1,16 @@
+"Token de push do aparelho (FCM). Neutro: serve ao app Capacitor e ao futuro app Expo."
+input RegisterDeviceTokenInput {
+  token: String!
+  "android | ios"
+  platform: String!
+  "fcm (padrão) | expo (reservado)"
+  provider: String
+  appVersion: String
+}
+
+extend type Mutation {
+  "Registra (ou move para a usuária atual) o token do aparelho. Sessão de admin de plataforma dentro do salão não registra e devolve false."
+  registerDeviceToken(input: RegisterDeviceTokenInput!): Boolean!
+  "Remove o token do aparelho da usuária atual (logout)."
+  unregisterDeviceToken(token: String!): Boolean!
+}
