@@ -21,6 +21,7 @@ import { ContractsModule } from './contracts/contracts.module';
 import { ContractPaymentsModule } from './contracts/payments/contract-payments.module';
 import { ContractAcceptanceModule } from './contracts/acceptance/contract-acceptance.module';
 import { ContractAlertsModule } from './contracts/alerts/contract-alerts.module';
+import { PushModule } from './push/push.module';
 import { envSchema } from './config/env.schema';
 import configuration from './config/configuration';
 
@@ -61,6 +62,7 @@ import configuration from './config/configuration';
     ContractPaymentsModule,
     ContractAcceptanceModule,
     ContractAlertsModule,
+    PushModule,
     HealthModule,
   ],
 })
