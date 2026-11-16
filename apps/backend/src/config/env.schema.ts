@@ -92,6 +92,18 @@ export const envSchema = z.object({
     .transform((v) => v === 'true')
     .describe('Liga o agendador BullMQ dos alertas de contrato'),
 
+  // Fase 7 — push (FCM HTTP v1). Ausente => push desligado (no-op), backend sobe normal.
+  FCM_SERVICE_ACCOUNT_JSON: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim() ? v.trim() : undefined))
+    .describe('JSON da service account do Firebase em base64 (papel Firebase Cloud Messaging API Admin)'),
+  PUSH_NOTIFICATIONS_WORKER: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true')
+    .describe('Liga o worker BullMQ que envia os pushes'),
+
   // Frontend
   FRONTEND_URL: z
     .string()
