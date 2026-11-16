@@ -1,0 +1,22 @@
+{
+  "name": "@sgs/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Código compartilhado para o futuro app Expo (rotas do push, validações, documentos GraphQL). Sem build: fonte TS pura.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "codegen": "graphql-codegen --config codegen.ts"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "5.0.7",
+    "@graphql-codegen/typescript": "4.1.6",
+    "@graphql-codegen/typescript-operations": "4.6.1",
+    "graphql": "^16.10.0",
+    "typescript": "^5.7.3",
+    "vitest": "2.1.9"
+  }
+}

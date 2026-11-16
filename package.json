@@ -4,7 +4,8 @@
   "version": "0.0.1",
   "description": "SGS — Plataforma de Gestão para Salões de Beleza",
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
     "dev": "docker compose up -d && pnpm --filter @sgs/backend dev & pnpm --filter @sgs/frontend dev",
