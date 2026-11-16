@@ -85,7 +85,7 @@ export function AppShell() {
           notificationsOpen={notificationsOpen}
           onNotificationsOpenChange={setNotificationsOpen}
         />
-        <main className="min-w-0 flex-1 px-md py-md pb-20 lg:px-lg lg:py-lg lg:pb-lg">
+        <main className="min-w-0 flex-1 px-md py-md pb-[calc(5rem+var(--sgs-safe-bottom))] lg:px-lg lg:py-lg lg:pb-lg">
           <Outlet />
         </main>
       </div>
