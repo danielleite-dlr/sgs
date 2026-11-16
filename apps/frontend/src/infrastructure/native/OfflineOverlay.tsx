@@ -32,7 +32,7 @@ export function OfflineOverlay() {
       aria-modal="true"
       aria-labelledby="sgs-offline-title"
       aria-describedby="sgs-offline-desc"
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-md bg-[#F7F6F3] px-lg text-center safe-top safe-bottom"
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-md bg-background px-lg text-center safe-top safe-bottom"
     >
       <div
         aria-hidden="true"
