@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { TimelineOverrideHost } from '@/features/operations/components/TimelineOverrideHost';
 import { apolloClient } from '@/infrastructure/apollo/client';
+import { NativeAppBridge } from '@/infrastructure/native/NativeAppBridge';
 import { router } from '@/router';
 
 // Initialize i18n before rendering (side effect import)
@@ -16,6 +17,7 @@ export default function App() {
         <RouterProvider router={router} />
       </Suspense>
       <Toaster richColors position="top-right" />
+      <NativeAppBridge />
       <TimelineOverrideHost />
     </ApolloProvider>
   );
