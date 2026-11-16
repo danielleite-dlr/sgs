@@ -1,0 +1,102 @@
+name: Android (Gestor Beauty)
+
+on:
+  pull_request:
+    paths: ['apps/mobile/**', 'apps/frontend/package.json', 'pnpm-lock.yaml', '.github/workflows/android.yml']
+  push:
+    branches: [master]
+    paths: ['apps/mobile/**', 'apps/frontend/package.json', 'pnpm-lock.yaml', '.github/workflows/android.yml']
+    tags: ['android-v*']
+  workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  debug:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - uses: gradle/actions/setup-gradle@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @sgs/mobile test
+      - name: cap sync (precisa ser idempotente)
+        run: pnpm --filter @sgs/mobile exec cap sync android && git diff --exit-code apps/mobile/android
+      - name: google-services.json (opcional no debug)
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > apps/mobile/android/app/google-services.json
+            echo "google-services.json restaurado (push ativo no APK debug)"
+          else
+            echo "Sem GOOGLE_SERVICES_JSON_BASE64: APK debug sem push"
+          fi
+      - name: APK debug
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleDebug -PversionCode=$((1000 + ${{ github.run_number }})) -PversionName=$(node -p "require('../package.json').version")
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gestor-beauty-debug-apk
+          path: apps/mobile/android/app/build/outputs/apk/debug/*.apk
+          retention-days: 14
+
+  release:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/android-v')
+    needs: debug
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - uses: gradle/actions/setup-gradle@v4
+      - run: pnpm install --frozen-lockfile
+      - name: cap sync (precisa ser idempotente)
+        run: pnpm --filter @sgs/mobile exec cap sync android && git diff --exit-code apps/mobile/android
+      - name: Conferir segredos
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KSP: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KA: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KP: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          GS: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          for v in KS KSP KA KP GS; do
+            if [ -z "${!v}" ]; then echo "::error::Faltam os secrets do Android (ver apps/mobile/KEYSTORE.md)"; exit 1; fi
+          done
+      - name: Restaurar keystore e google-services.json
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          GS: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          echo "$KS" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          echo "$GS" | base64 -d > apps/mobile/android/app/google-services.json
+      - name: AAB e APK assinados
+        working-directory: apps/mobile/android
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/upload.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease assembleRelease -PversionCode=$((1000 + ${{ github.run_number }})) -PversionName=$(node -p "require('../package.json').version")
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gestor-beauty-release
+          path: |
+            apps/mobile/android/app/build/outputs/bundle/release/*.aab
+            apps/mobile/android/app/build/outputs/apk/release/*.apk
+          retention-days: 30
+      - name: Apagar segredos do runner
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks" apps/mobile/android/app/google-services.json
