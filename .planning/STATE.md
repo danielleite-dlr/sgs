@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed wave 3 (07-06 a 07-08)
+stopped_at: Completed wave 4 (07-09, 07-10)
 last_updated: "2026-11-16T16:57:48.135Z"
 last_activity: 2026-11-16
 progress:
   total_phases: 10
   completed_phases: 9
   total_plans: 117
-  completed_plans: 113
+  completed_plans: 115
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 7 (app-android-gestor-beauty-com-capacitor) — EXECUTING
-Plan: 9 of 13 (onda 4: 07-09, 07-10)
+Plan: 11 of 13 (07-11 gate, backup e deploy no staging)
 Status: Ready to execute
 Last activity: 2026-11-16
 
