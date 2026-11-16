@@ -7,7 +7,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "node scripts/check-config.mjs",
-    "sync": "cap sync android"
+    "sync": "cap sync android",
+    "assets": "node scripts/render-assets.mjs && capacitor-assets generate --android --assetPath assets --iconBackgroundColor '#570080' --iconBackgroundColorDark '#570080' --splashBackgroundColor '#F7F6F3' --splashBackgroundColorDark '#F7F6F3'"
   },
   "dependencies": {
     "@capacitor/android": "8.6.2",
