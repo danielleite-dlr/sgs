@@ -1,5 +1,5 @@
 // Teste de configuração da casca Android (Node puro, sem dependências).
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
@@ -82,6 +82,21 @@ checar(
 contem('android/app/src/main/res/values/strings.xml', '>Gestor Beauty<');
 checkIfExists('android/app/src/main/res/drawable/ic_stat_gestor_beauty.xml');
 contem('android/app/src/main/res/values/styles.xml', 'windowSplashScreenBackground');
+
+// Ícone e splash (D-16/D-17)
+contem('assets/icon.svg', '>GB<');
+contem('assets/icon.svg', '#570080');
+for (const png of ['icon-only', 'icon-foreground', 'icon-background', 'splash']) {
+  checkIfExists(`assets/${png}.png`);
+}
+checkIfExists('android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml');
+checkIfExists('android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png');
+const resDir = join(raiz, 'android/app/src/main/res');
+const temSplash = existsSync(resDir)
+  && readdirSync(resDir).some(
+    (d) => d.startsWith('drawable') && existsSync(join(resDir, d, 'splash.png')),
+  );
+checar(temSplash, 'Nenhum drawable*/splash.png em android/app/src/main/res');
 
 // Nenhum segredo versionado
 let rastreados = '';

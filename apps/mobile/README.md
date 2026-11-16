@@ -14,7 +14,15 @@ Este pacote não entra no Docker nem no `pnpm build` da raiz.
 
 ## Build
 
-O build do APK/AAB acontece só no GitHub Actions (workflow `android.yml`, plano 07-06). Não há SDK Android na VPS.
+O build do APK/AAB acontece só no GitHub Actions (workflow [`.github/workflows/android.yml`](../../.github/workflows/android.yml)). Não há SDK Android na VPS.
+Keystore, secrets e ordem das ações humanas (conta Play primeiro): veja [`KEYSTORE.md`](./KEYSTORE.md).
+
+## Trocar o ícone
+
+1. Edite `assets/icon.svg` (ou substitua `assets/icon-only.png`, `icon-foreground.png` e `icon-background.png` pelos PNGs do logo oficial).
+2. Rode `corepack pnpm --filter @sgs/mobile assets` (gera os PNGs-fonte e os recursos Android).
+3. Rode `corepack pnpm --filter @sgs/mobile exec cap sync android` e commite `android/app/src/main/res`.
+4. O gerador não mexe em `res/values/ic_launcher_background.xml`; ele já está em `#570080`.
 
 ## Plugins
 
