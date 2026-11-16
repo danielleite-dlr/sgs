@@ -1,4 +1,11 @@
 {
+  "native": {
+    "offline": {
+      "title": "Sem conexão",
+      "description": "Não foi possível falar com o Gestor Beauty. Confira o Wi-Fi ou os dados móveis e tente de novo.",
+      "retry": "Tentar novamente"
+    }
+  },
   "common": {
     "appName": "SGS",
     "loading": "Carregando…",

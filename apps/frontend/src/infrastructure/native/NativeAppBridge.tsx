@@ -4,6 +4,7 @@ import { router } from '@/router';
 import { selectIsAuthenticated, useAuthStore } from '@/infrastructure/stores/auth.store';
 import { registerDeviceToken } from './device-token.api';
 import { addPushListeners, registerForPush } from './native-push';
+import { OfflineOverlay } from './OfflineOverlay';
 import { isNativeApp } from './platform';
 import { savePendingRoute } from './push-route';
 
@@ -94,5 +95,5 @@ export function NativeAppBridge() {
     }
   }, [isAuth, memberId, organizationId, impersonating]);
 
-  return null;
+  return <OfflineOverlay />;
 }
