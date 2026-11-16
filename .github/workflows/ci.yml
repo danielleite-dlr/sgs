@@ -50,6 +50,8 @@ jobs:
         run: pnpm --filter @sgs/frontend test
       - name: Testes do pacote compartilhado
         run: pnpm --filter @sgs/shared test
+      - name: Configuração da casca Android
+        run: pnpm --filter @sgs/mobile test
 
   integration:
     runs-on: ubuntu-latest

@@ -74,3 +74,13 @@ apps/e2e/blob-report/
 
 # Fase 6 — screenshots de comparação com o Stitch (auditoria local)
 .planning/phases/06-novo-layout-gestor-beauty/06-audit-evidence/
+
+# App Android (fase 7) — segredos nunca no git
+*.jks
+*.keystore
+google-services.json
+**/service-account*.json
+apps/mobile/android/app/release/
+apps/mobile/android/.gradle/
+apps/mobile/android/build/
+apps/mobile/android/app/build/

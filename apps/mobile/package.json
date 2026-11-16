@@ -5,8 +5,8 @@
   "type": "module",
   "description": "Gestor Beauty — casca Android (Capacitor 8) que carrega o SGS do servidor. Fora do Docker e do build raiz.",
   "scripts": {
-    "typecheck": "echo 'typecheck do mobile entra no 07-04'",
-    "test": "echo 'check-config do mobile entra no 07-04'",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/check-config.mjs",
     "sync": "cap sync android"
   },
   "dependencies": {
