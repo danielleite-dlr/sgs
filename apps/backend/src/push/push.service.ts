@@ -1,0 +1,208 @@
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { TenantContextService } from '../database/tenant-context.service';
+import { buildPushMessage, type PushAppointmentView } from './push-messages';
+import {
+  PUSH_PROVIDER,
+  type PushJob,
+  type PushMessage,
+  type PushProvider,
+  type PushSendResult,
+} from './push.types';
+import { resolvePushTargets } from './resolve-push-targets';
+
+export interface PushDispatchResult {
+  sent: number;
+  invalid: number;
+  failed: number;
+  skipped?: string;
+}
+
+const CONCURRENCY = 10;
+const DEFAULT_TIMEZONE = 'America/Sao_Paulo';
+const MANAGER_ROLES = ['ADMIN', 'MANAGER'];
+
+interface SendItem {
+  tokenId: string;
+  token: string;
+  message: PushMessage;
+}
+
+@Injectable()
+export class PushService {
+  private readonly logger = new Logger(PushService.name);
+
+  constructor(
+    private readonly tenant: TenantContextService,
+    @Inject(PUSH_PROVIDER) private readonly provider: PushProvider,
+  ) {}
+
+  async dispatch(job: PushJob): Promise<PushDispatchResult> {
+    if (!this.provider.enabled) return { sent: 0, invalid: 0, failed: 0, skipped: 'disabled' };
+
+    let where: Record<string, unknown>;
+    if (job.kind === 'bridal.cancelled') {
+      if (!job.groupId && !job.contractId) {
+        return { sent: 0, invalid: 0, failed: 0, skipped: 'no-scope' };
+      }
+      where = {
+        status: 'cancelled',
+        cancelledBy: job.actorMemberId,
+        cancelledAt: { gte: new Date(job.since) },
+        ...(job.groupId ? { bridalGroupId: job.groupId } : {}),
+        ...(job.contractId ? { contractId: job.contractId } : {}),
+      };
+    } else {
+      where = { id: { in: job.appointmentIds } };
+    }
+
+    const plan = await this.tenant.runWithTenant(job.orgId, async (tx) => {
+      const org = await tx.organization.findUnique({
+        where: { id: job.orgId },
+        select: { timezone: true },
+      });
+      const timezone = org?.timezone ?? DEFAULT_TIMEZONE;
+
+      const rows = await tx.appointment.findMany({
+        where,
+        orderBy: { startsAt: 'asc' },
+        select: {
+          id: true,
+          professionalId: true,
+          startsAt: true,
+          professional: { select: { displayName: true } },
+          client: { select: { fullName: true } },
+          service: { select: { name: true } },
+          bridalGroup: {
+            select: {
+              id: true,
+              name: true,
+              eventKind: true,
+              eventDate: true,
+              members: {
+                where: { role: 'bride' },
+                select: { client: { select: { fullName: true } } },
+              },
+            },
+          },
+        },
+      });
+      if (rows.length === 0) return { skipped: 'no-appointments' as const };
+
+      const managers = await tx.member.findMany({
+        where: {
+          status: 'active',
+          deletedAt: null,
+          role: { name: { in: MANAGER_ROLES } },
+        },
+        select: { id: true },
+      });
+      const profIds = [...new Set(rows.map((r) => r.professionalId))];
+      const activeProfs = await tx.member.findMany({
+        where: { id: { in: profIds }, status: 'active', deletedAt: null },
+        select: { id: true },
+      });
+
+      const views: PushAppointmentView[] = rows.map((r) => ({
+        id: r.id,
+        professionalId: r.professionalId,
+        professionalName: r.professional.displayName,
+        clientName: r.client.fullName,
+        serviceName: r.service.name,
+        startsAt: r.startsAt,
+        bridalGroup: r.bridalGroup
+          ? {
+              id: r.bridalGroup.id,
+              name: r.bridalGroup.name,
+              eventKind: r.bridalGroup.eventKind,
+              eventDate: r.bridalGroup.eventDate,
+              brideName: r.bridalGroup.members[0]?.client.fullName ?? null,
+            }
+          : null,
+      }));
+
+      const targets = resolvePushTargets({
+        appointments: rows.map((r) => ({ id: r.id, professionalId: r.professionalId })),
+        managerMemberIds: managers.map((m) => m.id),
+        activeMemberIds: new Set(activeProfs.map((m) => m.id)),
+        actorMemberId: job.actorMemberId,
+      });
+      if (targets.length === 0) return { skipped: 'no-targets' as const };
+
+      const tokens = await tx.deviceToken.findMany({
+        where: { memberId: { in: targets.map((t) => t.memberId) }, provider: 'fcm' },
+        select: { id: true, memberId: true, token: true },
+      });
+
+      const items: SendItem[] = [];
+      const seen = new Set<string>();
+      for (const target of targets) {
+        const message = buildPushMessage(
+          job.kind,
+          target,
+          views.filter((v) => target.appointmentIds.includes(v.id)),
+          timezone,
+        );
+        for (const t of tokens.filter((x) => x.memberId === target.memberId)) {
+          if (seen.has(t.token)) continue;
+          seen.add(t.token);
+          items.push({ tokenId: t.id, token: t.token, message });
+        }
+      }
+      return { items };
+    });
+
+    if ('skipped' in plan) return { sent: 0, invalid: 0, failed: 0, skipped: plan.skipped };
+
+    const results: { item: SendItem; result: PushSendResult }[] = [];
+    for (let i = 0; i < plan.items.length; i += CONCURRENCY) {
+      const slice = plan.items.slice(i, i + CONCURRENCY);
+      const done = await Promise.all(
+        slice.map(async (item) => {
+          let result: PushSendResult;
+          try {
+            result = await this.provider.send(item.token, item.message);
+          } catch (e) {
+            result = { status: 'failed', retryable: true, reason: (e as Error).message };
+          }
+          return { item, result };
+        }),
+      );
+      results.push(...done);
+    }
+
+    let sent = 0;
+    let failed = 0;
+    const invalidIds: string[] = [];
+    let allRetryable = true;
+    let credentialLogged = false;
+    for (const { item, result } of results) {
+      if (result.status === 'sent') {
+        sent++;
+      } else if (result.status === 'invalid_token') {
+        invalidIds.push(item.tokenId);
+        this.logger.log(`Token inválido removido (…${item.token.slice(-6)}): ${result.reason}`);
+      } else {
+        failed++;
+        if (!result.retryable) {
+          allRetryable = false;
+          if (/credencial/i.test(result.reason) && !credentialLogged) {
+            credentialLogged = true;
+            this.logger.error(`Falha de credencial FCM: ${result.reason}`);
+          }
+        }
+        this.logger.warn(`Falha no envio (…${item.token.slice(-6)}): ${result.reason}`);
+      }
+    }
+
+    if (invalidIds.length > 0) {
+      await this.tenant.runWithTenant(job.orgId, (tx) =>
+        tx.deviceToken.deleteMany({ where: { id: { in: invalidIds } } }),
+      );
+    }
+
+    if (results.length > 0 && sent === 0 && invalidIds.length === 0 && allRetryable) {
+      throw new Error('FCM indisponível: nova tentativa');
+    }
+    return { sent, invalid: invalidIds.length, failed };
+  }
+}
