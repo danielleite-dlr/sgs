@@ -1,0 +1,27 @@
+{
+  "name": "@sgs/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Gestor Beauty — casca Android (Capacitor 8) que carrega o SGS do servidor. Fora do Docker e do build raiz.",
+  "scripts": {
+    "typecheck": "echo 'typecheck do mobile entra no 07-04'",
+    "test": "echo 'check-config do mobile entra no 07-04'",
+    "sync": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.6.2",
+    "@capacitor/keyboard": "8.0.6",
+    "@capacitor/push-notifications": "8.1.3",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "4.0.0",
+    "@capacitor/cli": "8.6.2",
+    "sharp": "0.35.5",
+    "typescript": "^5.7.3"
+  }
+}

@@ -48,6 +48,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Vitest do frontend
         run: pnpm --filter @sgs/frontend test
+      - name: Testes do pacote compartilhado
+        run: pnpm --filter @sgs/shared test
 
   integration:
     runs-on: ubuntu-latest
