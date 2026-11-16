@@ -3,6 +3,8 @@ import { PrismaClient } from '@prisma/client';
 // Suítes que sobem o AppModule não registram o scheduler BullMQ dos alertas de contrato
 // (o plano 04-10 tem seu próprio smoke com 'true').
 process.env.CONTRACT_ALERTS_SCHEDULER ??= 'false';
+// Idem para o worker de push (a fila de push não deve consumir jobs durante as suítes).
+process.env.PUSH_NOTIFICATIONS_WORKER ??= 'false';
 
 /**
  * Privileged client uses DIRECT_URL (sgs_migrator, BYPASSRLS) for test setup/teardown only.
