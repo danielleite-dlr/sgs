@@ -358,10 +358,17 @@ Plans:
 **Goal:** A equipe do salão instala o Gestor Beauty no iPhone sem App Store e sem conta Apple, como app web instalável (Safari → Compartilhar → Adicionar à Tela de Início), e recebe as mesmas notificações do Android (novo agendamento, cancelamento, lote de noivas) por Web Push. Escopo: botão "Instalar no iPhone" na tela de login (só em iPhone/iPad fora do modo instalado) com passo a passo; manifest com nome "Gestor Beauty", ícone GB roxo, apple-touch-icon e tela cheia (standalone); service worker com `push` e `notificationclick` abrindo a agenda no dia (mesma rota segura do Android); botão "Ativar notificações" dentro do app instalado (o iOS exige gesto da usuária; iOS 16.4+); backend com segundo canal Web Push (VAPID) ao lado do FCM, reaproveitando `device_tokens` (provider `webpush`, platform `ios`), destinatários, textos e fila; remoção de inscrição inválida (404/410); logout desinscreve; chaves VAPID no `.env.staging`; nginx sem cache para `sw.js` e manifest. Fora do escopo: App Store/TestFlight, modo offline do sistema. Decisão da usuária em 17/11/2026 (caminho 1 de 4, com notificações).
 **Requirements**: TBD
 **Depends on:** Phase 7
-**Plans:** 0 plans
+**Plans:** 8 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 8 to break down)
+- [ ] 08-01-backend-device-tokens-webpush-PLAN.md — migration p256dh/auth e provider webpush, validação anti-SSRF do endpoint e registro da inscrição
+- [ ] 08-02-backend-vapid-push-config-PLAN.md — web-push 3.6.7, chaves VAPID no env/compose e query pushConfig com a chave pública
+- [ ] 08-03-frontend-manifest-sw-nginx-PLAN.md — ícones GB, manifest, metas iOS, sw.js só push/clique, nginx sem cache e check-pwa-headers.sh
+- [ ] 08-04-backend-webpush-provider-dispatch-PLAN.md — WebPushProvider (404/410 remove) e dispatch de dois canais na fila da fase 7
+- [ ] 08-05-frontend-webpush-client-bridge-PLAN.md — detecção iPhone/standalone, inscrição, WebPushBridge, rota pendente e logout desinscrevendo
+- [ ] 08-06-frontend-ui-instalar-ativar-PLAN.md — botão Instalar no iPhone com passo a passo e faixa Ativar notificações
+- [ ] 08-07-gate-vapid-deploy-staging-PLAN.md — gate completo, VAPID no .env.staging, backup, deploy, headers no staging e CI verde
+- [ ] 08-08-iphone-verification-PLAN.md — verificação no iPhone real da usuária
 
 ---
 
