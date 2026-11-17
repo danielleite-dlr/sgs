@@ -1,4 +1,4 @@
-import { linkableTrialContract, type TrialLinkItem } from './comanda-trial-link';
+import { isTrialSettledAtEvent, linkableTrialContract, type TrialLinkItem } from './comanda-trial-link';
 
 const CONTRACT = { id: 'k1', code: 'CT-2026-008', status: 'draft' };
 
@@ -50,5 +50,20 @@ describe('linkableTrialContract (261117-i6j)', () => {
     const cancelled = [{ ...CONTRACT, status: 'cancelled' }];
     expect(linkableTrialContract(item({}, { bridalGroup: { members, contracts: cancelled } }))).toBeNull();
     expect(linkableTrialContract(item({}, { bridalGroup: { members, contracts: [] } }))).toBeNull();
+  });
+});
+
+describe('isTrialSettledAtEvent (261117-j1w)', () => {
+  const trial = { purpose: 'trial' };
+  it('teste coberto a R$ 0,00 -> pago no evento (sem comissão no teste)', () => {
+    expect(isTrialSettledAtEvent({ contractId: 'k1', totalCents: 0, appointment: trial })).toBe(true);
+  });
+  it('teste avulso, teste com valor ou evento -> false', () => {
+    expect(isTrialSettledAtEvent({ contractId: null, totalCents: 0, appointment: trial })).toBe(false);
+    expect(isTrialSettledAtEvent({ contractId: 'k1', totalCents: 15000, appointment: trial })).toBe(false);
+    expect(
+      isTrialSettledAtEvent({ contractId: 'k1', totalCents: 0, appointment: { purpose: 'event' } }),
+    ).toBe(false);
+    expect(isTrialSettledAtEvent({ contractId: 'k1', totalCents: 0, appointment: null })).toBe(false);
   });
 });

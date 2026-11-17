@@ -14,6 +14,7 @@ import {
 import { loadCategoryParents } from '../identity/member-categories';
 import { CLIENT_CREDIT_METHOD, computeComandaTotals, coveredCents } from './comanda-math';
 import { ComandaError, recalcComandaTotal } from './comanda-items';
+import { isTrialSettledAtEvent } from './comanda-trial-link';
 
 type LockedComanda = {
   id: string;
@@ -55,7 +56,10 @@ export async function closeComandaTx(
 
   const items = await tx.comandaItem.findMany({
     where: { comandaId },
-    include: { service: { select: { categoryId: true } } },
+    include: {
+      service: { select: { categoryId: true } },
+      appointment: { select: { purpose: true } },
+    },
     orderBy: { createdAt: 'asc' },
   });
   if (items.length === 0) {
@@ -141,11 +145,14 @@ export async function closeComandaTx(
       productId: item.productId,
       categoryChain: categoryChain(item.service?.categoryId ?? null, parents),
     });
-    const c = computeCommission(match, {
+    // Teste incluso no contrato: a comissão sai no evento, não aqui (evita pagar duas vezes).
+    const settledAtEvent = isTrialSettledAtEvent({ ...item, totalCents: toCents(item.total) });
+    const computed = computeCommission(match, {
       listUnitCents: toCents(item.listUnitPrice),
       quantity: item.quantity,
       chargedCents: toCents(item.total),
     });
+    const c = settledAtEvent ? { ...computed, amountCents: 0 } : computed;
     const rule = match?.rule ?? null;
     return {
       organizationId: orgId,
@@ -179,6 +186,7 @@ export async function closeComandaTx(
         packageId: item.packageId,
         fixedPer: 'unit',
         noRule: c.noRule,
+        ...(settledAtEvent ? { settledAtEvent: true } : {}),
       },
       calculatedAt: now,
     };

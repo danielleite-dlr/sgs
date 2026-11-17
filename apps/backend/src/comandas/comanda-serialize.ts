@@ -1,7 +1,11 @@
 import type { TenantPrismaClient } from '../database/types';
 import { fromCents, toCents } from '../common/money';
 import { computeComandaTotals, coveredCents } from './comanda-math';
-import { linkableTrialContract, TRIAL_LINK_APPOINTMENT_SELECT } from './comanda-trial-link';
+import {
+  isTrialSettledAtEvent,
+  linkableTrialContract,
+  TRIAL_LINK_APPOINTMENT_SELECT,
+} from './comanda-trial-link';
 
 const COMANDA_INCLUDE = {
   client: true,
@@ -144,8 +148,7 @@ export function serializeComanda(
       contractCode: i.contract?.code ?? null,
       // Teste incluso no pacote (261108-n2o): item do teste coberto pelo contrato a R$ 0,00;
       // o valor é cobrado na comanda do evento. Heurística só de exibição.
-      includedInEvent:
-        !!i.contractId && i.appointment?.purpose === 'trial' && toCents(i.total) === 0,
+      includedInEvent: isTrialSettledAtEvent({ ...i, totalCents: toCents(i.total) }),
       ...linkableFields(i),
       professional: memberView(i.professional),
       name: i.nameSnapshot,
