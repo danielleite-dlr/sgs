@@ -1,7 +1,7 @@
 ---
 phase: 7
 slug: app-android-gestor-beauty-com-capacitor
-status: draft
+status: approved
 nyquist_compliant: true
 wave_0_complete: true
 created: 2026-11-14
@@ -73,16 +73,16 @@ created: 2026-11-14
 
 | Behavior | Req | Why Manual | Test Instructions | Resultado |
 |----------|-----|------------|-------------------|-----------|
-| Instalação, ícone, nome "Gestor Beauty", splash `#F7F6F3`, login que permanece | C-01/C-05 | aparelho real | Instalar APK/AAB, logar, fechar e reabrir | ⬜ |
-| Push em primeiro plano, segundo plano e app fechado (novo agendamento, cancelamento, lote de noivas) | C-03 | FCM real + aparelho | Duas contas em dois aparelhos (profissional e gestora), conferir D-12/D-13/D-15 | ⬜ |
-| Toque abre a agenda no dia com o atendimento aberto (inclusive a frio) | C-04 | aparelho real | Tocar na notificação com o app fechado | ⬜ |
-| Modo avião → "Sem conexão" → reconectar → "Tentar novamente"; queda no meio da sessão | C-02 | rede real | Alternar modo avião | ⬜ |
-| Botão voltar, teclado, notch/safe area, barra de status, PDF de contrato | C-01 | WebView real | Navegar e abrir PDF | ⬜ |
-| Lote de noivas → 1 aviso por profissional + 1 para a gestora (D-15) | C-03 | FCM real + aparelho | Agendar evento do grupo com vários atendimentos da mesma profissional | ⬜ |
-| Sessão vencida → toque abre a agenda depois do login | C-04 | aparelho real | Logout, tocar na notificação, logar | ⬜ |
-| Admin de plataforma dentro do salão não recebe push | C-03 | aparelho real | Entrar como admin pelo painel e criar agendamento em outro aparelho | ⬜ |
-| PDF de contrato / exportação abre no app (Pitfall 9) | C-01 | WebView real | Abrir PDF de contrato e exportação do financeiro | ⬜ |
-| Teste interno na Play Console (convite, instalação pela loja) | C-01 | depende da conta da usuária | Quando a conta existir | ⬜ |
+| Instalação, ícone, nome "Gestor Beauty", splash `#F7F6F3`, login que permanece | C-01/C-05 | aparelho real | Instalar APK/AAB, logar, fechar e reabrir | ✅ APK baixado pelo link do login e login feito no aparelho (17/11); reabertura não conferida |
+| Push em primeiro plano, segundo plano e app fechado (novo agendamento, cancelamento, lote de noivas) | C-03 | FCM real + aparelho | Duas contas em dois aparelhos (profissional e gestora), conferir D-12/D-13/D-15 | ⏭️ não testado — aprovado pela usuária sem teste no aparelho (17/11); reabrir se der problema |
+| Toque abre a agenda no dia com o atendimento aberto (inclusive a frio) | C-04 | aparelho real | Tocar na notificação com o app fechado | ⏭️ não testado — aprovado pela usuária sem teste no aparelho (17/11); reabrir se der problema |
+| Modo avião → "Sem conexão" → reconectar → "Tentar novamente"; queda no meio da sessão | C-02 | rede real | Alternar modo avião | ⏭️ não testado — aprovado pela usuária sem teste no aparelho (17/11); reabrir se der problema |
+| Botão voltar, teclado, notch/safe area, barra de status, PDF de contrato | C-01 | WebView real | Navegar e abrir PDF | ⏭️ não testado — aprovado pela usuária sem teste no aparelho (17/11); reabrir se der problema |
+| Lote de noivas → 1 aviso por profissional + 1 para a gestora (D-15) | C-03 | FCM real + aparelho | Agendar evento do grupo com vários atendimentos da mesma profissional | ⏭️ não testado — aprovado pela usuária sem teste no aparelho (17/11); reabrir se der problema |
+| Sessão vencida → toque abre a agenda depois do login | C-04 | aparelho real | Logout, tocar na notificação, logar | ⏭️ não testado — aprovado pela usuária sem teste no aparelho (17/11); reabrir se der problema |
+| Admin de plataforma dentro do salão não recebe push | C-03 | aparelho real | Entrar como admin pelo painel e criar agendamento em outro aparelho | ⏭️ não testado — aprovado pela usuária sem teste no aparelho (17/11); reabrir se der problema |
+| PDF de contrato / exportação abre no app (Pitfall 9) | C-01 | WebView real | Abrir PDF de contrato e exportação do financeiro | ⏭️ não testado — aprovado pela usuária sem teste no aparelho (17/11); reabrir se der problema |
+| Teste interno na Play Console (convite, instalação pela loja) | C-01 | depende da conta da usuária | Quando a conta existir | ⏳ aguardando conta Play |
 
 ---
 
