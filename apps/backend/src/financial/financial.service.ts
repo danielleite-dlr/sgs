@@ -239,6 +239,8 @@ export class FinancialService {
           reversed: boolean;
           rule_snapshot: string;
           calculated_at: Date;
+          client_name: string | null;
+          service_date: Date;
         }[]
       >`
         SELECT cr.id, cr.comanda_id, c.code AS comanda_code, cr.comanda_item_id,
@@ -250,10 +252,15 @@ export class FinancialService {
                cr.calculated_amount::text AS calculated_amount,
                EXISTS (SELECT 1 FROM commission_records r
                         WHERE r.reverses_record_id = cr.id) AS reversed,
-               cr.rule_snapshot::text AS rule_snapshot, cr.calculated_at
+               cr.rule_snapshot::text AS rule_snapshot, cr.calculated_at,
+               cl.full_name AS client_name,
+               COALESCE(ap.starts_at, c.opened_at) AS service_date
           FROM commission_records cr
           JOIN comandas c ON c.id = cr.comanda_id
           JOIN members mb ON mb.id = cr.member_id
+          LEFT JOIN clients cl ON cl.id = c.client_id
+          LEFT JOIN comanda_items ci ON ci.id = cr.comanda_item_id
+          LEFT JOIN appointments ap ON ap.id = ci.appointment_id
          WHERE cr.calculated_at >= (${a.from}::date)::timestamp AT TIME ZONE ${tz}
            AND cr.calculated_at <  (${a.to}::date)::timestamp AT TIME ZONE ${tz}
            AND (${memberId}::uuid IS NULL OR cr.member_id = ${memberId}::uuid)
@@ -277,6 +284,8 @@ export class FinancialService {
         reversed: r.reversed,
         ruleSnapshot: r.rule_snapshot,
         calculatedAt: r.calculated_at,
+        clientName: r.client_name,
+        serviceDate: r.service_date,
       }));
     });
   }
@@ -290,9 +299,16 @@ export class FinancialService {
     return this.tenant.runWithTenant(orgId, async (tx) => {
       const tz = await this.timezone(tx, orgId);
       const rows = await tx.$queryRaw<
-        { member_id: string; member_name: string; total: string; records: number; no_rule: number }[]
+        {
+          member_id: string;
+          member_name: string;
+          member_phone: string | null;
+          total: string;
+          records: number;
+          no_rule: number;
+        }[]
       >`
-        SELECT cr.member_id, mb.display_name AS member_name,
+        SELECT cr.member_id, mb.display_name AS member_name, mb.phone AS member_phone,
                SUM(cr.calculated_amount)::text AS total,
                (COUNT(*) FILTER (WHERE cr.kind = 'accrual'))::int AS records,
                (COUNT(*) FILTER (
@@ -304,11 +320,12 @@ export class FinancialService {
          WHERE cr.calculated_at >= (${a.from}::date)::timestamp AT TIME ZONE ${tz}
            AND cr.calculated_at <  (${a.to}::date)::timestamp AT TIME ZONE ${tz}
            AND (${memberId}::uuid IS NULL OR cr.member_id = ${memberId}::uuid)
-         GROUP BY cr.member_id, mb.display_name
+         GROUP BY cr.member_id, mb.display_name, mb.phone
          ORDER BY mb.display_name`;
       return rows.map((r) => ({
         memberId: r.member_id,
         memberName: r.member_name,
+        memberPhone: r.member_phone,
         total: money(r.total),
         records: r.records,
         noRuleCount: r.no_rule,

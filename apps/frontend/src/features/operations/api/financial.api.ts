@@ -65,6 +65,8 @@ export const CommissionRecordsQuery = gql`
       calculatedAmount
       reversed
       calculatedAt
+      clientName
+      serviceDate
     }
   }
 `;
@@ -74,6 +76,7 @@ export const CommissionTotalsQuery = gql`
     commissionTotals(from: $from, to: $to, memberId: $memberId) {
       memberId
       memberName
+      memberPhone
       total
       records
       noRuleCount
@@ -185,6 +188,9 @@ export interface CommissionRecordEntry {
   calculatedAmount: string;
   reversed: boolean;
   calculatedAt: string;
+  clientName: string | null;
+  /** Início do atendimento (ou abertura da comanda). */
+  serviceDate: string;
 }
 
 export interface CommissionRecordsResult {
@@ -194,6 +200,7 @@ export interface CommissionRecordsResult {
 export interface CommissionMemberTotal {
   memberId: string;
   memberName: string;
+  memberPhone: string | null;
   total: string;
   records: number;
   noRuleCount: number;

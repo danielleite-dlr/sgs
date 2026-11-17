@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ChevronLeft } from 'lucide-react';
+import { AlertTriangle, ChevronLeft, FileText, MessageCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,15 +35,39 @@ import {
   type CommissionTotalsResult,
 } from '../api/financial.api';
 import { PeriodFilter } from '../components/PeriodFilter';
+import { CommissionPrintReport, PRINT_BODY_CLASS } from '../components/CommissionPrintReport';
 import { defaultPeriod, type PeriodValue } from '../lib/period-value';
+import {
+  brl,
+  buildWhatsAppText,
+  formatDay,
+  periodLabel,
+  whatsAppUrl,
+  type CommissionReportInput,
+} from '../lib/commission-report';
 
 const ALL = '__all__';
-const brl = (v: string) => `R$ ${formatCurrencyDisplay(v)}`;
 const HEAD = 'text-xs font-semibold text-neutral-500 uppercase tracking-wide';
+
+/** Imprime só o relatório; o título vira o nome sugerido do PDF. */
+function printReport(title: string) {
+  const body = document.body;
+  const previousTitle = document.title;
+  const done = () => {
+    body.classList.remove(PRINT_BODY_CLASS);
+    document.title = previousTitle;
+    window.removeEventListener('afterprint', done);
+  };
+  body.classList.add(PRINT_BODY_CLASS);
+  document.title = title;
+  window.addEventListener('afterprint', done);
+  window.print();
+}
 
 export function ComissoesCalculadasPage() {
   const { t } = useTranslation();
   const roleName = useAuthStore((s) => s.roleName);
+  const salonName = useAuthStore((s) => s.organizationName);
   const isProfessional = roleName === 'PROFESSIONAL';
   const canRead = useHasPermission('commissionRecord.read');
   const canReviewRules =
@@ -70,6 +94,51 @@ export function ComissoesCalculadasPage() {
   const totalRows = totals.data?.commissionTotals ?? [];
   const hasNoRule = totalRows.some((r) => r.noRuleCount > 0);
   const comandaLinks = isPathEnabled('/comanda');
+
+  /** Registros em ordem de atendimento (mais antigo primeiro), como no relatório. */
+  const recordRows = useMemo(
+    () =>
+      [...(records.data?.commissionRecords ?? [])].sort(
+        (a, b) => new Date(a.serviceDate).getTime() - new Date(b.serviceDate).getTime(),
+      ),
+    [records.data],
+  );
+
+  const selectedTotal = isProfessional
+    ? totalRows[0]
+    : totalRows.find((r) => r.memberId === filterId);
+  const selectedName =
+    selectedTotal?.memberName ??
+    recordRows[0]?.memberName ??
+    professionals.find((m) => m.id === filterId)?.displayName ??
+    '';
+
+  const report: CommissionReportInput | null =
+    showRecords && records.data && selectedName
+      ? {
+          salonName,
+          memberName: selectedName,
+          from: period.from,
+          to: period.to,
+          rows: recordRows,
+          total: selectedTotal?.total ?? '0.00',
+        }
+      : null;
+
+  const onPrint = () => {
+    if (!report) return;
+    printReport(
+      `Comissões - ${report.memberName} - ${periodLabel(report.from, report.to).replace(/\//g, '-')}`,
+    );
+  };
+  const onWhatsApp = () => {
+    if (!report) return;
+    window.open(
+      whatsAppUrl(selectedTotal?.memberPhone, buildWhatsAppText(report)),
+      '_blank',
+      'noopener,noreferrer',
+    );
+  };
 
   return (
     <div className="flex flex-col gap-md">
@@ -152,7 +221,7 @@ export function ComissoesCalculadasPage() {
                   <TableRow className="bg-neutral-50">
                     <TableHead className={HEAD}>{t('operations.commissions.professional', 'Profissional')}</TableHead>
                     <TableHead className={`${HEAD} text-right`}>
-                      {t('operations.commissions.item', 'Item')}
+                      {t('operations.commissions.services', 'Atendimentos')}
                     </TableHead>
                     <TableHead className={`${HEAD} text-right`}>
                       {t('operations.commissions.totalEarned', 'Total ganho')}
@@ -167,106 +236,47 @@ export function ComissoesCalculadasPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    totalRows.map((r) => (
-                      <TableRow key={r.memberId} data-testid={`commission-total-${r.memberId}`}>
-                        <TableCell className="text-sm font-medium text-neutral-800">
-                          {r.memberName}
-                          {r.noRuleCount > 0 && (
-                            <Badge variant="warning" className="ml-sm">
-                              {t('operations.commissions.noRuleBadge', 'Sem regra')}: {r.noRuleCount}
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm text-neutral-700 text-right">{r.records}</TableCell>
-                        <TableCell className="text-sm font-semibold text-neutral-800 text-right">
-                          {brl(r.total)}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-
-          {!showRecords ? (
-            <p className="text-xs text-neutral-500 text-center">
-              {t('operations.commissions.selectToSee', 'Selecione um profissional para ver os registros.')}
-            </p>
-          ) : records.loading ? (
-            <Skeleton className="h-24 w-full" />
-          ) : (
-            <div className="border border-neutral-200 rounded-lg overflow-hidden bg-white">
-              <Table data-testid="commission-records">
-                <TableHeader>
-                  <TableRow className="bg-neutral-50">
-                    <TableHead className={HEAD}>{t('operations.commissions.date', 'Data')}</TableHead>
-                    <TableHead className={HEAD}>{t('operations.commissions.comanda', 'Comanda')}</TableHead>
-                    <TableHead className={HEAD}>{t('operations.commissions.item', 'Item')}</TableHead>
-                    <TableHead className={`${HEAD} text-right`}>{t('operations.commissions.base', 'Preço cheio')}</TableHead>
-                    <TableHead className={`${HEAD} text-right`}>{t('operations.commissions.charged', 'Cobrado')}</TableHead>
-                    <TableHead className={HEAD}>{t('operations.commissions.rule', 'Regra')}</TableHead>
-                    <TableHead className={`${HEAD} text-right`}>{t('operations.commissions.commission', 'Comissão')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(records.data?.commissionRecords ?? []).length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-xl text-neutral-500 text-sm">
-                        {t('operations.commissions.empty', 'Nenhuma comissão no período.')}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    records.data!.commissionRecords.map((r) => {
-                      const isReversal = r.kind === 'reversal';
-                      const rule = r.noRule
-                        ? '—'
-                        : r.ruleKind === 'percentage'
-                          ? `${formatCurrencyDisplay(r.ruleValue ?? '0')}%`
-                          : r.ruleKind
-                            ? brl(r.ruleValue ?? '0')
-                            : '—';
+                    totalRows.map((r) => {
+                      const selected = filterId === r.memberId;
+                      const select = isProfessional ? undefined : () => setMemberId(r.memberId);
                       return (
                         <TableRow
-                          key={r.id}
-                          data-testid={`commission-record-${r.id}`}
-                          className={isReversal ? 'italic' : undefined}
+                          key={r.memberId}
+                          data-testid={`commission-total-${r.memberId}`}
+                          data-state={selected ? 'selected' : undefined}
+                          onClick={select}
+                          className={
+                            isProfessional
+                              ? undefined
+                              : `cursor-pointer ${selected ? 'bg-primary-50' : 'hover:bg-neutral-50'}`
+                          }
                         >
-                          <TableCell className="text-sm">
-                            {new Date(r.calculatedAt).toLocaleDateString('pt-BR')}
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            {comandaLinks ? (
-                              <Link to={`/comanda/${r.comandaId}`} className="underline">
-                                {r.comandaCode}
-                              </Link>
+                          <TableCell className="text-sm font-medium text-neutral-800">
+                            {isProfessional ? (
+                              r.memberName
                             ) : (
-                              r.comandaCode
+                              <button
+                                type="button"
+                                className="text-left font-medium text-primary-700 hover:underline"
+                                aria-pressed={selected}
+                                aria-label={`Ver atendimentos de ${r.memberName}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setMemberId(r.memberId);
+                                }}
+                              >
+                                {r.memberName}
+                              </button>
                             )}
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            {r.itemName}
-                            {isReversal && (
-                              <span className="ml-xs text-neutral-500">
-                                ({t('operations.commissions.reversal', 'Estorno')})
-                              </span>
-                            )}
-                            {r.reversed && (
-                              <Badge variant="outline" className="ml-xs">
-                                {t('operations.commissions.reversed', 'Estornada')}
-                              </Badge>
-                            )}
-                            {r.noRule && !isReversal && (
-                              <Badge variant="warning" className="ml-xs">
-                                {t('operations.commissions.noRuleBadge', 'Sem regra')}
+                            {r.noRuleCount > 0 && (
+                              <Badge variant="warning" className="ml-sm">
+                                {t('operations.commissions.noRuleBadge', 'Sem regra')}: {r.noRuleCount}
                               </Badge>
                             )}
                           </TableCell>
-                          <TableCell className="text-sm text-right">{brl(r.baseAmount)}</TableCell>
-                          <TableCell className="text-sm text-right">{brl(r.chargedAmount)}</TableCell>
-                          <TableCell className="text-sm">{rule}</TableCell>
-                          <TableCell className="text-sm font-semibold text-right">
-                            {brl(r.calculatedAmount)}
+                          <TableCell className="text-sm text-neutral-700 text-right">{r.records}</TableCell>
+                          <TableCell className="text-sm font-semibold text-neutral-800 text-right">
+                            {brl(r.total)}
                           </TableCell>
                         </TableRow>
                       );
@@ -275,6 +285,145 @@ export function ComissoesCalculadasPage() {
                 </TableBody>
               </Table>
             </div>
+          )}
+
+          {!showRecords ? (
+            <p className="text-xs text-neutral-500 text-center">
+              {t(
+                'operations.commissions.selectToSee',
+                'Clique em uma profissional para ver os atendimentos e gerar o relatório.',
+              )}
+            </p>
+          ) : records.loading ? (
+            <Skeleton className="h-24 w-full" />
+          ) : (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-sm">
+                <h2 className="text-sm font-semibold text-neutral-800">
+                  {selectedName ? `Atendimentos de ${selectedName}` : 'Atendimentos'}
+                  {selectedTotal && (
+                    <span className="ml-sm font-normal text-neutral-600">
+                      · Total {brl(selectedTotal.total)}
+                    </span>
+                  )}
+                </h2>
+                <div className="flex flex-wrap gap-xs">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onPrint}
+                    disabled={!report}
+                    data-testid="commission-print"
+                  >
+                    <FileText className="h-4 w-4 mr-xs" />
+                    Gerar relatório (PDF)
+                  </Button>
+                  {!isProfessional && (
+                    <Button
+                      size="sm"
+                      onClick={onWhatsApp}
+                      disabled={!report}
+                      data-testid="commission-whatsapp"
+                      title={
+                        selectedTotal?.memberPhone
+                          ? undefined
+                          : 'Profissional sem telefone: o WhatsApp vai pedir o contato'
+                      }
+                    >
+                      <MessageCircle className="h-4 w-4 mr-xs" />
+                      Enviar por WhatsApp
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="border border-neutral-200 rounded-lg overflow-x-auto bg-white">
+                <Table data-testid="commission-records">
+                  <TableHeader>
+                    <TableRow className="bg-neutral-50">
+                      <TableHead className={HEAD}>{t('operations.commissions.date', 'Data')}</TableHead>
+                      <TableHead className={HEAD}>{t('operations.commissions.client', 'Cliente')}</TableHead>
+                      <TableHead className={HEAD}>{t('operations.commissions.service', 'Serviço')}</TableHead>
+                      <TableHead className={`${HEAD} text-right`}>{t('operations.commissions.charged', 'Cobrado')}</TableHead>
+                      <TableHead className={`${HEAD} text-right`}>{t('operations.commissions.commission', 'Comissão')}</TableHead>
+                      <TableHead className={HEAD}>{t('operations.commissions.rule', 'Regra')}</TableHead>
+                      <TableHead className={HEAD}>{t('operations.commissions.comanda', 'Comanda')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recordRows.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-xl text-neutral-500 text-sm">
+                          {t('operations.commissions.empty', 'Nenhuma comissão no período.')}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      recordRows.map((r) => {
+                        const isReversal = r.kind === 'reversal';
+                        const rule = r.noRule
+                          ? '—'
+                          : r.ruleKind === 'percentage'
+                            ? `${formatCurrencyDisplay(r.ruleValue ?? '0')}%`
+                            : r.ruleKind
+                              ? brl(r.ruleValue ?? '0')
+                              : '—';
+                        return (
+                          <TableRow
+                            key={r.id}
+                            data-testid={`commission-record-${r.id}`}
+                            className={isReversal ? 'italic' : undefined}
+                          >
+                            <TableCell className="text-sm whitespace-nowrap">
+                              {formatDay(r.serviceDate)}
+                            </TableCell>
+                            <TableCell className="text-sm">{r.clientName ?? '—'}</TableCell>
+                            <TableCell className="text-sm">
+                              {r.itemName}
+                              {isReversal && (
+                                <span className="ml-xs text-neutral-500">
+                                  ({t('operations.commissions.reversal', 'Estorno')})
+                                </span>
+                              )}
+                              {r.reversed && (
+                                <Badge variant="outline" className="ml-xs">
+                                  {t('operations.commissions.reversed', 'Estornada')}
+                                </Badge>
+                              )}
+                              {r.noRule && !isReversal && (
+                                <Badge variant="warning" className="ml-xs">
+                                  {t('operations.commissions.noRuleBadge', 'Sem regra')}
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-sm text-right whitespace-nowrap">
+                              {brl(r.chargedAmount)}
+                            </TableCell>
+                            <TableCell className="text-sm font-semibold text-right whitespace-nowrap">
+                              {brl(r.calculatedAmount)}
+                            </TableCell>
+                            <TableCell className="text-xs text-neutral-500 whitespace-nowrap">
+                              {rule}
+                              {r.baseAmount !== r.chargedAmount && (
+                                <span className="block">cheio {brl(r.baseAmount)}</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-xs text-neutral-500">
+                              {comandaLinks ? (
+                                <Link to={`/comanda/${r.comandaId}`} className="underline">
+                                  {r.comandaCode}
+                                </Link>
+                              ) : (
+                                r.comandaCode
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              {report && <CommissionPrintReport report={report} />}
+            </>
           )}
         </>
       )}

@@ -147,4 +147,25 @@ describe('Phase 3 - registros de comissão (D-14, D-23, D-24)', () => {
     expect(res[0]).toMatchObject({ kind: 'accrual', calculatedAmount: '40.00', noRule: false, reversed: false });
     expect(res[0].itemName).toContain('servico-a');
   });
+
+  it('relatório: cliente, data do atendimento e telefone da profissional', async () => {
+    await rule({ scopeType: 'service', serviceId: w.serviceId, kind: 'percentage', value: '40' });
+    await adminPrisma.member.update({ where: { id: w.members.proA }, data: { phone: '11977776666' } });
+    const id = await open();
+    await addSvc(id, w.serviceId, w.members.proA);
+    await payAndClose(id, '100.00');
+    const { from, to } = range();
+    const q = `query($f: String!, $t: String!, $m: UUID) {
+      commissionRecords(from: $f, to: $t, memberId: $m) { clientName serviceDate }
+      commissionTotals(from: $f, to: $t, memberId: $m) { memberId memberPhone }
+    }`;
+    const d = (await gqlAs(w, w.tokens.admin)(q, { f: from, t: to, m: w.members.proA })).data;
+    expect(d.commissionRecords).toHaveLength(1);
+    expect(d.commissionRecords[0].clientName).toBe('p3comm-cliente');
+    // sem agendamento no item: cai na abertura da comanda
+    const opened = await adminPrisma.comanda.findUniqueOrThrow({ where: { id } });
+    expect(new Date(d.commissionRecords[0].serviceDate).getTime()).toBe(opened.openedAt.getTime());
+    expect(d.commissionTotals).toEqual([{ memberId: w.members.proA, memberPhone: '11977776666' }]);
+    await adminPrisma.member.update({ where: { id: w.members.proA }, data: { phone: null } });
+  });
 });

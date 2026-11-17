@@ -184,6 +184,9 @@ test.describe('Fluxo: agendamento com sinal, comanda, pagamento dividido e comis
     await expect(rows.first()).toBeVisible();
     await expect(proPage.getByTestId('commission-records')).toContainText(comandaCode);
     await expect(proPage.getByTestId('commission-member-select')).toHaveCount(0);
+    // relatório: a profissional gera o próprio PDF; envio por WhatsApp é do gestor
+    await expect(proPage.getByTestId('commission-print')).toBeEnabled();
+    await expect(proPage.getByTestId('commission-whatsapp')).toHaveCount(0);
     expect(comandaId).toBeTruthy();
     await proContext.close();
   });

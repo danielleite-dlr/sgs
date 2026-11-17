@@ -76,11 +76,16 @@ type CommissionRecordEntry {
   reversed: Boolean!
   ruleSnapshot: String!
   calculatedAt: DateTime!
+  "Cliente da comanda"
+  clientName: String
+  "Início do atendimento (agendamento do item) ou abertura da comanda"
+  serviceDate: DateTime!
 }
 
 type CommissionMemberTotal {
   memberId: UUID!
   memberName: String!
+  memberPhone: String
   total: String!
   records: Int!
   noRuleCount: Int!

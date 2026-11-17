@@ -104,3 +104,19 @@
     background: #f3f4f6;
   }
 }
+
+/* Relatório de comissões (quick 261117-klg): ao gerar o PDF, imprime só o relatório. */
+.print-report {
+  display: none;
+}
+@media print {
+  body.printing-commission-report > *:not(.print-report) {
+    display: none !important;
+  }
+  body.printing-commission-report > .print-report {
+    display: block;
+  }
+  @page {
+    margin: 14mm;
+  }
+}
