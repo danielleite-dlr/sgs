@@ -5,6 +5,10 @@
 #
 #   ./scripts/deploy-staging.sh            # usa o código já presente
 #   ./scripts/deploy-staging.sh --pull     # git pull antes de construir
+#   SKIP_APK=1 ./scripts/deploy-staging.sh # não publica o APK Android no fim
+#
+# No fim publica o APK Android mais recente (scripts/publish-apk.sh). Falha
+# nesse passo só gera aviso; o deploy segue.
 # ──────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
@@ -49,6 +53,13 @@ done
 
 echo "▸ Conferindo o frontend…"
 curl -fsS -m 5 -o /dev/null "http://127.0.0.1:${STG_FRONTEND_PORT:-8090}/" && echo "  frontend OK"
+
+echo "▸ Publicando o APK Android mais recente…"
+if [[ "${SKIP_APK:-}" == "1" ]]; then
+  echo "  pulado (SKIP_APK=1)"
+elif ! ./scripts/publish-apk.sh; then
+  echo "  aviso: não deu para publicar o APK; o deploy segue. Rode ./scripts/publish-apk.sh depois." >&2
+fi
 
 echo
 echo "✓ Deploy concluído — $URL"
