@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Smartphone } from 'lucide-react';
 import { AuthShell } from '../components/AuthShell';
 import { AuthCard } from '../components/AuthCard';
 import { PasswordInput } from '../components/PasswordInput';
@@ -15,6 +15,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLoginMutation } from '../api/auth.api';
 import { useAuth } from '../hooks/useAuth';
 import { consumePendingRoute } from '@/infrastructure/native/push-route';
+import { isNativeApp } from '@/infrastructure/native/platform';
+
+// O nginx do host serve o APK publicado por scripts/publish-apk.sh (quick 261117-2pd).
+const APK_URL = '/download/gestor-beauty.apk';
 
 const schema = z.object({
   email: z.string().email(),
@@ -34,6 +38,7 @@ export function LoginPage() {
   const [authError, setAuthError] = useState<{ code: string; message: string } | null>(null);
   const [login, { loading }] = useLoginMutation();
   const { applyAuthPayload } = useAuth();
+  const showApkDownload = !isNativeApp();
 
   const {
     register,
@@ -239,6 +244,20 @@ export function LoginPage() {
             </Link>
           </div>
         </form>
+
+        {showApkDownload && (
+          <div className="border-t border-neutral-200 pt-md space-y-xs">
+            <Button asChild variant="outline" className="w-full">
+              <a href={APK_URL} download="gestor-beauty.apk">
+                <Smartphone size={16} aria-hidden="true" />
+                {t('login.downloadAndroid')}
+              </a>
+            </Button>
+            <p className="text-label text-neutral-500 text-center">
+              {t('login.downloadAndroidHint')}
+            </p>
+          </div>
+        )}
       </AuthCard>
     </AuthShell>
   );

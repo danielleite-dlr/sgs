@@ -21,6 +21,8 @@
     "primaryCta": "Entrar",
     "loadingCta": "Entrando…",
     "forgotPassword": "Esqueceu a senha?",
+    "downloadAndroid": "Baixar app Android",
+    "downloadAndroidHint": "Instale o Gestor Beauty no seu celular Android.",
     "errors": {
       "wrongCredentials": "E-mail ou senha incorretos.",
       "unverified": "Verifique seu e-mail antes de entrar.",
