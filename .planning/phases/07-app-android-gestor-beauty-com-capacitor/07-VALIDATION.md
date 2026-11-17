@@ -71,14 +71,18 @@ created: 2026-11-14
 
 ## Manual-Only Verifications
 
-| Behavior | Req | Why Manual | Test Instructions |
-|----------|-----|------------|-------------------|
-| Instalação, ícone, nome "Gestor Beauty", splash `#F7F6F3`, login que permanece | C-01/C-05 | aparelho real | Instalar APK/AAB, logar, fechar e reabrir |
-| Push em primeiro plano, segundo plano e app fechado (novo agendamento, cancelamento, lote de noivas) | C-03 | FCM real + aparelho | Duas contas em dois aparelhos (profissional e gestora), conferir D-12/D-13/D-15 |
-| Toque abre a agenda no dia com o atendimento aberto (inclusive a frio) | C-04 | aparelho real | Tocar na notificação com o app fechado |
-| Modo avião → "Sem conexão" → reconectar → "Tentar novamente"; queda no meio da sessão | C-02 | rede real | Alternar modo avião |
-| Botão voltar, teclado, notch/safe area, barra de status, PDF de contrato | C-01 | WebView real | Navegar e abrir PDF |
-| Teste interno na Play Console (convite, instalação pela loja) | C-01 | depende da conta da usuária | Quando a conta existir |
+| Behavior | Req | Why Manual | Test Instructions | Resultado |
+|----------|-----|------------|-------------------|-----------|
+| Instalação, ícone, nome "Gestor Beauty", splash `#F7F6F3`, login que permanece | C-01/C-05 | aparelho real | Instalar APK/AAB, logar, fechar e reabrir | ⬜ |
+| Push em primeiro plano, segundo plano e app fechado (novo agendamento, cancelamento, lote de noivas) | C-03 | FCM real + aparelho | Duas contas em dois aparelhos (profissional e gestora), conferir D-12/D-13/D-15 | ⬜ |
+| Toque abre a agenda no dia com o atendimento aberto (inclusive a frio) | C-04 | aparelho real | Tocar na notificação com o app fechado | ⬜ |
+| Modo avião → "Sem conexão" → reconectar → "Tentar novamente"; queda no meio da sessão | C-02 | rede real | Alternar modo avião | ⬜ |
+| Botão voltar, teclado, notch/safe area, barra de status, PDF de contrato | C-01 | WebView real | Navegar e abrir PDF | ⬜ |
+| Lote de noivas → 1 aviso por profissional + 1 para a gestora (D-15) | C-03 | FCM real + aparelho | Agendar evento do grupo com vários atendimentos da mesma profissional | ⬜ |
+| Sessão vencida → toque abre a agenda depois do login | C-04 | aparelho real | Logout, tocar na notificação, logar | ⬜ |
+| Admin de plataforma dentro do salão não recebe push | C-03 | aparelho real | Entrar como admin pelo painel e criar agendamento em outro aparelho | ⬜ |
+| PDF de contrato / exportação abre no app (Pitfall 9) | C-01 | WebView real | Abrir PDF de contrato e exportação do financeiro | ⬜ |
+| Teste interno na Play Console (convite, instalação pela loja) | C-01 | depende da conta da usuária | Quando a conta existir | ⬜ |
 
 ---
 
