@@ -179,6 +179,33 @@ export async function createBridalScheduleTx(
     depositByMember.set(d.groupMemberId, d);
   }
 
+  // Teste já agendado para a mesma pessoa e serviço: recusa em vez de duplicar (duplo clique,
+  // aba antiga). Reagendar o teste é pela agenda. Não toca no caminho do evento.
+  const trialBuckets = [...buckets.values()].filter((b) => b.purpose === 'trial');
+  if (trialBuckets.length > 0) {
+    const trialClientIds = trialBuckets.map((b) => memberById.get(b.groupMemberId)!.clientId);
+    const existingTrials = await tx.appointment.findMany({
+      where: {
+        bridalGroupId: group.id,
+        purpose: 'trial',
+        status: { in: [...BLOCKING_STATUSES] },
+        clientId: { in: trialClientIds },
+      },
+      select: { clientId: true, serviceId: true },
+    });
+    const taken = new Set(existingTrials.map((a) => `${a.clientId}:${a.serviceId}`));
+    for (const b of trialBuckets) {
+      const clientId = memberById.get(b.groupMemberId)!.clientId;
+      if (b.items.some((i) => taken.has(`${clientId}:${i.serviceId}`))) {
+        throw new BridalError(
+          'TRIAL_ALREADY_SCHEDULED',
+          'O teste deste serviço já está agendado para esta pessoa. Para mudar, mova o atendimento na agenda.',
+          'items',
+        );
+      }
+    }
+  }
+
   const appointmentIds: string[] = [];
   for (const bucket of buckets.values()) {
     const m = memberById.get(bucket.groupMemberId)!;

@@ -78,6 +78,7 @@ export function serializeAppointment<
     depositAmount?: unknown;
     comanda?: { code: string; status: string } | null;
     clientId?: string;
+    purpose?: string | null;
     bridalGroup?: BridalGroupInclude;
   },
 >(
@@ -87,6 +88,7 @@ export function serializeAppointment<
   bridalGroupName: string | null;
   bridalEventKind: string | null;
   bridalRole: string | null;
+  purpose: string | null;
 } {
   const group = row.bridalGroup ?? null;
   return {
@@ -95,6 +97,7 @@ export function serializeAppointment<
     bridalEventKind: group?.eventKind ?? null,
     bridalRole:
       group?.members?.find((m) => m.clientId === row.clientId)?.role ?? null,
+    purpose: row.purpose ?? null,
     comandaCode: row.comanda?.code ?? null,
     comandaStatus: row.comanda?.status ?? null,
     depositAmount: fromCents(

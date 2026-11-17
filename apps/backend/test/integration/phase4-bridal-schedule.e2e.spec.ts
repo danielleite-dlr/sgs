@@ -312,6 +312,71 @@ describe('Fase 4 - agenda do evento de noivas', () => {
     expect(await groupApptCount(g.groupId)).toBe(1);
   });
 
+  it('agendar só o teste não mexe no evento; repetir o mesmo teste é recusado; agenda expõe purpose', async () => {
+    const g = await newGroup(0);
+    const ev = await schedule({ groupId: g.groupId, items: eventItems(g, 0) });
+    expect(ev.errors).toEqual([]);
+    const snap = async () => ({
+      appts: (
+        await adminPrisma.appointment.findMany({
+          where: { bridalGroupId: g.groupId, purpose: 'event' },
+          orderBy: { startsAt: 'asc' },
+        })
+      ).map((a) => ({
+        id: a.id,
+        startsAt: a.startsAt.toISOString(),
+        endsAt: a.endsAt.toISOString(),
+        status: a.status,
+        comandaId: a.comandaId,
+      })),
+      blocks: (
+        await adminPrisma.timeBlock.findMany({
+          where: { bridalGroupId: g.groupId },
+          orderBy: [{ professionalId: 'asc' }, { startsAt: 'asc' }],
+        })
+      ).map((b) => ({
+        professionalId: b.professionalId,
+        startsAt: b.startsAt.toISOString(),
+        endsAt: b.endsAt.toISOString(),
+      })),
+    });
+    const before = await snap();
+    expect(before.appts).toHaveLength(2);
+
+    const trial = {
+      groupMemberId: g.brideMemberId,
+      serviceId: w.serviceId,
+      professionalId: w.members.proA,
+      startsAt: at(trialDay, 10),
+      endsAt: at(trialDay, 11),
+      purpose: 'trial',
+    };
+    const ok = await schedule({ groupId: g.groupId, items: [trial] });
+    expect(ok.errors).toEqual([]);
+    expect(await snap()).toEqual(before);
+    const trials = await adminPrisma.appointment.findMany({
+      where: { bridalGroupId: g.groupId, purpose: 'trial' },
+    });
+    expect(trials).toHaveLength(1);
+    expect(trials[0].comandaId).not.toBeNull();
+    expect(before.appts.map((a) => a.comandaId)).not.toContain(trials[0].comandaId);
+
+    const again = await schedule({ groupId: g.groupId, items: [trial] });
+    expect(again.errors[0].code).toBe('TRIAL_ALREADY_SCHEDULED');
+    expect(await groupApptCount(g.groupId)).toBe(3);
+
+    const res = await att()(
+      `query($s: DateTime!, $e: DateTime!) { appointments(startsAt: $s, endsAt: $e) { id purpose } }`,
+      { s: at(trialDay, 0), e: at(eventDay, 20) },
+    );
+    expect(res.errors).toBeUndefined();
+    const byId = new Map<string, string | null>(
+      (res.data.appointments as { id: string; purpose: string | null }[]).map((a) => [a.id, a.purpose]),
+    );
+    expect(byId.get(trials[0].id)).toBe('trial');
+    expect(byId.get(before.appts[0].id)).toBe('event');
+  });
+
   it('D-25: comanda fechada da noiva não muda quando o contrato é editado', async () => {
     const g = await newGroup(0);
     const r = await schedule({ groupId: g.groupId, items: eventItems(g, 0) });

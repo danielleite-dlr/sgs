@@ -66,4 +66,11 @@ describe("serializeAppointment — grupo de noiva", () => {
       serializeAppointment({ clientId: "c-social", bridalGroup: null }),
     ).toMatchObject({ bridalGroupName: null, bridalEventKind: null, bridalRole: null });
   });
+
+  it("expõe a finalidade: trial para o teste e null sem a coluna", () => {
+    expect(
+      serializeAppointment({ clientId: "c-noiva", purpose: "trial", bridalGroup: group }).purpose,
+    ).toBe("trial");
+    expect(serializeAppointment({ clientId: "c-social", bridalGroup: null }).purpose).toBeNull();
+  });
 });

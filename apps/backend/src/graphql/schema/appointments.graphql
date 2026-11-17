@@ -52,6 +52,8 @@ type Appointment {
   bridalEventKind: String
   "Papel da cliente no grupo: bride | companion (null se não for membro)."
   bridalRole: String
+  "Finalidade no grupo de noiva: event | trial (teste). null para atendimento social."
+  purpose: String
   professional: Member!
   client: Client!
   service: Service!
