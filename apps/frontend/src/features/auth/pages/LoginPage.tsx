@@ -16,6 +16,7 @@ import { useLoginMutation } from '../api/auth.api';
 import { useAuth } from '../hooks/useAuth';
 import { consumePendingRoute } from '@/infrastructure/native/push-route';
 import { isNativeApp } from '@/infrastructure/native/platform';
+import { getLastEmail, saveLastEmail } from '../lib/last-email';
 
 // O nginx do host serve o APK publicado por scripts/publish-apk.sh (quick 261117-2pd).
 const APK_URL = '/download/gestor-beauty.apk';
@@ -39,6 +40,7 @@ export function LoginPage() {
   const [login, { loading }] = useLoginMutation();
   const { applyAuthPayload } = useAuth();
   const showApkDownload = !isNativeApp();
+  const [lastEmail] = useState(getLastEmail);
 
   const {
     register,
@@ -52,12 +54,14 @@ export function LoginPage() {
     // precisar clicar fora (quick 261107-kpj). O erro de e-mail só aparece depois de sair do
     // campo, para não acusar "inválido" enquanto a pessoa ainda digita.
     mode: 'onChange',
+    defaultValues: { email: lastEmail, password: '' },
   });
   const emailError = touchedFields.email || isSubmitted ? errors.email : undefined;
 
   useEffect(() => {
     document.title = t('login.pageTitle');
-    emailRef.current?.focus();
+    (lastEmail ? passwordRef : emailRef).current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t]);
 
   // Copia para o formulário o que estiver no DOM e o React Hook Form não viu (autopreenchimento).
@@ -130,6 +134,7 @@ export function LoginPage() {
       }
       const ok = applyAuthPayload(payload);
       if (ok) {
+        saveLastEmail(values.email);
         // Senha temporária vem antes de tudo: sem trocar, nada de sistema.
         if (payload.session?.mustChangePassword) {
           navigate('/trocar-senha', { replace: true });
