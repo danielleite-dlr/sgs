@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 Phase: 7 (app-android-gestor-beauty-com-capacitor) — EXECUTING
 Plan: 13 of 13 concluídos (07-13 aprovado em 17/11 com teste parcial)
 Status: Aguardando conta Play para o teste interno
-Last activity: 2026-11-17 - Completed quick task 261117-mtn: teste de noiva + dia da noiva como 1 atendimento no relatório de comissões
+Last activity: 2026-11-17 - Completed quick task 261117-m39: renovar sessão pelo refresh token e lembrar último e-mail no login
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -263,6 +263,7 @@ Recent decisions affecting current work:
 | 261117-j1w | Comissão do teste de noiva incluso no contrato: o fechamento do teste registra 0 (settledAtEvent) e a comissão inteira sai no evento; teste avulso segue normal | 2026-11-17 | e4c6be7 | [261117-j1w-comissao-do-teste-de-noiva-so-no-evento](./quick/261117-j1w-comissao-do-teste-de-noiva-so-no-evento/) |
 | 261117-klg | Relatório de comissões por profissional: clicar na profissional lista atendimentos (data, cliente, serviço, comissão), gerar PDF e enviar por WhatsApp | 2026-11-17 | d2b9dcd | [261117-klg-relatorio-de-comissoes-por-profissional](./quick/261117-klg-relatorio-de-comissoes-por-profissional/) |
 | 261117-mtn | Relatório de comissões: teste de noiva incluso conta junto com o dia da noiva (1 atendimento); par estornado não conta | 2026-11-17 | 0023932 | [261117-mtn-teste-de-noiva-e-evento-como-um-atendimento](./quick/261117-mtn-teste-de-noiva-e-evento-como-um-atendimento/) |
+| 261117-m39 | App não pede mais login a cada abertura: renova a sessão pelo refresh token (single-flight, sem rede mantém a sessão) e a tela de login lembra o último e-mail | 2026-11-17 | 43d14b8 | [261117-m39-app-pede-login-toda-vez-renovar-sessao-p](./quick/261117-m39-app-pede-login-toda-vez-renovar-sessao-p/) |
 
 ## Session Continuity
 
