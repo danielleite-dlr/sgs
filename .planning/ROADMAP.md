@@ -18,6 +18,7 @@ Construir um SaaS multi-tenant completo para salões de beleza, partindo da fund
 - [x] **Phase 5: Uso no dia a dia** - Rodada de usabilidade das telas principais e previsão financeira de 30 dias (completed 2026-11-06)
 - [x] **Phase 6: Novo layout Gestor Beauty** - O sistema inteiro com a cara do Stitch "Gestor Beauty", só visual (completed 2026-11-16)
 - [ ] **Phase 7: App Android Gestor Beauty com Capacitor** - App Android com avisos push, publicado na Play
+- [ ] **Phase 8: App iPhone Gestor Beauty instalável** - Instalação pela tela de início do iPhone, sem loja, com notificações Web Push
 
 ## Phase Details
 
@@ -351,6 +352,16 @@ Plans:
 - [x] 07-11-gate-deploy-staging-PLAN.md — gate completo, backup, deploy no staging e CI verde com APK debug
 - [x] 07-12-firebase-keystore-secrets-PLAN.md — Firebase, conta Play, keystore com backup e secrets (ações humanas)
 - [x] 07-13-device-verification-play-PLAN.md — teste no aparelho e teste interno da Play Console
+
+### Phase 8: App iPhone Gestor Beauty instalável com notificações
+
+**Goal:** A equipe do salão instala o Gestor Beauty no iPhone sem App Store e sem conta Apple, como app web instalável (Safari → Compartilhar → Adicionar à Tela de Início), e recebe as mesmas notificações do Android (novo agendamento, cancelamento, lote de noivas) por Web Push. Escopo: botão "Instalar no iPhone" na tela de login (só em iPhone/iPad fora do modo instalado) com passo a passo; manifest com nome "Gestor Beauty", ícone GB roxo, apple-touch-icon e tela cheia (standalone); service worker com `push` e `notificationclick` abrindo a agenda no dia (mesma rota segura do Android); botão "Ativar notificações" dentro do app instalado (o iOS exige gesto da usuária; iOS 16.4+); backend com segundo canal Web Push (VAPID) ao lado do FCM, reaproveitando `device_tokens` (provider `webpush`, platform `ios`), destinatários, textos e fila; remoção de inscrição inválida (404/410); logout desinscreve; chaves VAPID no `.env.staging`; nginx sem cache para `sw.js` e manifest. Fora do escopo: App Store/TestFlight, modo offline do sistema. Decisão da usuária em 17/11/2026 (caminho 1 de 4, com notificações).
+**Requirements**: TBD
+**Depends on:** Phase 7
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 8 to break down)
 
 ---
 

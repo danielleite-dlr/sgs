@@ -217,6 +217,7 @@ Recent decisions affecting current work:
 - Phase 04.1 inserted after Phase 4: Layout e regras do contrato (modelo Studio JS) — PDF em 2 páginas com tabelas, cláusulas I–VIII e assinaturas; Noiva/Debutante; dados completos da contratante; extras/desconto; à vista ou sinal parcelado com alertas; dados do studio configuráveis (URGENT)
 - Phase 6 added (2026-11-06): Novo layout Gestor Beauty — aplicar o design do Stitch "Gestor Beauty" ao SGS; só o visual, lote base primeiro e depois uma tela por lote
 - Phase 04.2 inserted after Phase 04.1 (2026-11-14): Cronograma da noiva e das acompanhantes (modelo Studio JS) — cronograma por pacote a partir da saída; agenda das madrinhas respeita o making of/fotos (URGENT)
+- Phase 8 added (2026-11-17): App iPhone Gestor Beauty instalável — app web instalável no iPhone (sem App Store/conta Apple) com notificações Web Push (VAPID) ao lado do FCM; botão "Instalar no iPhone" no login
 - Phase 7 added (2026-11-14): App Android "Gestor Beauty" com Capacitor para a equipe do salão — mesmas telas do SGS, só Android, Play Store, push FCM neutro; sem PWA; depois iOS e app Expo como atualização do mesmo appId
 
 ### Quick Tasks Completed
