@@ -17,6 +17,7 @@ import {
 } from '../api/bridal.api';
 import { useBridalPermission } from '../bridal-permissions';
 import { AiSuggestionPanel } from '../components/AiSuggestionPanel';
+import { BridalTrialCard } from '../components/BridalTrialCard';
 import { BridalGroupFormDialog } from '../components/BridalGroupFormDialog';
 import { BridalMembersCard } from '../components/BridalMembersCard';
 import { BridalTimelineTab } from '../components/BridalTimelineTab';
@@ -230,7 +231,10 @@ export function BridalGroupDetailPage() {
           <BridalMembersCard group={group} />
         </TabsContent>
         <TabsContent value="schedule">
-          <AiSuggestionPanel group={group} onScheduled={() => void refetch()} />
+          <div className="space-y-lg">
+            <BridalTrialCard group={group} onScheduled={() => void refetch()} />
+            <AiSuggestionPanel group={group} onScheduled={() => void refetch()} />
+          </div>
         </TabsContent>
         <TabsContent value="timeline">
           <BridalTimelineTab group={group} onChanged={() => void refetch()} />

@@ -67,7 +67,10 @@ export function AiSuggestionPanel({ group, onScheduled }: Props) {
     scheduleBridalEvent: BridalGroupPayload;
   }>(ScheduleBridalEventMutation);
 
-  const appointments = (group.appointments ?? []).filter((a) => a.status !== 'cancelled');
+  // O teste tem card próprio; contá-lo aqui esconderia os botões do agendamento do evento.
+  const appointments = (group.appointments ?? []).filter(
+    (a) => a.status !== 'cancelled' && a.purpose !== 'trial',
+  );
   const hasSchedule = appointments.length > 0;
 
   const serviceIds = useMemo(

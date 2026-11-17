@@ -33,13 +33,22 @@ export function AppointmentCard({
   const starts = formatHM(appointment.start);
   const ends = formatHM(appointment.end);
   const displayName = toDisplayName(appointment.clientName);
-  const ariaLabel = `${appointment.clientName}, ${appointment.service}, ${starts} a ${ends}${draggable ? ". Pressione espaço para mover" : ""}`;
+  const ariaLabel = `${appointment.clientName}, ${appointment.service}, ${starts} a ${ends}${appointment.isTrial ? ", teste" : ""}${draggable ? ". Pressione espaço para mover" : ""}`;
   const merged: CSSProperties = {
     ...style,
     ...(transform
       ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
       : null),
   };
+
+  const nameEl = (
+    <p
+      data-testid={`appointment-name-${appointment.id}`}
+      className="min-w-0 truncate font-serif text-[15px] font-semibold leading-5 text-neutral-800"
+    >
+      {displayName}
+    </p>
+  );
 
   return (
     <Tooltip>
@@ -72,12 +81,19 @@ export function AppointmentCard({
           )}
           style={merged}
         >
-          <p
-            data-testid={`appointment-name-${appointment.id}`}
-            className="truncate font-serif text-[15px] font-semibold leading-5 text-neutral-800"
-          >
-            {displayName}
-          </p>
+          {appointment.isTrial ? (
+            <div className="flex min-w-0 items-center gap-1">
+              {nameEl}
+              <span
+                data-testid={`appointment-trial-${appointment.id}`}
+                className="shrink-0 rounded-md border border-primary-200 bg-primary-50 px-1 text-[11px] font-semibold leading-4 text-primary-700"
+              >
+                Teste
+              </span>
+            </div>
+          ) : (
+            nameEl
+          )}
           <p className="truncate text-[12px] leading-4 text-neutral-600">
             {appointment.service}
           </p>
@@ -108,6 +124,9 @@ export function AppointmentCard({
         <div className="text-sm space-y-xs">
           <p className="font-semibold">{displayName}</p>
           <p className="text-white/80">{appointment.service}</p>
+          {appointment.isTrial && (
+            <p className="text-white/80 text-xs">Teste do evento</p>
+          )}
           <p className="text-white/80 text-xs tabular-nums">
             {starts} — {appointment.durationMinutes} min
           </p>

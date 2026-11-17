@@ -115,6 +115,12 @@ export function WeekGrid({
                       </span>
                       {" · "}
                       {a.service.name}
+                      {a.purpose === "trial" && (
+                        <>
+                          {" · "}
+                          <span className="font-semibold text-primary-700">Teste</span>
+                        </>
+                      )}
                     </button>
                   );
                 })

@@ -22,6 +22,7 @@ export const APPOINTMENT_FIELDS = gql`
     bridalGroupName
     bridalEventKind
     bridalRole
+    purpose
     client {
       id
       fullName
@@ -141,6 +142,8 @@ export interface AppointmentData {
   bridalEventKind?: string | null;
   /** bride | companion */
   bridalRole?: string | null;
+  /** event | trial (teste); null no atendimento social. */
+  purpose?: string | null;
   client: { id: string; fullName: string };
   professional: { id: string; displayName: string };
   service: {

@@ -32,6 +32,8 @@ export interface ScheduleAppointment {
   end: Date;
   durationMinutes: number;
   status: string;
+  // Teste do evento (purpose "trial") ganha o selo "Teste" na agenda.
+  isTrial: boolean;
 }
 
 // Todas aceitam texto branco com contraste AA (fase 6, D-11/D-12).
@@ -65,6 +67,7 @@ export function appointmentToSchedule(
     end,
     durationMinutes: Math.round((end.getTime() - start.getTime()) / 60000),
     status: appointment.status,
+    isTrial: appointment.purpose === "trial",
   };
 }
 

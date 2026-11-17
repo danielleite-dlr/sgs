@@ -49,6 +49,9 @@ export const FALLBACK_REASON_LABEL: Record<string, string> = {
 };
 
 export const ERROR_MESSAGES: Record<string, string> = {
+  TRIAL_NOT_BEFORE_EVENT: 'O teste deve ser antes do dia do evento.',
+  TRIAL_ALREADY_SCHEDULED:
+    'O teste deste serviço já está agendado. Para mudar, mova o atendimento na agenda.',
   SLOT_TAKEN: 'Um dos horários escolhidos já está ocupado para o profissional.',
   TIME_BLOCKED: 'Um dos horários escolhidos cai em um bloqueio da agenda.',
   COVERAGE_LOCKED:

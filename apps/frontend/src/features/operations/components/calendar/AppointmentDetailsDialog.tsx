@@ -71,6 +71,9 @@ export function AppointmentDetailsDialog({
   const rows: [string, string][] = [
     ['Cliente', appointment.client.fullName],
     ['Serviço', appointment.service.name],
+    ...(appointment.purpose === 'trial'
+      ? ([['Finalidade', 'Teste do evento']] as [string, string][])
+      : []),
     ['Profissional', appointment.professional.displayName],
     [
       'Data e hora',

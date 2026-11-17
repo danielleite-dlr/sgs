@@ -21,6 +21,8 @@ export interface ScheduleRow {
   start: string;
   /** 'HH:MM' */
   end: string;
+  /** Finalidade da linha; ausente = evento (o payload não leva o campo). */
+  purpose?: 'event' | 'trial';
 }
 
 function parts(d: Date, tz: string): Record<string, string> {
@@ -89,6 +91,7 @@ export function rowsToScheduleItems(
     professionalId: r.professionalId,
     startsAt: fromZoned(r.date, r.start, tz).toISOString(),
     endsAt: fromZoned(r.date, r.end, tz).toISOString(),
+    ...(r.purpose ? { purpose: r.purpose } : {}),
   }));
 }
 

@@ -37,6 +37,7 @@ const appt = (over: Partial<ScheduleAppointment> = {}): ScheduleAppointment => (
   end: new Date(2026, 10, 12, 10, 30),
   durationMinutes: 90,
   status: 'confirmed',
+  isTrial: false,
   ...over,
 });
 
