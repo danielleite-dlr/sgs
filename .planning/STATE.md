@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 Phase: 7 (app-android-gestor-beauty-com-capacitor) — EXECUTING
 Plan: 13 of 13 concluídos (07-13 aprovado em 17/11 com teste parcial)
 Status: Aguardando conta Play para o teste interno
-Last activity: 2026-11-17 - Completed quick task 261117-gn8: teste de noiva na agenda e no grupo
+Last activity: 2026-11-17 - Completed quick task 261117-i6j: vincular teste de noiva ao contrato na comanda
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -259,6 +259,7 @@ Recent decisions affecting current work:
 | 261113-k6j | Comanda: botão "Voltar para a agenda" que reabre a agenda no mesmo dia e visão de onde veio (?agenda=&visao= na comanda, ?data=&visao= na agenda) | 2026-11-13 | 370deb7 | [261113-k6j-comanda-voltar-para-a-agenda](./quick/261113-k6j-comanda-voltar-para-a-agenda/) |
 | 261117-2pd | Botão "Baixar app Android" na tela de login (só na web) apontando para /download/gestor-beauty.apk; scripts/publish-apk.sh publica o último APK assinado do CI e roda no fim do deploy do staging | 2026-11-17 | 181bf76 | [261117-2pd-botao-baixar-apk-no-login](./quick/261117-2pd-botao-baixar-apk-no-login/) |
 | 261117-gn8 | Teste de noiva: Appointment.purpose na API, selo "Teste" na agenda (dia, semana e detalhe) e card "Teste" no grupo com "Agendar teste" (só serviços de teste, data antes do evento, profissional do evento pré-preenchida); recusa teste duplicado; aba Agenda do grupo não confunde mais teste com evento agendado | 2026-11-17 | a90b37b | [261117-gn8-teste-de-noiva-na-agenda-e-no-grupo](./quick/261117-gn8-teste-de-noiva-na-agenda-e-no-grupo/) |
+| 261117-i6j | Comanda do teste de noiva: botão "Vincular ao contrato CT-…" quando o contrato do grupo não tem item de teste (item a R$ 0,00, pago no evento, comissão cheia; fecha sem pagamento) | 2026-11-17 | c63622e | [261117-i6j-vincular-teste-de-noiva-ao-contrato-na-c](./quick/261117-i6j-vincular-teste-de-noiva-ao-contrato-na-c/) |
 
 ## Session Continuity
 
