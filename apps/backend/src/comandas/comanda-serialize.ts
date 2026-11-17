@@ -1,13 +1,14 @@
 import type { TenantPrismaClient } from '../database/types';
 import { fromCents, toCents } from '../common/money';
 import { computeComandaTotals, coveredCents } from './comanda-math';
+import { linkableTrialContract, TRIAL_LINK_APPOINTMENT_SELECT } from './comanda-trial-link';
 
 const COMANDA_INCLUDE = {
   client: true,
   items: {
     include: {
       contract: { select: { code: true } },
-      appointment: { select: { purpose: true } },
+      appointment: { select: TRIAL_LINK_APPOINTMENT_SELECT },
       professional: {
         include: {
           user: { select: { email: true } },
@@ -32,6 +33,12 @@ function findRows(tx: TenantPrismaClient, ids: string[]) {
     include: COMANDA_INCLUDE,
     orderBy: { openedAt: 'desc' },
   });
+}
+
+/** Contrato a que o item do teste de noiva pode ser ligado (261117-i6j). */
+function linkableFields(i: ComandaRow['items'][number]) {
+  const c = linkableTrialContract(i);
+  return { linkableContractId: c?.id ?? null, linkableContractCode: c?.code ?? null };
 }
 
 const money = (v: unknown) => fromCents(toCents(v as string | number));
@@ -139,6 +146,7 @@ export function serializeComanda(
       // o valor é cobrado na comanda do evento. Heurística só de exibição.
       includedInEvent:
         !!i.contractId && i.appointment?.purpose === 'trial' && toCents(i.total) === 0,
+      ...linkableFields(i),
       professional: memberView(i.professional),
       name: i.nameSnapshot,
       quantity: i.quantity,

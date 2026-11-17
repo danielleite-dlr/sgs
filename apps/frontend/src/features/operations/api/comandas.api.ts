@@ -47,6 +47,8 @@ export const COMANDA_FIELDS = gql`
       contractId
       contractCode
       includedInEvent
+      linkableContractId
+      linkableContractCode
     }
     payments {
       id
@@ -110,6 +112,22 @@ export const AddComandaItemMutation = gql`
   ${COMANDA_FIELDS}
   mutation AddComandaItem($input: AddComandaItemInput!) {
     addComandaItem(input: $input) {
+      comanda {
+        ...ComandaFields
+      }
+      errors {
+        code
+        message
+        field
+      }
+    }
+  }
+`;
+
+export const LinkComandaItemToContractMutation = gql`
+  ${COMANDA_FIELDS}
+  mutation LinkComandaItemToContract($comandaId: UUID!, $itemId: UUID!) {
+    linkComandaItemToContract(comandaId: $comandaId, itemId: $itemId) {
       comanda {
         ...ComandaFields
       }
@@ -239,6 +257,9 @@ export interface ComandaItemData {
   contractCode?: string | null;
   /** Teste incluso no pacote: cobrado na comanda do evento (261108-n2o). */
   includedInEvent?: boolean;
+  /** Teste de noiva sem cobertura que pode ser ligado ao contrato do grupo (261117-i6j). */
+  linkableContractId?: string | null;
+  linkableContractCode?: string | null;
 }
 
 export interface ComandaPaymentData {
@@ -313,6 +334,9 @@ export interface OpenWalkInComandaResult {
 }
 export interface AddComandaItemResult {
   addComandaItem: ComandaPayloadResult;
+}
+export interface LinkComandaItemToContractResult {
+  linkComandaItemToContract: ComandaPayloadResult;
 }
 export interface RemoveComandaItemResult {
   removeComandaItem: ComandaPayloadResult;

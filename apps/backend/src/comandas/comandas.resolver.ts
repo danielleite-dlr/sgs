@@ -75,6 +75,16 @@ export class ComandasResolver {
     return this.comandas.removeItem(tenant.organizationId, comandaId, itemId);
   }
 
+  @Mutation('linkComandaItemToContract')
+  @RequirePermission(PERMISSIONS.COMANDA_WRITE)
+  linkItemToContract(
+    @CurrentTenant() tenant: TenantContext,
+    @Args('comandaId') comandaId: string,
+    @Args('itemId') itemId: string,
+  ) {
+    return this.comandas.linkItemToContract(tenant.organizationId, comandaId, itemId);
+  }
+
   @Mutation('addComandaPackage')
   @RequirePermission(PERMISSIONS.COMANDA_WRITE)
   addPackage(

@@ -12,6 +12,7 @@ import {
   Scissors,
   Receipt,
   X,
+  Link2,
   Package,
   AlertTriangle,
   Percent,
@@ -30,12 +31,14 @@ import {
   AddComandaPaymentMutation,
   CloseComandaMutation,
   ComandaQuery,
+  LinkComandaItemToContractMutation,
   RemoveComandaItemMutation,
   RemoveComandaPaymentMutation,
   type AddComandaPaymentResult,
   type CloseComandaResult,
   type ComandaPayloadResult,
   type ComandaQueryResult,
+  type LinkComandaItemToContractResult,
   type RemoveComandaItemResult,
   type RemoveComandaPaymentResult,
 } from '../api/comandas.api';
@@ -80,6 +83,9 @@ export function ComandaPage() {
   const [reopenOpen, setReopenOpen] = useState(false);
 
   const [removeItem, removeItemState] = useMutation<RemoveComandaItemResult>(RemoveComandaItemMutation);
+  const [linkItem, linkItemState] = useMutation<LinkComandaItemToContractResult>(
+    LinkComandaItemToContractMutation,
+  );
   const [addPayment, addPaymentState] = useMutation<AddComandaPaymentResult>(AddComandaPaymentMutation);
   const [removePayment, removePaymentState] = useMutation<RemoveComandaPaymentResult>(
     RemoveComandaPaymentMutation,
@@ -87,6 +93,7 @@ export function ComandaPage() {
   const [closeComanda, closeState] = useMutation<CloseComandaResult>(CloseComandaMutation);
   const busy =
     removeItemState.loading ||
+    linkItemState.loading ||
     addPaymentState.loading ||
     removePaymentState.loading ||
     closeState.loading;
@@ -138,6 +145,18 @@ export function ComandaPage() {
       if (err) toast.error(err);
     } catch {
       toast.error('Não foi possível remover o item.');
+    }
+  }
+
+  async function handleLinkItem(itemId: string) {
+    if (!comanda) return;
+    try {
+      const res = await linkItem({ variables: { comandaId: comanda.id, itemId } });
+      const err = firstError(res.data?.linkComandaItemToContract);
+      if (err) toast.error(err);
+      else toast.success('Teste vinculado ao contrato.');
+    } catch {
+      toast.error('Não foi possível vincular ao contrato.');
     }
   }
 
@@ -332,6 +351,24 @@ export function ComandaPage() {
                           >
                             Teste incluso no pacote — pago no evento
                           </Badge>
+                        )}
+                        {isOpen && canWrite && item.linkableContractId && (
+                          <div className="mt-xs">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              data-testid={`item-link-contract-${item.id}`}
+                              disabled={busy}
+                              onClick={() => void handleLinkItem(item.id)}
+                            >
+                              <Link2 className="h-4 w-4" aria-hidden="true" />
+                              Vincular ao contrato {item.linkableContractCode}
+                            </Button>
+                            <p className="mt-xs text-[12px] leading-4 text-neutral-500">
+                              Teste incluso no contrato: fica R$ 0,00 aqui e é pago no evento.
+                            </p>
+                          </div>
                         )}
                       </div>
                       <div

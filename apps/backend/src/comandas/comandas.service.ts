@@ -17,6 +17,7 @@ import {
   recalcComandaTotal,
 } from './comanda-items';
 import { openComandaTx } from './comanda-open';
+import { linkableTrialContract, TRIAL_LINK_APPOINTMENT_SELECT } from './comanda-trial-link';
 import { closeComandaTx, reopenComandaTx } from './comanda-close';
 import { StockError } from '../catalog/products/stock';
 import { CreditError } from '../financial/client-credit';
@@ -252,6 +253,50 @@ export class ComandasService {
         );
       }
       await tx.comandaItem.delete({ where: { id: itemId } });
+      await recalcComandaTotal(tx, comandaId);
+    });
+  }
+
+  /**
+   * Liga o item do teste de noiva ao contrato vivo do grupo (261117-i6j): R$ 0,00 na comanda,
+   * pago no evento; list_unit_price fica (comissão pelo preço cheio, D-08). Idempotente.
+   */
+  linkItemToContract(
+    orgId: string,
+    comandaId: string,
+    itemId: string,
+  ): Promise<ComandaPayload> {
+    return this.mutate(orgId, comandaId, async (tx) => {
+      const item = await tx.comandaItem.findFirst({
+        where: { id: itemId, comandaId },
+        select: {
+          id: true,
+          kind: true,
+          contractId: true,
+          appointmentId: true,
+          appointment: { select: TRIAL_LINK_APPOINTMENT_SELECT },
+        },
+      });
+      if (!item) {
+        throw new ComandaError('ITEM_NOT_FOUND', 'Item não encontrado.', 'itemId');
+      }
+      if (item.contractId && item.appointment?.purpose === 'trial') return;
+      const contract = linkableTrialContract(item);
+      if (!contract || !item.appointmentId) {
+        throw new ComandaError(
+          'ITEM_NOT_LINKABLE',
+          'Só o teste de noiva de um grupo com contrato pode ser vinculado ao contrato.',
+          'itemId',
+        );
+      }
+      await tx.comandaItem.update({
+        where: { id: item.id },
+        data: { contractId: contract.id, unitPrice: '0', total: '0' },
+      });
+      await tx.appointment.update({
+        where: { id: item.appointmentId },
+        data: { contractId: contract.id },
+      });
       await recalcComandaTotal(tx, comandaId);
     });
   }

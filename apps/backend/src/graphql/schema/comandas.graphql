@@ -8,6 +8,8 @@ extend type Mutation {
   openWalkInComanda(input: OpenWalkInComandaInput!): ComandaPayload!
   addComandaItem(input: AddComandaItemInput!): ComandaPayload!
   removeComandaItem(comandaId: UUID!, itemId: UUID!): ComandaPayload!
+  "Liga o item do teste de noiva ao contrato vivo do grupo: R$ 0,00, pago no evento (261117-i6j)."
+  linkComandaItemToContract(comandaId: UUID!, itemId: UUID!): ComandaPayload!
   addComandaPackage(input: AddComandaPackageInput!): ComandaPayload!
   addComandaPayment(input: AddComandaPaymentInput!): ComandaPayload!
   removeComandaPayment(comandaId: UUID!, paymentId: UUID!): ComandaPayload!
@@ -81,6 +83,9 @@ type ComandaItem {
   contractCode: String
   "Teste incluso no pacote: cobrado na comanda do evento (item do teste coberto a R$ 0,00)."
   includedInEvent: Boolean!
+  "Teste de noiva sem cobertura que pode ser ligado ao contrato vivo do grupo (261117-i6j)."
+  linkableContractId: UUID
+  linkableContractCode: String
   professional: Member!
   name: String!
   quantity: Int!
