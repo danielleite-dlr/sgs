@@ -23,12 +23,12 @@ Onde guardar:
 - Uma segunda cópia offline (pen drive ou disco guardado em local seguro).
 - Nunca no git e nunca deixar no servidor depois do backup.
 
-### Impressões digitais (preencher no 07-12)
+### Impressões digitais (geradas em 2026-11-17, validade até 2054-04-04)
 
 | Algoritmo | Valor |
 | --------- | ----- |
-| SHA-1     | (preencher) |
-| SHA-256   | (preencher) |
+| SHA-1     | `E8:DF:5F:D5:C2:5D:0E:BE:96:BE:E4:96:DB:42:13:92:AD:5D:E0:18` |
+| SHA-256   | `91:75:A8:ED:AD:B8:41:4F:9E:62:A7:35:FB:AF:3C:62:7D:37:84:95:EE:66:48:04:E3:C6:B5:2F:11:01:F2:EC` |
 
 Obter com `keytool -list -v -keystore gestor-beauty-upload.jks -alias gestorbeauty`.
 
