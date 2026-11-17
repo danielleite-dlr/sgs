@@ -50,6 +50,7 @@ export function CommissionPrintReport({ report }: { report: CommissionReportInpu
                 <td className="py-1 pr-2">
                   {r.itemName}
                   {r.kind === 'reversal' && ' (estorno)'}
+                  {r.note && <span className="block text-xs text-neutral-600">{r.note}</span>}
                 </td>
                 <td className="py-1 pr-2 text-right">{brl(r.chargedAmount)}</td>
                 <td className="py-1 text-right">{brl(r.calculatedAmount)}</td>

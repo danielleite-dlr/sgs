@@ -67,6 +67,10 @@ export const CommissionRecordsQuery = gql`
       calculatedAt
       clientName
       serviceDate
+      bridalTrialIncluded
+      trialDate
+      reversesRecordId
+      contractId
     }
   }
 `;
@@ -191,6 +195,14 @@ export interface CommissionRecordEntry {
   clientName: string | null;
   /** Início do atendimento (ou abertura da comanda). */
   serviceDate: string;
+  /** Teste de noiva incluso no contrato: faz parte do atendimento do dia da noiva. */
+  bridalTrialIncluded: boolean;
+  /** No item do dia da noiva com contrato: data do teste. */
+  trialDate: string | null;
+  reversesRecordId: string | null;
+  contractId: string | null;
+  /** Só no cliente: observação da linha montada por `reportRows`. */
+  note?: string | null;
 }
 
 export interface CommissionRecordsResult {

@@ -80,6 +80,14 @@ type CommissionRecordEntry {
   clientName: String
   "Início do atendimento (agendamento do item) ou abertura da comanda"
   serviceDate: DateTime!
+  "Teste de noiva incluso no contrato: faz parte do atendimento do dia da noiva (261117-mtn)"
+  bridalTrialIncluded: Boolean!
+  "No item do dia da noiva com contrato: data do teste da mesma cliente no grupo"
+  trialDate: DateTime
+  "Estorno: registro estornado"
+  reversesRecordId: UUID
+  "Contrato do item da comanda"
+  contractId: UUID
 }
 
 type CommissionMemberTotal {
@@ -87,6 +95,7 @@ type CommissionMemberTotal {
   memberName: String!
   memberPhone: String
   total: String!
+  "Atendimentos: accruals não estornados; teste de noiva incluso conta junto com o dia da noiva"
   records: Int!
   noRuleCount: Int!
 }

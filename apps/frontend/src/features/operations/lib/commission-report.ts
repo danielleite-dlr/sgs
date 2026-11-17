@@ -8,6 +8,8 @@ export interface CommissionReportRow {
   chargedAmount: string;
   calculatedAmount: string;
   kind: string;
+  /** Observação da linha (ex.: teste de noiva incluso). */
+  note?: string | null;
 }
 
 export interface CommissionReportInput {
@@ -37,6 +39,74 @@ export function periodLabel(from: string, to: string): string {
   return last <= from ? ymd(from) : `${ymd(from)} a ${ymd(last)}`;
 }
 
+/** Campos que `reportRows` usa para juntar as linhas. */
+export interface CommissionRowLike extends CommissionReportRow {
+  id: string;
+  reversed: boolean;
+  reversesRecordId?: string | null;
+  bridalTrialIncluded?: boolean;
+  trialDate?: string | null;
+  contractId?: string | null;
+}
+
+const cents = (v: string) => Math.round(Number(v) * 100);
+const fromCents = (c: number) => (c / 100).toFixed(2);
+
+/**
+ * Linhas do relatório (261117-mtn), uma por atendimento:
+ * - lançamento estornado + estorno, os dois no período, somem (a comanda foi reaberta e fechada de novo);
+ * - o teste de noiva incluso no contrato faz parte do dia da noiva: soma na linha do evento do mesmo
+ *   contrato ("teste em dd/mm incluso"); sem o evento no período, fica uma linha avisando que a comissão
+ *   sai no dia da noiva.
+ * A soma das comissões não muda.
+ */
+export function reportRows<T extends CommissionRowLike>(rows: T[]): T[] {
+  const ids = new Set(rows.map((r) => r.id));
+  const reversedHere = new Set(
+    rows
+      .filter((r) => r.kind === 'reversal' && r.reversesRecordId && ids.has(r.reversesRecordId))
+      .map((r) => r.reversesRecordId as string),
+  );
+  const live = rows.filter(
+    (r) =>
+      !reversedHere.has(r.id) &&
+      !(r.kind === 'reversal' && r.reversesRecordId && reversedHere.has(r.reversesRecordId)),
+  );
+
+  const isTrial = (r: T) => r.kind === 'accrual' && !!r.bridalTrialIncluded && !!r.contractId;
+  const events = new Map<string, T>();
+  for (const r of live) {
+    if (r.kind === 'accrual' && !r.bridalTrialIncluded && r.contractId && !events.has(r.contractId)) {
+      events.set(r.contractId, r);
+    }
+  }
+  const merged = new Map<string, T>();
+  const out: T[] = [];
+  for (const r of live) {
+    if (isTrial(r) && events.has(r.contractId as string)) {
+      const ev = events.get(r.contractId as string) as T;
+      const cur = merged.get(ev.id) ?? ev;
+      merged.set(ev.id, {
+        ...cur,
+        calculatedAmount: fromCents(cents(cur.calculatedAmount) + cents(r.calculatedAmount)),
+        chargedAmount: fromCents(cents(cur.chargedAmount) + cents(r.chargedAmount)),
+        trialDate: cur.trialDate ?? r.serviceDate,
+      });
+      continue;
+    }
+    out.push(
+      isTrial(r) ? { ...r, note: 'Teste da noiva (incluso; comissão no dia da noiva)' } : r,
+    );
+  }
+  return out.map((r) => {
+    const m = merged.get(r.id) ?? r;
+    if (m.trialDate && !m.bridalTrialIncluded && m.contractId && m.kind === 'accrual') {
+      return { ...m, note: `Dia da noiva + teste em ${formatDay(m.trialDate)} (1 atendimento)` };
+    }
+    return m;
+  });
+}
+
 export function buildWhatsAppText(r: CommissionReportInput): string {
   const lines: string[] = [];
   lines.push(`*Relatório de comissões${r.salonName ? ` — ${r.salonName}` : ''}*`);
@@ -48,9 +118,10 @@ export function buildWhatsAppText(r: CommissionReportInput): string {
   } else {
     for (const row of r.rows) {
       const estorno = row.kind === 'reversal' ? ' (estorno)' : '';
+      const note = row.note ? ` (${row.note})` : '';
       lines.push(
         `${formatDay(row.serviceDate)} · ${row.clientName ?? 'Cliente não informado'} · ` +
-          `${row.itemName}${estorno} · ${brl(row.calculatedAmount)}`,
+          `${row.itemName}${estorno}${note} · ${brl(row.calculatedAmount)}`,
       );
     }
   }

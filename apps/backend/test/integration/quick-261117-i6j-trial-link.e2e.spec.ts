@@ -55,22 +55,30 @@ describe('Quick 261117-i6j - vincular teste de noiva ao contrato na comanda', ()
 
   /** Comanda do teste (purpose) da noiva com item de serviço R$100 ligado ao atendimento. */
   async function trialComanda(
-    opts: { purpose?: string; covered?: boolean; contractStatus?: string } = {},
+    opts: {
+      purpose?: string;
+      covered?: boolean;
+      contractStatus?: string;
+      /** Reaproveita grupo e contrato de outra chamada (evento do mesmo contrato do teste). */
+      same?: { g: Awaited<ReturnType<typeof insertBridalGroupRow>>; contractId: string; code: string };
+    } = {},
   ) {
-    const g = await insertBridalGroupRow(w);
+    const g = opts.same?.g ?? (await insertBridalGroupRow(w));
     if (opts.covered === false) {
       await adminPrisma.bridalGroupMember.update({
         where: { id: g.brideMemberId },
         data: { coveredByContract: false },
       });
     }
-    const { contractId, code } = await insertContractRow(w, {
-      groupId: g.groupId,
-      brideClientId: g.brideClientId,
-      totalAmount: '2200.00',
-      depositAmount: '300.00',
-      status: opts.contractStatus ?? 'draft',
-    });
+    const { contractId, code } =
+      opts.same ??
+      (await insertContractRow(w, {
+        groupId: g.groupId,
+        brideClientId: g.brideClientId,
+        totalAmount: '2200.00',
+        depositAmount: '300.00',
+        status: opts.contractStatus ?? 'draft',
+      }));
     const open = (await att()(OPEN, { i: { clientId: g.brideClientId } })).data
       .openWalkInComanda as Pl;
     const comandaId = open.comanda!.id;
@@ -95,7 +103,7 @@ describe('Quick 261117-i6j - vincular teste de noiva ao contrato na comanda', ()
       },
     });
     await adminPrisma.comandaItem.update({ where: { id: itemId }, data: { appointmentId: appt.id } });
-    return { comandaId, itemId, contractId, code, appointmentId: appt.id };
+    return { comandaId, itemId, contractId, code, appointmentId: appt.id, g };
   }
 
   it('oferece o contrato, liga a R$ 0,00 e fecha sem pagamento; comissão do teste fica 0 (sai no evento)', async () => {
@@ -169,6 +177,59 @@ describe('Quick 261117-i6j - vincular teste de noiva ao contrato na comanda', ()
       );
     expect(await amount(trial.comandaId)).toBe(0);
     expect(await amount(event.comandaId)).toBe(400);
+  });
+
+  it('relatório: teste incluso + dia da noiva contam 1 atendimento (261117-mtn)', async () => {
+    await adminPrisma.commissionRule.create({
+      data: { organizationId: w.orgId, scopeType: 'service', serviceId: w.serviceId, kind: 'fixed', value: '400' },
+    });
+    const trial = await trialComanda();
+    await att()(LINK, { c: trial.comandaId, i: trial.itemId });
+    expect(((await att()(CLOSE, { id: trial.comandaId })).data.closeComanda as Pl).errors).toEqual([]);
+    // reabrir e fechar de novo (estorno no meio) não pode virar atendimento a mais
+    const REOPEN = `mutation($i: ReopenComandaInput!) { reopenComanda(input: $i) { ${PAYLOAD} } }`;
+    const re = (await gqlAs(w, w.tokens.admin)(REOPEN, { i: { id: trial.comandaId, reason: 'teste' } })).data
+      .reopenComanda as Pl;
+    expect(re.errors).toEqual([]);
+    expect(((await att()(CLOSE, { id: trial.comandaId })).data.closeComanda as Pl).errors).toEqual([]);
+
+    const event = await trialComanda({ purpose: 'event', same: trial });
+    await adminPrisma.comandaItem.update({
+      where: { id: event.itemId },
+      data: { contractId: trial.contractId },
+    });
+    expect(((await att()(CLOSE, { id: event.comandaId })).data.closeComanda as Pl).errors).toEqual([]);
+
+    const today = new Date();
+    const ymd = (d: Date) => d.toISOString().slice(0, 10);
+    const from = ymd(new Date(today.getTime() - 2 * 86400000));
+    const to = ymd(new Date(today.getTime() + 2 * 86400000));
+    const q = `query($f: String!, $t: String!, $m: UUID) {
+      commissionRecords(from: $f, to: $t, memberId: $m) {
+        id kind comandaId bridalTrialIncluded trialDate reversesRecordId contractId calculatedAmount }
+      commissionTotals(from: $f, to: $t, memberId: $m) { records total }
+    }`;
+    const d = (await gqlAs(w, w.tokens.admin)(q, { f: from, t: to, m: w.members.proA })).data;
+    expect(d.commissionTotals).toEqual([{ records: 1, total: '400.00' }]);
+    type R = {
+      id: string;
+      kind: string;
+      comandaId: string;
+      bridalTrialIncluded: boolean;
+      trialDate: string | null;
+      reversesRecordId: string | null;
+      contractId: string | null;
+    };
+    const recs = d.commissionRecords as R[];
+    const trialRecs = recs.filter((r) => r.comandaId === trial.comandaId);
+    expect(trialRecs.length).toBeGreaterThanOrEqual(3);
+    expect(trialRecs.every((r) => r.bridalTrialIncluded && r.contractId === trial.contractId)).toBe(true);
+    const rev = trialRecs.find((r) => r.kind === 'reversal')!;
+    expect(trialRecs.map((r) => r.id)).toContain(rev.reversesRecordId);
+    const ev = recs.find((r) => r.comandaId === event.comandaId)!;
+    expect(ev).toMatchObject({ bridalTrialIncluded: false, contractId: trial.contractId });
+    const trialAppt = await adminPrisma.appointment.findUniqueOrThrow({ where: { id: trial.appointmentId } });
+    expect(new Date(ev.trialDate!).getTime()).toBe(trialAppt.startsAt.getTime());
   });
 
   it('teste avulso (pago, sem contrato) segue com comissão normal', async () => {

@@ -241,6 +241,10 @@ export class FinancialService {
           calculated_at: Date;
           client_name: string | null;
           service_date: Date;
+          bridal_trial_included: boolean;
+          trial_date: Date | null;
+          reverses_record_id: string | null;
+          contract_id: string | null;
         }[]
       >`
         SELECT cr.id, cr.comanda_id, c.code AS comanda_code, cr.comanda_item_id,
@@ -254,7 +258,17 @@ export class FinancialService {
                         WHERE r.reverses_record_id = cr.id) AS reversed,
                cr.rule_snapshot::text AS rule_snapshot, cr.calculated_at,
                cl.full_name AS client_name,
-               COALESCE(ap.starts_at, c.opened_at) AS service_date
+               COALESCE(ap.starts_at, c.opened_at) AS service_date,
+               (ap.purpose = 'trial' AND ci.contract_id IS NOT NULL) IS TRUE AS bridal_trial_included,
+               CASE WHEN ap.purpose IS DISTINCT FROM 'trial' AND ci.contract_id IS NOT NULL
+                         AND ap.bridal_group_id IS NOT NULL THEN
+                 (SELECT MIN(t.starts_at) FROM appointments t
+                   WHERE t.bridal_group_id = ap.bridal_group_id
+                     AND t.client_id = ap.client_id
+                     AND t.purpose = 'trial'
+                     AND t.status <> 'cancelled')
+               END AS trial_date,
+               cr.reverses_record_id, ci.contract_id
           FROM commission_records cr
           JOIN comandas c ON c.id = cr.comanda_id
           JOIN members mb ON mb.id = cr.member_id
@@ -286,6 +300,10 @@ export class FinancialService {
         calculatedAt: r.calculated_at,
         clientName: r.client_name,
         serviceDate: r.service_date,
+        bridalTrialIncluded: r.bridal_trial_included,
+        trialDate: r.trial_date,
+        reversesRecordId: r.reverses_record_id,
+        contractId: r.contract_id,
       }));
     });
   }
@@ -310,13 +328,20 @@ export class FinancialService {
       >`
         SELECT cr.member_id, mb.display_name AS member_name, mb.phone AS member_phone,
                SUM(cr.calculated_amount)::text AS total,
-               (COUNT(*) FILTER (WHERE cr.kind = 'accrual'))::int AS records,
+               (COUNT(*) FILTER (
+                  WHERE cr.kind = 'accrual'
+                    AND NOT EXISTS (SELECT 1 FROM commission_records r
+                                     WHERE r.reverses_record_id = cr.id)
+                    AND NOT ((ap.purpose = 'trial' AND ci.contract_id IS NOT NULL) IS TRUE)
+                ))::int AS records,
                (COUNT(*) FILTER (
                   WHERE cr.no_rule AND cr.kind = 'accrual'
                     AND NOT EXISTS (SELECT 1 FROM commission_records r
                                      WHERE r.reverses_record_id = cr.id)))::int AS no_rule
           FROM commission_records cr
           JOIN members mb ON mb.id = cr.member_id
+          LEFT JOIN comanda_items ci ON ci.id = cr.comanda_item_id
+          LEFT JOIN appointments ap ON ap.id = ci.appointment_id
          WHERE cr.calculated_at >= (${a.from}::date)::timestamp AT TIME ZONE ${tz}
            AND cr.calculated_at <  (${a.to}::date)::timestamp AT TIME ZONE ${tz}
            AND (${memberId}::uuid IS NULL OR cr.member_id = ${memberId}::uuid)

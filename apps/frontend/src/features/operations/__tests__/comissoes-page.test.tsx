@@ -33,13 +33,44 @@ const record = (id: string, day: string, client: string, item: string, amount: s
   calculatedAt: `${day}T18:00:00.000Z`,
   clientName: client,
   serviceDate: `${day}T13:00:00.000Z`,
+  bridalTrialIncluded: false,
+  trialDate: null as string | null,
+  reversesRecordId: null as string | null,
+  contractId: null as string | null,
 });
 const anaRecords = [
   record('2', '2026-11-12', 'Carla', 'Penteado', '25.00'),
   record('1', '2026-11-10', 'Beatriz', 'Maquiagem', '15.00'),
 ];
 
-function renderPage(extra: MockedResponse[] = []) {
+/** Ewelly: teste incluso fechado duas vezes (estorno no meio) + dia da noiva. */
+const bridalRecords = [
+  {
+    ...record('t1', '2026-11-17', 'Ewelly', 'Maquiagem noiva', '400.00'),
+    reversed: true,
+    bridalTrialIncluded: true,
+    contractId: 'ct',
+  },
+  {
+    ...record('t1r', '2026-11-17', 'Ewelly', 'Maquiagem noiva', '-400.00'),
+    kind: 'reversal',
+    reversesRecordId: 't1',
+    bridalTrialIncluded: true,
+    contractId: 'ct',
+  },
+  {
+    ...record('t2', '2026-11-17', 'Ewelly', 'Maquiagem noiva', '0.00'),
+    bridalTrialIncluded: true,
+    contractId: 'ct',
+  },
+  {
+    ...record('ev', '2026-11-20', 'Ewelly', 'Maquiagem noiva', '400.00'),
+    contractId: 'ct',
+    trialDate: '2026-11-17T13:00:00.000Z',
+  },
+];
+
+function renderPage(extra: MockedResponse[] = [], recs: unknown[] = anaRecords) {
   const mocks: MockedResponse[] = [
     {
       request: { query: CommissionTotalsQuery },
@@ -55,7 +86,7 @@ function renderPage(extra: MockedResponse[] = []) {
     {
       request: { query: CommissionRecordsQuery },
       variableMatcher: () => true,
-      result: { data: { commissionRecords: anaRecords } },
+      result: { data: { commissionRecords: recs } },
       maxUsageCount: 5,
     },
     ...extra,
@@ -139,5 +170,27 @@ describe('ComissoesCalculadasPage', () => {
     window.dispatchEvent(new Event('afterprint'));
     expect(document.body.classList.contains('printing-commission-report')).toBe(false);
     print.mockRestore();
+  });
+
+  it('teste de noiva incluso + dia da noiva = 1 linha; estornos só na auditoria', async () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    renderPage([], bridalRecords);
+    fireEvent.click(await screen.findByTestId('commission-total-a'));
+    const table = await screen.findByTestId('commission-records');
+    await within(table).findAllByText('Ewelly');
+    let rows = within(table).getAllByRole('row').slice(1);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toHaveTextContent('20/11/2026');
+    expect(rows[0]).toHaveTextContent('Dia da noiva + teste em 17/11/2026 (1 atendimento)');
+    expect(rows[0]).toHaveTextContent('R$ 400,00');
+
+    fireEvent.click(screen.getByTestId('commission-whatsapp'));
+    const text = decodeURIComponent(String(open.mock.calls[0][0]).split('text=')[1]);
+    expect(text.match(/Ewelly/g)).toHaveLength(1);
+    open.mockRestore();
+
+    fireEvent.click(screen.getByTestId('commission-show-reversals'));
+    rows = within(table).getAllByRole('row').slice(1);
+    expect(rows).toHaveLength(4);
   });
 });

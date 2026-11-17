@@ -42,6 +42,7 @@ import {
   buildWhatsAppText,
   formatDay,
   periodLabel,
+  reportRows,
   whatsAppUrl,
   type CommissionReportInput,
 } from '../lib/commission-report';
@@ -75,6 +76,7 @@ export function ComissoesCalculadasPage() {
 
   const [period, setPeriod] = useState<PeriodValue>(() => defaultPeriod());
   const [memberId, setMemberId] = useState<string>(ALL);
+  const [showReversals, setShowReversals] = useState(false);
 
   const members = useQuery<MembersQueryResult>(MembersQuery, { skip: !canRead || isProfessional });
   const professionals = (members.data?.members ?? []).filter((m) => m.isProfessional);
@@ -103,6 +105,9 @@ export function ComissoesCalculadasPage() {
       ),
     [records.data],
   );
+  /** Uma linha por atendimento: sem pares estornados e com o teste de noiva no dia da noiva. */
+  const attendanceRows = useMemo(() => reportRows(recordRows), [recordRows]);
+  const tableRows = showReversals ? recordRows : attendanceRows;
 
   const selectedTotal = isProfessional
     ? totalRows[0]
@@ -120,7 +125,7 @@ export function ComissoesCalculadasPage() {
           memberName: selectedName,
           from: period.from,
           to: period.to,
-          rows: recordRows,
+          rows: attendanceRows,
           total: selectedTotal?.total ?? '0.00',
         }
       : null;
@@ -336,6 +341,18 @@ export function ComissoesCalculadasPage() {
                   )}
                 </div>
               </div>
+              <label className="flex items-center gap-xs text-xs text-neutral-600">
+                <input
+                  type="checkbox"
+                  checked={showReversals}
+                  onChange={(e) => setShowReversals(e.target.checked)}
+                  data-testid="commission-show-reversals"
+                />
+                {t(
+                  'operations.commissions.showReversals',
+                  'Mostrar estornos e lançamentos separados (auditoria)',
+                )}
+              </label>
               <div className="border border-neutral-200 rounded-lg overflow-x-auto bg-white">
                 <Table data-testid="commission-records">
                   <TableHeader>
@@ -350,14 +367,14 @@ export function ComissoesCalculadasPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {recordRows.length === 0 ? (
+                    {tableRows.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className="text-center py-xl text-neutral-500 text-sm">
                           {t('operations.commissions.empty', 'Nenhuma comissão no período.')}
                         </TableCell>
                       </TableRow>
                     ) : (
-                      recordRows.map((r) => {
+                      tableRows.map((r) => {
                         const isReversal = r.kind === 'reversal';
                         const rule = r.noRule
                           ? '—'
@@ -387,6 +404,14 @@ export function ComissoesCalculadasPage() {
                                 <Badge variant="outline" className="ml-xs">
                                   {t('operations.commissions.reversed', 'Estornada')}
                                 </Badge>
+                              )}
+                              {r.note && (
+                                <span
+                                  className="block text-xs text-neutral-500"
+                                  data-testid="commission-record-note"
+                                >
+                                  {r.note}
+                                </span>
                               )}
                               {r.noRule && !isReversal && (
                                 <Badge variant="warning" className="ml-xs">
