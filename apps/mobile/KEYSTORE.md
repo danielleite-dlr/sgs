@@ -62,6 +62,14 @@ Usar o mesmo appId `br.com.gestorbeauty.app`, a mesma chave de upload (importada
 - Release: `gh workflow run android.yml --ref master` ou criar a tag `android-v0.1.0`. Sem os secrets, o job falha com a mensagem "Faltam os secrets do Android".
 - Baixar: `gh run download <id> -n gestor-beauty-release`.
 
+## Publicar o APK no staging
+
+1. Gerar o release: `gh workflow run android.yml --ref master` ou criar uma tag `android-v*`.
+2. Na VPS, rodar `./scripts/publish-apk.sh`. Ele baixa o artifact `gestor-beauty-release` mais recente que ainda não expirou (o GitHub guarda 30 dias) para `/root/gestor-beauty-apks/release-AAAAMMDD-run<id>/` e publica em `/var/www/gb-apk/gestor-beauty.apk`. Rodar de novo não baixa nem troca nada se for o mesmo APK.
+3. Para publicar um APK local: `./scripts/publish-apk.sh --file <apk>`.
+4. O `scripts/deploy-staging.sh` já faz isso no fim. Se falhar, só avisa e o deploy segue. `SKIP_APK=1` pula o passo.
+5. O link é `https://sgs.jessicaseixasmakeup.com.br/download/gestor-beauty.apk`. Ele também aparece no botão "Baixar app Android" da tela de login, que não aparece dentro do app nativo.
+
 ## Teste antes da conta Play (D-10)
 
 Instalar o APK por `adb install -r app-release.apk` em um aparelho com depuração USB ligada. Desde 30/09/2026 o Brasil exige verificação de desenvolvedor para instalar por sideload em aparelhos certificados. Se o Android bloquear a instalação pelo arquivo, usar o `adb install` ou o fluxo avançado das opções do desenvolvedor.
