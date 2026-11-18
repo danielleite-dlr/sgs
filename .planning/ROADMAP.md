@@ -19,6 +19,7 @@ Construir um SaaS multi-tenant completo para salões de beleza, partindo da fund
 - [x] **Phase 6: Novo layout Gestor Beauty** - O sistema inteiro com a cara do Stitch "Gestor Beauty", só visual (completed 2026-11-16)
 - [ ] **Phase 7: App Android Gestor Beauty com Capacitor** - App Android com avisos push, publicado na Play
 - [ ] **Phase 8: App iPhone Gestor Beauty instalável** - Instalação pela tela de início do iPhone, sem loja, com notificações Web Push
+- [ ] **Phase 9: Comercial - CRM do Atimos no SGS** - Menu Comercial com painel, leads, pipeline, lembretes e relatórios; ganho vira cliente e contrato
 
 ## Phase Details
 
@@ -369,6 +370,16 @@ Plans:
 - [x] 08-06-frontend-ui-instalar-ativar-PLAN.md — botão Instalar no iPhone com passo a passo e faixa Ativar notificações
 - [x] 08-07-gate-vapid-deploy-staging-PLAN.md — gate completo, VAPID no .env.staging, backup, deploy, headers no staging e CI verde
 - [ ] 08-08-iphone-verification-PLAN.md — verificação no iPhone real da usuária
+
+### Phase 9: Comercial - CRM do Atimos no SGS
+
+**Goal:** Trazer para o SGS o acompanhamento comercial do Atimos CRM (`/root/atmo-crm/atmos-crm`): novo menu **Comercial** com os submenus Painel comercial, Leads, Pipeline, Lembretes e Relatórios (relatórios só admin/gerente). Leads com histórico de interações; pipeline em kanban com etapas configuráveis por salão (padrão Novo, Contato, Proposta, Negociação, Ganho, Perdido), ganho/perdido com motivo e pacote/desconto; lembretes de follow-up. Negócio ganho vira cliente do SGS e abre contrato rascunho com o pacote escolhido. Vem antes do app nativo iOS (decisão da usuária em 2026-11-18, depois de achar fraca a usabilidade do app instalado pela Tela de Início).
+**Requirements**: TBD
+**Depends on:** Phase 8
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 9 to break down)
 
 ---
 
