@@ -72,17 +72,17 @@
 ### Comercial (Fase 9)
 
 - [x] **COM-01**: Atendente cadastra lead (manual) separado das clientes, com aviso "já é cliente: Fulana" por telefone/e-mail e vínculo à cliente existente _(09 D-01, D-02)_
-- [ ] **COM-02**: Gerente/atendente importa leads de planilha Excel/CSV com prévia de linhas válidas, inválidas e duplicadas, mantendo o responsável do Atimos (coluna Responsável casada com membro ADMIN/MANAGER/ATTENDANT por e-mail ou nome; sem casamento vai para a fila sem responsável com aviso) _(09 D-04, D-20, D-22)_
+- [x] **COM-02**: Gerente/atendente importa leads de planilha Excel/CSV com prévia de linhas válidas, inválidas e duplicadas, mantendo o responsável do Atimos (coluna Responsável casada com membro ADMIN/MANAGER/ATTENDANT por e-mail ou nome; sem casamento vai para a fila sem responsável com aviso) _(09 D-04, D-20, D-22)_
 - [x] **COM-03**: Salão recebe leads pelo formulário público do site (token por organização, consentimento LGPD, anti-spam, limite de requisições, embutível em iframe) _(09 D-04, D-20)_
-- [ ] **COM-04**: Lead tem vários negócios independentes, só Noiva ou Debutante, com data do evento, pacote do catálogo, desconto, valor final, responsável, origem, local e observações _(09 D-03, D-05, D-06, D-18)_
-- [ ] **COM-05**: Etapas do funil configuráveis por salão (nome, cor, ordem, prazo em dias), padrão Novo/Contato/Proposta/Negociação/Ganho/Perdido, com Ganho/Perdido de sistema e alerta de SLA por etapa _(09 D-07, D-15)_
+- [x] **COM-04**: Lead tem vários negócios independentes, só Noiva ou Debutante, com data do evento, pacote do catálogo, desconto, valor final, responsável, origem, local e observações _(09 D-03, D-05, D-06, D-18)_
+- [x] **COM-05**: Etapas do funil configuráveis por salão (nome, cor, ordem, prazo em dias), padrão Novo/Contato/Proposta/Negociação/Ganho/Perdido, com Ganho/Perdido de sistema e alerta de SLA por etapa _(09 D-07, D-15)_
 - [x] **COM-06**: Pipeline em kanban: arrastar no computador, rolagem lateral e menu "Mover para…" no celular _(09, critério do Claude)_
 - [x] **COM-07**: Histórico único de interações por lead (6 tipos) com "próximo contato em" que cria o lembrete _(09 D-17)_
 - [x] **COM-08**: Negócio ganho cria ou reaproveita a cliente, cria grupo + contrato rascunho com o pacote pelo fluxo de contratos existente, lança o sinal opcional no contrato e no caixa e abre o contrato _(09 D-08, D-09, D-18, D-21)_
 - [x] **COM-09**: Negócio perdido exige motivo de lista fixa + texto livre; só ADMIN/MANAGER reabrem _(09 D-10, D-19)_
 - [x] **COM-10**: Comercial só para ADMIN/MANAGER/ATTENDANT; ATTENDANT vê só os negócios dela e os leads deles; sem responsável só ADMIN/MANAGER; configurar etapas, excluir, trocar responsável e relatórios só ADMIN/MANAGER; tudo imposto na API _(09 D-11 a D-14, D-20)_
 - [x] **COM-11**: Lembretes com lista (vencidos, hoje, próximos), destaque no Painel e push Android/iPhone na hora marcada para o responsável e gerentes/admins _(09 D-16)_
-- [ ] **COM-12**: Painel comercial (números do dia, follow-ups pendentes, últimas interações, funil, conversão, valor em negociação) e Relatórios só ADMIN/MANAGER com filtros, motivos de perda, origem e exportação Excel/PDF _(09 D-13)_
+- [x] **COM-12**: Painel comercial (números do dia, follow-ups pendentes, últimas interações, funil, conversão, valor em negociação) e Relatórios só ADMIN/MANAGER com filtros, motivos de perda, origem e exportação Excel/PDF _(09 D-13)_
 
 ### Qualidade / Observabilidade
 
@@ -172,17 +172,17 @@
 | BRI-01 | Phase 04.2 | Complete |
 | BRI-02 | Phase 04.2 | Complete |
 | COM-01 | Phase 9 | Complete |
-| COM-02 | Phase 9 | Pending |
+| COM-02 | Phase 9 | Complete |
 | COM-03 | Phase 9 | Complete |
-| COM-04 | Phase 9 | Pending |
-| COM-05 | Phase 9 | Pending |
+| COM-04 | Phase 9 | Complete |
+| COM-05 | Phase 9 | Complete |
 | COM-06 | Phase 9 | Complete |
 | COM-07 | Phase 9 | Complete |
 | COM-08 | Phase 9 | Complete |
 | COM-09 | Phase 9 | Complete |
 | COM-10 | Phase 9 | Complete |
 | COM-11 | Phase 9 | Complete |
-| COM-12 | Phase 9 | Pending |
+| COM-12 | Phase 9 | Complete |
 | QA-01 | Backlog | Deferred |
 | QA-02 | Backlog | Deferred |
 | QA-03 | Backlog | Deferred |
