@@ -1,0 +1,36 @@
+input CommercialWinClientInput {
+  fullName: String
+  phone: String
+  email: String
+  cpf: String
+  rg: String
+  birthDate: String
+  postalCode: String
+  address: String
+  phone2: String
+  phone3: String
+}
+
+input CommercialDepositLineInput {
+  method: String!
+  amount: String!
+}
+
+input WinCommercialDealInput {
+  dealId: UUID!
+  client: CommercialWinClientInput
+  beneficiaryName: String
+  depositPaid: Boolean!
+  depositLines: [CommercialDepositLineInput!]
+  discountDescription: String
+}
+
+type CommercialWinPayload {
+  contractId: UUID
+  clientId: UUID
+  errors: [UserError!]!
+}
+
+extend type Mutation {
+  winCommercialDeal(input: WinCommercialDealInput!): CommercialWinPayload!
+}
