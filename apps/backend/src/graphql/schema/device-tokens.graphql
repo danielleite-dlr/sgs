@@ -1,11 +1,16 @@
-"Token de push do aparelho (FCM). Neutro: serve ao app Capacitor e ao futuro app Expo."
+"Token de push do aparelho (FCM) ou inscrição Web Push (iPhone)."
 input RegisterDeviceTokenInput {
+  "FCM: token; webpush: endpoint da inscrição"
   token: String!
   "android | ios"
   platform: String!
-  "fcm (padrão) | expo (reservado)"
+  "fcm (padrão) | expo (reservado) | webpush"
   provider: String
   appVersion: String
+  "Web Push: chave p256dh da inscrição (base64url)"
+  p256dh: String
+  "Web Push: chave auth da inscrição (base64url)"
+  auth: String
 }
 
 extend type Mutation {
