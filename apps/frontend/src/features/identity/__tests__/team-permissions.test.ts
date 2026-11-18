@@ -15,11 +15,11 @@ describe('canInviteMembers', () => {
 });
 
 describe('canManageMembers', () => {
-  it('somente ADMIN pode gerenciar', () => {
-    expect(canManageMembers('ADMIN')).toBe(true);
+  it.each(['ADMIN', 'MANAGER'])('%s pode gerenciar', (role) => {
+    expect(canManageMembers(role)).toBe(true);
   });
 
-  it.each(['MANAGER', 'ATTENDANT', 'PROFESSIONAL', 'UNKNOWN', 'admin', '', null, undefined])(
+  it.each(['ATTENDANT', 'PROFESSIONAL', 'UNKNOWN', 'admin', '', null, undefined])(
     '%s nao pode gerenciar',
     (role) => {
       expect(canManageMembers(role)).toBe(false);

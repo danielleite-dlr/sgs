@@ -126,7 +126,7 @@ export interface CreateMemberDialogProps {
 export function CreateMemberDialog({
   open,
   onClose,
-  callerRoleName,
+  callerRoleName: _callerRoleName,
 }: CreateMemberDialogProps) {
   const { t } = useTranslation();
   const [created, setCreated] = useState<CreatedState | null>(null);
@@ -148,10 +148,8 @@ export function CreateMemberDialog({
   const roleName = form.watch('roleName');
   const alsoProfessional = form.watch('alsoProfessional');
   const isProfessional = roleName === 'PROFESSIONAL' || alsoProfessional;
-  const roleOptions =
-    callerRoleName === 'MANAGER'
-      ? ROLE_OPTIONS.filter((r) => r !== 'ADMIN')
-      : ROLE_OPTIONS;
+  // Quick 261118-gpm: Gerente gerencia a equipe como o Admin, todos os papéis disponíveis.
+  const roleOptions = ROLE_OPTIONS;
 
   const [createMember, { loading }] = useMutation<CreateMemberResult>(
     CreateMemberMutation,

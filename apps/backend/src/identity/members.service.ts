@@ -415,13 +415,6 @@ export class MembersService {
     if (!pix) {
       return createErr('INVALID_PIX_KEY', 'Chave Pix inválida.', 'pixKey');
     }
-    if (callerRoleName === 'MANAGER' && input.roleName === ADMIN_ROLE_NAME) {
-      return createErr(
-        'FORBIDDEN_ROLE',
-        'Gerentes não podem cadastrar administradores.',
-        'roleName',
-      );
-    }
 
     const isProfessional =
       input.roleName === PROFESSIONAL_ROLE_NAME ? true : !!input.isProfessional;
