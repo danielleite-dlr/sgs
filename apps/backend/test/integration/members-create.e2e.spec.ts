@@ -281,7 +281,7 @@ describe('Member direct registration (EQUIPE-01..03)', () => {
       expect(res.data!.createMember.errors[0]).toMatchObject({ code, field });
     });
 
-    it('MANAGER cria ATTENDANT, mas não ADMIN', async () => {
+    it('MANAGER cria ATTENDANT e também ADMIN (igual ao Admin)', async () => {
       const ok = await gql(managerAToken, CREATE, {
         i: baseInput('att', { roleName: 'ATTENDANT', categoryIds: undefined }),
       });
@@ -289,13 +289,43 @@ describe('Member direct registration (EQUIPE-01..03)', () => {
       expect(ok.data!.createMember.member.isProfessional).toBe(false);
       expect(ok.data!.createMember.member.categories).toEqual([]);
 
-      const bad = await gql(managerAToken, CREATE, {
+      const adm = await gql(managerAToken, CREATE, {
         i: baseInput('adm', { roleName: 'ADMIN', isProfessional: false }),
       });
-      expect(bad.data!.createMember.errors[0]).toMatchObject({
-        code: 'FORBIDDEN_ROLE',
-        field: 'roleName',
+      expect(adm.data!.createMember.errors).toEqual([]);
+      expect(adm.data!.createMember.member.roleName).toBe('ADMIN');
+    });
+
+    it('MANAGER edita, troca papel para ADMIN, redefine senha, desativa, reativa; PROFESSIONAL não', async () => {
+      const created = await gql(adminAToken, CREATE, {
+        i: baseInput('mgr-gerencia', { roleName: 'ATTENDANT', categoryIds: undefined }),
       });
+      const id = created.data!.createMember.member.id as string;
+
+      const upd = await gql(
+        managerAToken,
+        `mutation($i: UpdateMemberInput!) { updateMember(input: $i) { member { id roleName } errors { code } } }`,
+        { i: { id, roleName: 'ADMIN' } },
+      );
+      expect(upd.errors).toBeUndefined();
+      expect(upd.data!.updateMember.errors).toEqual([]);
+      expect(upd.data!.updateMember.member.roleName).toBe('ADMIN');
+
+      const reset = await gql(managerAToken, RESET, { i: { id } });
+      expect(reset.errors).toBeUndefined();
+      expect(reset.data!.resetMemberPassword.errors).toEqual([]);
+
+      const DEACT = `mutation($id: UUID!) { deactivateMember(id: $id) { member { status } errors { code } } }`;
+      const REACT = `mutation($id: UUID!) { reactivateMember(id: $id) { member { status } errors { code } } }`;
+      const off = await gql(managerAToken, DEACT, { id });
+      expect(off.data!.deactivateMember.errors).toEqual([]);
+      expect(off.data!.deactivateMember.member.status).toBe('inactive');
+      const on = await gql(managerAToken, REACT, { id });
+      expect(on.data!.reactivateMember.errors).toEqual([]);
+      expect(on.data!.reactivateMember.member.status).toBe('active');
+
+      const denied = await gql(proAToken, DEACT, { id });
+      expect(denied.errors?.length).toBeGreaterThan(0);
     });
 
     it('PROFESSIONAL não pode cadastrar', async () => {
@@ -404,8 +434,11 @@ describe('Member direct registration (EQUIPE-01..03)', () => {
       expect(res.data!.resetMemberPassword.errors[0].code).toBe('CANNOT_RESET_SELF');
     });
 
-    it('MANAGER não tem permissão', async () => {
-      const res = await gql(managerAToken, RESET, { i: { id: soloMemberId } });
+    it('MANAGER redefine; PROFESSIONAL não tem permissão', async () => {
+      const ok = await gql(managerAToken, RESET, { i: { id: soloMemberId } });
+      expect(ok.errors).toBeUndefined();
+      expect(ok.data!.resetMemberPassword.errors).toEqual([]);
+      const res = await gql(proAToken, RESET, { i: { id: soloMemberId } });
       expect(res.errors?.length).toBeGreaterThan(0);
     });
 

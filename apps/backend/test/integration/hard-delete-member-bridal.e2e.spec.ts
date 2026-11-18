@@ -319,11 +319,16 @@ describe('Exclusão definitiva de profissional e de grupo de noiva', () => {
     expect(await count(`members WHERE id = '${foreign.memberId}'`)).toBe(1);
   });
 
-  it('só ADMIN exclui profissional', async () => {
+  it('ADMIN e GERENTE excluem profissional; atendente não', async () => {
     const p = await mkPro('perm');
-    const res = await gqlAs(w, w.tokens.manager)(DELETE_MEMBER, { id: p.memberId });
+    const res = await gqlAs(w, w.tokens.attendant)(DELETE_MEMBER, { id: p.memberId });
     expect(res.errors?.length).toBeGreaterThan(0);
     expect(await count(`members WHERE id = '${p.memberId}'`)).toBe(1);
+
+    const out = (await gqlAs(w, w.tokens.manager)(DELETE_MEMBER, { id: p.memberId })).data
+      .deleteMemberPermanently;
+    expect(out.errors).toEqual([]);
+    expect(await count(`members WHERE id = '${p.memberId}'`)).toBe(0);
   });
 
   /** Grupo com contrato completo + pagamento + caixa + agendamento + comanda do agendamento. */
