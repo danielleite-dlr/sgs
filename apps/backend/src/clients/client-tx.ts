@@ -122,13 +122,9 @@ export async function updateClientTx(
   if (!existing) throw new ClientFieldError('NOT_FOUND', 'Cliente não encontrado.');
 
   const phone = input.phone !== undefined ? input.phone : existing.phone;
-  const email =
-    input.email !== undefined ? (input.email?.toLowerCase() ?? null) : existing.email;
+  const email = input.email !== undefined ? (input.email?.toLowerCase() ?? null) : existing.email;
   if (!phone && !email) {
-    throw new ClientFieldError(
-      'CONTACT_REQUIRED',
-      'Informe pelo menos um telefone ou e-mail.',
-    );
+    throw new ClientFieldError('CONTACT_REQUIRED', 'Informe pelo menos um telefone ou e-mail.');
   }
 
   return tx.client.update({
@@ -137,12 +133,7 @@ export async function updateClientTx(
       fullName: input.fullName ?? existing.fullName,
       phone,
       email,
-      cpf:
-        input.cpf !== undefined
-          ? input.cpf
-            ? normalizeCpf(input.cpf)
-            : null
-          : existing.cpf,
+      cpf: input.cpf !== undefined ? (input.cpf ? normalizeCpf(input.cpf) : null) : existing.cpf,
       birthDate:
         input.birthDate !== undefined
           ? input.birthDate
@@ -150,10 +141,7 @@ export async function updateClientTx(
             : null
           : existing.birthDate,
       address: input.address !== undefined ? input.address : existing.address,
-      rg:
-        input.rg !== undefined
-          ? (emptyToNull(input.rg)?.toUpperCase() ?? null)
-          : existing.rg,
+      rg: input.rg !== undefined ? (emptyToNull(input.rg)?.toUpperCase() ?? null) : existing.rg,
       postalCode:
         input.postalCode !== undefined ? normalizeCep(input.postalCode) : existing.postalCode,
       phone2: input.phone2 !== undefined ? emptyToNull(input.phone2) : existing.phone2,

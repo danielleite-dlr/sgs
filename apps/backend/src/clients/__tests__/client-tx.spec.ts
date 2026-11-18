@@ -8,8 +8,14 @@ import {
 const CPF_OK = '529.982.247-25';
 
 function fakeTx(existing: Record<string, unknown> | null = null) {
-  const create = jest.fn(async ({ data }: { data: unknown }) => ({ id: 'c1', ...(data as object) }));
-  const update = jest.fn(async ({ data }: { data: unknown }) => ({ id: 'c1', ...(data as object) }));
+  const create = jest.fn(async ({ data }: { data: unknown }) => ({
+    id: 'c1',
+    ...(data as object),
+  }));
+  const update = jest.fn(async ({ data }: { data: unknown }) => ({
+    id: 'c1',
+    ...(data as object),
+  }));
   const findFirst = jest.fn(async () => existing);
   return { tx: { client: { create, update, findFirst } } as never, create, update, findFirst };
 }
@@ -26,9 +32,9 @@ describe('validateClientFields', () => {
   });
 
   it('CPF inválido, RG, CEP e telefone extra inválidos', () => {
-    expect(validateClientFields({ phone: '11999999999', cpf: '111.111.111-11' }, 'create')?.code).toBe(
-      'CPF_INVALID',
-    );
+    expect(
+      validateClientFields({ phone: '11999999999', cpf: '111.111.111-11' }, 'create')?.code,
+    ).toBe('CPF_INVALID');
     expect(validateClientFields({ phone: '11999999999', rg: '!!' }, 'create')?.code).toBe(
       'RG_INVALID',
     );
