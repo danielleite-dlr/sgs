@@ -216,6 +216,8 @@ export function ProfissionaisPage() {
                   {
                     key: 'actions',
                     header: t('team.table.actions'),
+                    // fixa à direita: alcançável em 390 px sem rolar a tabela larga
+                    className: 'sticky right-0 bg-background',
                     // modal={false}: o menu fecha ao selecionar e o dialog (modal) assume o
                     // bloqueio da pagina. Com o menu modal, abrir um dialog a partir dele
                     // podia deixar body { pointer-events: none } preso.

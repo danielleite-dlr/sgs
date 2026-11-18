@@ -749,7 +749,7 @@ describe('CreateMemberDialog', () => {
     expect((screen.getByLabelText('Senha provisória') as HTMLInputElement).value).not.toBe(before);
   });
 
-  it('MANAGER does not see the ADMIN role option', async () => {
+  it('MANAGER also sees the ADMIN role option', async () => {
     render(
       <MockedProvider mocks={[categoriesMock]} addTypename={false}>
         <CreateMemberDialog open onClose={vi.fn()} callerRoleName="MANAGER" />
@@ -758,7 +758,7 @@ describe('CreateMemberDialog', () => {
 
     fireEvent.click(screen.getByRole('combobox', { name: 'Papel' }));
     expect(await screen.findByRole('option', { name: 'Gerente' })).toBeInTheDocument();
-    expect(screen.queryByRole('option', { name: 'Admin' })).toBeNull();
+    expect(screen.getByRole('option', { name: 'Admin' })).toBeInTheDocument();
   });
 
   it('PROFESSIONAL hides the also-attends checkbox and shows categories; ATTENDANT shows checkbox first', async () => {

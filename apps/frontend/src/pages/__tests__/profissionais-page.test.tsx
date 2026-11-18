@@ -103,7 +103,7 @@ describe('ProfissionaisPage', () => {
       expect(screen.queryByRole('button', { name: 'Convidar profissional' })).toBeNull();
     });
 
-    it('MANAGER ve Cadastrar profissional, mas nao as acoes de membros', async () => {
+    it('MANAGER ve Cadastrar profissional e o menu completo de acoes dos membros', async () => {
       useAuthStore.setState({ roleName: 'MANAGER' });
       renderPage();
       await screen.findByText('Ana Silva');
@@ -111,11 +111,14 @@ describe('ProfissionaisPage', () => {
       expect(
         screen.getByRole('button', { name: 'Cadastrar profissional' }),
       ).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Ações' })).toBeNull();
-      const membersTable = screen.getByText('Ana Silva').closest('table')!;
-      expect(
-        within(membersTable).queryByRole('columnheader', { name: 'Ações' }),
-      ).toBeNull();
+      const buttons = screen.getAllByRole('button', { name: 'Ações' });
+      expect(buttons).toHaveLength(2);
+      const activeRow = screen.getByText('Ana Silva').closest('tr')!;
+      openDropdown(within(activeRow).getByRole('button', { name: 'Ações' }));
+      expect(await screen.findByText('Editar')).toBeInTheDocument();
+      expect(screen.getByText('Gerar nova senha provisória')).toBeInTheDocument();
+      expect(screen.getByText('Desativar')).toBeInTheDocument();
+      expect(screen.getByTestId('member-delete-permanent')).toBeInTheDocument();
     });
 
     it.each(['ATTENDANT', 'PROFESSIONAL'])(
