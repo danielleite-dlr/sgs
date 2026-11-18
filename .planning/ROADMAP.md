@@ -382,7 +382,7 @@ Plans:
 - [x] 09-01-dados-rls-permissoes-PLAN.md — tabelas commercial_* com FORCE RLS, etapas padrão, permissões commercial.*, fixtures e phase9-rls-rbac (onda 1)
 - [x] 09-02-dominio-puro-tdd-PLAN.md — TDD de telefone, SLA por etapa, visibilidade por papel e ponto único da D-21; instala exceljs (onda 1)
 - [x] 09-03-frontend-base-menu-guard-PLAN.md — flag comercial, menu filtrado por papel, guard de rota, rotas e pontos de montagem (onda 1)
-- [ ] 09-04-backend-nucleo-etapas-leads-PLAN.md — CommercialModule + submódulos, SDL, etapas configuráveis, leads com duplicidade (onda 2)
+- [x] 09-04-backend-nucleo-etapas-leads-PLAN.md — CommercialModule + submódulos, SDL, etapas configuráveis, leads com duplicidade (onda 2)
 - [x] 09-07-push-lembrete-rotas-PLAN.md — push commercial.reminder e allowlist /comercial/lembretes nas 4 cópias (onda 2)
 - [ ] 09-05-backend-negocios-interacoes-perdido-PLAN.md — negócios, mover/atribuir, perdido/reabrir, interações com próximo contato (onda 3)
 - [ ] 09-06-backend-ganho-PLAN.md — ganho atômico: cliente + grupo + contrato rascunho + sinal no caixa (createInTx, createClientTx) (onda 3)
