@@ -38,6 +38,15 @@ import { BridalGroupDetailPage } from '@/features/bridal/pages/BridalGroupDetail
 import { ContractsPage } from '@/features/bridal/pages/ContractsPage';
 import { ContractDetailPage } from '@/features/bridal/pages/ContractDetailPage';
 import { ContractAcceptPage } from '@/features/bridal/public/ContractAcceptPage';
+import { CommercialRoute } from '@/features/commercial/components/CommercialRoute';
+import { CommercialDashboardPage } from '@/features/commercial/pages/CommercialDashboardPage';
+import { LeadsPage } from '@/features/commercial/pages/LeadsPage';
+import { LeadDetailPage } from '@/features/commercial/pages/LeadDetailPage';
+import { PipelinePage } from '@/features/commercial/pages/PipelinePage';
+import { RemindersPage } from '@/features/commercial/pages/RemindersPage';
+import { ReportsPage } from '@/features/commercial/pages/ReportsPage';
+import { CommercialSettingsPage } from '@/features/commercial/pages/CommercialSettingsPage';
+import { PublicLeadFormPage } from '@/features/commercial/public/PublicLeadFormPage';
 // Phase 5 — Communication
 import { CampaignsPlaceholder } from '@/features/communication/pages/CampaignsPlaceholder';
 // Sub-páginas financeiras
@@ -135,6 +144,16 @@ const PROTECTED_ROUTES: GatedRoute[] = [
   { path: '/contratos',             element: <ContractsPage /> },
   { path: '/contratos/:id',         element: <ContractDetailPage /> },
   { path: '/campanhas',             element: <CampaignsPlaceholder /> },
+  { path: '/comercial',             element: <CommercialRoute><CommercialDashboardPage /></CommercialRoute> },
+  { path: '/comercial/leads',       element: <CommercialRoute><LeadsPage /></CommercialRoute> },
+  { path: '/comercial/leads/:id',   element: <CommercialRoute><LeadDetailPage /></CommercialRoute> },
+  { path: '/comercial/pipeline',    element: <CommercialRoute><PipelinePage /></CommercialRoute> },
+  { path: '/comercial/lembretes',   element: <CommercialRoute><RemindersPage /></CommercialRoute> },
+  { path: '/comercial/relatorios',  element: <CommercialRoute managerOnly><ReportsPage /></CommercialRoute> },
+  {
+    path: '/comercial/configuracoes',
+    element: <CommercialRoute managerOnly><CommercialSettingsPage /></CommercialRoute>,
+  },
 ];
 
 const enabledRoutes: GatedRoute[] = PROTECTED_ROUTES.filter((r) =>
@@ -197,6 +216,10 @@ export const router = createBrowserRouter([
     path: '/aceite/:orgId/:token',
     element: <ContractAcceptPage />,
   },
+  // Formulário público do Comercial (sem login): só existe com a flag ligada.
+  ...(FEATURES.comercial
+    ? [{ path: '/contato/:orgId/:token', element: <PublicLeadFormPage /> }]
+    : []),
   {
     // Password recovery deferred to post-Phase 1 — links to this route from LoginPage
     path: '/recuperar-senha',
