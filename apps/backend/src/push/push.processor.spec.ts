@@ -109,7 +109,7 @@ describe('PushService.dispatch', () => {
     const { service } = setup({
       send: async () => ({ status: 'failed', retryable: true, reason: 'timeout' }),
     });
-    await expect(service.dispatch(CREATED)).rejects.toThrow('FCM indisponível: nova tentativa');
+    await expect(service.dispatch(CREATED)).rejects.toThrow('Push indisponível: nova tentativa');
   });
 
   it('falha parcial não lança', async () => {

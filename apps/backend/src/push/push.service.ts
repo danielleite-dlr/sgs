@@ -1,12 +1,14 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { TenantContextService } from '../database/tenant-context.service';
 import { buildPushMessage, type PushAppointmentView } from './push-messages';
 import {
   PUSH_PROVIDER,
+  WEBPUSH_PROVIDER,
   type PushJob,
   type PushMessage,
   type PushProvider,
   type PushSendResult,
+  type WebPushKeys,
 } from './push.types';
 import { resolvePushTargets } from './resolve-push-targets';
 
@@ -24,6 +26,8 @@ const MANAGER_ROLES = ['ADMIN', 'MANAGER'];
 interface SendItem {
   tokenId: string;
   token: string;
+  provider: 'fcm' | 'webpush';
+  keys?: WebPushKeys;
   message: PushMessage;
 }
 
@@ -34,10 +38,15 @@ export class PushService {
   constructor(
     private readonly tenant: TenantContextService,
     @Inject(PUSH_PROVIDER) private readonly provider: PushProvider,
+    @Optional() @Inject(WEBPUSH_PROVIDER) private readonly webPush?: PushProvider,
   ) {}
 
   async dispatch(job: PushJob): Promise<PushDispatchResult> {
-    if (!this.provider.enabled) return { sent: 0, invalid: 0, failed: 0, skipped: 'disabled' };
+    const channels = [
+      this.provider.enabled ? 'fcm' : null,
+      this.webPush?.enabled ? 'webpush' : null,
+    ].filter((c): c is 'fcm' | 'webpush' => c !== null);
+    if (channels.length === 0) return { sent: 0, invalid: 0, failed: 0, skipped: 'disabled' };
 
     let where: Record<string, unknown>;
     if (job.kind === 'bridal.cancelled') {
@@ -129,8 +138,15 @@ export class PushService {
       if (targets.length === 0) return { skipped: 'no-targets' as const };
 
       const tokens = await tx.deviceToken.findMany({
-        where: { memberId: { in: targets.map((t) => t.memberId) }, provider: 'fcm' },
-        select: { id: true, memberId: true, token: true },
+        where: { memberId: { in: targets.map((t) => t.memberId) }, provider: { in: channels } },
+        select: {
+          id: true,
+          memberId: true,
+          token: true,
+          provider: true,
+          p256dh: true,
+          auth: true,
+        },
       });
 
       const items: SendItem[] = [];
@@ -143,9 +159,20 @@ export class PushService {
           timezone,
         );
         for (const t of tokens.filter((x) => x.memberId === target.memberId)) {
-          if (seen.has(t.token)) continue;
-          seen.add(t.token);
-          items.push({ tokenId: t.id, token: t.token, message });
+          const provider = t.provider === 'webpush' ? 'webpush' : 'fcm';
+          const key = `${provider}:${t.token}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          items.push({
+            tokenId: t.id,
+            token: t.token,
+            provider,
+            keys:
+              provider === 'webpush' && t.p256dh && t.auth
+                ? { p256dh: t.p256dh, auth: t.auth }
+                : undefined,
+            message,
+          });
         }
       }
       return { items };
@@ -160,7 +187,10 @@ export class PushService {
         slice.map(async (item) => {
           let result: PushSendResult;
           try {
-            result = await this.provider.send(item.token, item.message);
+            result =
+              item.provider === 'webpush'
+                ? await this.webPush!.send(item.token, item.message, item.keys)
+                : await this.provider.send(item.token, item.message);
           } catch (e) {
             result = { status: 'failed', retryable: true, reason: (e as Error).message };
           }
@@ -174,7 +204,7 @@ export class PushService {
     let failed = 0;
     const invalidIds: string[] = [];
     let allRetryable = true;
-    let credentialLogged = false;
+    const credentialLogged = new Set<string>();
     for (const { item, result } of results) {
       if (result.status === 'sent') {
         sent++;
@@ -185,9 +215,11 @@ export class PushService {
         failed++;
         if (!result.retryable) {
           allRetryable = false;
-          if (/credencial/i.test(result.reason) && !credentialLogged) {
-            credentialLogged = true;
-            this.logger.error(`Falha de credencial FCM: ${result.reason}`);
+          if (/credencial/i.test(result.reason) && !credentialLogged.has(item.provider)) {
+            credentialLogged.add(item.provider);
+            this.logger.error(
+              `Falha de credencial ${item.provider === 'webpush' ? 'Web Push' : 'FCM'}: ${result.reason}`,
+            );
           }
         }
         this.logger.warn(`Falha no envio (…${item.token.slice(-6)}): ${result.reason}`);
@@ -200,8 +232,9 @@ export class PushService {
       );
     }
 
+    // Falha parcial (um canal enviou) não reenvia, para não duplicar aviso (mesmo limite da fase 7).
     if (results.length > 0 && sent === 0 && invalidIds.length === 0 && allRetryable) {
-      throw new Error('FCM indisponível: nova tentativa');
+      throw new Error('Push indisponível: nova tentativa');
     }
     return { sent, invalid: invalidIds.length, failed };
   }

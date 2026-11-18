@@ -10,7 +10,8 @@ import { createPushProvider } from './fcm-push.provider';
 import { PushEventsService } from './push-events.service';
 import { PushProcessor } from './push.processor';
 import { PushService } from './push.service';
-import { PUSH_PROVIDER, PUSH_QUEUE } from './push.types';
+import { createWebPushProvider } from './web-push.provider';
+import { PUSH_PROVIDER, PUSH_QUEUE, WEBPUSH_PROVIDER } from './push.types';
 
 // Worker lido de process.env na carga do módulo, igual aos alertas de contrato;
 // as suítes de integração definem 'false'.
@@ -35,6 +36,17 @@ const workerProviders: Provider[] =
           provider.enabled
             ? 'Push FCM habilitado'
             : 'Push desabilitado (sem FCM_SERVICE_ACCOUNT_JSON)',
+        );
+        return provider;
+      },
+    },
+    {
+      provide: WEBPUSH_PROVIDER,
+      inject: [AppConfigService],
+      useFactory: (config: AppConfigService) => {
+        const provider = createWebPushProvider(config.vapid);
+        new Logger('PushModule').log(
+          provider.enabled ? 'Web Push habilitado' : 'Web Push desabilitado (sem VAPID_*)',
         );
         return provider;
       },

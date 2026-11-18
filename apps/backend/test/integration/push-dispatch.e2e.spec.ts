@@ -98,3 +98,107 @@ describe('Fase 7 - dispatch do push (Postgres real, RLS real, provider falso)', 
     expect(sent.map((s) => s.token)).toContain('tok-p7-proa');
   });
 });
+
+describe('Fase 8 - dispatch com Web Push (Postgres real, RLS real, providers falsos)', () => {
+  let w: Phase3World;
+  let service: PushService;
+  let appointmentId: string;
+  const KEYS = { p256dh: 'B' + 'a'.repeat(86), auth: 'c'.repeat(22) };
+  const fcmSent: string[] = [];
+  const webSent: { endpoint: string; keys?: { p256dh: string; auth: string } }[] = [];
+
+  const fakeFcm: PushProvider = {
+    enabled: true,
+    send: jest.fn(async (token: string): Promise<PushSendResult> => {
+      fcmSent.push(token);
+      return { status: 'sent' };
+    }),
+  };
+  const fakeWebPush: PushProvider = {
+    enabled: true,
+    send: jest.fn(
+      async (
+        endpoint: string,
+        _message: PushMessage,
+        keys?: { p256dh: string; auth: string },
+      ): Promise<PushSendResult> => {
+        webSent.push({ endpoint, keys });
+        return endpoint.endsWith('p8-dead')
+          ? { status: 'invalid_token', reason: 'WebPush 410' }
+          : { status: 'sent' };
+      },
+    ),
+  };
+
+  beforeAll(async () => {
+    w = await createPhase3World('p8push');
+    service = new PushService(w.app.get(TenantContextService), fakeFcm, fakeWebPush);
+
+    await adminPrisma.deviceToken.create({
+      data: {
+        organizationId: w.orgId,
+        memberId: w.members.proA,
+        platform: 'android',
+        provider: 'fcm',
+        token: 'tok-p8-fcm',
+      },
+    });
+    for (const path of ['p8-ok', 'p8-dead']) {
+      await adminPrisma.deviceToken.create({
+        data: {
+          organizationId: w.orgId,
+          memberId: w.members.proA,
+          platform: 'ios',
+          provider: 'webpush',
+          token: `https://web.push.apple.com/${path}`,
+          p256dh: KEYS.p256dh,
+          auth: KEYS.auth,
+        },
+      });
+    }
+
+    const r = await gqlAs(w, w.tokens.attendant)(CREATE, {
+      i: {
+        professionalId: w.members.proA,
+        clientId: w.clientId,
+        serviceId: w.serviceId,
+        startsAt: '2030-05-03T13:00:00Z',
+        endsAt: '2030-05-03T14:00:00Z',
+      },
+    });
+    expect(r.data.createAppointment.errors).toEqual([]);
+    appointmentId = r.data.createAppointment.appointment.id;
+  });
+
+  afterAll(async () => {
+    await adminPrisma.$executeRawUnsafe(
+      `DELETE FROM device_tokens WHERE organization_id = '${w.orgId}'::uuid`,
+    );
+    await destroyPhase3World(w);
+  });
+
+  it('envia por FCM e Web Push, com chaves, e apaga a inscrição morta', async () => {
+    const r = await service.dispatch({
+      kind: 'appointment.created',
+      orgId: w.orgId,
+      actorMemberId: w.members.attendant,
+      appointmentIds: [appointmentId],
+    });
+
+    expect(fcmSent).toEqual(['tok-p8-fcm']);
+    expect(webSent.map((s) => s.endpoint).sort()).toEqual([
+      'https://web.push.apple.com/p8-dead',
+      'https://web.push.apple.com/p8-ok',
+    ]);
+    expect(webSent.every((s) => s.keys?.p256dh === KEYS.p256dh && s.keys?.auth === KEYS.auth)).toBe(
+      true,
+    );
+    expect(r).toMatchObject({ sent: 2, invalid: 1, failed: 0 });
+
+    const left = await adminPrisma.deviceToken.findMany({ where: { organizationId: w.orgId } });
+    expect(left.map((t) => t.token).sort()).toEqual([
+      'https://web.push.apple.com/p8-ok',
+      'tok-p8-fcm',
+    ]);
+  });
+});
