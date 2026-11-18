@@ -204,9 +204,10 @@ describe('fase 9 — negócios (criar, editar, mover, atribuir, SLA, visibilidad
       [open, openB, unassigned, wonRecent, lostOld].sort(),
     );
     expect(ids(await asManager(LIST, { f: { leadId: l, status: 'lost' } }))).toEqual([lostOld]);
-    expect(ids(await asManager(LIST, { f: { leadId: l, unassigned: true } }))).toEqual([
-      unassigned,
-    ]);
+    // o ganho recente também não tem responsável
+    expect(
+      ids(await asManager(LIST, { f: { leadId: l, unassigned: true, status: 'open' } })),
+    ).toEqual([unassigned]);
     expect(
       ids(await asManager(LIST, { f: { leadId: l, assigneeMemberId: w.attendantB.memberId } })),
     ).toEqual([openB]);
