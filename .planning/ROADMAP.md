@@ -385,7 +385,7 @@ Plans:
 - [x] 09-04-backend-nucleo-etapas-leads-PLAN.md — CommercialModule + submódulos, SDL, etapas configuráveis, leads com duplicidade (onda 2)
 - [x] 09-07-push-lembrete-rotas-PLAN.md — push commercial.reminder e allowlist /comercial/lembretes nas 4 cópias (onda 2)
 - [x] 09-05-backend-negocios-interacoes-perdido-PLAN.md — negócios, mover/atribuir, perdido/reabrir, interações com próximo contato (onda 3)
-- [ ] 09-06-backend-ganho-PLAN.md — ganho atômico: cliente + grupo + contrato rascunho + sinal no caixa (createInTx, createClientTx) (onda 3)
+- [x] 09-06-backend-ganho-PLAN.md — ganho atômico: cliente + grupo + contrato rascunho + sinal no caixa (createInTx, createClientTx) (onda 3)
 - [x] 09-08-backend-lembretes-agendador-PLAN.md — CRUD de lembretes e tick BullMQ por minuto que dispara o push (onda 3)
 - [x] 09-09-backend-painel-relatorios-export-PLAN.md — painel comercial, relatórios e exportação Excel/PDF no backend (onda 3)
 - [ ] 09-10-backend-formulario-importacao-PLAN.md — importação de planilha com prévia e formulário público com LGPD/anti-spam (onda 3)
