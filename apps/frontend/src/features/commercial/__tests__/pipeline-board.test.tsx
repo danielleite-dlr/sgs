@@ -236,7 +236,7 @@ describe('Pipeline', () => {
     );
   });
 
-  it.skip('soltar em Ganho ou Perdido não move: abre os diálogos', async () => {
+  it('soltar em Ganho ou Perdido não move: abre os diálogos', async () => {
     setRole('ATTENDANT');
     renderPage();
     await screen.findByTestId('deal-d1');
@@ -289,7 +289,7 @@ describe('Pipeline', () => {
     expect(screen.getByRole('menuitem', { name: 'Marcar como perdido' })).toBeTruthy();
   });
 
-  it.skip('?negocio=ID&acao=perder abre o diálogo de perda desse negócio', async () => {
+  it('?negocio=ID&acao=perder abre o diálogo de perda desse negócio', async () => {
     setRole('ATTENDANT');
     renderPage(
       [

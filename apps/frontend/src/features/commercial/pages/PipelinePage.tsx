@@ -13,7 +13,9 @@ import {
 import { CommercialAssigneesQuery, CommercialStagesQuery } from '../api/leads.api';
 import type { CommercialMember, CommercialStage } from '../api/leads.api';
 import { useCommercialAccess } from '../commercial-permissions';
+import { LoseDealDialog } from '../components/LoseDealDialog';
 import { PipelineBoard } from '../components/PipelineBoard';
+import { WinDealDialog } from '../components/WinDealDialog';
 import { KIND_LABEL } from '../lib/commercial-labels';
 
 const SELECT_CLASS =
@@ -132,8 +134,22 @@ export function PipelinePage() {
           onLose={setDealToLose}
         />
       )}
-      {/* Task 2 monta WinDealDialog/LoseDealDialog com dealToWin/dealToLose e refetch. */}
-      <span hidden data-win={dealToWin?.id} data-lose={dealToLose?.id} onClick={() => refetch()} />
+      <WinDealDialog
+        deal={dealToWin}
+        open={dealToWin !== null}
+        onOpenChange={(o) => {
+          if (!o) setDealToWin(null);
+        }}
+        onDone={() => void refetch()}
+      />
+      <LoseDealDialog
+        deal={dealToLose}
+        open={dealToLose !== null}
+        onOpenChange={(o) => {
+          if (!o) setDealToLose(null);
+        }}
+        onDone={() => void refetch()}
+      />
     </div>
   );
 }
