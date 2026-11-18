@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { TimelineOverrideHost } from '@/features/operations/components/TimelineOverrideHost';
 import { apolloClient } from '@/infrastructure/apollo/client';
 import { NativeAppBridge } from '@/infrastructure/native/NativeAppBridge';
+import { WebPushBridge } from '@/infrastructure/webpush/WebPushBridge';
 import { router } from '@/router';
 
 // Initialize i18n before rendering (side effect import)
@@ -18,6 +19,7 @@ export default function App() {
       </Suspense>
       <Toaster richColors position="top-right" />
       <NativeAppBridge />
+      <WebPushBridge />
       <TimelineOverrideHost />
     </ApolloProvider>
   );
