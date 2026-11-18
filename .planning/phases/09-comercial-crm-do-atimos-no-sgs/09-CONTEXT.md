@@ -42,6 +42,12 @@ Referência funcional: Atimos CRM em `/root/atmo-crm/atmos-crm` (Next.js + Supab
 - **D-16:** O lembrete aparece na **lista de Lembretes e no Painel** (vencidos e do dia em destaque) e manda **push** no celular, Android (FCM) e iPhone (Web Push), na hora marcada. O push vai para o **responsável pelo negócio e para os gerentes e admins**. Se o lembrete não tiver negócio, vai para quem o criou e para os gerentes e admins.
 - **D-17:** Ao registrar uma **interação** (ligação, WhatsApp, e-mail, reunião, visita, outro), o formulário tem o campo opcional **"próximo contato em"**, que cria o lembrete junto.
 
+### Decisões pós-pesquisa (2026-11-18, plan-phase)
+- **D-18 (debutante):** o lead é a **responsável/contratante**. Ao marcar ganho com pacote de debutante, o modal **pede o nome da debutante** (`beneficiary_name`) e o grupo é criado com ela como "noiva"; a responsável vira a cliente contratante.
+- **D-19 (reabrir perdido):** só **ADMIN e MANAGER** reabrem negócio perdido.
+- **D-20 (sem responsável):** leads/negócios do formulário público e da importação entram **sem responsável** e ficam visíveis **só para ADMIN e MANAGER**, com filtro "Sem responsável", até alguém atribuir.
+- **D-21 (ganho pela atendente — A CONFIRMAR com a usuária, ela não respondeu):** adotado o padrão recomendado — qualquer papel do Comercial (inclusive ATTENDANT, nos negócios que vê) marca ganho, e o ganho cria cliente + contrato **rascunho** protegido por `commercial.write` + visibilidade, sem dar `contract.write` à atendente. Revisar/enviar o contrato segue com ADMIN/MANAGER. Manter isso isolado (um ponto de checagem) para trocar fácil se ela preferir "só admin/gerente marcam ganho".
+
 ### Claude's Discretion
 - Indicadores do **Painel comercial**: seguir o Atimos (números do dia, follow-ups pendentes, últimas interações, status do funil) mais conversão e valor em negociação.
 - **Relatórios**: seguir o Atimos, com filtros por responsável, etapa, status e período e exportação para Excel e PDF. Incluir motivos de perda (D-10) e origem.
