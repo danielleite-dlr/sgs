@@ -631,6 +631,19 @@ export class ContractsService {
   }
 
   /**
+   * Fase 9 (ganho no Comercial): o mesmo createTx, dentro de uma transação de quem chama.
+   * Lança ContractError/BridalError; quem chama decide o rollback.
+   */
+  async createInTx(
+    tx: TenantPrismaClient,
+    orgId: string,
+    memberId: string,
+    input: CreateContractInput,
+  ): Promise<string> {
+    return this.createTx(tx, orgId, memberId, input, "commit");
+  }
+
+  /**
    * Corpo do create (grava tudo no `tx`). `mode: 'preview'` = mesma regra, mas sem
    * consumir número de contrato, sem exigir itens e sem auditoria; quem chama desfaz
    * a transação (ver preview()).
