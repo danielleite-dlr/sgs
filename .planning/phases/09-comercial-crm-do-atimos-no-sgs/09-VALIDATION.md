@@ -43,7 +43,7 @@ created: 2026-11-18
 |-----|---------------|-----------|--------|-------------------|-------------|--------|
 | COM-01 | normalização de telefone e duplicidade (máscara, +55, 9º dígito) | unit | 09-02 | `... exec jest src/commercial/commercial-phone.spec.ts` | ❌ W0 | ⬜ pending |
 | COM-01 | aviso/vínculo a cliente existente; lead não aparece em `clients` | integração | 09-04, 09-11 | `... test:integration -- phase9-leads` | ❌ W0 | ⬜ pending |
-| COM-02 | importação: prévia, inválidas, duplicadas, limite de linhas | unit + integração | 09-10, 09-14 | `... exec jest src/commercial/lead-import.spec.ts`, `... test:integration -- phase9-import` | ❌ W0 | ⬜ pending |
+| COM-02 | importação: prévia, inválidas, duplicadas, limite de linhas | unit + integração | 09-10, 09-14 | `... exec jest src/commercial/lead-sheet.spec.ts`, `... test:integration -- phase9-import` | ❌ W0 | ⬜ pending |
 | COM-03 | formulário público: token inválido/inativo 404, throttle, honeypot, consentimento, RLS | integração | 09-10, 09-14, 09-15 | `... test:integration -- phase9-public-form` | ❌ W0 | ⬜ pending |
 | COM-04/05 | etapas padrão, backfill, ordem/exclusão, Ganho/Perdido de sistema; negócios por lead | unit + integração | 09-01, 09-04, 09-05, 09-12 | `... test:integration -- phase9-stages phase9-deals` | ❌ W0 | ⬜ pending |
 | COM-05 | SLA por etapa (limites, sem interação, sem prazo) | unit | 09-02, 09-05 | `... exec jest src/commercial/commercial-sla.spec.ts` | ❌ W0 | ⬜ pending |
@@ -66,7 +66,7 @@ created: 2026-11-18
 ## Wave 0 Requirements
 
 - [ ] `apps/backend/test/integration/helpers/phase9-fixtures.ts` e `phase9-cleanup.ts` (mundo da fase 4 + atendentes A/B + profissional + pacotes noiva/debutante; apagar `commercial_*` antes de `destroyPhase4World`)
-- [ ] specs unitários puros: `commercial-phone`, `commercial-sla`, `commercial-access`
+- [ ] specs unitários puros: `commercial-phone`, `commercial-sla`, `commercial-access`, `lead-sheet`
 - [ ] `phase9-rls-rbac.e2e.spec.ts` criado junto da migração
 - [ ] fixtures do frontend `features/commercial/__tests__/commercial-fixtures.ts`
 - [ ] helper E2E `apps/e2e/support/phase9.ts`
