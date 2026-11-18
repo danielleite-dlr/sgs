@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom';
+import { EnableNotificationsBanner } from '@/infrastructure/webpush/EnableNotificationsBanner';
 import { useState } from 'react';
 import { useQuery } from '@apollo/client';
 import { TopHeader } from './TopHeader';
@@ -86,6 +87,7 @@ export function AppShell() {
           onNotificationsOpenChange={setNotificationsOpen}
         />
         <main className="min-w-0 flex-1 px-md py-md pb-[calc(5rem+var(--sgs-safe-bottom))] lg:px-lg lg:py-lg lg:pb-lg">
+          <EnableNotificationsBanner />
           <Outlet />
         </main>
       </div>
