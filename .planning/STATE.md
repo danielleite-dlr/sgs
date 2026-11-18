@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 07-13-PLAN.md (Play pendente da conta)
-last_updated: "2026-11-17T12:00:00.000Z"
-last_activity: 2026-11-17
+stopped_at: Completed 07-11-PLAN.md
+last_updated: "2026-11-18T02:47:59.729Z"
+last_activity: 2026-11-18 -- Phase 08 execution started
 progress:
-  total_phases: 10
-  completed_phases: 9
-  total_plans: 117
-  completed_plans: 117
+  total_phases: 11
+  completed_phases: 10
+  total_plans: 125
+  completed_plans: 121
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-02)
 
 **Core value:** Profissional do beleza consegue agendar, atender, cobrar e comunicar com cliente em um único fluxo — sem sair da plataforma.
-**Current focus:** Phase 7 — app-android-gestor-beauty-com-capacitor
+**Current focus:** Phase 08 — app-iphone-gestor-beauty-instalavel-com-notificacoes
 
 ## Current Position
 
-Phase: 7 (app-android-gestor-beauty-com-capacitor) — EXECUTING
-Plan: 13 of 13 concluídos (07-13 aprovado em 17/11 com teste parcial)
-Status: Aguardando conta Play para o teste interno
-Last activity: 2026-11-17 - Completed quick task 261117-m39: renovar sessão pelo refresh token e lembrar último e-mail no login
+Phase: 08 (app-iphone-gestor-beauty-instalavel-com-notificacoes) — EXECUTING
+Plan: 1 of 8
+Status: Executing Phase 08
+Last activity: 2026-11-18 -- Phase 08 execution started
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
