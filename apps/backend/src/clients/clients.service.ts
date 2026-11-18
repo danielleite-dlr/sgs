@@ -1,43 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { TenantContextService } from '../database/tenant-context.service';
-import { validateCpf, normalizeCpf } from './cpf.util';
+import { normalizeCpf } from './cpf.util';
+import {
+  ClientFieldError,
+  createClientTx,
+  updateClientTx,
+  validateClientFields,
+} from './client-tx';
 import { CreateClientInput, UpdateClientInput } from './dto/client.input';
-
-/** Normalizadores dos campos de contratante (D-08): vazio vira null. */
-const RG_RE = /^[0-9Xx.\-\s]{5,20}$/;
-const PHONE_RE = /^[\d\s()+\-]{8,30}$/;
-
-function emptyToNull(v: string | null | undefined): string | null {
-  const t = v?.trim();
-  return t ? t : null;
-}
-
-function normalizeCep(v: string | null | undefined): string | null {
-  const t = emptyToNull(v);
-  if (!t) return null;
-  const digits = t.replace(/\D/g, '');
-  return `${digits.slice(0, 5)}-${digits.slice(5)}`;
-}
-
-type ExtraFields = Pick<CreateClientInput, 'rg' | 'postalCode' | 'phone2' | 'phone3'>;
-
-/** Valida os campos extras; devolve o primeiro erro ou null. */
-function validateExtras(input: ExtraFields) {
-  if (input.rg && !RG_RE.test(input.rg)) {
-    return errPayload('RG_INVALID', 'RG inválido.', 'rg');
-  }
-  if (input.postalCode && !/^\d{5}-?\d{3}$/.test(input.postalCode)) {
-    return errPayload('POSTAL_CODE_INVALID', 'CEP inválido.', 'postalCode');
-  }
-  for (const f of ['phone2', 'phone3'] as const) {
-    const v = input[f];
-    if (v && !PHONE_RE.test(v)) {
-      return errPayload('PHONE_INVALID', 'Telefone inválido.', f);
-    }
-  }
-  return null;
-}
 
 export interface UserError {
   code: string;
@@ -135,104 +106,37 @@ export class ClientsService {
   }
 
   async create(orgId: string, input: CreateClientInput) {
-    if (!input.phone && !input.email) {
-      return errPayload(
-        'CONTACT_REQUIRED',
-        'Informe pelo menos um telefone ou e-mail.',
-      );
-    }
-    if (input.cpf && !validateCpf(input.cpf)) {
-      return errPayload('CPF_INVALID', 'CPF inválido. Verifique os números.', 'cpf');
-    }
-    const extrasError = validateExtras(input);
-    if (extrasError) return extrasError;
+    const problem = validateClientFields(input, 'create');
+    if (problem) return errPayload(problem.code, problem.message, problem.field ?? undefined);
 
-    return this.tenant.runWithTenant(orgId, async (tx) => {
-      const client = await tx.client.create({
-        data: {
-          organizationId: orgId,
-          fullName: input.fullName,
-          phone: input.phone ?? null,
-          email: input.email?.toLowerCase() ?? null,
-          cpf: input.cpf ? normalizeCpf(input.cpf) : null,
-          birthDate: input.birthDate ? new Date(input.birthDate) : null,
-          address: input.address ?? null,
-          rg: emptyToNull(input.rg)?.toUpperCase() ?? null,
-          postalCode: normalizeCep(input.postalCode),
-          phone2: emptyToNull(input.phone2),
-          phone3: emptyToNull(input.phone3),
-          notes: input.notes ?? null,
-        },
+    try {
+      return await this.tenant.runWithTenant(orgId, async (tx) => {
+        const client = await createClientTx(tx, orgId, input);
+        return { client, errors: [] as UserError[] };
       });
-      return { client, errors: [] as UserError[] };
-    });
+    } catch (e) {
+      if (e instanceof ClientFieldError) {
+        return errPayload(e.code, e.message, e.field ?? undefined);
+      }
+      throw e;
+    }
   }
 
   async update(orgId: string, input: UpdateClientInput) {
-    if (input.cpf && !validateCpf(input.cpf)) {
-      return errPayload('CPF_INVALID', 'CPF inválido.', 'cpf');
-    }
-    const extrasError = validateExtras(input);
-    if (extrasError) return extrasError;
+    const problem = validateClientFields(input, 'update');
+    if (problem) return errPayload(problem.code, problem.message, problem.field ?? undefined);
 
-    return this.tenant.runWithTenant(orgId, async (tx) => {
-      const existing = await tx.client.findFirst({
-        where: { id: input.id, deletedAt: null },
+    try {
+      return await this.tenant.runWithTenant(orgId, async (tx) => {
+        const client = await updateClientTx(tx, orgId, input);
+        return { client, errors: [] as UserError[] };
       });
-      if (!existing) return errPayload('NOT_FOUND', 'Cliente não encontrado.');
-
-      const phone =
-        input.phone !== undefined ? input.phone : existing.phone;
-      const email =
-        input.email !== undefined
-          ? input.email?.toLowerCase() ?? null
-          : existing.email;
-
-      if (!phone && !email) {
-        return errPayload(
-          'CONTACT_REQUIRED',
-          'Informe pelo menos um telefone ou e-mail.',
-        );
+    } catch (e) {
+      if (e instanceof ClientFieldError) {
+        return errPayload(e.code, e.message, e.field ?? undefined);
       }
-
-      const client = await tx.client.update({
-        where: { id: input.id },
-        data: {
-          fullName: input.fullName ?? existing.fullName,
-          phone,
-          email,
-          cpf:
-            input.cpf !== undefined
-              ? input.cpf
-                ? normalizeCpf(input.cpf)
-                : null
-              : existing.cpf,
-          birthDate:
-            input.birthDate !== undefined
-              ? input.birthDate
-                ? new Date(input.birthDate)
-                : null
-              : existing.birthDate,
-          address:
-            input.address !== undefined ? input.address : existing.address,
-          rg:
-            input.rg !== undefined
-              ? emptyToNull(input.rg)?.toUpperCase() ?? null
-              : existing.rg,
-          postalCode:
-            input.postalCode !== undefined
-              ? normalizeCep(input.postalCode)
-              : existing.postalCode,
-          phone2:
-            input.phone2 !== undefined ? emptyToNull(input.phone2) : existing.phone2,
-          phone3:
-            input.phone3 !== undefined ? emptyToNull(input.phone3) : existing.phone3,
-          notes: input.notes !== undefined ? input.notes : existing.notes,
-          version: { increment: 1 },
-        },
-      });
-      return { client, errors: [] as UserError[] };
-    });
+      throw e;
+    }
   }
 
   async softDelete(orgId: string, id: string) {
