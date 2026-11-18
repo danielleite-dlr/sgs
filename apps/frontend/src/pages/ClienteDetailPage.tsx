@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { useNavigate, useParams, Navigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, Navigate } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
-import { Pencil } from 'lucide-react';
+import { ArrowLeft, Pencil } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,12 +11,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ClientByIdQuery } from '@/features/clients/api/clients.api';
 import type { ClientByIdResult } from '@/features/clients/api/clients.api';
 import { ClientHistoryTab } from '@/features/clients/components/ClientHistoryTab';
+import { ClientSituation } from '@/features/clients/components/ClientSituation';
 import { formatCpf } from '@/features/clients/utils/cpf';
 import { toDisplayName } from '@/lib/format-name';
 
 export function ClienteDetailPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Veio da comanda, agenda ou grupo: o Voltar usa o histórico do navegador.
+  const cameFromApp = (location.state as { voltar?: boolean } | null)?.voltar === true;
   const { id } = useParams<{ id: string }>();
   const { data, loading, error } = useQuery<ClientByIdResult>(ClientByIdQuery, {
     variables: { id },
@@ -51,15 +55,31 @@ export function ClienteDetailPage() {
           { label: toDisplayName(c.fullName) },
         ]}
         cta={
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/clientes/${c.id}/editar`)}
-          >
-            <Pencil className="mr-2 h-4 w-4" />
-            Editar
-          </Button>
+          <div className="flex items-center gap-xs">
+            {cameFromApp && (
+              <Button
+                variant="outline"
+                className="shrink-0"
+                data-testid="cliente-voltar"
+                onClick={() => navigate(-1)}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Voltar
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              className="shrink-0"
+              onClick={() => navigate(`/clientes/${c.id}/editar`)}
+            >
+              <Pencil className="mr-2 h-4 w-4" />
+              Editar
+            </Button>
+          </div>
         }
       />
+
+      <ClientSituation clientId={c.id} />
 
       <Tabs defaultValue="data">
         <TabsList>

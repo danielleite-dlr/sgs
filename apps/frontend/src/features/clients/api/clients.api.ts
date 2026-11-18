@@ -68,9 +68,123 @@ export const ClientHistoryQuery = gql`
       description
       amount
       professionalName
+      entityType
+      entityId
     }
   }
 `;
+
+export interface ClientHistoryItemData {
+  id: string;
+  occurredAt: string;
+  /** appointment | comanda | product | contract_payment */
+  kind: string;
+  description: string;
+  amount: string | null;
+  professionalName: string | null;
+  /** appointment | comanda | contract */
+  entityType: string | null;
+  entityId: string | null;
+}
+
+export interface ClientHistoryResult {
+  clientHistory: ClientHistoryItemData[];
+}
+
+export const ClientOverviewQuery = gql`
+  query ClientOverview($clientId: UUID!) {
+    clientOverview(clientId: $clientId) {
+      bridalGroups {
+        id
+        name
+        eventKind
+        role
+        eventDate
+        eventTime
+        status
+        trialDates
+      }
+      contracts {
+        id
+        code
+        status
+        groupId
+        groupName
+        totalAmount
+        paid
+        balance
+        nextDueDate
+        nextDueAmount
+      }
+      upcomingAppointments {
+        id
+        startsAt
+        endsAt
+        status
+        serviceName
+        professionalName
+        kind
+        comandaId
+        bridalGroupId
+      }
+      stats {
+        completedCount
+        lastVisitAt
+        totalSpent
+        creditBalance
+      }
+    }
+  }
+`;
+
+export interface ClientOverviewData {
+  bridalGroups: {
+    id: string;
+    name: string;
+    eventKind: string;
+    /** bride | debutante | companion | responsible */
+    role: string;
+    /** YYYY-MM-DD */
+    eventDate: string;
+    eventTime: string | null;
+    status: string;
+    trialDates: string[];
+  }[];
+  contracts: {
+    id: string;
+    code: string;
+    status: string;
+    groupId: string;
+    groupName: string;
+    totalAmount: string;
+    paid: string;
+    balance: string;
+    nextDueDate: string | null;
+    nextDueAmount: string | null;
+  }[];
+  upcomingAppointments: {
+    id: string;
+    startsAt: string;
+    endsAt: string;
+    status: string;
+    serviceName: string;
+    professionalName: string;
+    /** trial | event | normal */
+    kind: string;
+    comandaId: string | null;
+    bridalGroupId: string | null;
+  }[];
+  stats: {
+    completedCount: number;
+    lastVisitAt: string | null;
+    totalSpent: string;
+    creditBalance: string;
+  };
+}
+
+export interface ClientOverviewResult {
+  clientOverview: ClientOverviewData;
+}
 
 // ===== Mutations =====
 
