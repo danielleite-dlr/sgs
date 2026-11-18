@@ -367,7 +367,7 @@ Plans:
 - [x] 08-04-backend-webpush-provider-dispatch-PLAN.md — WebPushProvider (404/410 remove) e dispatch de dois canais na fila da fase 7
 - [x] 08-05-frontend-webpush-client-bridge-PLAN.md — detecção iPhone/standalone, inscrição, WebPushBridge, rota pendente e logout desinscrevendo
 - [x] 08-06-frontend-ui-instalar-ativar-PLAN.md — botão Instalar no iPhone com passo a passo e faixa Ativar notificações
-- [ ] 08-07-gate-vapid-deploy-staging-PLAN.md — gate completo, VAPID no .env.staging, backup, deploy, headers no staging e CI verde
+- [x] 08-07-gate-vapid-deploy-staging-PLAN.md — gate completo, VAPID no .env.staging, backup, deploy, headers no staging e CI verde
 - [ ] 08-08-iphone-verification-PLAN.md — verificação no iPhone real da usuária
 
 ---

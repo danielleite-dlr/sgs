@@ -50,7 +50,7 @@ Mapa por decisão (os IDs de tarefa são preenchidos pelo planner nos PLAN.md):
 | D-08 | `WebPushProvider` e `PushService.dispatch` com dois canais; registro `webpush` com chaves, RLS e anti-SSRF; migration | unit + integração | `pnpm --filter @sgs/backend test -- push web-push`; `test:integration -- device-tokens push-dispatch` | ✅ | ✅ green |
 | D-09 | 404/410 → inscrição removida; 429/5xx/rede retentável | unit + integração | `pnpm --filter @sgs/backend test -- web-push.provider`; `test:integration -- push-dispatch` | ✅ | ✅ green |
 | D-10 | Sem VAPID → canal desligado e boot normal; `pushConfig.webPushPublicKey`; chaves fora do log | unit + integração | `pnpm --filter @sgs/backend test -- web-push-credentials`; `test:integration -- push-config` | ✅ | ✅ green |
-| D-11 | Container serve `sw.js` e manifest com `no-cache` e tipo certo | infra | `scripts/check-pwa-headers.sh` (imagem local e staging) | ✅ | ⚠️ imagem local ok; staging pendente |
+| D-11 | Container serve `sw.js` e manifest com `no-cache` e tipo certo | infra | `scripts/check-pwa-headers.sh` (imagem local e staging) | ✅ | ✅ green (imagem local e staging) |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -86,4 +86,4 @@ Mapa por decisão (os IDs de tarefa são preenchidos pelo planner nos PLAN.md):
 - [x] Feedback latency < 60s
 - [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** gate verde em 2026-11-18 (D-11 no staging pendente de conferência)
+**Approval:** gate verde em 2026-11-18 (staging conferido)
