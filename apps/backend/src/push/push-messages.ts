@@ -123,3 +123,46 @@ export function buildPushMessage(
       : `${first.clientName} · ${n} serviços, ${day} a partir de ${time}${suffix}`;
   return { title: cancelled ? 'Agendamento cancelado' : 'Novo agendamento', body, data };
 }
+
+/** Cópia de packages/shared/src/push.ts. */
+export function buildReminderRoute(reminderId: string): string {
+  if (!/^[A-Za-z0-9-]{1,64}$/.test(reminderId)) throw new Error('id de lembrete inválido');
+  return `/comercial/lembretes?lembrete=${reminderId}`;
+}
+
+export interface PushReminderView {
+  reminderId: string;
+  title: string;
+  description?: string | null;
+  leadName?: string | null;
+  dealKind?: string | null;
+  /** DATE do negócio, formato YYYY-MM-DD (sem conversão de fuso). */
+  eventDate?: string | null;
+}
+
+function truncate(text: string, max: number): string {
+  return text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`;
+}
+
+export function buildCommercialReminderMessage(view: PushReminderView, _timezone: string): PushMessage {
+  const parts: string[] = [];
+  if (view.leadName) parts.push(view.leadName);
+  if (view.dealKind) parts.push(view.dealKind === 'debutante' ? 'Debutante' : 'Noiva');
+  const ymd = view.eventDate ? /^(\d{4})-(\d{2})-(\d{2})/.exec(view.eventDate) : null;
+  if (ymd) parts.push(`${ymd[3]}/${ymd[2]}/${ymd[1]}`);
+  const body =
+    parts.length > 0
+      ? parts.join(' · ')
+      : view.description?.trim()
+        ? truncate(view.description.trim(), 140)
+        : 'Abra o Comercial para ver o lembrete';
+  return {
+    title: truncate(`Lembrete: ${view.title}`, 100),
+    body,
+    data: {
+      kind: 'commercial.reminder',
+      route: buildReminderRoute(view.reminderId),
+      reminderId: view.reminderId,
+    },
+  };
+}

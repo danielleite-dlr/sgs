@@ -80,7 +80,7 @@ describe('service worker de push', () => {
     if (_nome !== 'sem data') expect(chamadas[0][0]).toBe('Gestor Beauty');
   });
 
-  it.each(['https://evil.com', '//evil.com', '/agenda/../admin', '/financeiro'])(
+  it.each(['https://evil.com', '//evil.com', '/agenda/../admin', '/financeiro', '/comercial/lembretes/../admin', '/comercial/leads'])(
     'rota adulterada %s vira /agenda',
     async (route) => {
       const sw = carregarSw();
@@ -109,6 +109,17 @@ describe('service worker de push', () => {
     expect(sw.self.clients.openWindow).toHaveBeenCalledWith('/agenda?agendamento=abc');
   });
 
+  it('push de lembrete comercial mostra a rota e o clique abre /comercial/lembretes', async () => {
+    const route = '/comercial/lembretes?lembrete=r1';
+    const sw = carregarSw([]);
+    await enviarPush(sw, () => ({ title: 'Lembrete: Ligar', data: { route, reminderId: 'r1' } }));
+    const opcoes = sw.self.registration.showNotification.mock.calls[0][1] as unknown as { data: { route: string } };
+    expect(opcoes.data.route).toBe(route);
+    const sw2 = carregarSw([]);
+    await clicar(sw2, { route });
+    expect(sw2.self.clients.openWindow).toHaveBeenCalledWith(route);
+  });
+
   it('clique com rota adulterada abre /agenda', async () => {
     const sw = carregarSw([]);
     await clicar(sw, { route: 'https://evil.com' });
@@ -131,9 +142,9 @@ describe('service worker de push', () => {
     expect(codigo).not.toContain('importScripts');
   });
 
-  it('paridade: AGENDA_ROUTE_RE igual no sw.js, no push-route.ts e no shared', () => {
+  it('paridade: PUSH_ROUTE_RE igual no sw.js, no push-route.ts e no shared', () => {
     const extrair = (arquivo: string) =>
-      /AGENDA_ROUTE_RE = (\/.+\/);/.exec(readFileSync(arquivo, 'utf8'))?.[1];
+      /PUSH_ROUTE_RE = (\/.+\/);/.exec(readFileSync(arquivo, 'utf8'))?.[1];
     const sw = extrair(caminhoSw);
     expect(sw).toBeTruthy();
     expect(extrair(join(__dirname, '../infrastructure/native/push-route.ts'))).toBe(sw);

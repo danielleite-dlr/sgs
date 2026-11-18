@@ -14,7 +14,17 @@ describe('push-route', () => {
     expect(isAllowedPushRoute('/agenda?data=2026-11-20&visao=day&agendamento=x')).toBe(true);
   });
 
+  it('aceita a rota dos lembretes comerciais', () => {
+    expect(isAllowedPushRoute('/comercial/lembretes')).toBe(true);
+    expect(isAllowedPushRoute('/comercial/lembretes?lembrete=0193-abc')).toBe(true);
+  });
+
   it.each([
+    '/financeiro',
+    '/comercial',
+    '/comercial/leads',
+    '/comercial/lembretes/../admin',
+    '/comercial/lembretesx',
     'https://evil.com/agenda',
     '//evil.com',
     '/agenda/../admin',

@@ -6,6 +6,7 @@ export const PUSH_KINDS = [
   'appointment.cancelled',
   'bridal.scheduled',
   'bridal.cancelled',
+  'commercial.reminder',
 ] as const;
 export type PushKind = (typeof PUSH_KINDS)[number];
 
@@ -23,7 +24,8 @@ export type PushJob =
       since: string;
       groupId?: string | null;
       contractId?: string | null;
-    };
+    }
+  | { kind: 'commercial.reminder'; orgId: string; reminderId: string };
 
 export interface PushMessage {
   title: string;
