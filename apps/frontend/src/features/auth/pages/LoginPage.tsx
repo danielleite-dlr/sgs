@@ -16,6 +16,8 @@ import { useLoginMutation } from '../api/auth.api';
 import { useAuth } from '../hooks/useAuth';
 import { consumePendingRoute } from '@/infrastructure/native/push-route';
 import { isNativeApp } from '@/infrastructure/native/platform';
+import { isIosDevice, isStandalone } from '@/infrastructure/webpush/platform-ios';
+import { InstallIphoneDialog } from '@/infrastructure/webpush/InstallIphoneDialog';
 import { getLastEmail, saveLastEmail } from '../lib/last-email';
 
 // O nginx do host serve o APK publicado por scripts/publish-apk.sh (quick 261117-2pd).
@@ -39,7 +41,10 @@ export function LoginPage() {
   const [authError, setAuthError] = useState<{ code: string; message: string } | null>(null);
   const [login, { loading }] = useLoginMutation();
   const { applyAuthPayload } = useAuth();
-  const showApkDownload = !isNativeApp();
+  const ios = !isNativeApp() && isIosDevice();
+  const showIphoneInstall = ios && !isStandalone();
+  const showApkDownload = !isNativeApp() && !ios;
+  const [installOpen, setInstallOpen] = useState(false);
   const [lastEmail] = useState(getLastEmail);
 
   const {
@@ -250,17 +255,38 @@ export function LoginPage() {
           </div>
         </form>
 
-        {showApkDownload && (
+        {(showApkDownload || showIphoneInstall) && (
           <div className="border-t border-neutral-200 pt-md space-y-xs">
-            <Button asChild variant="outline" className="w-full">
-              <a href={APK_URL} download="gestor-beauty.apk">
-                <Smartphone size={16} aria-hidden="true" />
-                {t('login.downloadAndroid')}
-              </a>
-            </Button>
-            <p className="text-label text-neutral-500 text-center">
-              {t('login.downloadAndroidHint')}
-            </p>
+            {showApkDownload && (
+              <>
+                <Button asChild variant="outline" className="w-full">
+                  <a href={APK_URL} download="gestor-beauty.apk">
+                    <Smartphone size={16} aria-hidden="true" />
+                    {t('login.downloadAndroid')}
+                  </a>
+                </Button>
+                <p className="text-label text-neutral-500 text-center">
+                  {t('login.downloadAndroidHint')}
+                </p>
+              </>
+            )}
+            {showIphoneInstall && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setInstallOpen(true)}
+                >
+                  <Smartphone size={16} aria-hidden="true" />
+                  {t('login.installIphone')}
+                </Button>
+                <p className="text-label text-neutral-500 text-center">
+                  {t('login.installIphoneHint')}
+                </p>
+                <InstallIphoneDialog open={installOpen} onOpenChange={setInstallOpen} />
+              </>
+            )}
           </div>
         )}
       </AuthCard>

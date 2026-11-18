@@ -28,7 +28,9 @@
       "unverified": "Verifique seu e-mail antes de entrar.",
       "resendVerification": "Reenviar verificação",
       "serverGeneric": "Algo deu errado. Tente novamente."
-    }
+    },
+    "installIphone": "Instalar no iPhone",
+    "installIphoneHint": "Use o Gestor Beauty pela tela de início do iPhone, com notificações."
   },
   "signup": {
     "pageTitle": "Criar conta — SGS",
@@ -1016,6 +1018,36 @@
       "blockedListLabel": "Próximos agendamentos",
       "blockedClose": "Entendi",
       "commissionNote": "{{count}} regra(s) de comissão continuam vinculadas a {{name}}. Elas não impedem a desativação e o histórico é preservado."
+    }
+  },
+  "pwa": {
+    "install": {
+      "title": "Instalar no iPhone",
+      "description": "Leva menos de um minuto e não precisa de App Store.",
+      "step1": "Abra este endereço no Safari.",
+      "step2": "Toque em Compartilhar (o quadrado com a seta para cima), na barra de baixo ou no topo.",
+      "step3": "Role a lista e toque em Adicionar à Tela de Início. Depois toque em Adicionar.",
+      "step4": "Abra o Gestor Beauty pelo ícone novo na tela de início e entre de novo com seu e-mail e senha. O app instalado tem login próprio.",
+      "step5": "Dentro do app, toque em Ativar notificações para receber os avisos da agenda.",
+      "notSafariTitle": "Abra no Safari",
+      "notSafari": "Este navegador não instala o app. Copie o endereço e abra no Safari.",
+      "copyLink": "Copiar endereço",
+      "copied": "Endereço copiado",
+      "close": "Entendi"
+    },
+    "notifications": {
+      "title": "Receba os avisos da agenda",
+      "body": "Ative as notificações para saber na hora de novos agendamentos e cancelamentos.",
+      "enable": "Ativar notificações",
+      "enabling": "Ativando…",
+      "later": "Agora não",
+      "enabled": "Notificações ativadas neste iPhone.",
+      "deniedTitle": "Notificações bloqueadas",
+      "denied": "Para ligar, abra Ajustes → Notificações → Gestor Beauty e permita.",
+      "unsupportedTitle": "Atualize o iPhone",
+      "unsupported": "Para receber notificações, atualize para o iOS 16.4 ou mais novo (Ajustes → Geral → Atualização de Software).",
+      "error": "Não foi possível ativar agora. Tente de novo.",
+      "close": "Fechar"
     }
   }
 }
