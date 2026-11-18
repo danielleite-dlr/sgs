@@ -388,7 +388,7 @@ Plans:
 - [x] 09-06-backend-ganho-PLAN.md — ganho atômico: cliente + grupo + contrato rascunho + sinal no caixa (createInTx, createClientTx) (onda 3)
 - [x] 09-08-backend-lembretes-agendador-PLAN.md — CRUD de lembretes e tick BullMQ por minuto que dispara o push (onda 3)
 - [x] 09-09-backend-painel-relatorios-export-PLAN.md — painel comercial, relatórios e exportação Excel/PDF no backend (onda 3)
-- [ ] 09-10-backend-formulario-importacao-PLAN.md — importação de planilha com prévia e formulário público com LGPD/anti-spam (onda 3)
+- [x] 09-10-backend-formulario-importacao-PLAN.md — importação de planilha com prévia e formulário público com LGPD/anti-spam (onda 3)
 - [ ] 09-11-frontend-leads-PLAN.md — telas de leads, aviso de cliente existente, negócios e interações (onda 4)
 - [ ] 09-14-frontend-formulario-importacao-PLAN.md — diálogo de importação, aba do formulário, página pública e nginx frame-ancestors (onda 4)
 - [ ] 09-12-frontend-pipeline-ganho-perdido-PLAN.md — kanban, diálogos de ganho (abre o contrato) e perda, configuração de etapas (onda 5)
