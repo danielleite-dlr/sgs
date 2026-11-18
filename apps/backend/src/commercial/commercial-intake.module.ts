@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { AuthzModule } from '../authz/authz.module';
 import { DatabaseModule } from '../database/database.module';
+import { CommercialImportService } from './commercial-import.service';
+import { CommercialIntakeResolver } from './commercial-intake.resolver';
 
-/** Submódulo do Comercial: preenchido no 09-10. */
+/** Entradas externas de leads: importação de planilha e formulário público do site. */
 @Module({
   imports: [DatabaseModule, AuthzModule],
-  providers: [],
-  exports: [],
+  providers: [CommercialImportService, CommercialIntakeResolver],
+  exports: [CommercialImportService],
 })
 export class CommercialIntakeModule {}

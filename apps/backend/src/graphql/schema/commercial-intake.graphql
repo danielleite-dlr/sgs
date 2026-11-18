@@ -1,0 +1,78 @@
+type CommercialImportDuplicate {
+  type: String!
+  id: UUID!
+  name: String!
+}
+
+type CommercialImportRow {
+  line: Int!
+  fullName: String!
+  phone: String
+  email: String
+  kind: String
+  eventDate: String
+  source: String!
+  notes: String
+  duplicateOf: CommercialImportDuplicate
+  assigneeRef: String
+  assignee: CommercialMember
+  assigneeWarning: String
+}
+
+type CommercialImportInvalid {
+  line: Int!
+  reason: String!
+}
+
+type CommercialImportPreview {
+  totalRows: Int!
+  valid: [CommercialImportRow!]!
+  invalid: [CommercialImportInvalid!]!
+  errors: [UserError!]!
+}
+
+type CommercialImportResult {
+  createdLeads: Int!
+  createdDeals: Int!
+  linkedClients: Int!
+  assignedDeals: Int!
+  unassignedDeals: Int!
+  skipped: Int!
+  errors: [UserError!]!
+}
+
+type CommercialFormSettings {
+  isActive: Boolean!
+  token: String!
+  publicPath: String!
+  defaultAssignee: CommercialMember
+  successMessage: String
+  consentText: String!
+  consentTextVersion: String!
+}
+
+input UpdateCommercialFormSettingsInput {
+  isActive: Boolean
+  defaultAssigneeMemberId: UUID
+  clearDefaultAssignee: Boolean
+  successMessage: String
+  consentText: String
+}
+
+type CommercialFormSettingsPayload {
+  settings: CommercialFormSettings
+  errors: [UserError!]!
+}
+
+extend type Query {
+  commercialFormSettings: CommercialFormSettings!
+}
+
+extend type Mutation {
+  previewCommercialLeadImport(base64: String!, filename: String!): CommercialImportPreview!
+  importCommercialLeads(base64: String!, filename: String!): CommercialImportResult!
+  updateCommercialFormSettings(
+    input: UpdateCommercialFormSettingsInput!
+  ): CommercialFormSettingsPayload!
+  regenerateCommercialFormToken: CommercialFormSettingsPayload!
+}
