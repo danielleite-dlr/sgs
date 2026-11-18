@@ -104,6 +104,23 @@ export const envSchema = z.object({
     .transform((v) => v === 'true')
     .describe('Liga o worker BullMQ que envia os pushes'),
 
+  // Fase 8 — Web Push (VAPID) no iPhone. Faltando qualquer uma => canal desligado, backend sobe normal.
+  VAPID_PUBLIC_KEY: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim() ? v.trim() : undefined))
+    .describe('Chave pública VAPID (base64url)'),
+  VAPID_PRIVATE_KEY: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim() ? v.trim() : undefined))
+    .describe('Chave privada VAPID (base64url) — segredo'),
+  VAPID_SUBJECT: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim() ? v.trim() : undefined))
+    .describe('Assunto VAPID: https://… ou mailto:…'),
+
   // Frontend
   FRONTEND_URL: z
     .string()
