@@ -364,9 +364,9 @@ Plans:
 - [x] 08-01-backend-device-tokens-webpush-PLAN.md — migration p256dh/auth e provider webpush, validação anti-SSRF do endpoint e registro da inscrição
 - [x] 08-02-backend-vapid-push-config-PLAN.md — web-push 3.6.7, chaves VAPID no env/compose e query pushConfig com a chave pública
 - [x] 08-03-frontend-manifest-sw-nginx-PLAN.md — ícones GB, manifest, metas iOS, sw.js só push/clique, nginx sem cache e check-pwa-headers.sh
-- [ ] 08-04-backend-webpush-provider-dispatch-PLAN.md — WebPushProvider (404/410 remove) e dispatch de dois canais na fila da fase 7
-- [ ] 08-05-frontend-webpush-client-bridge-PLAN.md — detecção iPhone/standalone, inscrição, WebPushBridge, rota pendente e logout desinscrevendo
-- [ ] 08-06-frontend-ui-instalar-ativar-PLAN.md — botão Instalar no iPhone com passo a passo e faixa Ativar notificações
+- [x] 08-04-backend-webpush-provider-dispatch-PLAN.md — WebPushProvider (404/410 remove) e dispatch de dois canais na fila da fase 7
+- [x] 08-05-frontend-webpush-client-bridge-PLAN.md — detecção iPhone/standalone, inscrição, WebPushBridge, rota pendente e logout desinscrevendo
+- [x] 08-06-frontend-ui-instalar-ativar-PLAN.md — botão Instalar no iPhone com passo a passo e faixa Ativar notificações
 - [ ] 08-07-gate-vapid-deploy-staging-PLAN.md — gate completo, VAPID no .env.staging, backup, deploy, headers no staging e CI verde
 - [ ] 08-08-iphone-verification-PLAN.md — verificação no iPhone real da usuária
 
