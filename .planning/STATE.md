@@ -229,6 +229,7 @@ Recent decisions affecting current work:
 - Phase 9 added (2026-11-18): Comercial — CRM do Atimos no SGS (painel, leads, pipeline com etapas configuráveis, lembretes, relatórios; ganho → cliente + contrato rascunho). Antes do app nativo iOS. Item 1 do 08-08 (instalação no iPhone) passou; usabilidade do app instalado foi considerada fraca
 - Phase 8 added (2026-11-17): App iPhone Gestor Beauty instalável — app web instalável no iPhone (sem App Store/conta Apple) com notificações Web Push (VAPID) ao lado do FCM; botão "Instalar no iPhone" no login
 - Phase 7 added (2026-11-14): App Android "Gestor Beauty" com Capacitor para a equipe do salão — mesmas telas do SGS, só Android, Play Store, push FCM neutro; sem PWA; depois iOS e app Expo como atualização do mesmo appId
+- Phase 12 added (2026-11-18): Ajustar cadastro de agendamento — escopo a detalhar no discuss; depois da fase 11
 
 ### Quick Tasks Completed
 
