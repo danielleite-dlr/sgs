@@ -48,6 +48,14 @@ describe('feature gating', () => {
     }
   });
 
+  it('libera o Comercial (flag ligada em 09-15) e o formulário público', () => {
+    for (const path of ['/comercial', '/comercial/pipeline', '/comercial/leads/:id', '/contato/x/y']) {
+      expect(isPathEnabled(path)).toBe(true);
+    }
+    const ids = flattenMenu(MENU).map(({ item }) => item.id);
+    expect(ids).toContain('comercial-pipeline');
+  });
+
   it('não confunde prefixo com outro caminho de mesmo início', () => {
     expect(isPathEnabled('/financeiro-teste')).toBe(true);
   });

@@ -54,8 +54,8 @@ const FLAGS = {
   assinatura: false,
   /** Ajuda e tutoriais no header — botões decorativos. */
   ajudaTutoriais: false,
-  /** Comercial (fase 9): funil de noivas e debutantes. Liga no 09-15, junto com o E2E. */
-  comercial: false,
+  /** Comercial (fase 9): backend real 09-04..09-10, telas 09-11..09-14 e E2E 09-15. */
+  comercial: true,
 } as const;
 
 export type FeatureKey = keyof typeof FLAGS;
