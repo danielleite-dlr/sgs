@@ -1,0 +1,133 @@
+type CommercialPackageRef {
+  id: UUID!
+  name: String!
+  price: String!
+}
+
+type CommercialDeal {
+  id: UUID!
+  leadId: UUID!
+  lead: CommercialLeadRef!
+  stage: CommercialStage!
+  status: String!
+  kind: String!
+  beneficiaryName: String
+  eventDate: String
+  package: CommercialPackageRef
+  packageName: String
+  packagePrice: String
+  discountAmount: String!
+  finalAmount: String
+  assignee: CommercialMember
+  source: String!
+  location: String
+  notes: String
+  stageEnteredAt: DateTime!
+  lastInteractionAt: DateTime
+  overdue: Boolean!
+  overdueSince: DateTime
+  lostReasonCode: String
+  lostReasonText: String
+  closedAt: DateTime
+  wonContractId: UUID
+  createdAt: DateTime!
+}
+
+type CommercialDealPage {
+  items: [CommercialDeal!]!
+  total: Int!
+}
+
+input CommercialDealFilter {
+  stageId: UUID
+  status: String
+  kind: String
+  leadId: UUID
+  assigneeMemberId: UUID
+  unassigned: Boolean
+  closedSinceDays: Int
+  limit: Int
+  offset: Int
+}
+
+input CreateCommercialDealInput {
+  leadId: UUID!
+  kind: String!
+  stageId: UUID
+  eventDate: String
+  beneficiaryName: String
+  packageId: UUID
+  discountAmount: String
+  assigneeMemberId: UUID
+  source: String
+  location: String
+  notes: String
+}
+
+input UpdateCommercialDealInput {
+  id: UUID!
+  kind: String
+  eventDate: String
+  beneficiaryName: String
+  packageId: UUID
+  discountAmount: String
+  source: String
+  location: String
+  notes: String
+}
+
+type CommercialDealPayload {
+  deal: CommercialDeal
+  errors: [UserError!]!
+}
+
+type CommercialInteraction {
+  id: UUID!
+  leadId: UUID!
+  dealId: UUID
+  type: String!
+  notes: String
+  occurredAt: DateTime!
+  createdBy: CommercialMember
+  reminderId: UUID
+}
+
+input CreateCommercialInteractionInput {
+  leadId: UUID!
+  dealId: UUID
+  type: String!
+  notes: String
+  occurredAt: DateTime
+  nextContactAt: DateTime
+  nextContactTitle: String
+}
+
+type CommercialInteractionPayload {
+  interaction: CommercialInteraction
+  errors: [UserError!]!
+}
+
+extend type CommercialLead {
+  deals: [CommercialDeal!]!
+  interactions(limit: Int): [CommercialInteraction!]!
+}
+
+extend type Query {
+  commercialDeals(filter: CommercialDealFilter): CommercialDealPage!
+  commercialDeal(id: UUID!): CommercialDeal
+  commercialInteractions(leadId: UUID!, dealId: UUID, limit: Int): [CommercialInteraction!]!
+}
+
+extend type Mutation {
+  createCommercialDeal(input: CreateCommercialDealInput!): CommercialDealPayload!
+  updateCommercialDeal(input: UpdateCommercialDealInput!): CommercialDealPayload!
+  moveCommercialDeal(id: UUID!, stageId: UUID!): CommercialDealPayload!
+  assignCommercialDeal(id: UUID!, assigneeMemberId: UUID): CommercialDealPayload!
+  loseCommercialDeal(id: UUID!, reasonCode: String!, reasonText: String): CommercialDealPayload!
+  reopenCommercialDeal(id: UUID!, stageId: UUID): CommercialDealPayload!
+  deleteCommercialDeal(id: UUID!): CommercialOkPayload!
+  createCommercialInteraction(
+    input: CreateCommercialInteractionInput!
+  ): CommercialInteractionPayload!
+  deleteCommercialInteraction(id: UUID!): CommercialOkPayload!
+}
