@@ -576,6 +576,8 @@ model DeviceToken {
   platform       String   @db.VarChar(10)
   token          String   @db.Text
   appVersion     String?  @map("app_version") @db.VarChar(20)
+  p256dh         String?  @db.VarChar(255)
+  auth           String?  @db.VarChar(255)
   lastSeenAt     DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(6)
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
