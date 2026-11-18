@@ -51,19 +51,20 @@ async function expectNothingSaved(brideName: string) {
   const data = await gql<{
     contracts: { brideName: string | null }[];
     bridalGroups: { name: string }[];
-    clients: { totalCount: number };
+    clients: { rows: { fullName: string }[] };
   }>(
     `query($s: String) {
       contracts { brideName }
       bridalGroups { name }
-      clients(search: $s) { totalCount }
+      clients(search: $s) { rows { fullName } }
     }`,
     { s: brideName },
     { token },
   );
   expect(data.contracts.filter((c) => c.brideName?.includes(brideName))).toEqual([]);
   expect(data.bridalGroups.filter((g) => g.name.includes(brideName))).toEqual([]);
-  expect(data.clients.totalCount).toBe(0);
+  // A busca também casa CPF por dígitos (só dígitos do termo): conferir pelo nome, não pelo total.
+  expect(data.clients.rows.filter((c) => c.fullName.includes(brideName))).toEqual([]);
 }
 
 test.describe('Prévia do contrato — telas largas', () => {

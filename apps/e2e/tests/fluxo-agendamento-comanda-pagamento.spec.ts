@@ -37,6 +37,8 @@ test.describe('Fluxo: agendamento com sinal, comanda, pagamento dividido e comis
     page,
     browser,
   }) => {
+    // Fluxo longo (~25 s sozinho, no limite dos 30 s): sob a suíte completa estourava o timeout.
+    test.slow();
     const { servicePrice, productPrice, productId, serviceId } = seed.phase3;
     const { id: clientId, name: clientName } = client;
     const total = Number(servicePrice) + Number(productPrice); // 80 + 35 = 115
