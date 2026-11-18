@@ -8,11 +8,11 @@ import {
 import { FEATURES, isPathEnabled } from '@/config/features';
 
 describe('permissões do Comercial', () => {
-  it('flag desligada até o 09-15', () => {
-    expect(FEATURES.comercial).toBe(false);
-    expect(isPathEnabled('/comercial')).toBe(false);
-    expect(isPathEnabled('/comercial/leads/x')).toBe(false);
-    expect(isPathEnabled('/contato/org/tok')).toBe(false);
+  it('flag ligada no 09-15', () => {
+    expect(FEATURES.comercial).toBe(true);
+    expect(isPathEnabled('/comercial')).toBe(true);
+    expect(isPathEnabled('/comercial/leads/x')).toBe(true);
+    expect(isPathEnabled('/contato/org/tok')).toBe(true);
   });
 
   it('canUseCommercial', () => {
