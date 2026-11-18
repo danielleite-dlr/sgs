@@ -407,6 +407,16 @@ Plans:
 Plans:
 - [ ] TBD (run /gsd:plan-phase 10 to break down)
 
+### Phase 11: Prioridade de profissionais e cronograma da noiva
+
+**Goal:** Pedido da usuária em 2026-11-18. (1) Na tela Profissionais, marcar quem **atende noiva** e quem é **fixa**. (2) Ao sugerir/distribuir atendimentos, **preencher primeiro as fixas livres** (e, para noivas, as fixas que atendem noiva), só depois as não fixas; com **duas ou mais fixas livres, sugerir a divisão mais justa possível**. (3) No cronograma do grupo de noiva, a noiva e as acompanhantes do grupo têm prioridade para cumprir o cronograma da noiva: **todas maquiadas e penteadas antes do make-off (fotos)** e **prontas no horário de saída configurável**, sempre respeitando o cronograma. Base existente: cronograma por pacote da 04.2 (`departureTime`, etapas antes da saída) e a sugestão de agenda da fase 4 (heurística/IA em `apps/backend/src/bridal/ai`). Ordem decidida: depois da fase 10, antes do app iOS.
+**Requirements**: TBD
+**Depends on:** Phase 10
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 11 to break down)
+
 ---
 
 ## Backlog
