@@ -47,7 +47,7 @@ export function DealCard({ deal, openStages, onMove, onWin, onLose }: Props) {
       className={cn(
         'relative rounded-md border bg-white p-sm shadow-sm',
         deal.overdue ? 'border-error-500 bg-error-50' : 'border-neutral-200',
-        isDragging && 'z-10 opacity-80 shadow-lg',
+        isDragging && 'z-10 opacity-80 shadow-sm ring-2 ring-primary-300',
       )}
     >
       <div className="flex items-start gap-xs">
