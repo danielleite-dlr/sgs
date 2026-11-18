@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 9 context gathered
-last_updated: "2026-11-18T14:32:55.948Z"
-last_activity: 2026-11-18 -- Phase 09 execution started
+stopped_at: Completed 09-02-PLAN.md
+last_updated: "2026-11-18T14:39:07.346Z"
+last_activity: 2026-11-18
 progress:
   total_phases: 12
   completed_phases: 10
   total_plans: 142
-  completed_plans: 125
+  completed_plans: 126
   percent: 100
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 09 (comercial-crm-do-atimos-no-sgs) — EXECUTING
-Plan: 1 of 17
-Status: Executing Phase 09
-Last activity: 2026-11-18 -- Phase 09 execution started
+Plan: 2 of 17
+Status: Ready to execute
+Last activity: 2026-11-18
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -104,6 +104,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 07 P11 | 70min | 2 tasks | 1 files |
 | Phase 08 P06 | 25min | 2 tasks | 7 files |
 | Phase 08 P07 | ~1h30 | 2 tasks | 1 files |
+| Phase 09 P02 | 20min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -201,6 +202,7 @@ Recent decisions affecting current work:
 - [Phase 04.2]: Confirmar sobre cronograma oficial existente pede AlertDialog; make/penteado só após a primeira simulação, sem pré-seleção
 - [Phase 07]: @sgs/shared sem consumidores nos apps com Docker; versões Capacitor exatas e iguais
 - [Phase 08]: No iPhone fora do app instalado, Instalar no iPhone substitui o link do APK no login
+- [Phase 09]: 09-02: visibilityWhere tipado como Record<string, unknown> até o client Prisma do 09-01; D-21 em WIN_DEAL_ROLES (ADMIN, MANAGER, ATTENDANT)
 
 ### Pending Todos
 
@@ -271,8 +273,8 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-18T12:47:41.584Z
-Stopped at: Phase 9 context gathered
-Resume file: .planning/phases/09-comercial-crm-do-atimos-no-sgs/09-CONTEXT.md
+Last session: 2026-11-18T14:39:07.332Z
+Stopped at: Completed 09-02-PLAN.md
+Resume file: None
 | 2026-11-12 | fast | Montar manualmente (noivas) sem duplicar serviços do teste | ✅ |
 | 2026-11-13 | fast | Comanda: crédito do cliente em destaque no pagamento e no card da cliente | ✅ |
