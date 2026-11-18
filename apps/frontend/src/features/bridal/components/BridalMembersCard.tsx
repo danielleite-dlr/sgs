@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -214,9 +215,14 @@ export function BridalMembersCard({ group }: Props) {
               return (
                 <tr key={m.id} className="border-t border-neutral-200" data-testid={`member-${m.id}`}>
                   <td className="p-sm">
-                    <span className="font-serif text-[15px] font-semibold text-neutral-800">
+                    <Link
+                      to={`/clientes/${m.clientId}`}
+                      state={{ voltar: true }}
+                      className="font-serif text-[15px] font-semibold text-neutral-800 hover:underline"
+                      data-testid={`member-client-link-${m.id}`}
+                    >
                       {toDisplayName(m.clientName)}
-                    </span>
+                    </Link>
                     {m.relationLabel && (
                       <span className="block text-[12px] font-normal text-neutral-500">
                         {m.relationLabel}

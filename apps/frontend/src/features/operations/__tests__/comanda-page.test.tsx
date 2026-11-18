@@ -89,6 +89,13 @@ describe('ComandaPage', () => {
     expect(screen.getByTestId('comanda-add-product')).toBeInTheDocument();
   });
 
+  it('o card Cliente leva à ficha da cliente (nome e botão Ver ficha)', async () => {
+    renderPage(makeComanda({ items }));
+    expect(await screen.findByTestId('comanda-client-card')).toBeInTheDocument();
+    expect(screen.getByTestId('comanda-client-link')).toHaveAttribute('href', '/clientes/c1');
+    expect(screen.getByTestId('comanda-ver-ficha')).toHaveAttribute('href', '/clientes/c1');
+  });
+
   it('comanda fechada com itens sem regra mostra o aviso D-24', async () => {
     renderPage(
       makeComanda({
