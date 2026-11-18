@@ -5,6 +5,7 @@ extend type Query {
   client(id: UUID!): Client
   clientsByField(cpf: String, phone: String, email: String, excludeId: UUID): [Client!]!
   clientHistory(clientId: UUID!, filters: ClientHistoryFilters): [ClientHistoryItem!]!
+  clientOverview(clientId: UUID!): ClientOverview!
 }
 
 extend type Mutation {
@@ -45,7 +46,7 @@ input ClientHistoryFilters {
 
 enum ClientHistoryKind { all appointment product comanda }
 
-# Phase 2 stub — Phase 3 fills in real fields when comandas/appointments land
+"kind: appointment | comanda | product | contract_payment; entityType: appointment | comanda | contract."
 type ClientHistoryItem {
   id: UUID!
   occurredAt: DateTime!
@@ -53,6 +54,61 @@ type ClientHistoryItem {
   description: String!
   amount: String
   professionalName: String
+  entityType: String
+  entityId: UUID
+}
+
+"Situação da cliente no estabelecimento (grupos de noiva, contratos, próximos atendimentos, números)."
+type ClientOverview {
+  bridalGroups: [ClientOverviewGroup!]!
+  contracts: [ClientOverviewContract!]!
+  upcomingAppointments: [ClientOverviewAppointment!]!
+  stats: ClientOverviewStats!
+}
+
+"role: bride | debutante | companion | responsible; eventDate: YYYY-MM-DD."
+type ClientOverviewGroup {
+  id: UUID!
+  name: String!
+  eventKind: String!
+  role: String!
+  eventDate: String!
+  eventTime: String
+  status: String!
+  trialDates: [DateTime!]!
+}
+
+type ClientOverviewContract {
+  id: UUID!
+  code: String!
+  status: String!
+  groupId: UUID!
+  groupName: String!
+  totalAmount: String!
+  paid: String!
+  balance: String!
+  nextDueDate: String
+  nextDueAmount: String
+}
+
+"kind: trial | event | normal."
+type ClientOverviewAppointment {
+  id: UUID!
+  startsAt: DateTime!
+  endsAt: DateTime!
+  status: String!
+  serviceName: String!
+  professionalName: String!
+  kind: String!
+  comandaId: UUID
+  bridalGroupId: UUID
+}
+
+type ClientOverviewStats {
+  completedCount: Int!
+  lastVisitAt: DateTime
+  totalSpent: String!
+  creditBalance: String!
 }
 
 input CreateClientInput {

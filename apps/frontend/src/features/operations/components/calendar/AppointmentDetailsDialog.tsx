@@ -120,6 +120,26 @@ export function AppointmentDetailsDialog({
             </p>
           )}
           <div className="flex flex-wrap justify-end gap-xs">
+            <Button asChild variant="outline" size="sm" className="shrink-0">
+              <Link
+                to={`/clientes/${appointment.clientId}`}
+                state={{ voltar: true }}
+                data-testid="appointment-open-client"
+              >
+                Ver ficha da cliente
+              </Link>
+            </Button>
+            {appointment.bridalGroupId && isPathEnabled('/noivas') && (
+              <Button asChild variant="outline" size="sm" className="shrink-0">
+                <Link
+                  to={`/noivas/${appointment.bridalGroupId}`}
+                  state={{ voltar: true }}
+                  data-testid="appointment-open-group"
+                >
+                  Abrir grupo
+                </Link>
+              </Button>
+            )}
             {comandaLinkEnabled && (
               <Button asChild variant="outline" size="sm">
                 <Link

@@ -53,6 +53,15 @@ export class ClientsResolver {
   }
 
   @RequirePermission(PERMISSIONS.CLIENT_READ)
+  @Query('clientOverview')
+  async clientOverview(
+    @Args('clientId') clientId: string,
+    @CurrentTenant() tenantCtx: TenantContext,
+  ) {
+    return this.clients.overview(tenantCtx.organizationId, clientId);
+  }
+
+  @RequirePermission(PERMISSIONS.CLIENT_READ)
   @Query('clientHistory')
   async clientHistory(
     @Args('clientId') clientId: string,

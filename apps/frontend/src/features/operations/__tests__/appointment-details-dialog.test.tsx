@@ -81,6 +81,22 @@ describe("AppointmentDetailsDialog", () => {
     flag.enabled = false;
   });
 
+  it("sempre oferece 'Ver ficha da cliente' para a ficha", () => {
+    flag.enabled = false;
+    renderDialog();
+    expect(screen.getByTestId("appointment-open-client")).toHaveAttribute("href", "/clientes/c1");
+    expect(screen.queryByTestId("appointment-open-group")).toBeNull();
+  });
+
+  it("agendamento de noiva também oferece 'Abrir grupo'", () => {
+    flag.enabled = true;
+    appointment.bridalGroupId = "g1";
+    renderDialog();
+    expect(screen.getByTestId("appointment-open-group")).toHaveAttribute("href", "/noivas/g1");
+    appointment.bridalGroupId = null;
+    flag.enabled = false;
+  });
+
   it("sem permissão de escrita não mostra ações", () => {
     flag.enabled = false;
     renderDialog(false);

@@ -249,7 +249,14 @@ export function ComandaPage() {
             </CardHeader>
             <CardContent className="space-y-xs">
               <p className="break-words font-serif text-[17px] font-semibold leading-6 text-neutral-800">
-                {toDisplayName(comanda.client.fullName)}
+                <Link
+                  to={`/clientes/${comanda.client.id}`}
+                  state={{ voltar: true }}
+                  className="font-serif text-[17px] font-semibold leading-6 text-neutral-800 hover:underline"
+                  data-testid="comanda-client-link"
+                >
+                  {toDisplayName(comanda.client.fullName)}
+                </Link>
               </p>
               {comanda.client.phone && (
                 <div className="flex items-center gap-xs text-body tabular-nums text-neutral-500">
@@ -267,6 +274,15 @@ export function ComandaPage() {
                   })}
                 </span>
               </div>
+              <Button asChild variant="outline" size="sm" className="shrink-0">
+                <Link
+                  to={`/clientes/${comanda.client.id}`}
+                  state={{ voltar: true }}
+                  data-testid="comanda-ver-ficha"
+                >
+                  Ver ficha
+                </Link>
+              </Button>
               {Number(comanda.clientCreditBalance) > 0 ? (
                 <div
                   className="flex items-center gap-xs rounded-md border border-primary-300 bg-primary-50 px-sm py-xs text-body font-semibold tabular-nums text-primary-900"
