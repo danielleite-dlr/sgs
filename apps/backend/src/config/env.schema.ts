@@ -91,6 +91,11 @@ export const envSchema = z.object({
     .default('true')
     .transform((v) => v === 'true')
     .describe('Liga o agendador BullMQ dos alertas de contrato'),
+  COMMERCIAL_REMINDERS_SCHEDULER: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true')
+    .describe('Liga o agendador BullMQ dos lembretes do Comercial (fase 9)'),
 
   // Fase 7 — push (FCM HTTP v1). Ausente => push desligado (no-op), backend sobe normal.
   FCM_SERVICE_ACCOUNT_JSON: z
