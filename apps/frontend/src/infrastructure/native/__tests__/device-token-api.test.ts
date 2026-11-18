@@ -8,6 +8,7 @@ import {
   REGISTER_DEVICE_TOKEN,
   UNREGISTER_DEVICE_TOKEN,
   registerDeviceToken,
+  registerWebPushSubscription,
   unregisterCurrentDeviceToken,
 } from '../device-token.api';
 
@@ -27,6 +28,23 @@ describe('device-token.api', () => {
       variables: { input: { token: 'tok', platform: 'android', provider: 'fcm' } },
     });
     expect(localStorage.getItem(DEVICE_TOKEN_KEY)).toBe('tok');
+  });
+
+  it('registra a inscrição Web Push com provider webpush', async () => {
+    await registerWebPushSubscription('https://push/e1', { p256dh: 'pk', auth: 'au' });
+    expect(mutate).toHaveBeenCalledWith({
+      mutation: REGISTER_DEVICE_TOKEN,
+      variables: {
+        input: {
+          token: 'https://push/e1',
+          platform: 'ios',
+          provider: 'webpush',
+          p256dh: 'pk',
+          auth: 'au',
+        },
+      },
+    });
+    expect(localStorage.getItem(DEVICE_TOKEN_KEY)).toBe('https://push/e1');
   });
 
   it('sem token local não chama o backend ao remover', async () => {

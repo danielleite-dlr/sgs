@@ -24,6 +24,25 @@ export async function registerDeviceToken(token: string): Promise<void> {
   localStorage.setItem(DEVICE_TOKEN_KEY, token);
 }
 
+export async function registerWebPushSubscription(
+  endpoint: string,
+  keys: { p256dh: string; auth: string },
+): Promise<void> {
+  await apolloClient.mutate({
+    mutation: REGISTER_DEVICE_TOKEN,
+    variables: {
+      input: {
+        token: endpoint,
+        platform: 'ios',
+        provider: 'webpush',
+        p256dh: keys.p256dh,
+        auth: keys.auth,
+      },
+    },
+  });
+  localStorage.setItem(DEVICE_TOKEN_KEY, endpoint);
+}
+
 export async function unregisterCurrentDeviceToken(): Promise<void> {
   const token = localStorage.getItem(DEVICE_TOKEN_KEY);
   if (!token) return;
