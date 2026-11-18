@@ -2,7 +2,7 @@
 // handler de fetch (D-03, fora do escopo o modo offline).
 // Cópia de apps/frontend/src/infrastructure/native/push-route.ts e packages/shared/src/push.ts;
 // o teste service-worker.test.ts confere que as três regex são iguais.
-const AGENDA_ROUTE_RE = /^\/agenda(\?[A-Za-z0-9=&._~%-]*)?$/;
+const PUSH_ROUTE_RE = /^\/(agenda|comercial\/lembretes)(\?[A-Za-z0-9=&._~%-]*)?$/;
 const DEFAULT_ROUTE = '/agenda';
 const DEFAULT_TITLE = 'Gestor Beauty';
 
@@ -12,7 +12,7 @@ function isAllowedPushRoute(r) {
     r.length <= 300 &&
     !r.includes('..') &&
     !r.startsWith('//') &&
-    AGENDA_ROUTE_RE.test(r)
+    PUSH_ROUTE_RE.test(r)
   );
 }
 

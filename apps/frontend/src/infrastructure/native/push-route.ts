@@ -1,5 +1,6 @@
 // Cópia de packages/shared/src/push.ts — o Docker do frontend não enxerga o workspace.
 export const AGENDA_ROUTE_RE = /^\/agenda(\?[A-Za-z0-9=&._~%-]*)?$/;
+export const PUSH_ROUTE_RE = /^\/(agenda|comercial\/lembretes)(\?[A-Za-z0-9=&._~%-]*)?$/;
 
 export function isAllowedPushRoute(route: unknown): route is string {
   return (
@@ -7,7 +8,7 @@ export function isAllowedPushRoute(route: unknown): route is string {
     route.length <= 300 &&
     !route.includes('..') &&
     !route.startsWith('//') &&
-    AGENDA_ROUTE_RE.test(route)
+    PUSH_ROUTE_RE.test(route)
   );
 }
 
