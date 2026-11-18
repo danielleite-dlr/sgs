@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { MockedProvider } from '@apollo/client/testing';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it } from 'vitest';
 import { CommercialRoute } from '../components/CommercialRoute';
@@ -54,9 +55,11 @@ describe('CommercialRoute', () => {
 describe('CommercialSettingsPage', () => {
   it('mostra as abas Etapas e Formulário do site', () => {
     render(
-      <MemoryRouter>
-        <CommercialSettingsPage />
-      </MemoryRouter>,
+      <MockedProvider mocks={[]}>
+        <MemoryRouter>
+          <CommercialSettingsPage />
+        </MemoryRouter>
+      </MockedProvider>,
     );
     expect(screen.getByRole('tab', { name: 'Etapas' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Formulário do site' })).toBeInTheDocument();
