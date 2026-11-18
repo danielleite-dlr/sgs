@@ -1,7 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { TenantContextService } from '../database/tenant-context.service';
 import { normalizeCpf } from './cpf.util';
+import {
+  ClientHistoryFiltersInput,
+  loadClientHistory,
+  loadClientOverview,
+} from './client-overview';
 import {
   ClientFieldError,
   createClientTx,
@@ -30,7 +35,8 @@ const errPayload = (code: string, message: string, field?: string) => ({
  *   - CPF is stored and looked up in normalized (digits-only) form
  *   - Duplicate CPF/phone/email is NOT blocked — clientsByField supports
  *     the UI showing duplicates before the attendant decides (D-22)
- *   - clientHistory returns [] in Phase 2; Phase 3 aggregates appointments/comandas
+ *   - clientHistory agrega agendamentos, comandas fechadas e pagamentos de contrato;
+ *     clientOverview traz a situação (grupos de noiva, contratos, próximos atendimentos)
  *
  * All DB ops are wrapped in runWithTenant (RLS enforced by PostgreSQL).
  */
@@ -176,31 +182,16 @@ export class ClientsService {
    * Phase 3 will aggregate appointments + comandas into this query.
    * The resolver is gated by CLIENT_READ so the slot is available immediately.
    */
-  async history(
-    orgId: string,
-    clientId: string,
-    _filters?: {
-      fromDate?: Date;
-      toDate?: Date;
-      professionalId?: string;
-      kind?: string;
-    },
-  ) {
-    return this.tenant.runWithTenant(orgId, async (tx) => {
-      // Verify client exists within this org (RLS ensures org scope)
-      const c = await tx.client.findFirst({
-        where: { id: clientId, deletedAt: null },
-      });
-      if (!c) return [];
-      // Phase 2 stub — returns empty array; Phase 3 replaces with real aggregation
-      return [] as Array<{
-        id: string;
-        occurredAt: Date;
-        kind: string;
-        description: string;
-        amount: string | null;
-        professionalName: string | null;
-      }>;
-    });
+  async history(orgId: string, clientId: string, filters?: ClientHistoryFiltersInput) {
+    return this.tenant.runWithTenant(orgId, (tx) => loadClientHistory(tx, clientId, filters ?? {}));
+  }
+
+  /** Situação da cliente: grupos de noiva, contratos, próximos atendimentos e números. */
+  async overview(orgId: string, clientId: string) {
+    const out = await this.tenant.runWithTenant(orgId, (tx) =>
+      loadClientOverview(tx, orgId, clientId),
+    );
+    if (!out) throw new NotFoundException('Cliente não encontrada.');
+    return out;
   }
 }
