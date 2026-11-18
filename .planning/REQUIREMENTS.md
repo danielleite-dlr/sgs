@@ -69,6 +69,21 @@
 
 - [ ] **AI-01**: Sistema sugere alocação ótima de profissionais para agenda completa de evento de noivas via Claude API, considerando disponibilidade e tempo de serviço
 
+### Comercial (Fase 9)
+
+- [ ] **COM-01**: Atendente cadastra lead (manual) separado das clientes, com aviso "já é cliente: Fulana" por telefone/e-mail e vínculo à cliente existente _(09 D-01, D-02)_
+- [ ] **COM-02**: Gerente/atendente importa leads de planilha Excel/CSV com prévia de linhas válidas, inválidas e duplicadas _(09 D-04)_
+- [ ] **COM-03**: Salão recebe leads pelo formulário público do site (token por organização, consentimento LGPD, anti-spam, limite de requisições, embutível em iframe) _(09 D-04, D-20)_
+- [ ] **COM-04**: Lead tem vários negócios independentes, só Noiva ou Debutante, com data do evento, pacote do catálogo, desconto, valor final, responsável, origem, local e observações _(09 D-03, D-05, D-06, D-18)_
+- [ ] **COM-05**: Etapas do funil configuráveis por salão (nome, cor, ordem, prazo em dias), padrão Novo/Contato/Proposta/Negociação/Ganho/Perdido, com Ganho/Perdido de sistema e alerta de SLA por etapa _(09 D-07, D-15)_
+- [ ] **COM-06**: Pipeline em kanban: arrastar no computador, rolagem lateral e menu "Mover para…" no celular _(09, critério do Claude)_
+- [ ] **COM-07**: Histórico único de interações por lead (6 tipos) com "próximo contato em" que cria o lembrete _(09 D-17)_
+- [ ] **COM-08**: Negócio ganho cria ou reaproveita a cliente, cria grupo + contrato rascunho com o pacote pelo fluxo de contratos existente, lança o sinal opcional no contrato e no caixa e abre o contrato _(09 D-08, D-09, D-18, D-21)_
+- [ ] **COM-09**: Negócio perdido exige motivo de lista fixa + texto livre; só ADMIN/MANAGER reabrem _(09 D-10, D-19)_
+- [ ] **COM-10**: Comercial só para ADMIN/MANAGER/ATTENDANT; ATTENDANT vê só os negócios dela e os leads deles; sem responsável só ADMIN/MANAGER; configurar etapas, excluir, trocar responsável e relatórios só ADMIN/MANAGER; tudo imposto na API _(09 D-11 a D-14, D-20)_
+- [ ] **COM-11**: Lembretes com lista (vencidos, hoje, próximos), destaque no Painel e push Android/iPhone na hora marcada para o responsável e gerentes/admins _(09 D-16)_
+- [ ] **COM-12**: Painel comercial (números do dia, follow-ups pendentes, últimas interações, funil, conversão, valor em negociação) e Relatórios só ADMIN/MANAGER com filtros, motivos de perda, origem e exportação Excel/PDF _(09 D-13)_
+
 ### Qualidade / Observabilidade
 
 - [ ] **QA-01**: Cobertura de testes unitários ≥80% do código de domínio no backend (regras de negócio, entidades, value objects)
@@ -156,16 +171,28 @@
 | AI-01 | Phase 4 | Pending |
 | BRI-01 | Phase 04.2 | Complete |
 | BRI-02 | Phase 04.2 | Complete |
+| COM-01 | Phase 9 | Pending |
+| COM-02 | Phase 9 | Pending |
+| COM-03 | Phase 9 | Pending |
+| COM-04 | Phase 9 | Pending |
+| COM-05 | Phase 9 | Pending |
+| COM-06 | Phase 9 | Pending |
+| COM-07 | Phase 9 | Pending |
+| COM-08 | Phase 9 | Pending |
+| COM-09 | Phase 9 | Pending |
+| COM-10 | Phase 9 | Pending |
+| COM-11 | Phase 9 | Pending |
+| COM-12 | Phase 9 | Pending |
 | QA-01 | Backlog | Deferred |
 | QA-02 | Backlog | Deferred |
 | QA-03 | Backlog | Deferred |
 | QA-04 | Backlog | Deferred |
 
 **Coverage:**
-- v1 requirements: 35 total
-- Mapped to phases: 35/35 ✓
+- v1 requirements: 47 total
+- Mapped to phases: 47/47 ✓
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-02*
-*Last updated: 2026-05-02 — Traceability filled after roadmap creation*
+*Last updated: 2026-11-18 — COM-01..COM-12 (fase 9, Comercial) acrescentados no plan-phase*

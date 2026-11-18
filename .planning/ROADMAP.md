@@ -374,12 +374,28 @@ Plans:
 ### Phase 9: Comercial - CRM do Atimos no SGS
 
 **Goal:** Trazer para o SGS o acompanhamento comercial do Atimos CRM (`/root/atmo-crm/atmos-crm`): novo menu **Comercial** com os submenus Painel comercial, Leads, Pipeline, Lembretes e Relatórios (relatórios só admin/gerente). Leads com histórico de interações; pipeline em kanban com etapas configuráveis por salão (padrão Novo, Contato, Proposta, Negociação, Ganho, Perdido), ganho/perdido com motivo e pacote/desconto; lembretes de follow-up. Negócio ganho vira cliente do SGS e abre contrato rascunho com o pacote escolhido. Vem antes do app nativo iOS (decisão da usuária em 2026-11-18, depois de achar fraca a usabilidade do app instalado pela Tela de Início).
-**Requirements**: TBD
+**Requirements:** COM-01, COM-02, COM-03, COM-04, COM-05, COM-06, COM-07, COM-08, COM-09, COM-10, COM-11, COM-12 (detalhe e rastreabilidade em REQUIREMENTS.md, seção "Comercial (Fase 9)")
 **Depends on:** Phase 8
-**Plans:** 0 plans
+**Plans:** 17 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 9 to break down)
+- [ ] 09-01-dados-rls-permissoes-PLAN.md — tabelas commercial_* com FORCE RLS, etapas padrão, permissões commercial.*, fixtures e phase9-rls-rbac (onda 1)
+- [ ] 09-02-dominio-puro-tdd-PLAN.md — TDD de telefone, SLA por etapa, visibilidade por papel e ponto único da D-21; instala exceljs (onda 1)
+- [ ] 09-03-frontend-base-menu-guard-PLAN.md — flag comercial, menu filtrado por papel, guard de rota, rotas e pontos de montagem (onda 1)
+- [ ] 09-04-backend-nucleo-etapas-leads-PLAN.md — CommercialModule + submódulos, SDL, etapas configuráveis, leads com duplicidade (onda 2)
+- [ ] 09-07-push-lembrete-rotas-PLAN.md — push commercial.reminder e allowlist /comercial/lembretes nas 4 cópias (onda 2)
+- [ ] 09-05-backend-negocios-interacoes-perdido-PLAN.md — negócios, mover/atribuir, perdido/reabrir, interações com próximo contato (onda 3)
+- [ ] 09-06-backend-ganho-PLAN.md — ganho atômico: cliente + grupo + contrato rascunho + sinal no caixa (createInTx, createClientTx) (onda 3)
+- [ ] 09-08-backend-lembretes-agendador-PLAN.md — CRUD de lembretes e tick BullMQ por minuto que dispara o push (onda 3)
+- [ ] 09-09-backend-painel-relatorios-export-PLAN.md — painel comercial, relatórios e exportação Excel/PDF no backend (onda 3)
+- [ ] 09-10-backend-formulario-importacao-PLAN.md — importação de planilha com prévia e formulário público com LGPD/anti-spam (onda 3)
+- [ ] 09-11-frontend-leads-PLAN.md — telas de leads, aviso de cliente existente, negócios e interações (onda 4)
+- [ ] 09-14-frontend-formulario-importacao-PLAN.md — diálogo de importação, aba do formulário, página pública e nginx frame-ancestors (onda 4)
+- [ ] 09-12-frontend-pipeline-ganho-perdido-PLAN.md — kanban, diálogos de ganho (abre o contrato) e perda, configuração de etapas (onda 5)
+- [ ] 09-13-frontend-lembretes-painel-relatorios-PLAN.md — telas de lembretes, painel comercial e relatórios com exportação (onda 5)
+- [ ] 09-15-e2e-ligar-flag-PLAN.md — liga a flag e E2E Playwright do funil, visibilidade e formulário (onda 6)
+- [ ] 09-16-gate-deploy-staging-PLAN.md — gate completo, backup, deploy no staging (worktree limpo se preciso) e CI verde (onda 7)
+- [ ] 09-17-verificacao-humana-PLAN.md — push no aparelho, toque no kanban, iframe e confirmação da D-21 com a usuária (onda 8)
 
 ---
 
