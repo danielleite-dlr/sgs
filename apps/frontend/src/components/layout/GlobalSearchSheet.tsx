@@ -10,6 +10,7 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { searchMenu, flattenMenu, type MenuItem } from './menu-config';
+import { useMenu } from './use-menu';
 
 interface GlobalSearchSheetProps {
   open: boolean;
@@ -24,6 +25,7 @@ interface GlobalSearchSheetProps {
  */
 export function GlobalSearchSheet({ open, onOpenChange }: GlobalSearchSheetProps) {
   const navigate = useNavigate();
+  const menu = useMenu();
   const [query, setQuery] = useState('');
 
   // Reset query when closing
@@ -44,8 +46,8 @@ export function GlobalSearchSheet({ open, onOpenChange }: GlobalSearchSheetProps
   }, [open, onOpenChange]);
 
   const results = query.trim()
-    ? searchMenu(query)
-    : flattenMenu().slice(0, 8); // top 8 as "sugestões" when empty
+    ? searchMenu(query, menu)
+    : flattenMenu(menu).slice(0, 8); // top 8 as "sugestões" when empty
 
   function handleSelect(item: MenuItem) {
     if (item.to) {
