@@ -1,0 +1,66 @@
+type CommercialReminder {
+  id: UUID!
+  title: String!
+  description: String
+  dueAt: DateTime!
+  completedAt: DateTime
+  notifiedAt: DateTime
+  overdue: Boolean!
+  lead: CommercialLeadRef
+  dealId: UUID
+  dealKind: String
+  dealEventDate: String
+  dealStageName: String
+  createdBy: CommercialMember
+}
+
+input CommercialReminderFilter {
+  status: String
+  leadId: UUID
+  dealId: UUID
+  limit: Int
+  offset: Int
+}
+
+type CommercialReminderPage {
+  items: [CommercialReminder!]!
+  total: Int!
+}
+
+type CommercialReminderCounts {
+  overdue: Int!
+  today: Int!
+}
+
+input CreateCommercialReminderInput {
+  title: String!
+  description: String
+  dueAt: DateTime!
+  leadId: UUID
+  dealId: UUID
+}
+
+input UpdateCommercialReminderInput {
+  id: UUID!
+  title: String
+  description: String
+  dueAt: DateTime
+}
+
+type CommercialReminderPayload {
+  reminder: CommercialReminder
+  errors: [UserError!]!
+}
+
+extend type Query {
+  commercialReminders(filter: CommercialReminderFilter): CommercialReminderPage!
+  commercialReminder(id: UUID!): CommercialReminder
+  commercialReminderCounts: CommercialReminderCounts!
+}
+
+extend type Mutation {
+  createCommercialReminder(input: CreateCommercialReminderInput!): CommercialReminderPayload!
+  updateCommercialReminder(input: UpdateCommercialReminderInput!): CommercialReminderPayload!
+  completeCommercialReminder(id: UUID!, completed: Boolean!): CommercialReminderPayload!
+  deleteCommercialReminder(id: UUID!): CommercialOkPayload!
+}
