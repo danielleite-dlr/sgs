@@ -397,6 +397,16 @@ Plans:
 - [ ] 09-16-gate-deploy-staging-PLAN.md — gate completo, backup, deploy no staging (worktree limpo se preciso) e CI verde (onda 7)
 - [ ] 09-17-verificacao-humana-PLAN.md — push no aparelho, toque no kanban e iframe (onda 8)
 
+### Phase 10: Permissões por usuário
+
+**Goal:** Cada papel (Admin, Gerente, Atendente, Profissional) continua vindo com permissões padrão, mas o Admin/Gerente consegue **ligar e desligar funcionalidades por pessoa**, no nível de **item do menu/área** (Agenda, Clientes, Comandas, Financeiro, Previsão de caixa, Contratos, Noivas, Comercial, Relatórios, Catálogo, Profissionais…). Desligado ⇒ some do menu, a rota bloqueia e a **API recusa**. Ex.: um gerente que não vê Financeiro; uma profissional que não vê X. Pedido da usuária em 2026-11-18; decisões: granularidade por item do menu (não por ação), fazer logo depois da fase 9 e antes do app nativo iOS.
+**Requirements**: TBD
+**Depends on:** Phase 9
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 10 to break down)
+
 ---
 
 ## Backlog
