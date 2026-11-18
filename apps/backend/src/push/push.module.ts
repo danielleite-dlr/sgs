@@ -5,6 +5,7 @@ import { DatabaseModule } from '../database/database.module';
 import { AuthzModule } from '../authz/authz.module';
 import { DeviceTokensService } from './device-tokens.service';
 import { DeviceTokensResolver } from './device-tokens.resolver';
+import { PushConfigResolver } from './push-config.resolver';
 import { createPushProvider } from './fcm-push.provider';
 import { PushEventsService } from './push-events.service';
 import { PushProcessor } from './push.processor';
@@ -22,6 +23,7 @@ const workerProviders: Provider[] =
   providers: [
     DeviceTokensService,
     DeviceTokensResolver,
+    PushConfigResolver,
     PushEventsService,
     PushService,
     {

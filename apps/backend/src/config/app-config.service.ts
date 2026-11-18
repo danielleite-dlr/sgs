@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Env } from './env.schema';
 import { FcmServiceAccount, parseFcmServiceAccount } from '../push/fcm-credentials';
+import { parseVapidDetails, VapidDetails } from '../push/web-push-credentials';
 
 /**
  * Typed wrapper around ConfigService for SGS application configuration.
@@ -81,6 +82,14 @@ export class AppConfigService {
 
   get fcmServiceAccount(): FcmServiceAccount | null {
     return parseFcmServiceAccount(this.config.get('FCM_SERVICE_ACCOUNT_JSON', { infer: true }));
+  }
+
+  get vapid(): VapidDetails | null {
+    return parseVapidDetails({
+      publicKey: this.config.get('VAPID_PUBLIC_KEY', { infer: true }),
+      privateKey: this.config.get('VAPID_PRIVATE_KEY', { infer: true }),
+      subject: this.config.get('VAPID_SUBJECT', { infer: true }),
+    });
   }
 
   get pushWorkerEnabled(): boolean {

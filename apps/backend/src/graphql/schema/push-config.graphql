@@ -1,0 +1,10 @@
+"Configuração pública do push para o app web (Fase 8)."
+type PushConfig {
+  "Chave pública VAPID (base64url) ou null quando o Web Push está desligado no servidor."
+  webPushPublicKey: String
+}
+
+extend type Query {
+  "Configuração pública do push. Exige login."
+  pushConfig: PushConfig!
+}
