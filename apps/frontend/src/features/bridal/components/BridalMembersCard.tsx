@@ -219,7 +219,7 @@ export function BridalMembersCard({ group }: Props) {
                       to={`/clientes/${m.clientId}`}
                       state={{ voltar: true }}
                       className="font-serif text-[15px] font-semibold text-neutral-800 hover:underline"
-                      data-testid={`member-client-link-${m.id}`}
+                      data-testid={`client-link-${m.id}`}
                     >
                       {toDisplayName(m.clientName)}
                     </Link>
