@@ -1,5 +1,6 @@
 export const PUSH_QUEUE = 'push-notifications';
 export const PUSH_PROVIDER = 'PUSH_PROVIDER';
+export const WEBPUSH_PROVIDER = 'WEBPUSH_PROVIDER';
 export const PUSH_KINDS = [
   'appointment.created',
   'appointment.cancelled',
@@ -35,7 +36,12 @@ export type PushSendResult =
   | { status: 'invalid_token'; reason: string }
   | { status: 'failed'; retryable: boolean; reason: string };
 
+export interface WebPushKeys {
+  p256dh: string;
+  auth: string;
+}
+
 export interface PushProvider {
   readonly enabled: boolean;
-  send(token: string, message: PushMessage): Promise<PushSendResult>;
+  send(token: string, message: PushMessage, keys?: WebPushKeys): Promise<PushSendResult>;
 }
