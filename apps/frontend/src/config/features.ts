@@ -54,6 +54,8 @@ const FLAGS = {
   assinatura: false,
   /** Ajuda e tutoriais no header — botões decorativos. */
   ajudaTutoriais: false,
+  /** Comercial (fase 9): funil de noivas e debutantes. Liga no 09-15, junto com o E2E. */
+  comercial: false,
 } as const;
 
 export type FeatureKey = keyof typeof FLAGS;
@@ -104,6 +106,8 @@ const GATED_PATHS: ReadonlyArray<readonly [string, FeatureKey]> = [
   ['/contratos', 'contratos'],
   ['/campanhas', 'campanhas'],
   ['/dashboard', 'dashboard'],
+  ['/comercial', 'comercial'],
+  ['/contato', 'comercial'],
 ];
 
 /** `/financeiro` cobre `/financeiro/caixa`, mas não cobriria `/financeiro-x`. */
