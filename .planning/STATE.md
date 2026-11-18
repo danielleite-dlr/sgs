@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 09-02-PLAN.md
+stopped_at: Completed 09-01, 09-02 e 09-03 (onda 1)
 last_updated: "2026-11-18T14:39:07.346Z"
 last_activity: 2026-11-18
 progress:
@@ -104,7 +104,9 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 07 P11 | 70min | 2 tasks | 1 files |
 | Phase 08 P06 | 25min | 2 tasks | 7 files |
 | Phase 08 P07 | ~1h30 | 2 tasks | 1 files |
+| Phase 09 P01 | 35min | 3 tasks | 7 files |
 | Phase 09 P02 | 20min | 2 tasks | 10 files |
+| Phase 09 P03 | 25min | 3 tasks | 25 files |
 
 ## Accumulated Context
 
@@ -202,6 +204,8 @@ Recent decisions affecting current work:
 - [Phase 04.2]: Confirmar sobre cronograma oficial existente pede AlertDialog; make/penteado só após a primeira simulação, sem pré-seleção
 - [Phase 07]: @sgs/shared sem consumidores nos apps com Docker; versões Capacitor exatas e iguais
 - [Phase 08]: No iPhone fora do app instalado, Instalar no iPhone substitui o link do APK no login
+- [Phase 09]: Funções purge_* não mudam: FKs commercial_* para members/contracts/clients/packages são SET NULL
+- [Phase 09]: 09-03: menu filtrado por papel via useMenu(); flag comercial false até o 09-15
 - [Phase 09]: 09-02: visibilityWhere tipado como Record<string, unknown> até o client Prisma do 09-01; D-21 em WIN_DEAL_ROLES (ADMIN, MANAGER, ATTENDANT)
 
 ### Pending Todos
@@ -274,7 +278,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-11-18T14:39:07.332Z
-Stopped at: Completed 09-02-PLAN.md
+Stopped at: Completed 09-01, 09-02 e 09-03 (onda 1)
 Resume file: None
 | 2026-11-12 | fast | Montar manualmente (noivas) sem duplicar serviços do teste | ✅ |
 | 2026-11-13 | fast | Comanda: crédito do cliente em destaque no pagamento e no card da cliente | ✅ |

@@ -11,22 +11,28 @@ datasource db {
 // ===== Identity & Organization =====
 
 model Organization {
-  id             String   @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
-  legalName      String   @map("legal_name") @db.VarChar(255)
-  tradeName      String   @map("trade_name") @db.VarChar(255)
-  documentType   String   @map("document_type") @db.VarChar(10)
-  documentNumber String   @map("document_number") @db.VarChar(14)
-  email          String   @db.VarChar(255)
-  phone          String?  @db.VarChar(20)
-  subdomain      String   @unique @db.VarChar(63)
-  timezone       String   @default("America/Sao_Paulo") @db.VarChar(50)
-  locale         String   @default("pt-BR") @db.VarChar(10)
-  currency       String   @default("BRL") @db.VarChar(3)
-  segment        String   @default("salon") @db.VarChar(30)
-  status         String   @default("active") @db.VarChar(20)
-  settings       Json     @default("{}") @db.JsonB
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  commercialStages       CommercialStage[]
+  commercialLeads        CommercialLead[]
+  commercialDeals        CommercialDeal[]
+  commercialInteractions CommercialInteraction[]
+  commercialReminders    CommercialReminder[]
+  commercialFormSettings CommercialFormSettings?
+  id                     String                  @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  legalName              String                  @map("legal_name") @db.VarChar(255)
+  tradeName              String                  @map("trade_name") @db.VarChar(255)
+  documentType           String                  @map("document_type") @db.VarChar(10)
+  documentNumber         String                  @map("document_number") @db.VarChar(14)
+  email                  String                  @db.VarChar(255)
+  phone                  String?                 @db.VarChar(20)
+  subdomain              String                  @unique @db.VarChar(63)
+  timezone               String                  @default("America/Sao_Paulo") @db.VarChar(50)
+  locale                 String                  @default("pt-BR") @db.VarChar(10)
+  currency               String                  @default("BRL") @db.VarChar(3)
+  segment                String                  @default("salon") @db.VarChar(30)
+  status                 String                  @default("active") @db.VarChar(20)
+  settings               Json                    @default("{}") @db.JsonB
+  createdAt              DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   members                     Member[]
   memberCategories            MemberCategory[]
@@ -131,20 +137,27 @@ model RolePermission {
 }
 
 model Member {
-  id             String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
-  organizationId String    @map("organization_id") @db.Uuid
-  userId         String    @map("user_id") @db.Uuid
-  roleId         String    @map("role_id") @db.Uuid
-  displayName    String    @map("display_name") @db.VarChar(255)
-  isProfessional Boolean   @default(false) @map("is_professional")
-  status         String    @default("active") @db.VarChar(20)
-  seniorityTier  String?   @map("seniority_tier") @db.VarChar(20)
-  phone          String?   @db.VarChar(20)
-  pixKey         String?   @map("pix_key") @db.VarChar(140)
-  birthDate      DateTime? @map("birth_date") @db.Date
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+  commercialLeadsCreated  CommercialLead[]         @relation("CommercialLeadCreatedBy")
+  commercialDealsAssigned CommercialDeal[]         @relation("CommercialDealAssignee")
+  commercialDealsCreated  CommercialDeal[]         @relation("CommercialDealCreatedBy")
+  commercialInteractions  CommercialInteraction[]
+  commercialReminders     CommercialReminder[]
+  commercialFormAssignee  CommercialFormSettings[] @relation("CommercialFormAssignee")
+  commercialFormUpdated   CommercialFormSettings[] @relation("CommercialFormUpdatedBy")
+  id                      String                   @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId          String                   @map("organization_id") @db.Uuid
+  userId                  String                   @map("user_id") @db.Uuid
+  roleId                  String                   @map("role_id") @db.Uuid
+  displayName             String                   @map("display_name") @db.VarChar(255)
+  isProfessional          Boolean                  @default(false) @map("is_professional")
+  status                  String                   @default("active") @db.VarChar(20)
+  seniorityTier           String?                  @map("seniority_tier") @db.VarChar(20)
+  phone                   String?                  @db.VarChar(20)
+  pixKey                  String?                  @map("pix_key") @db.VarChar(140)
+  birthDate               DateTime?                @map("birth_date") @db.Date
+  createdAt               DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt               DateTime?                @map("deleted_at") @db.Timestamptz(6)
 
   organization                Organization           @relation(fields: [organizationId], references: [id])
   user                        User                   @relation(fields: [userId], references: [id])
@@ -341,27 +354,28 @@ model ServicePricingVariant {
 }
 
 model Package {
-  id                  String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
-  organizationId      String    @map("organization_id") @db.Uuid
-  name                String    @db.VarChar(160)
-  price               Decimal   @db.Decimal(12, 2)
-  validForDays        Int?      @map("valid_for_days")
-  depositKind         String?   @map("deposit_kind") @db.VarChar(10)
-  depositValue        Decimal?  @map("deposit_value") @db.Decimal(12, 2)
-  coverImageUrl       String?   @map("cover_image_url") @db.Text
+  commercialDeals     CommercialDeal[]
+  id                  String           @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId      String           @map("organization_id") @db.Uuid
+  name                String           @db.VarChar(160)
+  price               Decimal          @db.Decimal(12, 2)
+  validForDays        Int?             @map("valid_for_days")
+  depositKind         String?          @map("deposit_kind") @db.VarChar(10)
+  depositValue        Decimal?         @map("deposit_value") @db.Decimal(12, 2)
+  coverImageUrl       String?          @map("cover_image_url") @db.Text
   /// Descrição do pacote exibida no contrato (até 2000 caracteres).
-  contractDescription String?   @map("contract_description") @db.Text
-  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(6)
+  contractDescription String?          @map("contract_description") @db.Text
+  createdAt           DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt           DateTime?        @map("deleted_at") @db.Timestamptz(6)
 
-  organization  Organization      @relation(fields: [organizationId], references: [id])
-  services      PackageService[]
-  costItems     PackageCostItem[]
-  comandaItems  ComandaItem[]
-  contracts     Contract[]
-  contractItems ContractItem[]
-  bridalGroups  BridalGroup[]
+  organization    Organization          @relation(fields: [organizationId], references: [id])
+  services        PackageService[]
+  costItems       PackageCostItem[]
+  comandaItems    ComandaItem[]
+  contracts       Contract[]
+  contractItems   ContractItem[]
+  bridalGroups    BridalGroup[]
   timelineSteps   PackageTimelineStep[]
   bridalTimelines BridalTimeline[]
 
@@ -474,23 +488,25 @@ model CommissionRule {
 // ===== Clients =====
 
 model Client {
-  id             String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
-  organizationId String    @map("organization_id") @db.Uuid
-  fullName       String    @map("full_name") @db.VarChar(255)
-  phone          String?   @db.VarChar(30)
-  email          String?   @db.VarChar(255)
-  cpf            String?   @db.VarChar(14)
-  birthDate      DateTime? @map("birth_date") @db.Date
-  address        String?   @db.Text
-  notes          String?   @db.Text
-  rg             String?   @db.VarChar(20)
-  postalCode     String?   @map("postal_code") @db.VarChar(9)
-  phone2         String?   @db.VarChar(30)
-  phone3         String?   @db.VarChar(30)
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
-  version        Int       @default(1)
+  commercialLeads    CommercialLead[] @relation("CommercialLeadClient")
+  commercialDealsWon CommercialDeal[] @relation("CommercialDealWonClient")
+  id                 String           @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId     String           @map("organization_id") @db.Uuid
+  fullName           String           @map("full_name") @db.VarChar(255)
+  phone              String?          @db.VarChar(30)
+  email              String?          @db.VarChar(255)
+  cpf                String?          @db.VarChar(14)
+  birthDate          DateTime?        @map("birth_date") @db.Date
+  address            String?          @db.Text
+  notes              String?          @db.Text
+  rg                 String?          @db.VarChar(20)
+  postalCode         String?          @map("postal_code") @db.VarChar(9)
+  phone2             String?          @db.VarChar(30)
+  phone3             String?          @db.VarChar(30)
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt          DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  version            Int              @default(1)
 
   organization              Organization           @relation(fields: [organizationId], references: [id])
   appointments              Appointment[]
@@ -939,35 +955,36 @@ model ContractSequence {
 }
 
 model Contract {
-  id                   String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
-  organizationId       String    @map("organization_id") @db.Uuid
-  code                 String    @db.VarChar(20)
-  bridalGroupId        String    @map("bridal_group_id") @db.Uuid
-  brideClientId        String    @map("bride_client_id") @db.Uuid
-  packageId            String?   @map("package_id") @db.Uuid
-  status               String    @default("draft") @db.VarChar(20)
-  itemsTotal           Decimal   @default(0) @map("items_total") @db.Decimal(12, 2)
-  discountAmount       Decimal   @default(0) @map("discount_amount") @db.Decimal(12, 2)
-  totalAmount          Decimal   @default(0) @map("total_amount") @db.Decimal(12, 2)
-  depositAmount        Decimal   @default(0) @map("deposit_amount") @db.Decimal(12, 2)
-  balanceDueDaysBefore Int       @map("balance_due_days_before")
-  balanceDueDate       DateTime  @map("balance_due_date") @db.Date
-  cancellationPolicy   Json      @map("cancellation_policy") @db.JsonB
-  currentVersion       Int       @default(0) @map("current_version")
-  acceptedVersion      Int?      @map("accepted_version")
-  linkGeneratedAt      DateTime? @map("link_generated_at") @db.Timestamptz(6)
-  acceptedAt           DateTime? @map("accepted_at") @db.Timestamptz(6)
-  cancelledAt          DateTime? @map("cancelled_at") @db.Timestamptz(6)
-  cancelledBy          String?   @map("cancelled_by") @db.Uuid
-  cancelReason         String?   @map("cancel_reason") @db.Text
-  cancelledByParty     String?   @map("cancelled_by_party") @db.VarChar(10)
-  paymentMode          String    @default("sinal") @map("payment_mode") @db.VarChar(20)
-  discountDescription  String?   @map("discount_description") @db.VarChar(120)
+  commercialDealsWon   CommercialDeal[] @relation("CommercialDealWonContract")
+  id                   String           @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId       String           @map("organization_id") @db.Uuid
+  code                 String           @db.VarChar(20)
+  bridalGroupId        String           @map("bridal_group_id") @db.Uuid
+  brideClientId        String           @map("bride_client_id") @db.Uuid
+  packageId            String?          @map("package_id") @db.Uuid
+  status               String           @default("draft") @db.VarChar(20)
+  itemsTotal           Decimal          @default(0) @map("items_total") @db.Decimal(12, 2)
+  discountAmount       Decimal          @default(0) @map("discount_amount") @db.Decimal(12, 2)
+  totalAmount          Decimal          @default(0) @map("total_amount") @db.Decimal(12, 2)
+  depositAmount        Decimal          @default(0) @map("deposit_amount") @db.Decimal(12, 2)
+  balanceDueDaysBefore Int              @map("balance_due_days_before")
+  balanceDueDate       DateTime         @map("balance_due_date") @db.Date
+  cancellationPolicy   Json             @map("cancellation_policy") @db.JsonB
+  currentVersion       Int              @default(0) @map("current_version")
+  acceptedVersion      Int?             @map("accepted_version")
+  linkGeneratedAt      DateTime?        @map("link_generated_at") @db.Timestamptz(6)
+  acceptedAt           DateTime?        @map("accepted_at") @db.Timestamptz(6)
+  cancelledAt          DateTime?        @map("cancelled_at") @db.Timestamptz(6)
+  cancelledBy          String?          @map("cancelled_by") @db.Uuid
+  cancelReason         String?          @map("cancel_reason") @db.Text
+  cancelledByParty     String?          @map("cancelled_by_party") @db.VarChar(10)
+  paymentMode          String           @default("sinal") @map("payment_mode") @db.VarChar(20)
+  discountDescription  String?          @map("discount_description") @db.VarChar(120)
   /// NULL = a contratante é a brideClientId.
-  contractorClientId   String?   @map("contractor_client_id") @db.Uuid
-  createdBy            String?   @map("created_by") @db.Uuid
-  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  contractorClientId   String?          @map("contractor_client_id") @db.Uuid
+  createdBy            String?          @map("created_by") @db.Uuid
+  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   organization      Organization                 @relation(fields: [organizationId], references: [id])
   group             BridalGroup                  @relation(fields: [bridalGroupId], references: [id])
@@ -1222,34 +1239,34 @@ model PackageTimelineStep {
 /// Cronograma confirmado do grupo (snapshot; um por grupo). FKs de profissional,
 /// serviço, agendamento e confirmed_by existem só no SQL.
 model BridalTimeline {
-  id                  String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
-  organizationId      String    @map("organization_id") @db.Uuid
-  groupId             String    @unique @map("group_id") @db.Uuid
-  packageId           String?   @map("package_id") @db.Uuid
-  packageName         String    @map("package_name") @db.VarChar(160)
-  departureTime       String    @map("departure_time") @db.VarChar(5)
-  departureAt         DateTime  @map("departure_at") @db.Timestamptz(6)
-  registryStartsAt    DateTime  @map("registry_starts_at") @db.Timestamptz(6)
-  registryLabel       String    @map("registry_label") @db.VarChar(120)
-  brideLabel          String    @map("bride_label") @db.VarChar(160)
-  makeProfessionalId  String?   @map("make_professional_id") @db.Uuid
-  hairProfessionalId  String?   @map("hair_professional_id") @db.Uuid
-  makeServiceId       String?   @map("make_service_id") @db.Uuid
-  hairServiceId       String?   @map("hair_service_id") @db.Uuid
-  makeStartsAt        DateTime? @map("make_starts_at") @db.Timestamptz(6)
-  makeEndsAt          DateTime? @map("make_ends_at") @db.Timestamptz(6)
-  hairStartsAt        DateTime? @map("hair_starts_at") @db.Timestamptz(6)
-  hairEndsAt          DateTime? @map("hair_ends_at") @db.Timestamptz(6)
-  makeAppointmentId   String?   @map("make_appointment_id") @db.Uuid
-  hairAppointmentId   String?   @map("hair_appointment_id") @db.Uuid
-  rows                Json      @default("[]") @db.JsonB
-  text                String    @db.Text
-  warnings            Json      @default("[]") @db.JsonB
-  confirmedBy         String?   @map("confirmed_by") @db.Uuid
-  confirmedAt         DateTime  @default(now()) @map("confirmed_at") @db.Timestamptz(6)
-  version             Int       @default(1)
-  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                 String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId     String    @map("organization_id") @db.Uuid
+  groupId            String    @unique @map("group_id") @db.Uuid
+  packageId          String?   @map("package_id") @db.Uuid
+  packageName        String    @map("package_name") @db.VarChar(160)
+  departureTime      String    @map("departure_time") @db.VarChar(5)
+  departureAt        DateTime  @map("departure_at") @db.Timestamptz(6)
+  registryStartsAt   DateTime  @map("registry_starts_at") @db.Timestamptz(6)
+  registryLabel      String    @map("registry_label") @db.VarChar(120)
+  brideLabel         String    @map("bride_label") @db.VarChar(160)
+  makeProfessionalId String?   @map("make_professional_id") @db.Uuid
+  hairProfessionalId String?   @map("hair_professional_id") @db.Uuid
+  makeServiceId      String?   @map("make_service_id") @db.Uuid
+  hairServiceId      String?   @map("hair_service_id") @db.Uuid
+  makeStartsAt       DateTime? @map("make_starts_at") @db.Timestamptz(6)
+  makeEndsAt         DateTime? @map("make_ends_at") @db.Timestamptz(6)
+  hairStartsAt       DateTime? @map("hair_starts_at") @db.Timestamptz(6)
+  hairEndsAt         DateTime? @map("hair_ends_at") @db.Timestamptz(6)
+  makeAppointmentId  String?   @map("make_appointment_id") @db.Uuid
+  hairAppointmentId  String?   @map("hair_appointment_id") @db.Uuid
+  rows               Json      @default("[]") @db.JsonB
+  text               String    @db.Text
+  warnings           Json      @default("[]") @db.JsonB
+  confirmedBy        String?   @map("confirmed_by") @db.Uuid
+  confirmedAt        DateTime  @default(now()) @map("confirmed_at") @db.Timestamptz(6)
+  version            Int       @default(1)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   organization Organization @relation(fields: [organizationId], references: [id])
   group        BridalGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
@@ -1257,4 +1274,166 @@ model BridalTimeline {
 
   @@index([organizationId], name: "ix_bt_org")
   @@map("bridal_timelines")
+}
+
+// ─── Fase 09: Comercial (CRM do Atimos no SGS) ────────────────────────────────
+
+model CommercialStage {
+  id             String   @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  name           String   @db.VarChar(60)
+  color          String   @db.VarChar(7)
+  position       Int
+  slaDays        Int?     @map("sla_days")
+  kind           String   @db.VarChar(10)
+  isSystem       Boolean  @default(false) @map("is_system")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization     @relation(fields: [organizationId], references: [id])
+  deals        CommercialDeal[]
+
+  @@index([organizationId, position], name: "ix_cs_org_position")
+  @@map("commercial_stages")
+}
+
+model CommercialLead {
+  id                 String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId     String    @map("organization_id") @db.Uuid
+  fullName           String    @map("full_name") @db.VarChar(255)
+  phone              String?   @db.VarChar(30)
+  phoneDigits        String?   @map("phone_digits") @db.VarChar(15)
+  email              String?   @db.VarChar(255)
+  source             String    @default("manual") @db.VarChar(20)
+  notes              String?   @db.Text
+  clientId           String?   @map("client_id") @db.Uuid
+  createdBy          String?   @map("created_by") @db.Uuid
+  consentAt          DateTime? @map("consent_at") @db.Timestamptz(6)
+  consentTextVersion String?   @map("consent_text_version") @db.VarChar(40)
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization            @relation(fields: [organizationId], references: [id])
+  client       Client?                 @relation("CommercialLeadClient", fields: [clientId], references: [id], onDelete: SetNull)
+  creator      Member?                 @relation("CommercialLeadCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  deals        CommercialDeal[]
+  interactions CommercialInteraction[]
+  reminders    CommercialReminder[]
+
+  @@index([organizationId, phoneDigits], name: "ix_cl_org_phone")
+  @@index([organizationId, createdBy], name: "ix_cl_org_created_by")
+  @@map("commercial_leads")
+}
+
+model CommercialDeal {
+  id                String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId    String    @map("organization_id") @db.Uuid
+  leadId            String    @map("lead_id") @db.Uuid
+  stageId           String    @map("stage_id") @db.Uuid
+  status            String    @default("open") @db.VarChar(10)
+  kind              String    @db.VarChar(10)
+  beneficiaryName   String?   @map("beneficiary_name") @db.VarChar(255)
+  eventDate         DateTime? @map("event_date") @db.Date
+  packageId         String?   @map("package_id") @db.Uuid
+  packageName       String?   @map("package_name") @db.VarChar(160)
+  packagePrice      Decimal?  @map("package_price") @db.Decimal(12, 2)
+  discountAmount    Decimal   @default(0) @map("discount_amount") @db.Decimal(12, 2)
+  finalAmount       Decimal?  @map("final_amount") @db.Decimal(12, 2)
+  assigneeMemberId  String?   @map("assignee_member_id") @db.Uuid
+  source            String    @default("manual") @db.VarChar(20)
+  location          String?   @db.VarChar(255)
+  notes             String?   @db.Text
+  stageEnteredAt    DateTime  @default(now()) @map("stage_entered_at") @db.Timestamptz(6)
+  lastInteractionAt DateTime? @map("last_interaction_at") @db.Timestamptz(6)
+  lostReasonCode    String?   @map("lost_reason_code") @db.VarChar(30)
+  lostReasonText    String?   @map("lost_reason_text") @db.VarChar(500)
+  closedAt          DateTime? @map("closed_at") @db.Timestamptz(6)
+  wonContractId     String?   @map("won_contract_id") @db.Uuid
+  wonClientId       String?   @map("won_client_id") @db.Uuid
+  createdBy         String?   @map("created_by") @db.Uuid
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization            @relation(fields: [organizationId], references: [id])
+  lead         CommercialLead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  stage        CommercialStage         @relation(fields: [stageId], references: [id])
+  package      Package?                @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  assignee     Member?                 @relation("CommercialDealAssignee", fields: [assigneeMemberId], references: [id], onDelete: SetNull)
+  wonContract  Contract?               @relation("CommercialDealWonContract", fields: [wonContractId], references: [id], onDelete: SetNull)
+  wonClient    Client?                 @relation("CommercialDealWonClient", fields: [wonClientId], references: [id], onDelete: SetNull)
+  creator      Member?                 @relation("CommercialDealCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  interactions CommercialInteraction[]
+  reminders    CommercialReminder[]
+
+  @@index([organizationId, assigneeMemberId], name: "ix_cd_org_assignee")
+  @@index([organizationId, leadId], name: "ix_cd_org_lead")
+  @@map("commercial_deals")
+}
+
+model CommercialInteraction {
+  id             String   @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  leadId         String   @map("lead_id") @db.Uuid
+  dealId         String?  @map("deal_id") @db.Uuid
+  type           String   @db.VarChar(10)
+  notes          String?  @db.Text
+  occurredAt     DateTime @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  createdBy      String?  @map("created_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization         @relation(fields: [organizationId], references: [id])
+  lead         CommercialLead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  deal         CommercialDeal?      @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  creator      Member?              @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  reminders    CommercialReminder[]
+
+  @@map("commercial_interactions")
+}
+
+model CommercialReminder {
+  id             String    @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  leadId         String?   @map("lead_id") @db.Uuid
+  dealId         String?   @map("deal_id") @db.Uuid
+  interactionId  String?   @map("interaction_id") @db.Uuid
+  title          String    @db.VarChar(160)
+  description    String?   @db.Text
+  dueAt          DateTime  @map("due_at") @db.Timestamptz(6)
+  completedAt    DateTime? @map("completed_at") @db.Timestamptz(6)
+  notifiedAt     DateTime? @map("notified_at") @db.Timestamptz(6)
+  createdBy      String?   @map("created_by") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization           @relation(fields: [organizationId], references: [id])
+  lead         CommercialLead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  deal         CommercialDeal?        @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  interaction  CommercialInteraction? @relation(fields: [interactionId], references: [id], onDelete: SetNull)
+  creator      Member?                @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, dealId], name: "ix_cr_org_deal")
+  @@map("commercial_reminders")
+}
+
+model CommercialFormSettings {
+  id                      String   @id @default(dbgenerated("gen_uuid_v7()")) @db.Uuid
+  organizationId          String   @unique @map("organization_id") @db.Uuid
+  token                   String   @db.VarChar(64)
+  isActive                Boolean  @default(false) @map("is_active")
+  defaultAssigneeMemberId String?  @map("default_assignee_member_id") @db.Uuid
+  successMessage          String?  @map("success_message") @db.VarChar(300)
+  consentText             String   @default("Autorizo o salão a usar meus dados para entrar em contato sobre o orçamento, conforme a LGPD.") @map("consent_text") @db.Text
+  consentTextVersion      String   @default("v1") @map("consent_text_version") @db.VarChar(40)
+  updatedBy               String?  @map("updated_by") @db.Uuid
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  defaultAssignee Member?      @relation("CommercialFormAssignee", fields: [defaultAssigneeMemberId], references: [id], onDelete: SetNull)
+  updater         Member?      @relation("CommercialFormUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@map("commercial_form_settings")
 }

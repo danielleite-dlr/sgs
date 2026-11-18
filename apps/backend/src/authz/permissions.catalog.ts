@@ -68,6 +68,11 @@ export const PERMISSIONS = {
   CONTRACT_PAYMENT: 'contract.payment',
   CONTRACT_CANCEL: 'contract.cancel',
   CONTRACT_SETTINGS: 'contract.settings',
+
+  // ===== Phase 9: Comercial =====
+  COMMERCIAL_READ: 'commercial.read',
+  COMMERCIAL_WRITE: 'commercial.write',
+  COMMERCIAL_MANAGE: 'commercial.manage',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -81,6 +86,7 @@ export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
  * Phase 3: 20261101000000_phase3_operations
  * Phase 4: 20261103000000_phase4_bridal_contracts
  * Phase 04.2: 20261114000000_bridal_timeline
+ * Phase 9: 20261122000000_phase9_commercial
  */
 export const ROLE_PERMISSIONS: Record<
   'ADMIN' | 'MANAGER' | 'ATTENDANT' | 'PROFESSIONAL',
@@ -132,6 +138,10 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.CONTRACT_PAYMENT,
     PERMISSIONS.CONTRACT_CANCEL,
     PERMISSIONS.CONTRACT_SETTINGS,
+    // Phase 9 — comercial
+    PERMISSIONS.COMMERCIAL_READ,
+    PERMISSIONS.COMMERCIAL_WRITE,
+    PERMISSIONS.COMMERCIAL_MANAGE,
   ],
   MANAGER: [
     // Phase 1
@@ -174,6 +184,10 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.CONTRACT_WRITE,
     PERMISSIONS.CONTRACT_PAYMENT,
     PERMISSIONS.CONTRACT_CANCEL,
+    // Phase 9 — comercial
+    PERMISSIONS.COMMERCIAL_READ,
+    PERMISSIONS.COMMERCIAL_WRITE,
+    PERMISSIONS.COMMERCIAL_MANAGE,
   ],
   ATTENDANT: [
     // Phase 1
@@ -199,6 +213,9 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.BRIDAL_WRITE,
     PERMISSIONS.CONTRACT_READ,
     PERMISSIONS.CONTRACT_PAYMENT,
+    // Phase 9 — comercial
+    PERMISSIONS.COMMERCIAL_READ,
+    PERMISSIONS.COMMERCIAL_WRITE,
   ],
   PROFESSIONAL: [
     // Phase 1
