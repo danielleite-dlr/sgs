@@ -19,7 +19,7 @@ requirements: [COM-02, COM-03]
 
 must_haves:
   truths:
-    - "Importar planilha: escolher .xlsx/.csv (até 2,5 MB), ver a prévia (válidas, inválidas com motivo, duplicadas marcadas 'já é cliente'/'lead existente'), ADMIN/MANAGER escolhem responsável, e confirmar mostra quantos leads e negócios foram criados (D-04)"
+    - "Importar planilha: escolher .xlsx/.csv (até 2,5 MB), ver a prévia (válidas, inválidas com motivo, duplicadas marcadas 'já é cliente'/'lead existente', coluna Responsável com o membro resolvido a partir da planilha e aviso 'responsável não encontrado: X' nas linhas que não casaram), e confirmar mostra quantos leads e negócios foram criados, com e sem responsável (D-04, D-22)"
     - "A aba 'Formulário do site' (ADMIN/MANAGER) liga/desliga o formulário, escolhe responsável padrão, edita mensagem e texto de consentimento, mostra o link público e o código <iframe> para copiar, e regera o token com confirmação"
     - "A página pública /contato/:orgId/:token (sem login) mostra o nome do salão, pede nome, telefone, e-mail opcional, Noiva/Debutante, data do evento, mensagem e o consentimento LGPD obrigatório, tem campo honeypot oculto e mostra a mensagem de sucesso; token inválido mostra 'Formulário indisponível'"
     - "A página pública pode ser embutida em iframe no site do salão: /contato/ sai com Content-Security-Policy frame-ancestors * e sem X-Frame-Options; o resto do app continua SAMEORIGIN"
@@ -67,10 +67,10 @@ Output: 2 APIs, 3 componentes/páginas, `nginx.conf`, 3 testes.
 **Verificado no planejamento (nginx):** o nginx do HOST (`infra/nginx/sgs-staging.conf`) não manda `X-Frame-Options`; quem manda é o nginx do CONTAINER do frontend (`apps/frontend/nginx.conf`), com `add_header X-Frame-Options "SAMEORIGIN" always;` no `server` e repetido em cada `location` (um `add_header` dentro de `location` cancela os herdados). O fallback SPA `location /` faz `try_files $uri $uri/ /index.html`, que redireciona internamente para `location = /index.html` (SAMEORIGIN). Por isso a rota pública precisa de um `location ^~ /contato/` próprio que sirva o `index.html` SEM redirecionamento interno (`try_files /index.html =404;` — o primeiro argumento encontrado é servido no próprio location). Os assets (`.js/.css`) continuarem com SAMEORIGIN não atrapalha (o cabeçalho só vale para documento). O host não precisa mudar.
 
 <interfaces>
-Backend 09-10: `previewCommercialLeadImport(base64, filename)` → `{ totalRows valid { line fullName phone email kind eventDate source notes duplicateOf { type id name } } invalid { line reason } errors }`; `importCommercialLeads(base64, filename, assigneeMemberId)` → `{ createdLeads createdDeals linkedClients skipped errors }`; `commercialFormSettings` → `{ isActive token publicPath defaultAssignee { id displayName } successMessage consentText consentTextVersion }`; `updateCommercialFormSettings(input { isActive defaultAssigneeMemberId clearDefaultAssignee successMessage consentText })`; `regenerateCommercialFormToken`.
+Backend 09-10: `previewCommercialLeadImport(base64, filename)` → `{ totalRows valid { line fullName phone email kind eventDate source notes duplicateOf { type id name } assigneeRef assignee { id displayName roleName } assigneeWarning } invalid { line reason } errors }`; `importCommercialLeads(base64, filename)` → `{ createdLeads createdDeals linkedClients assignedDeals unassignedDeals skipped errors }` (sem `assigneeMemberId`: o responsável vem da coluna Responsável da planilha, D-22); `commercialFormSettings` → `{ isActive token publicPath defaultAssignee { id displayName } successMessage consentText consentTextVersion }`; `updateCommercialFormSettings(input { isActive defaultAssigneeMemberId clearDefaultAssignee successMessage consentText })`; `regenerateCommercialFormToken`.
 REST público: `GET /public/leads/:orgId/:token` → 200 `{ orgName, consentText, consentTextVersion, successMessage }` | 404; `POST` mesmo caminho com `{ fullName, phone, email?, kind, eventDate?, message?, consent: true, website: '' }` → 201 `{ ok, message }` | 400 `{ code, message }` | 429.
 Modelo de cliente REST: `features/bridal/api/public-contract.api.ts` (fetch sem Apollo). Modelo de página pública fora do AppShell: `features/bridal/public/ContractAcceptPage.tsx`.
-Do 09-03: `LeadImportDialogProps { open; onOpenChange; onImported?(count) }`, `FormSettingsTab()` (montado na aba `formulario` de `CommercialSettingsPage`), `useCommercialAccess()`. Do 09-04: `CommercialAssigneesQuery` está em `leads.api.ts` do 09-11 (onda paralela): NÃO importar de lá; declarar a query `CommercialAssigneesForIntake` em `intake.api.ts`.
+Do 09-03: `LeadImportDialogProps { open; onOpenChange; onImported?(count) }`, `FormSettingsTab()` (montado na aba `formulario` de `CommercialSettingsPage`), `useCommercialAccess()`. Do 09-04: `CommercialAssigneesQuery` está em `leads.api.ts` do 09-11 (onda paralela): NÃO importar de lá; declarar a query `CommercialAssigneesForIntake` em `intake.api.ts` (usada só pelo responsável padrão do formulário; a importação não tem seletor de responsável).
 </interfaces>
 </context>
 
@@ -87,10 +87,11 @@ Do 09-03: `LeadImportDialogProps { open; onOpenChange; onImported?(count) }`, `F
   <behavior>
     - arquivo .pdf ou maior que 2.500.000 bytes mostra erro local ('Use um arquivo .xlsx ou .csv' / 'Arquivo maior que 2,5 MB') sem chamar a API
     - arquivo válido chama previewCommercialLeadImport com base64 sem o prefixo data: e o nome; mostra 'N válidas', 'M com problema' (lista linha + motivo) e marca duplicadas com 'Já é cliente: X' ou 'Lead existente: Y'
-    - como MANAGER mostra select 'Responsável dos negócios' com opção 'Sem responsável' (padrão, D-20); como ATTENDANT não mostra
-    - 'Importar' chama importCommercialLeads e mostra '3 leads e 2 negócios criados, 1 ignorado'; chama onImported(3) e fecha
+    - a tabela da prévia tem a coluna 'Responsável': mostra o nome do membro casado (assignee.displayName); sem casamento mostra 'Sem responsável' e, quando há assigneeWarning, o aviso 'responsável não encontrado: Fulana' na linha (role="status"); acima da tabela, resumo 'N linhas sem responsável vão para a fila de gerentes' quando N > 0 (D-20, D-22)
+    - não existe seletor de responsável no diálogo, para nenhum papel (ATTENDANT e MANAGER veem a mesma prévia)
+    - 'Importar' chama importCommercialLeads({ base64, filename }) e mostra '3 leads e 2 negócios criados (1 com responsável, 1 sem), 1 ignorado'; chama onImported(3) e fecha
     - errors da prévia (ex.: HEADER_MISSING) aparecem no diálogo
-    - texto de ajuda lista as colunas aceitas: Nome, Telefone, E-mail, Tipo (noiva/debutante), Data do evento, Origem, Observações
+    - texto de ajuda lista as colunas aceitas: Nome, Telefone, E-mail, Tipo (noiva/debutante), Data do evento, Origem, Observações, Responsável (e-mail ou nome do responsável no Atimos)
   </behavior>
   <action>`intake.api.ts` com os documentos do backend 09-10 (+ `CommercialAssigneesForIntake`). `LeadImportDialog` substitui o placeholder mantendo `LeadImportDialogProps`; passos 'Escolher arquivo' → 'Prévia' → 'Resultado'; `FileReader.readAsDataURL` e corte em `,`. Teste do `<behavior>`. Commit `feat(09-14): importação de leads por planilha`.</action>
   <verify>
@@ -99,6 +100,7 @@ Do 09-03: `LeadImportDialogProps { open; onOpenChange; onImported?(count) }`, `F
   <acceptance_criteria>
     - `grep -n "2_500_000\|2500000" apps/frontend/src/features/commercial/components/LeadImportDialog.tsx` encontra
     - `grep -n "PreviewCommercialLeadImportMutation" apps/frontend/src/features/commercial/components/LeadImportDialog.tsx` encontra
+    - `grep -n "assigneeWarning" apps/frontend/src/features/commercial/components/LeadImportDialog.tsx` encontra e `grep -n "assigneeMemberId" apps/frontend/src/features/commercial/components/LeadImportDialog.tsx` vazio
     - `grep -n "return null" apps/frontend/src/features/commercial/components/LeadImportDialog.tsx` vazio
     - comando do `<verify>` sai 0
   </acceptance_criteria>

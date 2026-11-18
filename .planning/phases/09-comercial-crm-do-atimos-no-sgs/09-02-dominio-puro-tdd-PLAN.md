@@ -22,7 +22,7 @@ must_haves:
     - "Telefones com máscara, +55 e com/sem 9º dígito são reconhecidos como o mesmo número (D-02)"
     - "Um negócio aberto é 'atrasado' quando a etapa tem prazo e passou sla_days desde a última interação (ou da entrada na etapa, se nunca houve interação) (D-15)"
     - "ADMIN/MANAGER veem tudo; ATTENDANT vê só negócios em que é responsável e leads criados por ela ou com negócio dela; sem responsável fica só para ADMIN/MANAGER (D-12, D-20)"
-    - "Quem pode marcar ganho é decidido num único ponto (WIN_DEAL_ROLES), hoje ADMIN, MANAGER e ATTENDANT (D-21, a confirmar)"
+    - "Quem pode marcar ganho é decidido num único ponto (WIN_DEAL_ROLES), hoje ADMIN, MANAGER e ATTENDANT (D-21, confirmada pela usuária em 2026-11-18)"
     - "exceljs está instalado no backend para os planos de importação e exportação"
   artifacts:
     - path: "apps/backend/src/commercial/commercial-access.ts"
@@ -79,7 +79,7 @@ Output: 4 módulos puros + 3 specs; `exceljs` no `apps/backend/package.json`.
     commercial-access:
     - isManagerRole('ADMIN'|'MANAGER') true; 'ATTENDANT'/'PROFESSIONAL'/'' false
     - canUseCommercial('PROFESSIONAL') false; ADMIN/MANAGER/ATTENDANT true
-    - canWinDeal('ATTENDANT') true (D-21 padrão); canWinDeal('PROFESSIONAL') false
+    - canWinDeal('ATTENDANT') true (D-21); canWinDeal('PROFESSIONAL') false
     - visibilityWhere({roleName:'MANAGER', memberId:'m'}) -> { deal: { deletedAt: null }, lead: { deletedAt: null } }
     - visibilityWhere({roleName:'ATTENDANT', memberId:'a'}).deal -> { deletedAt: null, assigneeMemberId: 'a' }
     - visibilityWhere(ATTENDANT).lead -> { deletedAt: null, OR: [{ createdBy: 'a' }, { deals: { some: { assigneeMemberId: 'a', deletedAt: null } } }] }
@@ -103,7 +103,7 @@ export const isManagerRole = (r: string | null | undefined) => r === 'ADMIN' || 
 export const canUseCommercial = (r: string | null | undefined) =>
   !!r && (COMMERCIAL_ROLES as readonly string[]).includes(r);
 /**
- * D-21 (A CONFIRMAR com a usuária): quem marca ganho. Padrão adotado: todos os papéis do
+ * D-21 (confirmada pela usuária em 2026-11-18): quem marca ganho: todos os papéis do
  * Comercial, nos negócios que veem. Para "só admin/gerente", trocar para ['ADMIN', 'MANAGER']
  * aqui e em apps/frontend/src/features/commercial/commercial-permissions.ts (WIN_DEAL_ROLES).
  */

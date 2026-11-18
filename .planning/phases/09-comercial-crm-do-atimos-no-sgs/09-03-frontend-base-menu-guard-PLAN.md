@@ -111,12 +111,12 @@ Consumidores: `SidebarNav.tsx` (linhas ~94 e ~336 usam `MENU`), `AppDrawer.tsx` 
     - FEATURES.comercial === false; isPathEnabled('/comercial') === false; isPathEnabled('/comercial/leads/x') === false
     - canUseCommercial('PROFESSIONAL') false; 'ATTENDANT' true; null false
     - isCommercialManager('MANAGER') true; 'ATTENDANT' false
-    - canWinDeal('ATTENDANT') true (D-21 padrão)
+    - canWinDeal('ATTENDANT') true (D-21)
     - COMMERCIAL_ROLE_PERMISSIONS.ATTENDANT = ['commercial.read', 'commercial.write']; ADMIN e MANAGER com 'commercial.manage'; PROFESSIONAL []
   </behavior>
   <action>
 1. `features.ts`: `/** Comercial (fase 9): funil de noivas e debutantes. Liga no 09-15, junto com o E2E. */ comercial: false,` em `FLAGS`; em `GATED_PATHS`, `['/comercial', 'comercial']` e `['/contato', 'comercial']`.
-2. `commercial-permissions.ts` (mesmo padrão de `bridal-permissions.ts`): `COMMERCIAL_ROLES = ['ADMIN', 'MANAGER', 'ATTENDANT'] as const`; `COMMERCIAL_ROLE_PERMISSIONS: Record<string, readonly string[]>` com a matriz do `<behavior>`; `WIN_DEAL_ROLES: readonly string[] = ['ADMIN', 'MANAGER', 'ATTENDANT']` com o comentário "D-21 (A CONFIRMAR com a usuária): espelha WIN_DEAL_ROLES de apps/backend/src/commercial/commercial-access.ts; para 'só admin/gerente', trocar nos dois arquivos."; `canUseCommercial`, `isCommercialManager`, `canWinDeal(roleName)`; hook `useCommercialAccess()` → `{ roleName, memberId, canUse, isManager, canWin }` lendo `useAuthStore`.
+2. `commercial-permissions.ts` (mesmo padrão de `bridal-permissions.ts`): `COMMERCIAL_ROLES = ['ADMIN', 'MANAGER', 'ATTENDANT'] as const`; `COMMERCIAL_ROLE_PERMISSIONS: Record<string, readonly string[]>` com a matriz do `<behavior>`; `WIN_DEAL_ROLES: readonly string[] = ['ADMIN', 'MANAGER', 'ATTENDANT']` com o comentário "D-21 (confirmada pela usuária em 2026-11-18): espelha WIN_DEAL_ROLES de apps/backend/src/commercial/commercial-access.ts; para 'só admin/gerente', trocar nos dois arquivos."; `canUseCommercial`, `isCommercialManager`, `canWinDeal(roleName)`; hook `useCommercialAccess()` → `{ roleName, memberId, canUse, isManager, canWin }` lendo `useAuthStore`.
 3. `commercial-fixtures.ts`: helpers de teste `setRole(roleName, memberId = 'm-1')` (escreve no `useAuthStore`) e objetos de exemplo `STAGES` (as 6 etapas padrão com ids `st-novo`… e cores do 09-01), `LEAD_ANA`, `DEAL_ANA_NOIVA`, usados pelos testes dos planos de tela.
 4. Testes do `<behavior>`; atualizar `features.test.ts` só no necessário para a flag nova.
 Commit `feat(09-03): flag e permissões do Comercial no frontend`.

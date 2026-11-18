@@ -70,7 +70,7 @@ Output: `client-tx.ts`, `createInTx`, `commercial-win.graphql`, serviço, resolv
 
 **Ambiente de execução:** igual ao 09-01. Arquivos de `contracts/` usam aspas duplas (prettier do backend): manter o estilo do arquivo.
 
-**D-21 (A CONFIRMAR):** o resolver exige `COMMERCIAL_WRITE`; o serviço checa `canWinDeal(tenant.roleName)` (único ponto, `commercial-access.ts`) e falha com `WIN_NOT_ALLOWED`. Não chamar o resolver de contratos nem exigir `contract.write`.
+**D-21 (confirmada pela usuária em 2026-11-18):** o resolver exige `COMMERCIAL_WRITE`; o serviço checa `canWinDeal(tenant.roleName)` (único ponto, `commercial-access.ts`) e falha com `WIN_NOT_ALLOWED`. Não chamar o resolver de contratos nem exigir `contract.write`.
 
 <interfaces>
 `apps/backend/src/contracts/contracts.service.ts`:

@@ -25,12 +25,13 @@ must_haves:
     - "Limites: 2,5 MB de arquivo (cabe no bodyLimit de 4 MiB do Fastify em base64) e 2.000 linhas; fórmulas são lidas como texto"
     - "O formulário público GET/POST /public/leads/:orgId/:token só funciona com token ativo (comparação em tempo constante); token errado, inativo ou org inválida dão o mesmo 404"
     - "O POST exige consentimento LGPD (grava consent_at e a versão do texto), tem honeypot (responde ok sem gravar), limite de 5 envios por minuto por IP e não loga telefone nem e-mail"
-    - "Lead e negócio do site e da importação entram sem responsável (visíveis só a ADMIN/MANAGER, D-20), salvo o responsável padrão do formulário ou o escolhido por ADMIN/MANAGER na importação"
+    - "Importação mantém o responsável do Atimos (D-22): a coluna Responsável (e-mail ou nome) casa com membro ativo ADMIN/MANAGER/ATTENDANT — e-mail exato sem caixa, depois nome sem acento/minúsculo/trim; casou → lead e negócio com esse responsável; vazio ou sem casamento → sem responsável (fila D-20) e aviso na prévia 'responsável não encontrado: <valor>'; vale igual quando quem importa é ATTENDANT"
+    - "Lead e negócio do formulário do site entram sem responsável (visíveis só a ADMIN/MANAGER, D-20), salvo o responsável padrão do formulário"
     - "Só ADMIN/MANAGER veem e editam a configuração do formulário e regeram o token"
   artifacts:
     - path: "apps/backend/src/commercial/lead-sheet.ts"
       provides: "parseLeadSheet"
-      exports: ["parseLeadSheet", "MAX_IMPORT_BYTES", "MAX_IMPORT_ROWS"]
+      exports: ["parseLeadSheet", "MAX_IMPORT_BYTES", "MAX_IMPORT_ROWS", "normalizePersonName", "matchAssignee"]
     - path: "apps/backend/src/commercial/public-lead.controller.ts"
       provides: "GET/POST /public/leads/:orgId/:token"
       contains: "@Throttle"
@@ -38,6 +39,10 @@ must_haves:
       provides: "importação e configuração do formulário"
       contains: "previewCommercialLeadImport"
   key_links:
+    - from: "apps/backend/src/commercial/commercial-import.service.ts"
+      to: "matchAssignee"
+      via: "D-22: responsável da planilha → membro do salão"
+      pattern: "matchAssignee\\("
     - from: "apps/backend/src/commercial/public-lead.controller.ts"
       to: "ThrottlerGuard global options"
       via: "@UseGuards(ThrottlerGuard) sem novo ThrottlerModule.forRoot"
@@ -55,7 +60,7 @@ must_haves:
 <objective>
 As duas entradas externas de leads: importação de planilha (prévia + gravação) e formulário público do site (configuração por ADMIN/MANAGER + endpoint REST público com anti-spam e LGPD).
 
-Purpose: COM-02 e COM-03 (D-04).
+Purpose: COM-02 e COM-03 (D-04, D-20, D-22).
 Output: parser puro com spec, serviços de importação e de formulário, controller público, resolver, SDL e duas suítes de integração.
 </objective>
 
@@ -99,7 +104,7 @@ Modelos de teste: `phase4-public-acceptance.e2e.spec.ts`, `phase4-public-ratelim
   </read_first>
   <behavior>
     parseLeadSheet(buffer, filename):
-    - xlsx com cabeçalhos 'Nome', 'Celular', 'E-mail', 'Tipo', 'Data do evento', 'Origem', 'Observações' (acento/caixa variando) → linhas normalizadas { line, fullName, phone, email, kind, eventDate 'YYYY-MM-DD', source, notes }
+    - xlsx com cabeçalhos 'Nome', 'Celular', 'E-mail', 'Tipo', 'Data do evento', 'Origem', 'Observações' (acento/caixa variando) → linhas normalizadas { line, fullName, phone, email, kind, eventDate 'YYYY-MM-DD', source, notes, assigneeRef }
     - csv com ';' e BOM e csv com ',' → mesmo resultado
     - célula com fórmula '=HYPERLINK(...)' → usa o texto do resultado ou a fórmula como texto, nunca avalia
     - data '10/05/2027', '2027-05-10' e Date do Excel → '2027-05-10'; data inválida → linha inválida 'Data do evento inválida'
@@ -107,15 +112,22 @@ Modelos de teste: `phase4-public-acceptance.e2e.spec.ts`, `phase4-public-ratelim
     - sem nome → inválida 'Nome obrigatório'; sem telefone e sem e-mail → inválida 'Informe telefone ou e-mail'
     - origem desconhecida ou vazia → 'import'
     - mesmo telefone repetido no arquivo → a segunda linha vai para inválidas 'Repetido na planilha (linha N)'
+    - coluna de responsável reconhecida por qualquer destes cabeçalhos normalizados: 'responsavel', 'responsável', 'dono', 'owner', 'vendedor', 'vendedora', 'atendente', 'usuario', 'usuário', 'e-mail do responsavel', 'email do responsavel' → assigneeRef (texto cru com trim; vazio → null); sem a coluna → assigneeRef null em todas as linhas
+    - normalizePersonName('  Júlia  Câmara ') → 'julia camara' (sem acento, minúsculo, espaços colapsados)
+    - matchAssignee('JULIA@STUDIO.COM', members) casa pelo e-mail exato sem caixa; matchAssignee('Júlia Câmara', members) casa pelo nome normalizado de 'Julia Camara'; e-mail tem prioridade sobre nome; nenhum casamento → null; dois membros com o mesmo nome normalizado e sem e-mail que desempate → null (ambíguo, vira aviso)
     - mais de 2.000 linhas → erro TOO_MANY_ROWS; buffer > 2,5 MB → FILE_TOO_LARGE; extensão fora de .xlsx/.csv ou xlsx sem assinatura 'PK' → FILE_TYPE_INVALID; sem coluna de nome → HEADER_MISSING
     integração:
     - previewCommercialLeadImport devolve valid/invalid e duplicateOf { type: 'client'|'lead', id, name } para linhas que casam com cliente do SGS ou lead existente
-    - importCommercialLeads cria os leads (source da linha, created_by = quem importa), liga à cliente quando duplicateOf é client, pula duplicadas de lead (skipped), cria negócio na primeira etapa aberta quando há tipo; negócios sem responsável (D-20) a menos que ADMIN/MANAGER passe assigneeMemberId (validado); ATTENDANT passando assigneeMemberId → ignorado
+    - prévia (D-22): linha com Responsável = e-mail de attendantB → assignee { id: attendantB }; com o nome de attendantB escrito com acento/caixa diferentes → casa; com 'Fulana Inexistente' → assignee null e assigneeWarning 'responsável não encontrado: Fulana Inexistente'; com o nome/e-mail de proA (PROFESSIONAL) ou de um membro inativo → não casa (null + aviso); coluna vazia → null sem aviso
+    - importCommercialLeads cria os leads (source da linha), liga à cliente quando duplicateOf é client, pula duplicadas de lead (skipped), cria negócio na primeira etapa aberta quando há tipo; responsável casado → `assignee_member_id` do negócio = membro e `created_by` do lead = membro (o lead fica visível a ela por "cadastrado por ela" mesmo sem negócio); sem casamento → negócio sem responsável e lead com `created_by` null (fila D-20, só ADMIN/MANAGER veem)
+    - as mesmas regras valem quando quem importa é ATTENDANT (o responsável vem da planilha, não de quem importa)
+    - visibilidade resultante: depois de importar como MANAGER uma linha com Responsável = attendantB, attendantB vê o lead e o negócio em commercialLeads/commercialDeals e attendant (A) não vê
+    - a mutação não aceita mais assigneeMemberId (sem seletor de responsável na importação)
     - tudo numa transação: erro inesperado não deixa importação parcial
     - PROFESSIONAL → FORBIDDEN; ATTENDANT pode importar (COMMERCIAL_WRITE)
   </behavior>
   <action>
-1. `lead-sheet.ts`: `export const MAX_IMPORT_BYTES = 2_500_000; export const MAX_IMPORT_ROWS = 2000;` `export async function parseLeadSheet(buffer: Buffer, filename: string): Promise<{ valid: ParsedLeadRow[]; invalid: { line: number; reason: string }[] }>` lançando `CommercialError` para os erros de arquivo. Só a primeira planilha; valores convertidos para texto (`richText` → junção, `{ formula, result }` → `String(result ?? '')`, hyperlink → `text`), trim, até 255 caracteres por campo (notas até 2000). Mapa de cabeçalhos normalizados (sem acento, minúsculo): nome/name/nome completo → fullName; telefone/celular/whatsapp/fone/phone → phone; e-mail/email → email; tipo/evento tipo → kind; data do evento/data/data evento → eventDate; origem/source → source; observacoes/obs/notas → notes. CSV: remover BOM, detectar `;` vs `,` pela primeira linha.
+1. `lead-sheet.ts`: `export const MAX_IMPORT_BYTES = 2_500_000; export const MAX_IMPORT_ROWS = 2000;` `export async function parseLeadSheet(buffer: Buffer, filename: string): Promise<{ valid: ParsedLeadRow[]; invalid: { line: number; reason: string }[] }>` lançando `CommercialError` para os erros de arquivo. Só a primeira planilha; valores convertidos para texto (`richText` → junção, `{ formula, result }` → `String(result ?? '')`, hyperlink → `text`), trim, até 255 caracteres por campo (notas até 2000). Mapa de cabeçalhos normalizados (sem acento, minúsculo): nome/name/nome completo → fullName; telefone/celular/whatsapp/fone/phone → phone; e-mail/email → email; tipo/evento tipo → kind; data do evento/data/data evento → eventDate; origem/source → source; observacoes/obs/notas → notes; responsavel/dono/owner/vendedor/vendedora/atendente/usuario/e-mail do responsavel/email do responsavel → assigneeRef (D-22). Também exportar `normalizePersonName(s)` (NFD, remove diacríticos, minúsculo, trim, espaços colapsados) e `matchAssignee(ref: string | null, members: { id: string; email: string | null; displayName: string }[]): { memberId: string | null; warning: string | null }` (puro: e-mail exato sem caixa quando `ref` contém '@'; senão, e também como segunda tentativa, nome normalizado igual ao de `displayName` ou do nome do usuário; ambíguo ou nenhum → `memberId: null` e `warning: 'responsável não encontrado: ' + ref`; `ref` vazio → `{ null, null }`). CSV: remover BOM, detectar `;` vs `,` pela primeira linha.
 2. SDL `commercial-intake.graphql`:
 ```graphql
 type CommercialImportDuplicate { type: String! id: UUID! name: String! }
@@ -130,6 +142,9 @@ type CommercialImportRow {
   source: String!
   notes: String
   duplicateOf: CommercialImportDuplicate
+  assigneeRef: String
+  assignee: CommercialMember
+  assigneeWarning: String
 }
 
 type CommercialImportInvalid { line: Int! reason: String! }
@@ -145,6 +160,8 @@ type CommercialImportResult {
   createdLeads: Int!
   createdDeals: Int!
   linkedClients: Int!
+  assignedDeals: Int!
+  unassignedDeals: Int!
   skipped: Int!
   errors: [UserError!]!
 }
@@ -175,13 +192,13 @@ extend type Query {
 
 extend type Mutation {
   previewCommercialLeadImport(base64: String!, filename: String!): CommercialImportPreview!
-  importCommercialLeads(base64: String!, filename: String!, assigneeMemberId: UUID): CommercialImportResult!
+  importCommercialLeads(base64: String!, filename: String!): CommercialImportResult!
   updateCommercialFormSettings(input: UpdateCommercialFormSettingsInput!): CommercialFormSettingsPayload!
   regenerateCommercialFormToken: CommercialFormSettingsPayload!
 }
 ```
    (a importação relê e revalida o arquivo no servidor; não confia em linhas vindas do cliente.)
-3. `commercial-import.service.ts`: `preview` (parse + `findDuplicatesTx` por linha) e `import` (uma `runWithTenant` com `timeout` de 60 s: `{ timeout: 60_000 }` se o `runWithTenant` aceitar opções, conferir assinatura), regras do `<behavior>`. Resolver: as duas mutações com `COMMERCIAL_WRITE`.
+3. `commercial-import.service.ts`: carrega uma vez os candidatos a responsável (`member.findMany({ where: { status: 'active', deletedAt: null, role: { name: { in: ['ADMIN','MANAGER','ATTENDANT'] } } }, include: { user: { select: { email: true } }, role: true } })` → `{ id, email: user.email, displayName }`; PROFESSIONAL e inativos ficam fora e por isso nunca casam) e resolve cada linha com `matchAssignee` (D-22); `preview` (parse + `findDuplicatesTx` + responsável por linha) e `import` (uma `runWithTenant` com `timeout` de 60 s: `{ timeout: 60_000 }` se o `runWithTenant` aceitar opções, conferir assinatura), regras do `<behavior>`. Resolver: as duas mutações com `COMMERCIAL_WRITE`.
 4. `lead-sheet.spec.ts` (gera planilhas em memória com exceljs e CSV como string) e `phase9-import.e2e.spec.ts`.
 Commits `test(09-10): importação de planilha` e `feat(09-10): importação de leads por planilha`.
   </action>
@@ -192,9 +209,13 @@ Commits `test(09-10): importação de planilha` e `feat(09-10): importação de 
     - `grep -n "export const MAX_IMPORT_BYTES = 2_500_000" apps/backend/src/commercial/lead-sheet.ts` encontra
     - `grep -n "FILE_TOO_LARGE\|TOO_MANY_ROWS\|FILE_TYPE_INVALID\|HEADER_MISSING" apps/backend/src/commercial/lead-sheet.spec.ts` encontra os 4
     - `grep -n "findDuplicatesTx" apps/backend/src/commercial/commercial-import.service.ts` encontra
+    - `grep -n "matchAssignee(" apps/backend/src/commercial/commercial-import.service.ts` encontra
+    - `grep -n "responsável não encontrado" apps/backend/src/commercial/lead-sheet.spec.ts apps/backend/test/integration/phase9-import.e2e.spec.ts` encontra nos dois
+    - `grep -n "assigneeMemberId" apps/backend/src/graphql/schema/commercial-intake.graphql` só na linha de `defaultAssigneeMemberId` do formulário (nenhum na importação)
+    - `grep -n "attendantB" apps/backend/test/integration/phase9-import.e2e.spec.ts` encontra (visibilidade resultante)
     - comando do `<verify>` sai 0
   </acceptance_criteria>
-  <done>Importação segura, com prévia e sem gravação parcial.</done>
+  <done>Importação segura, com prévia, responsável do Atimos preservado (D-22) e sem gravação parcial.</done>
 </task>
 
 <task type="auto" tdd="true">

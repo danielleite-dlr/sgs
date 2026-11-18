@@ -72,7 +72,7 @@
 ### Comercial (Fase 9)
 
 - [ ] **COM-01**: Atendente cadastra lead (manual) separado das clientes, com aviso "já é cliente: Fulana" por telefone/e-mail e vínculo à cliente existente _(09 D-01, D-02)_
-- [ ] **COM-02**: Gerente/atendente importa leads de planilha Excel/CSV com prévia de linhas válidas, inválidas e duplicadas _(09 D-04)_
+- [ ] **COM-02**: Gerente/atendente importa leads de planilha Excel/CSV com prévia de linhas válidas, inválidas e duplicadas, mantendo o responsável do Atimos (coluna Responsável casada com membro ADMIN/MANAGER/ATTENDANT por e-mail ou nome; sem casamento vai para a fila sem responsável com aviso) _(09 D-04, D-20, D-22)_
 - [ ] **COM-03**: Salão recebe leads pelo formulário público do site (token por organização, consentimento LGPD, anti-spam, limite de requisições, embutível em iframe) _(09 D-04, D-20)_
 - [ ] **COM-04**: Lead tem vários negócios independentes, só Noiva ou Debutante, com data do evento, pacote do catálogo, desconto, valor final, responsável, origem, local e observações _(09 D-03, D-05, D-06, D-18)_
 - [ ] **COM-05**: Etapas do funil configuráveis por salão (nome, cor, ordem, prazo em dias), padrão Novo/Contato/Proposta/Negociação/Ganho/Perdido, com Ganho/Perdido de sistema e alerta de SLA por etapa _(09 D-07, D-15)_
