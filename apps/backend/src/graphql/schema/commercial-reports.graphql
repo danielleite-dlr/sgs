@@ -1,0 +1,129 @@
+type CommercialFollowUp {
+  dealId: UUID!
+  leadId: UUID!
+  leadName: String!
+  kind: String!
+  stageName: String!
+  stageColor: String!
+  overdueSince: DateTime!
+  assigneeName: String
+}
+
+type CommercialRecentInteraction {
+  id: UUID!
+  leadId: UUID!
+  leadName: String!
+  type: String!
+  notes: String
+  occurredAt: DateTime!
+  createdByName: String
+}
+
+type CommercialStageSummary {
+  stageId: UUID!
+  name: String!
+  color: String!
+  kind: String!
+  count: Int!
+  amount: String!
+}
+
+type CommercialDashboard {
+  periodDays: Int!
+  newLeadsToday: Int!
+  newDealsToday: Int!
+  interactionsToday: Int!
+  remindersOverdue: Int!
+  remindersToday: Int!
+  followUpsPending: Int!
+  followUps: [CommercialFollowUp!]!
+  lastInteractions: [CommercialRecentInteraction!]!
+  stages: [CommercialStageSummary!]!
+  openAmount: String!
+  wonCount: Int!
+  wonAmount: String!
+  lostCount: Int!
+  conversionRate: Float
+}
+
+input CommercialReportFilter {
+  from: String!
+  to: String!
+  assigneeMemberId: UUID
+  stageId: UUID
+  status: String
+  kind: String
+  source: String
+}
+
+type CommercialReportTotals {
+  deals: Int!
+  open: Int!
+  won: Int!
+  lost: Int!
+  openAmount: String!
+  wonAmount: String!
+  conversionRate: Float
+}
+
+type CommercialAssigneeSummary {
+  memberId: UUID
+  name: String!
+  deals: Int!
+  won: Int!
+  lost: Int!
+  wonAmount: String!
+}
+
+type CommercialSourceSummary {
+  source: String!
+  label: String!
+  deals: Int!
+  won: Int!
+}
+
+type CommercialLostReasonSummary {
+  code: String!
+  label: String!
+  count: Int!
+}
+
+type CommercialReportRow {
+  dealId: UUID!
+  leadName: String!
+  phone: String
+  kind: String!
+  eventDate: String
+  stageName: String!
+  status: String!
+  assigneeName: String
+  source: String!
+  packageName: String
+  finalAmount: String
+  lostReasonLabel: String
+  lostReasonText: String
+  createdAt: DateTime!
+  closedAt: DateTime
+}
+
+type CommercialReport {
+  totals: CommercialReportTotals!
+  byStage: [CommercialStageSummary!]!
+  byAssignee: [CommercialAssigneeSummary!]!
+  bySource: [CommercialSourceSummary!]!
+  lostReasons: [CommercialLostReasonSummary!]!
+  rows: [CommercialReportRow!]!
+  truncated: Boolean!
+}
+
+type CommercialExportFile {
+  filename: String!
+  mimeType: String!
+  base64: String!
+}
+
+extend type Query {
+  commercialDashboard(periodDays: Int): CommercialDashboard!
+  commercialReport(filter: CommercialReportFilter!): CommercialReport!
+  exportCommercialReport(filter: CommercialReportFilter!, format: String!): CommercialExportFile!
+}
