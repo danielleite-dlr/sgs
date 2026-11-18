@@ -376,7 +376,7 @@ Plans:
 **Goal:** Trazer para o SGS o acompanhamento comercial do Atimos CRM (`/root/atmo-crm/atmos-crm`): novo menu **Comercial** com os submenus Painel comercial, Leads, Pipeline, Lembretes e Relatórios (relatórios só admin/gerente). Leads com histórico de interações; pipeline em kanban com etapas configuráveis por salão (padrão Novo, Contato, Proposta, Negociação, Ganho, Perdido), ganho/perdido com motivo e pacote/desconto; lembretes de follow-up. Negócio ganho vira cliente do SGS e abre contrato rascunho com o pacote escolhido. Vem antes do app nativo iOS (decisão da usuária em 2026-11-18, depois de achar fraca a usabilidade do app instalado pela Tela de Início).
 **Requirements:** COM-01, COM-02, COM-03, COM-04, COM-05, COM-06, COM-07, COM-08, COM-09, COM-10, COM-11, COM-12 (detalhe e rastreabilidade em REQUIREMENTS.md, seção "Comercial (Fase 9)")
 **Depends on:** Phase 8
-**Plans:** 17 plans
+**Plans:** 15/17 plans executed
 
 Plans:
 - [x] 09-01-dados-rls-permissoes-PLAN.md — tabelas commercial_* com FORCE RLS, etapas padrão, permissões commercial.*, fixtures e phase9-rls-rbac (onda 1)
@@ -393,7 +393,7 @@ Plans:
 - [x] 09-14-frontend-formulario-importacao-PLAN.md — diálogo de importação, aba do formulário, página pública e nginx frame-ancestors (onda 4)
 - [x] 09-12-frontend-pipeline-ganho-perdido-PLAN.md — kanban, diálogos de ganho (abre o contrato) e perda, configuração de etapas (onda 5)
 - [x] 09-13-frontend-lembretes-painel-relatorios-PLAN.md — telas de lembretes, painel comercial e relatórios com exportação (onda 5)
-- [ ] 09-15-e2e-ligar-flag-PLAN.md — liga a flag e E2E Playwright do funil, visibilidade e formulário (onda 6)
+- [x] 09-15-e2e-ligar-flag-PLAN.md — liga a flag e E2E Playwright do funil, visibilidade e formulário (onda 6)
 - [ ] 09-16-gate-deploy-staging-PLAN.md — gate completo, backup, deploy no staging (worktree limpo se preciso) e CI verde (onda 7)
 - [ ] 09-17-verificacao-humana-PLAN.md — push no aparelho, toque no kanban e iframe (onda 8)
 

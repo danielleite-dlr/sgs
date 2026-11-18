@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 09-01, 09-02 e 09-03 (onda 1)
-last_updated: "2026-11-18T14:39:07.346Z"
+stopped_at: Completed 09-15-PLAN.md
+last_updated: "2026-11-18T19:38:23.831Z"
 last_activity: 2026-11-18
 progress:
-  total_phases: 12
+  total_phases: 15
   completed_phases: 10
   total_plans: 142
-  completed_plans: 126
+  completed_plans: 140
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 09 (comercial-crm-do-atimos-no-sgs) — EXECUTING
-Plan: 2 of 17
+Plan: 3 of 17
 Status: Ready to execute
 Last activity: 2026-11-18
 
@@ -107,6 +107,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 09 P01 | 35min | 3 tasks | 7 files |
 | Phase 09 P02 | 20min | 2 tasks | 10 files |
 | Phase 09 P03 | 25min | 3 tasks | 25 files |
+| Phase 9 P15 | 50min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -207,6 +208,7 @@ Recent decisions affecting current work:
 - [Phase 09]: Funções purge_* não mudam: FKs commercial_* para members/contracts/clients/packages são SET NULL
 - [Phase 09]: 09-03: menu filtrado por papel via useMenu(); flag comercial false até o 09-15
 - [Phase 09]: 09-02: visibilityWhere tipado como Record<string, unknown> até o client Prisma do 09-01; D-21 em WIN_DEAL_ROLES (ADMIN, MANAGER, ATTENDANT)
+- [Phase 9]: 09-15: E2E arrasta o card pelo texto do tipo (link do nome barra o drag) com mouse em passos
 
 ### Pending Todos
 
@@ -278,8 +280,8 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-18T14:39:07.332Z
-Stopped at: Completed 09-01, 09-02 e 09-03 (onda 1)
+Last session: 2026-11-18T19:38:23.819Z
+Stopped at: Completed 09-15-PLAN.md
 Resume file: None
 | 2026-11-12 | fast | Montar manualmente (noivas) sem duplicar serviços do teste | ✅ |
 | 2026-11-13 | fast | Comanda: crédito do cliente em destaque no pagamento e no card da cliente | ✅ |
