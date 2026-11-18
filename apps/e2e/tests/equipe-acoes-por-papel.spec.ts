@@ -3,10 +3,9 @@ import { gql } from '../support/graphql';
 import { apiLogin, readSeedState } from '../support/seed-state';
 import { loginViaUi, navigateViaMenu } from '../support/ui';
 
-// Item 4 da VERIFICACAO da fase 02.1 descrevia "as ações aparecem e o backend
-// devolve FORBIDDEN". A quick 260929-dek resolveu isso: member.invite = ADMIN +
-// MANAGER (vê "Cadastrar profissional"); editRole/remove = ADMIN (só ele vê
-// Ações). É esse comportamento entregue que estes testes travam.
+// Quick 261118-gpm (decisão da usuária em 18/11): o MANAGER gerencia a equipe igual ao
+// ADMIN (editar, trocar papel, nova senha, desativar, reativar, excluir). ATTENDANT
+// continua sem nenhuma ação de equipe.
 
 const ACTION_TEXTS = ['Editar', 'Desativar', 'Reativar', 'Gerar nova senha provisória'];
 
@@ -29,37 +28,34 @@ async function expectNoMemberActions(page: Page) {
   }
 }
 
-test('MANAGER vê Cadastrar profissional mas nenhuma ação de gestão', async ({ page }) => {
+test('MANAGER vê Cadastrar profissional e as ações de gestão', async ({ page }) => {
   const seed = readSeedState();
   await openTeamPage(page, seed.manager.email, seed.manager.password, seed.proEditable.name);
 
   await expect(page.getByRole('button', { name: 'Cadastrar profissional' })).toBeVisible();
-  await expectNoMemberActions(page);
+  await expect(page.getByRole('columnheader', { name: 'Ações' })).toBeVisible();
+  const row = page.getByRole('row', { name: new RegExp(seed.proEditable.name) });
+  await row.getByRole('button', { name: 'Ações', exact: true }).click();
+  for (const text of ['Editar', 'Desativar', 'Gerar nova senha provisória']) {
+    await expect(page.getByRole('menuitem', { name: text })).toBeVisible();
+  }
+  await page.keyboard.press('Escape');
 
-  // O backend também nega: o membro segue ativo.
+  // O backend também aceita: desativa e reativa (o membro volta a ficar ativo).
   const token = await apiLogin(seed.manager.email, seed.manager.password);
   const ctx = { token, orgId: seed.orgId };
-  const res = await fetch('http://localhost:3100/graphql', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      'X-Organization-Id': seed.orgId,
-    },
-    body: JSON.stringify({
-      query: `mutation($id: UUID!) { deactivateMember(id: $id) { member { id } errors { code message } } }`,
-      variables: { id: seed.proEditable.memberId },
-    }),
-  });
-  const body = (await res.json()) as {
-    data?: { deactivateMember?: { member: unknown; errors: { code: string }[] } };
-    errors?: { message: string; extensions?: { code?: string } }[];
-  };
-  const denied =
-    (body.errors?.length ?? 0) > 0 ||
-    (body.data?.deactivateMember?.errors.length ?? 0) > 0;
-  expect(denied, JSON.stringify(body)).toBe(true);
-  expect(body.data?.deactivateMember?.member ?? null).toBeNull();
+  const off = await gql<{ deactivateMember: { member: { id: string } | null; errors: { code: string }[] } }>(
+    `mutation($id: UUID!) { deactivateMember(id: $id) { member { id } errors { code } } }`,
+    { id: seed.proEditable.memberId },
+    ctx,
+  );
+  expect(off.deactivateMember.errors).toEqual([]);
+  const on = await gql<{ reactivateMember: { member: { id: string } | null; errors: { code: string }[] } }>(
+    `mutation($id: UUID!) { reactivateMember(id: $id) { member { id } errors { code } } }`,
+    { id: seed.proEditable.memberId },
+    ctx,
+  );
+  expect(on.reactivateMember.errors).toEqual([]);
 
   const { allMembers } = await gql<{ allMembers: { id: string; status: string }[] }>(
     `query { allMembers { id status } }`,

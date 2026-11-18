@@ -298,9 +298,10 @@ test.describe('Fase 4: pacote -> grupo de noivas -> contrato -> aceite público 
     await page.getByTestId('sidebar-brand').click();
     await navigateViaMenu(page, 'Agenda');
     await expect(page.getByTestId('view-day')).toBeVisible();
-    const next = page.getByRole('button', { name: 'Próximo dia' });
-    const hops = daysBetween(spDate(0), eventDate);
-    for (let i = 0; i < hops; i += 1) await next.click();
+    // Vai direto ao dia do evento pela URL (?data=AAAA-MM-DD), como os links da ficha da
+    // cliente: clicar "Próximo dia" ~40 vezes deixava o teste no limite dos 30 s.
+    await page.goto(`/agenda?data=${eventDate}&visao=day`);
+    await expect(page.getByTestId('view-day')).toBeVisible();
     await expect(page.locator('[data-testid^="appointment-card-"]').first()).toBeVisible();
     expect(await page.locator('[data-testid^="appointment-card-"]').count()).toBeGreaterThanOrEqual(4);
   });
