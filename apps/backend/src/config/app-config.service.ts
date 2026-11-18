@@ -80,6 +80,10 @@ export class AppConfigService {
     return this.config.get('CONTRACT_ALERTS_SCHEDULER', { infer: true });
   }
 
+  get commercialRemindersSchedulerEnabled(): boolean {
+    return this.config.get('COMMERCIAL_REMINDERS_SCHEDULER', { infer: true });
+  }
+
   get fcmServiceAccount(): FcmServiceAccount | null {
     return parseFcmServiceAccount(this.config.get('FCM_SERVICE_ACCOUNT_JSON', { infer: true }));
   }
