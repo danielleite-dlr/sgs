@@ -1,0 +1,138 @@
+enum CommercialStageKind {
+  open
+  won
+  lost
+}
+
+type CommercialStage {
+  id: UUID!
+  name: String!
+  color: String!
+  position: Int!
+  slaDays: Int
+  kind: CommercialStageKind!
+  isSystem: Boolean!
+  openDeals: Int!
+}
+
+input CommercialStageInput {
+  name: String!
+  color: String!
+  slaDays: Int
+}
+
+type CommercialMember {
+  id: UUID!
+  displayName: String!
+  roleName: String!
+}
+
+type CommercialClientRef {
+  id: UUID!
+  fullName: String!
+  phone: String
+  email: String
+}
+
+type CommercialLeadRef {
+  id: UUID!
+  fullName: String!
+  phone: String
+  email: String
+}
+
+type CommercialDuplicateCheck {
+  clients: [CommercialClientRef!]!
+  leads: [CommercialLeadRef!]!
+}
+
+type CommercialLead {
+  id: UUID!
+  fullName: String!
+  phone: String
+  email: String
+  source: String!
+  notes: String
+  client: CommercialClientRef
+  createdBy: CommercialMember
+  consentAt: DateTime
+  createdAt: DateTime!
+  openDeals: Int!
+  lastInteractionAt: DateTime
+}
+
+type CommercialLeadPage {
+  items: [CommercialLead!]!
+  total: Int!
+}
+
+input CommercialLeadFilter {
+  search: String
+  source: String
+  assigneeMemberId: UUID
+  unassigned: Boolean
+  limit: Int
+  offset: Int
+}
+
+input CreateCommercialLeadInput {
+  fullName: String!
+  phone: String
+  email: String
+  source: String
+  notes: String
+  clientId: UUID
+}
+
+input UpdateCommercialLeadInput {
+  id: UUID!
+  fullName: String
+  phone: String
+  email: String
+  source: String
+  notes: String
+}
+
+type CommercialStagePayload {
+  stage: CommercialStage
+  errors: [UserError!]!
+}
+
+type CommercialStagesPayload {
+  stages: [CommercialStage!]!
+  errors: [UserError!]!
+}
+
+type CommercialLeadPayload {
+  lead: CommercialLead
+  errors: [UserError!]!
+}
+
+type CommercialOkPayload {
+  ok: Boolean!
+  errors: [UserError!]!
+}
+
+extend type Query {
+  commercialStages: [CommercialStage!]!
+  commercialLeads(filter: CommercialLeadFilter): CommercialLeadPage!
+  commercialLead(id: UUID!): CommercialLead
+  commercialDuplicateCheck(
+    phone: String
+    email: String
+    excludeLeadId: UUID
+  ): CommercialDuplicateCheck!
+  commercialAssignees: [CommercialMember!]!
+}
+
+extend type Mutation {
+  createCommercialStage(input: CommercialStageInput!): CommercialStagePayload!
+  updateCommercialStage(id: UUID!, input: CommercialStageInput!): CommercialStagePayload!
+  reorderCommercialStages(ids: [UUID!]!): CommercialStagesPayload!
+  deleteCommercialStage(id: UUID!, moveToStageId: UUID): CommercialOkPayload!
+  createCommercialLead(input: CreateCommercialLeadInput!): CommercialLeadPayload!
+  updateCommercialLead(input: UpdateCommercialLeadInput!): CommercialLeadPayload!
+  linkCommercialLeadClient(leadId: UUID!, clientId: UUID): CommercialLeadPayload!
+  deleteCommercialLead(id: UUID!): CommercialOkPayload!
+  purgeCommercialLead(id: UUID!): CommercialOkPayload!
+}
