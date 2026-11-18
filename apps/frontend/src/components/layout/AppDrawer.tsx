@@ -4,7 +4,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { cn } from '@/lib/utils';
 import { brandName } from '@/lib/brand';
 import { FEATURES } from '@/config/features';
-import { MENU, type MenuItem } from './menu-config';
+import { type MenuItem } from './menu-config';
+import { useMenu } from './use-menu';
 import { contemAvisoEstoque, useMenuAccordion } from './use-menu-accordion';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -33,6 +34,7 @@ export function AppDrawer({
   onOpenNotifications,
 }: AppDrawerProps) {
   const { logout } = useAuth();
+  const menu = useMenu();
   const organizationName = useAuthStore((s) => s.organizationName);
 
   function handleNavigate() {
@@ -71,7 +73,7 @@ export function AppDrawer({
 
         <nav className="flex-1 overflow-y-auto py-sm" aria-label="Menu principal">
           <DrawerList
-            items={MENU}
+            items={menu}
             fallbackId="estabelecimento"
             lowStockCount={lowStockCount}
             onNavigate={handleNavigate}

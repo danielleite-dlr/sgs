@@ -45,9 +45,13 @@ import {
   Trophy,
   UserX,
   Wallet,
+  Handshake,
+  Kanban,
+  BellRing,
   type LucideIcon,
 } from 'lucide-react';
 import { isPathEnabled } from '@/config/features';
+import { COMMERCIAL_ROLES } from '@/features/commercial/commercial-permissions';
 
 export interface MenuItem {
   id: string;
@@ -58,6 +62,8 @@ export interface MenuItem {
   children?: MenuItem[];
   searchTerms?: string[];
   badge?: 'lowStock';
+  /** Papéis que veem o item (e os filhos). Ausente = todos. */
+  roles?: readonly string[];
 }
 
 /**
@@ -84,6 +90,58 @@ const ALL_MENU: MenuItem[] = [
     to: '/agenda',
     icon: CalendarDays,
     searchTerms: ['agenda', 'agendamento', 'horario', 'minha agenda'],
+  },
+  {
+    id: 'comercial',
+    label: 'Comercial',
+    icon: Handshake,
+    roles: COMMERCIAL_ROLES,
+    children: [
+      {
+        id: 'comercial-painel',
+        label: 'Painel comercial',
+        to: '/comercial',
+        icon: LayoutDashboard,
+        searchTerms: ['comercial', 'funil', 'vendas'],
+      },
+      {
+        id: 'comercial-leads',
+        label: 'Leads',
+        to: '/comercial/leads',
+        icon: Users,
+        searchTerms: ['leads', 'interessadas', 'orçamento'],
+      },
+      {
+        id: 'comercial-pipeline',
+        label: 'Pipeline',
+        to: '/comercial/pipeline',
+        icon: Kanban,
+        searchTerms: ['pipeline', 'kanban', 'negócios', 'funil'],
+      },
+      {
+        id: 'comercial-lembretes',
+        label: 'Lembretes',
+        to: '/comercial/lembretes',
+        icon: BellRing,
+        searchTerms: ['lembretes', 'follow-up', 'retorno'],
+      },
+      {
+        id: 'comercial-relatorios',
+        label: 'Relatórios',
+        to: '/comercial/relatorios',
+        icon: BarChart3,
+        roles: ['ADMIN', 'MANAGER'],
+        searchTerms: ['relatório comercial', 'conversão', 'perdas'],
+      },
+      {
+        id: 'comercial-config',
+        label: 'Etapas e formulário',
+        to: '/comercial/configuracoes',
+        icon: Settings2,
+        roles: ['ADMIN', 'MANAGER'],
+        searchTerms: ['etapas', 'formulário', 'site'],
+      },
+    ],
   },
   {
     id: 'estabelecimento',
@@ -478,6 +536,35 @@ function pruneMenu(items: MenuItem[]): MenuItem[] {
 /** Menu efetivamente navegável — o que o usuário vê. */
 export const MENU: MenuItem[] = pruneMenu(ALL_MENU);
 
+/** Menu completo, sem poda por flag (para testes). */
+export const MENU_DEFINITION: readonly MenuItem[] = ALL_MENU;
+
+/**
+ * Remove os itens cujo `roles` não inclui o papel (item sem `roles` é de todos) e
+ * os grupos que ficam sem filhos por causa disso.
+ */
+export function filterMenuByRole(
+  items: readonly MenuItem[],
+  roleName: string | null | undefined,
+): MenuItem[] {
+  const kept: MenuItem[] = [];
+  for (const item of items) {
+    if (item.roles && (roleName == null || !item.roles.includes(roleName))) continue;
+    if (item.children) {
+      const children = filterMenuByRole(item.children, roleName);
+      if (children.length === 0) continue;
+      kept.push({ ...item, children });
+      continue;
+    }
+    kept.push(item);
+  }
+  return kept;
+}
+
+export function menuForRole(roleName: string | null | undefined): MenuItem[] {
+  return filterMenuByRole(MENU, roleName);
+}
+
 /**
  * Flatten menu for global search.
  * Returns leaf items (those with `to`).
@@ -503,10 +590,13 @@ export function flattenMenu(items: MenuItem[] = MENU, breadcrumb: string[] = [])
  * Search menu items by label or searchTerms.
  * Case-insensitive, accent-insensitive.
  */
-export function searchMenu(query: string): Array<{ item: MenuItem; path: string[] }> {
+export function searchMenu(
+  query: string,
+  items: MenuItem[] = MENU,
+): Array<{ item: MenuItem; path: string[] }> {
   const q = normalize(query);
   if (!q) return [];
-  return flattenMenu().filter(({ item, path }) => {
+  return flattenMenu(items).filter(({ item, path }) => {
     const hay = [
       item.label,
       ...(item.searchTerms ?? []),

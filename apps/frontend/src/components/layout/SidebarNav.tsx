@@ -15,7 +15,8 @@ import { brandName } from '@/lib/brand';
 import { HOME_PATH } from '@/config/features';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { MENU, type MenuItem } from './menu-config';
+import { type MenuItem } from './menu-config';
+import { useMenu } from './use-menu';
 import { contemAvisoEstoque, temRotaAtiva, useMenuAccordion } from './use-menu-accordion';
 import { BrandMark } from './BrandMark';
 import { SessionUser } from './SessionUser';
@@ -54,6 +55,7 @@ export function SidebarNav({
 }: SidebarNavProps) {
   const organizationName = useAuthStore((s) => s.organizationName);
   const { logout } = useAuth();
+  const menu = useMenu();
 
   if (collapsed) {
     return (
@@ -91,7 +93,7 @@ export function SidebarNav({
 
         <div className="flex-1 overflow-y-auto px-sm py-md">
           <SidebarList
-            items={MENU}
+            items={menu}
             className="space-y-xs"
             lowStockCount={lowStockCount}
             onNavigate={onNavigate}
@@ -312,6 +314,7 @@ function CollapsedSidebar({
   onExpand,
   onLogout,
 }: CollapsedSidebarProps) {
+  const menu = useMenu();
   return (
     <TooltipProvider delayDuration={200}>
       <nav
@@ -333,7 +336,7 @@ function CollapsedSidebar({
         </Link>
 
         <ul className="flex w-full flex-1 flex-col items-center gap-xs overflow-y-auto py-md">
-          {MENU.map((item) => (
+          {menu.map((item) => (
             <CollapsedItem key={item.id} item={item} lowStockCount={lowStockCount} />
           ))}
         </ul>
