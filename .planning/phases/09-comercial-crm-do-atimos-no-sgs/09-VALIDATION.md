@@ -1,0 +1,97 @@
+---
+phase: 9
+slug: comercial-crm-do-atimos-no-sgs
+status: draft
+nyquist_compliant: false
+wave_0_complete: false
+created: 2026-11-18
+---
+
+# Phase 9 — Validation Strategy
+
+> Per-phase validation contract for feedback sampling during execution.
+> Fonte: `09-RESEARCH.md` §Arquitetura de validação.
+
+---
+
+## Test Infrastructure
+
+| Property | Value |
+|----------|-------|
+| **Framework** | Jest 29 + ts-jest (backend unit/integração), Vitest 2 + Testing Library (frontend), Playwright (E2E) |
+| **Config file** | `apps/backend/jest.config.ts`, `apps/backend/jest-integration.config.ts`, `apps/frontend/vite.config.ts`, `apps/e2e/playwright.config.ts` |
+| **Quick run command** | `corepack pnpm --filter @sgs/backend exec jest src/commercial` / `corepack pnpm --filter @sgs/frontend exec vitest run src/features/commercial` |
+| **Full suite command** | `corepack pnpm -r --if-present lint && corepack pnpm -r typecheck && corepack pnpm --filter @sgs/backend test && corepack pnpm --filter @sgs/backend test:integration && corepack pnpm --filter @sgs/frontend test && corepack pnpm --filter @sgs/e2e test:e2e` |
+| **Estimated runtime** | ~600 seconds (suíte completa); quick run < 60 s |
+
+---
+
+## Sampling Rate
+
+- **After every task commit:** comando rápido do módulo tocado (jest do módulo ou vitest da feature) + typecheck do pacote
+- **After every plan wave:** `corepack pnpm --filter @sgs/backend test && corepack pnpm --filter @sgs/backend test:integration -- phase9 && corepack pnpm --filter @sgs/frontend test`
+- **Before `/gsd:verify-work`:** suíte completa verde (lint, typecheck, jest, integração completa, vitest, Playwright)
+- **Max feedback latency:** 60 seconds (quick run)
+
+---
+
+## Per-Task Verification Map
+
+> Mapa por requisito/comportamento; a coluna Planos é preenchida pelo planner.
+
+| Req | Comportamento | Test Type | Planos | Automated Command | File Exists | Status |
+|-----|---------------|-----------|--------|-------------------|-------------|--------|
+| COM-01 | normalização de telefone e duplicidade (máscara, +55, 9º dígito) | unit | — | `... exec jest src/commercial/commercial-phone.spec.ts` | ❌ W0 | ⬜ pending |
+| COM-01 | aviso/vínculo a cliente existente; lead não aparece em `clients` | integração | — | `... test:integration -- phase9-leads` | ❌ W0 | ⬜ pending |
+| COM-02 | importação: prévia, inválidas, duplicadas, limite de linhas | unit + integração | — | `... exec jest src/commercial/lead-import.spec.ts`, `... test:integration -- phase9-import` | ❌ W0 | ⬜ pending |
+| COM-03 | formulário público: token inválido/inativo 404, throttle, honeypot, consentimento, RLS | integração | — | `... test:integration -- phase9-public-form` | ❌ W0 | ⬜ pending |
+| COM-04/05 | etapas padrão, backfill, ordem/exclusão, Ganho/Perdido de sistema | unit + integração | — | `... test:integration -- phase9-stages` | ❌ W0 | ⬜ pending |
+| COM-05 | SLA por etapa (limites, sem interação, sem prazo) | unit | — | `... exec jest src/commercial/commercial-sla.spec.ts` | ❌ W0 | ⬜ pending |
+| COM-06 | kanban: mover otimista, reverter em erro, "Mover para…" no celular | vitest | — | `... exec vitest run src/features/commercial/__tests__/pipeline-board.test.tsx` | ❌ W0 | ⬜ pending |
+| COM-07 | interação atualiza `last_interaction_at`; "próximo contato em" cria lembrete | integração | — | `... test:integration -- phase9-interactions` | ❌ W0 | ⬜ pending |
+| COM-08 | ganho atômico (cliente nova/existente, contrato rascunho, sinal no caixa), rollback, concorrência, debutante | integração | — | `... test:integration -- phase9-win-deal` | ❌ W0 | ⬜ pending |
+| COM-09 | perdido: motivo obrigatório, texto livre, reabrir | unit + integração | — | `... test:integration -- phase9-lose-deal` | ❌ W0 | ⬜ pending |
+| COM-10 | `visibilityWhere` puro | unit | — | `... exec jest src/commercial/commercial-access.spec.ts` | ❌ W0 | ⬜ pending |
+| COM-10 | matriz papel × operação; ATTENDANT A não vê nada de B (lista, id, contagens, export); PROFESSIONAL FORBIDDEN; RLS entre orgs com FORCE RLS | integração | — | `... test:integration -- phase9-rls-rbac` | ❌ W0 | ⬜ pending |
+| COM-10 (front) | menu por papel; flag `comercial`; guard de rota | vitest | — | `... exec vitest run src/components/layout/__tests__ src/config/__tests__/features.test.ts` | ✅ estender | ⬜ pending |
+| COM-11 | `claimDueReminders` idempotente, reagendar zera `notified_at`, alvos e mensagem do push | unit + integração | — | `... exec jest src/push/push-commercial.spec.ts`, `... test:integration -- phase9-reminders` | ❌ W0 | ⬜ pending |
+| COM-11 | allowlist do push aceita `/comercial/lembretes` e segue rejeitando `https://evil.com`, `//evil.com`, `/agenda/../admin` | vitest | — | `... exec vitest run src/__tests__/service-worker.test.ts` | ✅ estender | ⬜ pending |
+| COM-12 | painel/relatórios: conversão, valor em negociação, filtros; export xlsx/pdf; `commercial.manage`; injeção de fórmula escapada | integração + unit | — | `... test:integration -- phase9-reports` | ❌ W0 | ⬜ pending |
+| E2E | lead → negócio → arrastar etapas → interação com próximo contato → ganho com sinal → contrato rascunho; perdido com motivo; atendente só vê o dela | Playwright | — | `corepack pnpm --filter @sgs/e2e test:e2e comercial` | ❌ W0 | ⬜ pending |
+
+*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+
+---
+
+## Wave 0 Requirements
+
+- [ ] `apps/backend/test/integration/helpers/phase9-fixtures.ts` e `phase9-cleanup.ts` (mundo da fase 4 + atendentes A/B + profissional + pacotes noiva/debutante; apagar `commercial_*` antes de `destroyPhase4World`)
+- [ ] specs unitários puros: `commercial-phone`, `commercial-sla`, `commercial-access`
+- [ ] `phase9-rls-rbac.e2e.spec.ts` criado junto da migração
+- [ ] fixtures do frontend `features/commercial/__tests__/commercial-fixtures.ts`
+- [ ] helper E2E `apps/e2e/support/phase9.ts`
+- [ ] `COMMERCIAL_REMINDERS_SCHEDULER ??= 'false'` em `test/integration/setup.ts`
+- [ ] dependência `exceljs` instalada antes dos testes de importação/exportação
+
+---
+
+## Manual-Only Verifications
+
+| Behavior | Requirement | Why Manual | Test Instructions |
+|----------|-------------|------------|-------------------|
+| Push do lembrete chega no iPhone e abre `/comercial/lembretes` | COM-11 | depende de dispositivo real com app instalado | no staging, criar lembrete para daqui a 2 min com o usuário inscrito no push; tocar na notificação |
+| Arrastar no kanban pelo toque no celular | COM-06 | gesto de toque real | abrir Pipeline no iPhone, arrastar um card e usar "Mover para…" |
+| Formulário público embutido (iframe) no site do salão | COM-03 | depende do nginx/site externo | colar o snippet numa página de teste e enviar um lead |
+
+---
+
+## Validation Sign-Off
+
+- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
+- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
+- [ ] Wave 0 covers all MISSING references
+- [ ] No watch-mode flags
+- [ ] Feedback latency < 60s
+- [ ] `nyquist_compliant: true` set in frontmatter
+
+**Approval:** pending
