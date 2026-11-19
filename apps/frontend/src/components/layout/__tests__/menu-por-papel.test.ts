@@ -27,6 +27,11 @@ const FILHOS = [
 ];
 
 describe('menu por papel (D-11, D-13)', () => {
+  it('Comercial é o último grupo do menu', () => {
+    expect(MENU_DEFINITION.at(-1)?.id).toBe('comercial');
+    expect(filterMenuByRole(MENU, 'ADMIN').at(-1)?.id).toBe('comercial');
+  });
+
   it('PROFESSIONAL não vê o Comercial em nível nenhum', () => {
     const todos = ids(filterMenuByRole(MENU_DEFINITION, 'PROFESSIONAL'));
     expect(todos).not.toContain('comercial');
