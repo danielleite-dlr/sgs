@@ -67,7 +67,9 @@ const CLOSE_TX_OPTIONS = { timeout: 15000, maxWait: 5000 } as const;
 /** PROFESSIONAL só enxerga as próprias comissões. */
 function scopeCommissions(view: ComandaView | null, tenant: Pick<TenantContext, 'roleName' | 'memberId'>) {
   if (!view || tenant.roleName !== 'PROFESSIONAL') return view;
-  const commissions = view.commissions.filter((c) => c.memberId === tenant.memberId);
+  const commissions = view.commissions
+    .filter((c) => c.memberId === tenant.memberId)
+    .map((c) => ({ ...c, chargedAmount: '0.00', baseAmount: '0.00' }));
   return {
     ...view,
     commissions,

@@ -9,6 +9,25 @@ import { PERMISSIONS } from '../authz/permissions.catalog';
 import { ClientCreditService } from './client-credit.service';
 import { FinancialService } from './financial.service';
 
+/**
+ * PROFESSIONAL vê só o que recebe (comissão): valor cobrado, base e regra
+ * (percentual + comissão revelaria o cobrado) saem zerados. Schema continua
+ * `String!`, então não há mudança de SDL.
+ */
+export function maskForProfessional<
+  T extends {
+    chargedAmount: string;
+    baseAmount: string;
+    ruleValue?: string | null;
+    ruleSnapshot?: string;
+  },
+>(record: T): T {
+  const masked = { ...record, chargedAmount: '0.00', baseAmount: '0.00' };
+  if ('ruleValue' in record) masked.ruleValue = null;
+  if ('ruleSnapshot' in record) masked.ruleSnapshot = '{}';
+  return masked;
+}
+
 @Resolver()
 export class FinancialResolver {
   constructor(
@@ -39,17 +58,18 @@ export class FinancialResolver {
 
   @Query('commissionRecords')
   @RequirePermission(PERMISSIONS.COMMISSION_RECORD_READ)
-  commissionRecords(
+  async commissionRecords(
     @CurrentTenant() tenant: TenantContext,
     @Args('from') from: string,
     @Args('to') to: string,
     @Args('memberId') memberId?: string,
   ) {
-    return this.financial.commissionRecords(tenant.organizationId, {
+    const rows = await this.financial.commissionRecords(tenant.organizationId, {
       from,
       to,
       memberId: scopeProfessionalFilter(tenant, memberId),
     });
+    return tenant.roleName === 'PROFESSIONAL' ? rows.map(maskForProfessional) : rows;
   }
 
   @Query('commissionTotals')

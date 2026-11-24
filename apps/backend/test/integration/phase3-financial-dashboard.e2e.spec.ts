@@ -204,7 +204,8 @@ describe('Phase 3 - dashboard financeiro (D-22)', () => {
     expect(recs).toHaveLength(2);
     expect(recs.every((r: { memberId: string }) => r.memberId === w.members.proB)).toBe(true);
     expect(recs.map((r: { itemName: string }) => r.itemName).sort()).toEqual(['Corte B', 'Corte C']);
-    expect(recs[0].ruleSnapshot).toContain('itemName');
+    // quick 261124-qhs: PROFESSIONAL não vê a regra (revelaria o valor cobrado)
+    expect(recs[0].ruleSnapshot).toBe('{}');
 
     const tot = await q(w.tokens.proB)(TOTALS, { f: '2030-03-01', t: '2030-04-01', m: w.members.proA });
     expect(tot.data.commissionTotals).toEqual([
