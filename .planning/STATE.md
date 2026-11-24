@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 Phase: 09 (comercial-crm-do-atimos-no-sgs) — EXECUTING
 Plan: 4 of 17
 Status: Ready to execute
-Last activity: 2026-11-24 - Completed quick task 261124-owd: agendamento reaproveita a comanda aberta da cliente no mesmo dia
+Last activity: 2026-11-24 - Completed quick task 261124-pkz: ficha da cliente com contrato só da noiva e comandas abertas no histórico
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -285,6 +285,7 @@ Recent decisions affecting current work:
 | 261124-mkp | Agendamento pela agenda de pessoa do grupo no dia do evento entra no grupo (filtro da noiva); "Agendar agora?" ao incluir serviço no grupo abre a agenda preenchida | 2026-11-24 | 9c81178 | [261124-mkp-agenda-liga-grupo-e-agendar-agora](./quick/261124-mkp-agenda-liga-grupo-e-agendar-agora/) |
 | 261124-n98 | Grupo da noiva avisa "Falta agendar: <serviços>" por pessoa (serviço do evento sem agendamento ativo), com botão Agendar que abre a agenda preenchida; lista de grupos mostra "N serviços sem agendar" depois que a agenda do evento foi montada | 2026-11-24 | — | [261124-n98-aviso-falta-agendar-no-grupo-da-noiva](./quick/261124-n98-aviso-falta-agendar-no-grupo-da-noiva/) |
 | 261124-owd | Agendamento novo (agenda ou grupo da noiva) reaproveita a comanda aberta da cliente com atendimento ativo no mesmo dia; comanda fechada ou outro dia abre nova. Edna (20/11) juntada na C-2026-025 e C-2026-117 cancelada | 2026-11-24 | a55f873 | [261124-owd-comanda-unica-por-cliente-no-dia-ao-agen](./quick/261124-owd-comanda-unica-por-cliente-no-dia-ao-agen/) |
+| 261124-pkz | Ficha da cliente: acompanhante não vê mais o contrato do grupo (só noiva/debutante/responsável ou quem está no contrato); Histórico com bloco "Comandas abertas", comandas abertas e atendimentos passados em aberto na lista, contador no trigger | 2026-11-24 | a96ea04 | [261124-pkz-ficha-da-cliente-contrato-so-da-noiva-e-](./quick/261124-pkz-ficha-da-cliente-contrato-so-da-noiva-e-/) |
 
 ## Session Continuity
 
