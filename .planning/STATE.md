@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 Phase: 09 (comercial-crm-do-atimos-no-sgs) — EXECUTING
 Plan: 4 of 17
 Status: Ready to execute
-Last activity: 2026-11-24 - Completed quick task 261124-ijh: comissão da noiva dividida entre teste e dia + agenda atualiza após fechar comanda
+Last activity: 2026-11-24 - Completed quick task 261124-k9b: data do fechamento da comanda (padrão = dia do atendimento)
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -280,6 +280,7 @@ Recent decisions affecting current work:
 | 261117-mtn | Relatório de comissões: teste de noiva incluso conta junto com o dia da noiva (1 atendimento); par estornado não conta | 2026-11-17 | 0023932 | [261117-mtn-teste-de-noiva-e-evento-como-um-atendimento](./quick/261117-mtn-teste-de-noiva-e-evento-como-um-atendimento/) |
 | 261117-m39 | App não pede mais login a cada abertura: renova a sessão pelo refresh token (single-flight, sem rede mantém a sessão) e a tela de login lembra o último e-mail | 2026-11-17 | 43d14b8 | [261117-m39-app-pede-login-toda-vez-renovar-sessao-p](./quick/261117-m39-app-pede-login-toda-vez-renovar-sessao-p/) |
 | 261124-ijh | Comissão da noiva dividida entre teste incluso e dia (R$ 400 → 200 + 200; sem teste o dia fica com tudo), substitui 261117-j1w; agenda refaz a consulta ao voltar da comanda fechada e modal em atendimento leva a "Finalizar na comanda"; staging: C-2026-022/020/058 reabertas e fechadas para recalcular | 2026-11-24 | 5672a5b | [261124-ijh-comissao-noiva-dividida-teste-e-dia-agen](./quick/261124-ijh-comissao-noiva-dividida-teste-e-dia-agen/) |
+| 261124-k9b | Data do fechamento da comanda: padrão = dia do atendimento, editável, não futura; caixa, comissão, closed_at e paid_at entram nesse dia (12:00 locais) | 2026-11-24 | 8b579f8 | [261124-k9b-data-do-fechamento-da-comanda](./quick/261124-k9b-data-do-fechamento-da-comanda/) |
 
 ## Session Continuity
 
