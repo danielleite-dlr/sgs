@@ -1,6 +1,6 @@
 import '@/infrastructure/i18n';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import { MemoryRouter } from 'react-router-dom';
 import { ClientHistoryQuery } from '../api/clients.api';
@@ -23,6 +23,7 @@ const empty: ClientOverviewData = {
   bridalGroups: [],
   contracts: [],
   upcomingAppointments: [],
+  openComandas: [],
   stats: { completedCount: 0, lastVisitAt: null, totalSpent: '0.00', creditBalance: '0.00' },
 };
 
@@ -130,7 +131,17 @@ describe('ClientHistoryTab', () => {
     ...over,
   });
 
-  function renderTab(items: unknown[]) {
+  const openComanda = {
+    id: 'cm9',
+    code: 'C-2026-099',
+    openedAt: '2026-11-23T12:00:00.000Z',
+    firstAppointmentAt: '2026-11-23T15:00:00.000Z',
+    total: '80.00',
+    serviceNames: ['Escova'],
+    professionalNames: ['Jessica'],
+  };
+
+  function renderTab(items: unknown[], openComandas: unknown[] = []) {
     const mocks: MockedResponse[] = [
       {
         request: {
@@ -143,7 +154,7 @@ describe('ClientHistoryTab', () => {
     return render(
       <MockedProvider mocks={mocks}>
         <MemoryRouter>
-          <ClientHistoryTab clientId="c1" />
+          <ClientHistoryTab clientId="c1" openComandas={openComandas as never} />
         </MemoryRouter>
       </MockedProvider>,
     );
@@ -177,6 +188,48 @@ describe('ClientHistoryTab', () => {
     expect(rows[0]).toHaveTextContent('R$ 120,00');
     expect(within(rows[0]).getByRole('link')).toHaveAttribute('href', '/comanda/cm1');
     expect(within(rows[1]).getByRole('link')).toHaveAttribute('href', '/contratos/ct1');
+  });
+
+  it('bloco Comandas abertas no topo com selo, valores e link', async () => {
+    renderTab([], [openComanda]);
+    const block = await screen.findByTestId('client-open-comandas');
+    expect(block).toHaveTextContent('Comandas abertas');
+    const cards = within(block).getAllByTestId('client-open-comanda');
+    expect(cards).toHaveLength(1);
+    expect(cards[0]).toHaveTextContent('C-2026-099');
+    expect(cards[0]).toHaveTextContent('Escova');
+    expect(cards[0]).toHaveTextContent('Jessica');
+    expect(cards[0]).toHaveTextContent('R$ 80,00');
+    expect(cards[0]).toHaveTextContent('Aberta');
+    expect(within(cards[0]).getByRole('link')).toHaveAttribute('href', '/comanda/cm9');
+    // com comanda aberta, o estado vazio da lista não aparece
+    await waitFor(() => expect(screen.queryByText('Sem histórico ainda')).toBeNull());
+  });
+
+  it('linha de comanda aberta na lista renderiza com link', async () => {
+    renderTab(
+      [
+        item({
+          id: 'cm9',
+          occurredAt: '2026-11-23T15:00:00.000Z',
+          kind: 'comanda',
+          description: 'Comanda C-2026-099 (aberta) — Escova',
+          amount: '80.00',
+          entityType: 'comanda',
+          entityId: 'cm9',
+        }),
+      ],
+      [openComanda],
+    );
+    const rows = await screen.findAllByTestId('client-history-item');
+    expect(rows[0]).toHaveTextContent('(aberta)');
+    expect(within(rows[0]).getByRole('link')).toHaveAttribute('href', '/comanda/cm9');
+  });
+
+  it('sem comandas abertas o bloco não aparece', async () => {
+    renderTab([]);
+    expect(await screen.findByText('Sem histórico ainda')).toBeInTheDocument();
+    expect(screen.queryByTestId('client-open-comandas')).toBeNull();
   });
 
   it('estado vazio só quando não há itens', async () => {

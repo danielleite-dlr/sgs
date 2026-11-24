@@ -8,8 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ClientByIdQuery } from '@/features/clients/api/clients.api';
-import type { ClientByIdResult } from '@/features/clients/api/clients.api';
+import { ClientByIdQuery, ClientOverviewQuery } from '@/features/clients/api/clients.api';
+import type { ClientByIdResult, ClientOverviewResult } from '@/features/clients/api/clients.api';
 import { ClientHistoryTab } from '@/features/clients/components/ClientHistoryTab';
 import { ClientSituation } from '@/features/clients/components/ClientSituation';
 import { formatCpf } from '@/features/clients/utils/cpf';
@@ -26,6 +26,14 @@ export function ClienteDetailPage() {
     variables: { id },
     skip: !id,
   });
+
+  // Mesmas variáveis da ClientSituation: o cache do Apollo compartilha o resultado.
+  const { data: overview } = useQuery<ClientOverviewResult>(ClientOverviewQuery, {
+    variables: { clientId: id },
+    skip: !id,
+    fetchPolicy: 'cache-and-network',
+  });
+  const open = overview?.clientOverview.openComandas ?? [];
 
   useEffect(() => {
     if (data?.client?.fullName) {
@@ -84,7 +92,9 @@ export function ClienteDetailPage() {
       <Tabs defaultValue="data">
         <TabsList>
           <TabsTrigger value="data">{t('clients.tabs.data')}</TabsTrigger>
-          <TabsTrigger value="history">{t('clients.tabs.history')}</TabsTrigger>
+          <TabsTrigger value="history">{t('clients.tabs.history')}
+            {open.length > 0 && ` (${open.length} ${open.length === 1 ? 'aberta' : 'abertas'})`}
+          </TabsTrigger>
         </TabsList>
 
         {/* Dados tab */}
@@ -122,7 +132,7 @@ export function ClienteDetailPage() {
 
         {/* Histórico tab */}
         <TabsContent value="history">
-          <ClientHistoryTab clientId={c.id} />
+          <ClientHistoryTab clientId={c.id} openComandas={open} />
         </TabsContent>
       </Tabs>
     </>

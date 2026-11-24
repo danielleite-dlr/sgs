@@ -127,6 +127,15 @@ export const ClientOverviewQuery = gql`
         comandaId
         bridalGroupId
       }
+      openComandas {
+        id
+        code
+        openedAt
+        firstAppointmentAt
+        total
+        serviceNames
+        professionalNames
+      }
       stats {
         completedCount
         lastVisitAt
@@ -136,6 +145,16 @@ export const ClientOverviewQuery = gql`
     }
   }
 `;
+
+export interface ClientOpenComandaData {
+  id: string;
+  code: string;
+  openedAt: string;
+  firstAppointmentAt: string | null;
+  total: string;
+  serviceNames: string[];
+  professionalNames: string[];
+}
 
 export interface ClientOverviewData {
   bridalGroups: {
@@ -174,6 +193,7 @@ export interface ClientOverviewData {
     comandaId: string | null;
     bridalGroupId: string | null;
   }[];
+  openComandas: ClientOpenComandaData[];
   stats: {
     completedCount: number;
     lastVisitAt: string | null;
