@@ -1,4 +1,9 @@
-import { isTrialSettledAtEvent, linkableTrialContract, type TrialLinkItem } from './comanda-trial-link';
+import {
+  isTrialSettledAtEvent,
+  linkableTrialContract,
+  splitTrialCommission,
+  type TrialLinkItem,
+} from './comanda-trial-link';
 
 const CONTRACT = { id: 'k1', code: 'CT-2026-008', status: 'draft' };
 
@@ -65,5 +70,20 @@ describe('isTrialSettledAtEvent (261117-j1w)', () => {
       isTrialSettledAtEvent({ contractId: 'k1', totalCents: 0, appointment: { purpose: 'event' } }),
     ).toBe(false);
     expect(isTrialSettledAtEvent({ contractId: 'k1', totalCents: 0, appointment: null })).toBe(false);
+  });
+});
+
+describe('splitTrialCommission (261124-ijh)', () => {
+  it('R$ 400 vira R$ 200 no teste + R$ 200 no dia', () => {
+    expect(splitTrialCommission(40000, 'trial')).toBe(20000);
+    expect(splitTrialCommission(40000, 'event')).toBe(20000);
+  });
+  it('centavo ímpar fica no dia e a soma bate com a regra', () => {
+    expect(splitTrialCommission(4001, 'trial')).toBe(2000);
+    expect(splitTrialCommission(4001, 'event')).toBe(2001);
+  });
+  it('regra zero -> zero nos dois', () => {
+    expect(splitTrialCommission(0, 'trial')).toBe(0);
+    expect(splitTrialCommission(0, 'event')).toBe(0);
   });
 });

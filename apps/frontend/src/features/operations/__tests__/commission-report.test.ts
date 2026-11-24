@@ -72,6 +72,6 @@ describe('commission-report', () => {
       row('r', { kind: 'reversal', calculatedAmount: '-10.00', reversesRecordId: 'fora' }),
     ]);
     expect(out.map((r) => r.id)).toEqual(['t', 'r']);
-    expect(out[0].note).toBe('Teste da noiva (incluso; comissão no dia da noiva)');
+    expect(out[0].note).toBe('Teste da noiva (incluso; metade da comissão, o resto no dia da noiva)');
   });
 });

@@ -14,7 +14,7 @@ import {
 import { loadCategoryParents } from '../identity/member-categories';
 import { CLIENT_CREDIT_METHOD, computeComandaTotals, coveredCents } from './comanda-math';
 import { ComandaError, recalcComandaTotal } from './comanda-items';
-import { isTrialSettledAtEvent } from './comanda-trial-link';
+import { isTrialSettledAtEvent, splitTrialCommission } from './comanda-trial-link';
 
 type LockedComanda = {
   id: string;
@@ -35,6 +35,45 @@ async function lockComanda(tx: TenantPrismaClient, comandaId: string): Promise<L
 }
 
 const brl = (cents: number) => fromCents(cents).replace('.', ',');
+
+/**
+ * Itens do dia da noiva (coberto por contrato) cuja cliente tem teste incluso do mesmo serviço no
+ * grupo: esses levam a outra metade da comissão (261124). Teste cancelado ou falta não divide.
+ */
+async function eventItemsWithIncludedTrial(
+  tx: TenantPrismaClient,
+  items: {
+    id: string;
+    kind: string;
+    contractId: string | null;
+    appointment: {
+      purpose: string | null;
+      clientId: string;
+      bridalGroupId: string | null;
+      serviceId: string;
+    } | null;
+  }[],
+): Promise<Set<string>> {
+  const out = new Set<string>();
+  for (const item of items) {
+    const a = item.appointment;
+    if (item.kind !== 'service' || !item.contractId || !a || !a.bridalGroupId) continue;
+    if (a.purpose === 'trial') continue;
+    const trial = await tx.appointment.findFirst({
+      where: {
+        bridalGroupId: a.bridalGroupId,
+        clientId: a.clientId,
+        serviceId: a.serviceId,
+        purpose: 'trial',
+        status: { notIn: ['cancelled', 'no_show'] },
+        OR: [{ contractId: { not: null } }, { comandaItems: { some: { contractId: { not: null } } } }],
+      },
+      select: { id: true },
+    });
+    if (trial) out.add(item.id);
+  }
+  return out;
+}
 
 /**
  * Fechamento financeiro atômico (D-12). Roda inteiro na transação do chamador
@@ -58,7 +97,9 @@ export async function closeComandaTx(
     where: { comandaId },
     include: {
       service: { select: { categoryId: true } },
-      appointment: { select: { purpose: true } },
+      appointment: {
+        select: { purpose: true, clientId: true, bridalGroupId: true, serviceId: true },
+      },
     },
     orderBy: { createdAt: 'asc' },
   });
@@ -137,6 +178,7 @@ export async function closeComandaTx(
     deletedAt: r.deletedAt,
   }));
   const parents = await loadCategoryParents(tx);
+  const eventsWithTrial = await eventItemsWithIncludedTrial(tx, items);
   const records: Prisma.CommissionRecordCreateManyInput[] = items.map((item) => {
     const match = resolveCommissionRule(rules, {
       kind: item.kind === 'product' ? 'product' : 'service',
@@ -145,14 +187,23 @@ export async function closeComandaTx(
       productId: item.productId,
       categoryChain: categoryChain(item.service?.categoryId ?? null, parents),
     });
-    // Teste incluso no contrato: a comissão sai no evento, não aqui (evita pagar duas vezes).
-    const settledAtEvent = isTrialSettledAtEvent({ ...item, totalCents: toCents(item.total) });
+    // Teste incluso no contrato: a comissão da regra é dividida entre o teste e o dia (261124).
+    const split: 'trial' | 'event' | null = isTrialSettledAtEvent({
+      ...item,
+      totalCents: toCents(item.total),
+    })
+      ? 'trial'
+      : eventsWithTrial.has(item.id)
+        ? 'event'
+        : null;
     const computed = computeCommission(match, {
       listUnitCents: toCents(item.listUnitPrice),
       quantity: item.quantity,
       chargedCents: toCents(item.total),
     });
-    const c = settledAtEvent ? { ...computed, amountCents: 0 } : computed;
+    const c = split
+      ? { ...computed, amountCents: splitTrialCommission(computed.amountCents, split) }
+      : computed;
     const rule = match?.rule ?? null;
     return {
       organizationId: orgId,
@@ -186,7 +237,8 @@ export async function closeComandaTx(
         packageId: item.packageId,
         fixedPer: 'unit',
         noRule: c.noRule,
-        ...(settledAtEvent ? { settledAtEvent: true } : {}),
+        ...(split === 'trial' ? { settledAtEvent: true } : {}),
+        ...(split ? { splitWithTrial: split } : {}),
       },
       calculatedAt: now,
     };

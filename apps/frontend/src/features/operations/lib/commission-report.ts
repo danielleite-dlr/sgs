@@ -56,8 +56,8 @@ const fromCents = (c: number) => (c / 100).toFixed(2);
  * Linhas do relatório (261117-mtn), uma por atendimento:
  * - lançamento estornado + estorno, os dois no período, somem (a comanda foi reaberta e fechada de novo);
  * - o teste de noiva incluso no contrato faz parte do dia da noiva: soma na linha do evento do mesmo
- *   contrato ("teste em dd/mm incluso"); sem o evento no período, fica uma linha avisando que a comissão
- *   sai no dia da noiva.
+ *   contrato ("teste em dd/mm incluso"); sem o evento no período, fica uma linha avisando que o teste
+ *   leva metade da comissão e a outra metade sai no dia da noiva (261124-ijh).
  * A soma das comissões não muda.
  */
 export function reportRows<T extends CommissionRowLike>(rows: T[]): T[] {
@@ -95,7 +95,7 @@ export function reportRows<T extends CommissionRowLike>(rows: T[]): T[] {
       continue;
     }
     out.push(
-      isTrial(r) ? { ...r, note: 'Teste da noiva (incluso; comissão no dia da noiva)' } : r,
+      isTrial(r) ? { ...r, note: 'Teste da noiva (incluso; metade da comissão, o resto no dia da noiva)' } : r,
     );
   }
   return out.map((r) => {

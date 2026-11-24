@@ -29,8 +29,8 @@ export function linkableTrialContract(item: TrialLinkItem): { id: string; code: 
 
 /**
  * Teste incluso no contrato, pago no evento (261108-n2o / 261117-i6j): item do atendimento trial
- * coberto pelo contrato a R$ 0,00. Teste e evento são um serviço só: a comissão sai inteira no
- * fechamento da comanda do evento, e o teste registra comissão 0 (261117 — comissão em dobro).
+ * coberto pelo contrato a R$ 0,00. Teste e evento são um serviço só: a comissão da regra é dividida
+ * entre o teste e o dia (261124 — antes saía 0 no teste e inteira no evento).
  */
 export function isTrialSettledAtEvent(item: {
   contractId: string | null;
@@ -38,6 +38,15 @@ export function isTrialSettledAtEvent(item: {
   appointment: { purpose: string | null } | null;
 }): boolean {
   return !!item.contractId && item.appointment?.purpose === 'trial' && item.totalCents === 0;
+}
+
+/**
+ * Divisão da comissão entre teste incluso e dia (261124): o teste fica com a metade arredondada
+ * para baixo e o dia com o resto, então a soma bate exatamente com a regra.
+ */
+export function splitTrialCommission(fullCents: number, part: 'trial' | 'event'): number {
+  const trial = Math.floor(fullCents / 2);
+  return part === 'trial' ? trial : fullCents - trial;
 }
 
 /** `select` do Prisma para o atendimento do item, com o que `linkableTrialContract` precisa. */

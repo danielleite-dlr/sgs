@@ -52,6 +52,11 @@ describe('Quick 261117-i6j - vincular teste de noiva ao contrato na comanda', ()
   });
 
   const att = () => gqlAs(w, w.tokens.attendant);
+  const amount = async (comandaId: string) =>
+    (await adminPrisma.commissionRecord.findMany({ where: { comandaId } })).reduce(
+      (a, r) => a + Number(r.calculatedAmount),
+      0,
+    );
 
   /** Comanda do teste (purpose) da noiva com item de serviço R$100 ligado ao atendimento. */
   async function trialComanda(
@@ -106,7 +111,7 @@ describe('Quick 261117-i6j - vincular teste de noiva ao contrato na comanda', ()
     return { comandaId, itemId, contractId, code, appointmentId: appt.id, g };
   }
 
-  it('oferece o contrato, liga a R$ 0,00 e fecha sem pagamento; comissão do teste fica 0 (sai no evento)', async () => {
+  it('oferece o contrato, liga a R$ 0,00 e fecha sem pagamento; teste fica com metade da comissão', async () => {
     await createServiceRule(w, w.serviceId, '40');
     const { comandaId, itemId, contractId, code, appointmentId } = await trialComanda();
 
@@ -143,13 +148,13 @@ describe('Quick 261117-i6j - vincular teste de noiva ao contrato na comanda', ()
     const rec = await adminPrisma.commissionRecord.findMany({ where: { comandaId, kind: 'accrual' } });
     expect(rec).toHaveLength(1);
     expect(Number(rec[0].baseAmount)).toBe(100);
-    // 261117-j1w: teste e evento são um serviço só; a comissão sai no fechamento do evento.
-    expect(Number(rec[0].calculatedAmount)).toBe(0);
+    // 261124-ijh: teste e evento são um serviço só; a comissão (40% de 100) se divide 20 + 20.
+    expect(Number(rec[0].calculatedAmount)).toBe(20);
     expect(rec[0].noRule).toBe(false);
-    expect(rec[0].ruleSnapshot).toMatchObject({ settledAtEvent: true });
+    expect(rec[0].ruleSnapshot).toMatchObject({ settledAtEvent: true, splitWithTrial: 'trial' });
   });
 
-  it('regra fixa: teste incluso registra 0 e o evento coberto registra a comissão inteira', async () => {
+  it('regra fixa: teste incluso e evento coberto dividem a comissão (200 + 200)', async () => {
     await adminPrisma.commissionRule.create({
       data: {
         organizationId: w.orgId,
@@ -163,19 +168,48 @@ describe('Quick 261117-i6j - vincular teste de noiva ao contrato na comanda', ()
     await att()(LINK, { c: trial.comandaId, i: trial.itemId });
     expect(((await att()(CLOSE, { id: trial.comandaId })).data.closeComanda as Pl).errors).toEqual([]);
 
+    const event = await trialComanda({ purpose: 'event', same: trial });
+    await adminPrisma.comandaItem.update({
+      where: { id: event.itemId },
+      data: { contractId: trial.contractId },
+    });
+    expect(((await att()(CLOSE, { id: event.comandaId })).data.closeComanda as Pl).errors).toEqual([]);
+
+    expect(await amount(trial.comandaId)).toBe(200);
+    expect(await amount(event.comandaId)).toBe(200);
+    const ev = await adminPrisma.commissionRecord.findFirstOrThrow({ where: { comandaId: event.comandaId } });
+    expect(ev.ruleSnapshot).toMatchObject({ splitWithTrial: 'event' });
+  });
+
+  it('regra fixa: evento coberto sem teste incluso fica com a comissão inteira', async () => {
+    await adminPrisma.commissionRule.create({
+      data: { organizationId: w.orgId, scopeType: 'service', serviceId: w.serviceId, kind: 'fixed', value: '400' },
+    });
     const event = await trialComanda({ purpose: 'event' });
     await adminPrisma.comandaItem.update({
       where: { id: event.itemId },
       data: { contractId: event.contractId },
     });
     expect(((await att()(CLOSE, { id: event.comandaId })).data.closeComanda as Pl).errors).toEqual([]);
+    expect(await amount(event.comandaId)).toBe(400);
+  });
 
-    const amount = async (comandaId: string) =>
-      (await adminPrisma.commissionRecord.findMany({ where: { comandaId } })).reduce(
-        (a, r) => a + Number(r.calculatedAmount),
-        0,
-      );
-    expect(await amount(trial.comandaId)).toBe(0);
+  it('regra fixa: teste cancelado não divide; o evento fica com tudo', async () => {
+    await adminPrisma.commissionRule.create({
+      data: { organizationId: w.orgId, scopeType: 'service', serviceId: w.serviceId, kind: 'fixed', value: '400' },
+    });
+    const trial = await trialComanda();
+    await att()(LINK, { c: trial.comandaId, i: trial.itemId });
+    await adminPrisma.appointment.update({
+      where: { id: trial.appointmentId },
+      data: { status: 'cancelled' },
+    });
+    const event = await trialComanda({ purpose: 'event', same: trial });
+    await adminPrisma.comandaItem.update({
+      where: { id: event.itemId },
+      data: { contractId: trial.contractId },
+    });
+    expect(((await att()(CLOSE, { id: event.comandaId })).data.closeComanda as Pl).errors).toEqual([]);
     expect(await amount(event.comandaId)).toBe(400);
   });
 
