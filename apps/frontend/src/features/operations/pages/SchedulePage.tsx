@@ -754,6 +754,10 @@ export function SchedulePage() {
   const [modalSeed, setModalSeed] = useState<
     { hour: number; minute: number; profId?: string } | undefined
   >();
+  // "Agendar agora" do grupo da noiva abre o formulário já preenchido (quick 261124-mkp).
+  const [modalPrefill, setModalPrefill] = useState<
+    { clientId: string; clientName: string; serviceIds: string[] } | null
+  >(null);
   const [buscarAgendarOpen, setBuscarAgendarOpen] = useState(false);
   const [selecaoProfOpen, setSelecaoProfOpen] = useState(false);
   const [blockOpen, setBlockOpen] = useState(false);
@@ -824,6 +828,30 @@ export function SchedulePage() {
       // precisa buscar de novo em vez de mostrar o cache (261124-ijh).
       fetchPolicy: "cache-and-network",
     });
+
+  // Link "novo=1&cliente=..&nome=..&servicos=a,b" (grupo da noiva): abre o novo agendamento.
+  const newClientParam = searchParams.get("novo") === "1" ? searchParams.get("cliente") : null;
+  useEffect(() => {
+    if (!newClientParam) return;
+    const d = parseAgendaDate(searchParams.get("data"));
+    if (d) setSelectedDate(d);
+    setModalSeed(undefined);
+    setModalPrefill({
+      clientId: newClientParam,
+      clientName: searchParams.get("nome") ?? "",
+      serviceIds: (searchParams.get("servicos") ?? "").split(",").filter(Boolean),
+    });
+    setModalOpen(true);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        for (const k of ["novo", "cliente", "nome", "servicos"]) next.delete(k);
+        return next;
+      },
+      { replace: true },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newClientParam]);
 
   // Fase 7 (D-14): toque na notificação abre o atendimento no dia.
   const deepLinkId = searchParams.get("agendamento");
@@ -1268,8 +1296,12 @@ export function SchedulePage() {
       {canSchedule && (
         <VisitFormDialog
           open={modalOpen}
-          onOpenChange={setModalOpen}
+          onOpenChange={(o) => {
+            setModalOpen(o);
+            if (!o) setModalPrefill(null);
+          }}
           initialTime={modalSeed}
+          prefill={modalPrefill}
           date={selectedDate}
           professionals={professionals}
           onCreated={refetchAll}

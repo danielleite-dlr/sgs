@@ -69,6 +69,8 @@ export interface VisitFormDialogProps {
   date: Date;
   professionals: ScheduleProfessional[];
   onCreated: (r: { comandaId: string | null; comandaCode: string | null }) => void;
+  /** Abre já com a pessoa e os serviços (vindo do grupo da noiva, quick 261124-mkp). */
+  prefill?: { clientId: string; clientName: string; serviceIds: string[] } | null;
 }
 
 const SELECT_CLASS = `${NATIVE_SELECT_CLASS} mt-xs`;
@@ -397,6 +399,7 @@ export function VisitFormDialog({
   date,
   professionals,
   onCreated,
+  prefill,
 }: VisitFormDialogProps) {
   const [clientSearch, setClientSearch] = useState('');
   const [clientId, setClientId] = useState('');
@@ -446,13 +449,38 @@ export function VisitFormDialog({
   useEffect(() => {
     if (open) {
       setDateBr(dateToBr(date));
-      setLines([emptyLine(seedTime(initialTime), initialTime?.profId)]);
+      if (prefill && prefill.serviceIds.length > 0) {
+        pickClient(prefill.clientId, prefill.clientName, null);
+        setLines(
+          prefill.serviceIds.map((serviceId) => ({
+            ...emptyLine(seedTime(initialTime), initialTime?.profId),
+            serviceId,
+          })),
+        );
+      } else {
+        setLines([emptyLine(seedTime(initialTime), initialTime?.profId)]);
+      }
       setPackageId('');
       setError('');
       setDepositOpen(depositAmount !== '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, initialTime]);
+  }, [open, initialTime, prefill]);
+
+  // Serviço pré-preenchido ganha a duração padrão quando o catálogo chega.
+  useEffect(() => {
+    const list = servicesData?.services ?? [];
+    if (!open || list.length === 0) return;
+    setLines((prev) =>
+      prev.some((l) => l.serviceId && !l.duration)
+        ? prev.map((l) => {
+            if (!l.serviceId || l.duration) return l;
+            const svc = list.find((x) => x.id === l.serviceId);
+            return svc ? { ...l, duration: String(svc.defaultDurationMinutes) } : l;
+          })
+        : prev,
+    );
+  }, [open, servicesData]);
 
   // Remede o aviso de rolagem quando o conteúdo do corpo muda de altura.
   useEffect(() => {

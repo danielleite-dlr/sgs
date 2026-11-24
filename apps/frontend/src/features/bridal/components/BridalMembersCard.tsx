@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +22,9 @@ import {
   type BridalUserError,
 } from '../api/bridal.api';
 import { useBridalPermission } from '../bridal-permissions';
+import { useAuthStore } from '@/infrastructure/stores/auth.store';
+import { canWriteAppointments } from '@/features/operations/schedule-permissions';
+import { agendaNewVisitHref, newEventServiceIds } from '../lib/schedule-added';
 import { PURPOSE_LABEL, ROLE_LABEL, errorMessage } from '../lib/bridal-labels';
 import { buildPersonInput, emptyPerson, type PersonDraft } from '../lib/person-draft';
 import { BridalPersonFields } from './BridalPersonFields';
@@ -34,10 +37,12 @@ function ServicesDialog({
   member,
   onClose,
   onError,
+  onAddedEventServices,
 }: {
   member: BridalMemberData;
   onClose: () => void;
   onError: (errs: BridalUserError[]) => void;
+  onAddedEventServices: (serviceIds: string[], names: string[]) => void;
 }) {
   const { data } = useQuery<ServicesQueryResult>(ServicesQuery);
   const [items, setItems] = useState(
@@ -56,7 +61,14 @@ function ServicesDialog({
       return;
     }
     toast.success('Serviços atualizados.');
+    const added = newEventServiceIds(member.services, items);
     onClose();
+    if (added.length > 0) {
+      onAddedEventServices(
+        added,
+        added.map((id) => services.find((s) => s.id === id)?.name ?? 'Serviço'),
+      );
+    }
   }
 
   return (
@@ -135,6 +147,13 @@ export function BridalMembersCard({ group }: Props) {
     addBridalGroupMember: BridalGroupPayload;
   }>(AddBridalGroupMemberMutation);
   const editable = canWrite && group.status === 'active';
+  const canSchedule = canWriteAppointments(useAuthStore((st) => st.roleName));
+  const navigate = useNavigate();
+  const [toSchedule, setToSchedule] = useState<{
+    member: BridalMemberData;
+    serviceIds: string[];
+    names: string[];
+  } | null>(null);
 
   function showErrors(errs: BridalUserError[]) {
     const msgs = errs.map(errorMessage);
@@ -307,7 +326,48 @@ export function BridalMembersCard({ group }: Props) {
       )}
 
       {editing && (
-        <ServicesDialog member={editing} onClose={() => setEditing(null)} onError={showErrors} />
+        <ServicesDialog
+          member={editing}
+          onClose={() => setEditing(null)}
+          onError={showErrors}
+          onAddedEventServices={(serviceIds, names) => {
+            if (canSchedule) setToSchedule({ member: editing, serviceIds, names });
+          }}
+        />
+      )}
+      {toSchedule && (
+        <Dialog open onOpenChange={(o) => !o && setToSchedule(null)}>
+          <DialogContent className="max-w-[480px]" data-testid="schedule-added-dialog">
+            <DialogTitle className="text-base font-bold">Agendar agora?</DialogTitle>
+            <DialogDescription className="text-sm text-neutral-600">
+              {toSchedule.names.join(', ')} de {toDisplayName(toSchedule.member.clientName)} ainda
+              não está na agenda. Abrir a agenda do dia do evento com o agendamento preenchido?
+            </DialogDescription>
+            <div className="flex justify-end gap-sm">
+              <Button type="button" variant="outline" onClick={() => setToSchedule(null)}>
+                Agora não
+              </Button>
+              <Button
+                type="button"
+                data-testid="schedule-added-go"
+                onClick={() => {
+                  const t = toSchedule;
+                  setToSchedule(null);
+                  navigate(
+                    agendaNewVisitHref(
+                      group.eventDate,
+                      t.member.clientId,
+                      t.member.clientName,
+                      t.serviceIds,
+                    ),
+                  );
+                }}
+              >
+                Abrir na agenda
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
       {adding && (
         <Dialog open onOpenChange={(o) => !o && setAdding(false)}>

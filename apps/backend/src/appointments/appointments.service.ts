@@ -14,6 +14,8 @@ import { cancelAppointmentTx } from "./appointment-cancel";
 import { moveAppointmentTx } from "./appointment-move";
 import type { TimelineOverrideInput } from "../bridal/timeline/timeline-guard";
 import { createVisitTx, type CreateVisitInput } from "./visits";
+import { findBridalAutoLinkTx } from "../bridal/bridal-autolink";
+import { rebuildTravelBlocksTx } from "../bridal/bridal-schedule";
 import { PushEventsService } from "../push/push-events.service";
 import type { PushJob } from "../push/push.types";
 
@@ -210,7 +212,19 @@ export class AppointmentsService {
       .runWithTenant(
         orgId,
         async (tx) => {
-          const r = await createVisitTx(tx, orgId, memberId, input);
+          // Pessoa de grupo agendada pela agenda no dia do evento entra no grupo (261124-mkp).
+          const first = input.items?.[0];
+          const autoLink =
+            !input.bridal && !input.packageId && first
+              ? await findBridalAutoLinkTx(tx, input.clientId, new Date(first.startsAt))
+              : null;
+          const r = await createVisitTx(
+            tx,
+            orgId,
+            memberId,
+            autoLink ? { ...input, bridal: autoLink } : input,
+          );
+          if (autoLink) await rebuildTravelBlocksTx(tx, orgId, memberId, autoLink.groupId);
           const rows = await tx.appointment.findMany({
             where: { id: { in: r.appointmentIds } },
             include: APPOINTMENT_INCLUDE,
