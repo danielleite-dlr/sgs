@@ -1,6 +1,6 @@
 import { fromCents, parseMoneyInput } from "../common/money";
 import { CASH_METHODS } from "../comandas/comanda-math";
-import { openComandaTx } from "../comandas/comanda-open";
+import { findReusableComandaTx, openComandaTx } from "../comandas/comanda-open";
 import {
   buildServiceItem,
   expandPackageItems,
@@ -53,7 +53,8 @@ export interface CreateVisitInput {
 }
 
 /**
- * Visita = N agendamentos + 1 comanda aberta + itens de serviço + sinal opcional,
+ * Visita = N agendamentos + 1 comanda aberta (reaproveita a aberta da cliente no mesmo
+ * dia local, quick 261124-owd) + itens de serviço + sinal opcional,
  * tudo na transação do chamador (`runWithTenant(..., SCHEDULE_TX_OPTIONS)`).
  * Qualquer erro lançado desfaz tudo (D-05, D-03).
  */
@@ -242,14 +243,23 @@ export async function createVisitTx(
   }
   const ids = created.map((c) => c.id);
 
-  const comanda = await openComandaTx(tx, {
-    orgId,
+  // quick 261124-owd: reaproveita a comanda aberta da cliente no mesmo dia local.
+  const reusedId = await findReusableComandaTx(tx, {
     clientId: input.clientId,
-    openedBy: memberId,
+    startsAt: intervals.map((i) => i.startsAt),
   });
+  const comandaId =
+    reusedId ??
+    (
+      await openComandaTx(tx, {
+        orgId,
+        clientId: input.clientId,
+        openedBy: memberId,
+      })
+    ).id;
   await tx.appointment.updateMany({
     where: { id: { in: ids } },
-    data: { comandaId: comanda.id },
+    data: { comandaId },
   });
 
   if (input.packageId) {
@@ -282,7 +292,7 @@ export async function createVisitTx(
     }
     const expanded = await expandPackageItems(tx, {
       orgId,
-      comandaId: comanda.id,
+      comandaId,
       packageId: input.packageId,
       assignments: [...firstByService.values()].map((c) => ({
         serviceId: c.item.serviceId,
@@ -305,7 +315,7 @@ export async function createVisitTx(
     for (const c of created) {
       const row = await buildServiceItem(tx, {
         orgId,
-        comandaId: comanda.id,
+        comandaId,
         serviceId: c.item.serviceId,
         serviceVariantId: c.item.serviceVariantId ?? null,
         professionalId: c.item.professionalId,
@@ -324,7 +334,7 @@ export async function createVisitTx(
     }
     await tx.comandaItem.createMany({ data: rows });
   }
-  await recalcComandaTotal(tx, comanda.id);
+  await recalcComandaTotal(tx, comandaId);
 
   if (input.deposit && depositCents > 0) {
     await lockClient(tx, input.clientId);
@@ -334,7 +344,7 @@ export async function createVisitTx(
       amountCents: depositCents,
       kind: "deposit",
       appointmentId: ids[0],
-      comandaId: comanda.id,
+      comandaId,
       createdBy: memberId,
     });
     await recordCashMovement(tx, {
@@ -343,7 +353,7 @@ export async function createVisitTx(
       method: input.deposit.method as CashMethod,
       amountCents: depositCents,
       appointmentId: ids[0],
-      comandaId: comanda.id,
+      comandaId,
       clientId: input.clientId,
       memberId,
       occurredAt: new Date(),
@@ -354,5 +364,5 @@ export async function createVisitTx(
     });
   }
 
-  return { appointmentIds: ids, comandaId: comanda.id };
+  return { appointmentIds: ids, comandaId };
 }
