@@ -35,7 +35,7 @@ const errPayload = (code: string, message: string, field?: string) => ({
  *   - CPF is stored and looked up in normalized (digits-only) form
  *   - Duplicate CPF/phone/email is NOT blocked — clientsByField supports
  *     the UI showing duplicates before the attendant decides (D-22)
- *   - clientHistory agrega agendamentos, comandas fechadas e pagamentos de contrato;
+ *   - clientHistory agrega agendamentos, comandas (fechadas e abertas) e pagamentos de contrato;
  *     clientOverview traz a situação (grupos de noiva, contratos, próximos atendimentos)
  *
  * All DB ops are wrapped in runWithTenant (RLS enforced by PostgreSQL).

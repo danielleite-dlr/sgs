@@ -17,6 +17,7 @@ const OVERVIEW = `query($id: UUID!) {
     bridalGroups { id name eventKind role eventDate trialDates status }
     contracts { id code status totalAmount paid balance nextDueDate nextDueAmount }
     upcomingAppointments { id kind serviceName professionalName comandaId bridalGroupId }
+    openComandas { id code total serviceNames professionalNames firstAppointmentAt }
     stats { completedCount totalSpent creditBalance lastVisitAt }
   }
 }`;
@@ -36,6 +37,9 @@ describe('Quick c360 - ficha da cliente (clientOverview / clientHistory)', () =>
   });
   afterAll(async () => {
     await destroyPhase4World(w);
+  });
+  beforeEach(() => {
+    seq = 0; // mkAppt espaça os horários por seq; sem reset os testes antigos derivam no tempo
   });
   afterEach(async () => {
     await adminPrisma.$executeRawUnsafe(
@@ -123,23 +127,142 @@ describe('Quick c360 - ficha da cliente (clientOverview / clientHistory)', () =>
       nextDueAmount: '1400.00',
     });
     expect(o.upcomingAppointments).toHaveLength(1);
-    expect(o.upcomingAppointments[0]).toMatchObject({ kind: 'trial', bridalGroupId: b.groupId });
-    expect(o.stats).toMatchObject({ completedCount: 0, totalSpent: '0.00', creditBalance: '0.00' });
+    expect(o.upcomingAppointments[0]).toMatchObject({
+      kind: 'trial',
+      bridalGroupId: b.groupId,
+    });
+    expect(o.stats).toMatchObject({
+      completedCount: 0,
+      totalSpent: '0.00',
+      creditBalance: '0.00',
+    });
   });
 
-  it('acompanhante aparece com o papel certo e enxerga o contrato do grupo', async () => {
+  it('acompanhante aparece com o papel certo e NAO recebe o contrato do grupo', async () => {
     const b = await bride();
     const r = await adm()(OVERVIEW, { id: b.companionClientIds[0] });
     const o = r.data.clientOverview;
     expect(o.bridalGroups).toHaveLength(1);
-    expect(o.bridalGroups[0]).toMatchObject({ id: b.groupId, role: 'companion' });
-    expect(o.contracts.map((c: { id: string }) => c.id)).toEqual([b.contractId]);
+    expect(o.bridalGroups[0]).toMatchObject({
+      id: b.groupId,
+      role: 'companion',
+    });
+    expect(o.contracts).toEqual([]);
     expect(o.upcomingAppointments).toHaveLength(0);
+  });
+
+  it('acompanhante que consta como contratante recebe esse contrato', async () => {
+    const b = await bride();
+    await adminPrisma.contract.update({
+      where: { id: b.contractId },
+      data: { contractorClientId: b.companionClientIds[0] },
+    });
+    const r = await adm()(OVERVIEW, { id: b.companionClientIds[0] });
+    expect(r.errors).toBeUndefined();
+    const o = r.data.clientOverview;
+    expect(o.bridalGroups[0]).toMatchObject({ role: 'companion' });
+    expect(o.contracts.map((c: { id: string }) => c.id)).toEqual([b.contractId]);
+  });
+
+  it('debutante: a responsavel (mesmo sendo membro acompanhante) recebe o contrato do grupo', async () => {
+    const eventDate = new Date(Date.now() + 10 * DAY).toISOString().slice(0, 10);
+    const probe = await insertBridalGroupRow(w, { eventDate, companions: 1 });
+    const g = await insertBridalGroupRow(w, {
+      eventDate,
+      eventKind: 'debutante',
+      responsibleClientId: probe.companionClientIds[0],
+      companions: 1,
+    });
+    const c = await insertContractRow(w, {
+      groupId: g.groupId,
+      brideClientId: g.brideClientId,
+      totalAmount: '5000.00',
+      depositAmount: '1500.00',
+      status: 'active',
+      installments: [{ seq: 1, amount: '1500.00', dueDate: '2030-01-01' }],
+    });
+    const resp = await adm()(OVERVIEW, { id: probe.companionClientIds[0] });
+    expect(resp.errors).toBeUndefined();
+    const ids = (r: typeof resp) =>
+      r.data.clientOverview.contracts.map((x: { id: string }) => x.id);
+    expect(ids(resp)).toContain(c.contractId);
+    const comp = await adm()(OVERVIEW, { id: g.companionClientIds[0] });
+    expect(ids(comp)).toEqual([]);
+  });
+
+  it('comanda aberta: overview e historico mostram; cancelada nao aparece', async () => {
+    const b = await bride();
+    const past = await mkAppt(b.brideClientId, -DAY, { status: 'in_progress' });
+    const mkComanda = (status: string, extra: Record<string, unknown>) =>
+      adminPrisma.comanda.create({
+        data: {
+          organizationId: w.orgId,
+          code: `QO-${Date.now() % 100000}-${++seq}`,
+          clientId: b.brideClientId,
+          status,
+          total: '80.00',
+          ...extra,
+        } as never,
+      });
+    const open = await mkComanda('open', {});
+    await mkComanda('cancelled', { cancelledAt: new Date() });
+    await adminPrisma.appointment.update({
+      where: { id: past.id },
+      data: { comandaId: open.id },
+    });
+    await adminPrisma.comandaItem.create({
+      data: {
+        organizationId: w.orgId,
+        comandaId: open.id,
+        kind: 'service',
+        serviceId: w.serviceId,
+        professionalId: w.members.proA,
+        nameSnapshot: 'Escova',
+        quantity: 1,
+        listUnitPrice: '80.00',
+        unitPrice: '80.00',
+        total: '80.00',
+      },
+    });
+    const o = (await adm()(OVERVIEW, { id: b.brideClientId })).data.clientOverview;
+    expect(o.openComandas).toHaveLength(1);
+    expect(o.openComandas[0]).toMatchObject({
+      id: open.id,
+      code: open.code,
+      total: '80.00',
+      serviceNames: ['Escova'],
+      firstAppointmentAt: past.startsAt.toISOString(),
+    });
+    expect(o.openComandas[0].professionalNames).toHaveLength(1);
+
+    const h = await adm()(HISTORY, { id: b.brideClientId });
+    expect(h.errors).toBeUndefined();
+    type Row = {
+      kind: string;
+      description: string;
+      amount: string;
+      entityType: string;
+      occurredAt: string;
+    };
+    const items = h.data.clientHistory as Row[];
+    const com = items.filter((i) => i.kind === 'comanda');
+    expect(com).toHaveLength(1);
+    expect(com[0].description).toContain('(aberta)');
+    expect(com[0]).toMatchObject({
+      entityType: 'comanda',
+      amount: '80.00',
+      occurredAt: past.startsAt.toISOString(),
+    });
+    expect(items.find((i) => i.kind === 'appointment')?.description).toContain(
+      'Atendimento em aberto',
+    );
   });
 
   it('historico: atendimento concluido, comanda fechada e pagamento de contrato', async () => {
     const b = await bride();
-    const done = await mkAppt(b.brideClientId, -3 * DAY, { status: 'completed' });
+    const done = await mkAppt(b.brideClientId, -3 * DAY, {
+      status: 'completed',
+    });
     const comanda = await adminPrisma.comanda.create({
       data: {
         organizationId: w.orgId,
@@ -166,14 +289,21 @@ describe('Quick c360 - ficha da cliente (clientOverview / clientHistory)', () =>
     });
     const h = await adm()(HISTORY, { id: b.brideClientId });
     expect(h.errors).toBeUndefined();
-    const items = h.data.clientHistory as { kind: string; entityType: string; amount: string }[];
+    const items = h.data.clientHistory as {
+      kind: string;
+      entityType: string;
+      amount: string;
+    }[];
     expect(items.map((i) => i.kind)).toEqual(['contract_payment', 'comanda', 'appointment']);
     expect(items[1]).toMatchObject({ entityType: 'comanda', amount: '120.00' });
     expect(items.find((i) => i.kind === 'contract_payment')).toMatchObject({
       entityType: 'contract',
       amount: '1000.00',
     });
-    const only = await adm()(HISTORY, { id: b.brideClientId, f: { kind: 'appointment' } });
+    const only = await adm()(HISTORY, {
+      id: b.brideClientId,
+      f: { kind: 'appointment' },
+    });
     expect(only.data.clientHistory).toHaveLength(1);
     expect(only.data.clientHistory[0].id).toBe(done.id);
 
@@ -183,10 +313,14 @@ describe('Quick c360 - ficha da cliente (clientOverview / clientHistory)', () =>
 
   it('isolamento: outra organizacao nao enxerga a cliente', async () => {
     const b = await bride();
-    const r = await gqlAs(w, w.tokens.otherAdmin)(OVERVIEW, { id: b.brideClientId });
+    const r = await gqlAs(w, w.tokens.otherAdmin)(OVERVIEW, {
+      id: b.brideClientId,
+    });
     expect(r.data?.clientOverview ?? null).toBeNull();
     expect(r.errors?.length).toBeGreaterThan(0);
-    const h = await gqlAs(w, w.tokens.otherAdmin)(HISTORY, { id: b.brideClientId });
+    const h = await gqlAs(w, w.tokens.otherAdmin)(HISTORY, {
+      id: b.brideClientId,
+    });
     expect(h.data.clientHistory).toEqual([]);
   });
 });

@@ -63,7 +63,19 @@ type ClientOverview {
   bridalGroups: [ClientOverviewGroup!]!
   contracts: [ClientOverviewContract!]!
   upcomingAppointments: [ClientOverviewAppointment!]!
+  "Comandas com status open (canceladas e fechadas não entram)."
+  openComandas: [ClientOverviewOpenComanda!]!
   stats: ClientOverviewStats!
+}
+
+type ClientOverviewOpenComanda {
+  id: UUID!
+  code: String!
+  openedAt: DateTime!
+  firstAppointmentAt: DateTime
+  total: String!
+  serviceNames: [String!]!
+  professionalNames: [String!]!
 }
 
 "role: bride | debutante | companion | responsible; eventDate: YYYY-MM-DD."

@@ -37,12 +37,18 @@ function roleInGroup(
   return isResponsible ? 'responsible' : 'companion';
 }
 
+const uniq = <T>(values: T[]): T[] => [...new Set(values)];
+
+/** Serviços e profissionais distintos dos itens de uma comanda. */
+function comandaNames(items: { nameSnapshot: string; professional: { displayName: string } }[]) {
+  return {
+    serviceNames: uniq(items.map((i) => i.nameSnapshot)),
+    professionalNames: uniq(items.map((i) => i.professional.displayName)),
+  };
+}
+
 /** Visão geral da cliente: grupos de noiva, contratos, próximos atendimentos e números. */
-export async function loadClientOverview(
-  tx: TenantPrismaClient,
-  orgId: string,
-  clientId: string,
-) {
+export async function loadClientOverview(tx: TenantPrismaClient, orgId: string, clientId: string) {
   const client = await tx.client.findFirst({
     where: { id: clientId, deletedAt: null },
     select: { id: true },
@@ -71,11 +77,17 @@ export async function loadClientOverview(
       })
     : [];
 
+  // O contrato do grupo só aparece para quem é parte dele: a noiva/debutante e a responsável
+  // da debutante. Acompanhante não vê o contrato da noiva (relato da ficha da Edna); só vê
+  // contratos em que consta como noiva/contratante (dois primeiros ramos do OR).
+  const contractGroupIds = groups
+    .filter((g) => g.members[0]?.role === 'bride' || g.responsibleClientId === clientId)
+    .map((g) => g.id);
   const contractViews = await loadContractViews(tx, orgId, {
     OR: [
       { brideClientId: clientId },
       { contractorClientId: clientId },
-      ...(groupIds.length ? [{ bridalGroupId: { in: groupIds } }] : []),
+      ...(contractGroupIds.length ? [{ bridalGroupId: { in: contractGroupIds } }] : []),
     ],
   });
 
@@ -90,7 +102,7 @@ export async function loadClientOverview(
     take: UPCOMING_LIMIT,
   });
 
-  const [completed, lastVisit, spent, credit] = await Promise.all([
+  const [completed, lastVisit, spent, credit, openComandas] = await Promise.all([
     tx.appointment.count({ where: { clientId, status: 'completed' } }),
     tx.appointment.findFirst({
       where: { clientId, status: 'completed' },
@@ -102,6 +114,24 @@ export async function loadClientOverview(
       _sum: { total: true },
     }),
     getCreditBalanceCents(tx, clientId),
+    tx.comanda.findMany({
+      where: { clientId, status: 'open' },
+      include: {
+        items: {
+          select: {
+            nameSnapshot: true,
+            professional: { select: { displayName: true } },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+        appointments: {
+          select: { startsAt: true },
+          orderBy: { startsAt: 'asc' },
+          take: 1,
+        },
+      },
+      orderBy: { openedAt: 'desc' },
+    }),
   ]);
 
   return {
@@ -109,7 +139,11 @@ export async function loadClientOverview(
       id: g.id,
       name: g.name,
       eventKind: g.eventKind,
-      role: roleInGroup(g.members[0]?.role ?? null, g.eventKind, g.responsibleClientId === clientId),
+      role: roleInGroup(
+        g.members[0]?.role ?? null,
+        g.eventKind,
+        g.responsibleClientId === clientId,
+      ),
       eventDate: g.eventDate.toISOString().slice(0, 10),
       eventTime: g.eventTime,
       status: g.status,
@@ -141,6 +175,14 @@ export async function loadClientOverview(
       comandaId: a.comandaId,
       bridalGroupId: a.bridalGroupId,
     })),
+    openComandas: openComandas.map((c) => ({
+      id: c.id,
+      code: c.code,
+      openedAt: c.openedAt,
+      firstAppointmentAt: c.appointments[0]?.startsAt ?? null,
+      total: fromCents(toCents(c.total)),
+      ...comandaNames(c.items),
+    })),
     stats: {
       completedCount: completed,
       lastVisitAt: lastVisit?.startsAt ?? null,
@@ -154,9 +196,16 @@ const APPT_LABEL: Record<string, string> = {
   completed: 'Atendimento concluído',
   no_show: 'Não compareceu',
   cancelled: 'Agendamento cancelado',
+  scheduled: 'Atendimento em aberto',
+  confirmed: 'Atendimento em aberto',
+  in_progress: 'Atendimento em aberto',
 };
 
-/** Histórico passado da cliente (mais recente primeiro, limite 200). */
+/**
+ * Histórico da cliente (mais recente primeiro, limite 200). Inclui o que já aconteceu mesmo sem
+ * conclusão: comandas abertas e atendimentos passados ainda scheduled/confirmed/in_progress
+ * (rótulo "Atendimento em aberto"). Comandas canceladas nunca entram.
+ */
 export async function loadClientHistory(
   tx: TenantPrismaClient,
   clientId: string,
@@ -182,9 +231,12 @@ export async function loadClientHistory(
     const appts = await tx.appointment.findMany({
       where: {
         clientId,
-        status: { in: ['completed', 'no_show', 'cancelled'] },
+        OR: [
+          { status: { in: ['completed', 'no_show', 'cancelled'] } },
+          { status: { in: OPEN_STATUSES }, startsAt: { lt: new Date() } },
+        ],
         ...(filters.professionalId ? { professionalId: filters.professionalId } : {}),
-        startsAt: range(),
+        ...(range() ? { AND: [{ startsAt: range() }] } : {}),
       },
       include: {
         service: { select: { name: true } },
@@ -211,8 +263,10 @@ export async function loadClientHistory(
   if (kind === 'all' || kind === 'comanda') {
     const where: Prisma.ComandaWhereInput = {
       clientId,
-      status: 'closed',
-      closedAt: range() ?? { not: null },
+      OR: [
+        { status: 'closed', closedAt: range() ?? { not: null } },
+        { status: 'open', openedAt: range() },
+      ],
       ...(filters.professionalId
         ? { items: { some: { professionalId: filters.professionalId } } }
         : {}),
@@ -221,21 +275,29 @@ export async function loadClientHistory(
       where,
       include: {
         items: {
-          select: { nameSnapshot: true, professional: { select: { displayName: true } } },
+          select: {
+            nameSnapshot: true,
+            professional: { select: { displayName: true } },
+          },
           orderBy: { createdAt: 'asc' },
         },
+        appointments: {
+          select: { startsAt: true },
+          orderBy: { startsAt: 'asc' },
+          take: 1,
+        },
       },
-      orderBy: { closedAt: 'desc' },
+      orderBy: [{ closedAt: { sort: 'desc', nulls: 'last' } }, { openedAt: 'desc' }],
       take: HISTORY_LIMIT,
     });
     for (const c of comandas) {
-      const names = [...new Set(c.items.map((i) => i.nameSnapshot))];
-      const pros = [...new Set(c.items.map((i) => i.professional.displayName))];
+      const { serviceNames: names, professionalNames: pros } = comandaNames(c.items);
+      const isOpen = c.status === 'open';
       rows.push({
         id: c.id,
-        occurredAt: c.closedAt as Date,
+        occurredAt: isOpen ? (c.appointments[0]?.startsAt ?? c.openedAt) : (c.closedAt as Date),
         kind: 'comanda',
-        description: `Comanda ${c.code}${names.length ? ` — ${names.join(', ')}` : ''}`,
+        description: `Comanda ${c.code}${isOpen ? ' (aberta)' : ''}${names.length ? ` — ${names.join(', ')}` : ''}`,
         amount: fromCents(toCents(c.total)),
         professionalName: pros.length ? pros.join(', ') : null,
         entityType: 'comanda',
@@ -248,7 +310,11 @@ export async function loadClientHistory(
     const items = await tx.comandaItem.findMany({
       where: {
         kind: 'product',
-        comanda: { clientId, status: 'closed', closedAt: range() ?? { not: null } },
+        comanda: {
+          clientId,
+          status: 'closed',
+          closedAt: range() ?? { not: null },
+        },
         ...(filters.professionalId ? { professionalId: filters.professionalId } : {}),
       },
       include: {
@@ -275,7 +341,9 @@ export async function loadClientHistory(
   if (kind === 'all' && !filters.professionalId) {
     const payments = await tx.contractPayment.findMany({
       where: {
-        contract: { OR: [{ brideClientId: clientId }, { contractorClientId: clientId }] },
+        contract: {
+          OR: [{ brideClientId: clientId }, { contractorClientId: clientId }],
+        },
         paidAt: range(),
       },
       include: { contract: { select: { code: true } } },
