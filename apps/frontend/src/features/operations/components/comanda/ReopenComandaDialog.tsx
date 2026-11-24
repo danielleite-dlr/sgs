@@ -26,7 +26,9 @@ interface Props {
 function ReopenForm({ comandaId, onClose }: { comandaId: string; onClose: () => void }) {
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
-  const [reopen, { loading }] = useMutation<ReopenComandaResult>(ReopenComandaMutation);
+  const [reopen, { loading }] = useMutation<ReopenComandaResult>(ReopenComandaMutation, {
+    refetchQueries: ['Appointments'],
+  });
   const valid = reason.trim().length >= MIN_REASON;
 
   async function submit() {

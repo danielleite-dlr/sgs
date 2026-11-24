@@ -81,6 +81,22 @@ describe("AppointmentDetailsDialog", () => {
     flag.enabled = false;
   });
 
+  it("em atendimento oferece 'Finalizar na comanda' (encerrar = fechar a comanda)", () => {
+    flag.enabled = true;
+    appointment.status = "in_progress";
+    renderDialog();
+    expect(screen.getByTestId("appointment-finish-comanda")).toHaveAttribute(
+      "href",
+      "/comanda/cm1?agenda=2026-11-04&visao=day",
+    );
+    expect(screen.getByTestId("appointment-finish-comanda")).toHaveTextContent("Finalizar na comanda");
+    expect(screen.getByTestId("appointment-finish-hint")).toBeInTheDocument();
+    expect(screen.queryByTestId("appointment-open-comanda")).toBeNull();
+    expect(screen.queryByTestId("appointment-start")).toBeNull();
+    appointment.status = "scheduled";
+    flag.enabled = false;
+  });
+
   it("sempre oferece 'Ver ficha da cliente' para a ficha", () => {
     flag.enabled = false;
     renderDialog();

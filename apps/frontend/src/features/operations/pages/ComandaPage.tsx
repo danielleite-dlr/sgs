@@ -90,7 +90,10 @@ export function ComandaPage() {
   const [removePayment, removePaymentState] = useMutation<RemoveComandaPaymentResult>(
     RemoveComandaPaymentMutation,
   );
-  const [closeComanda, closeState] = useMutation<CloseComandaResult>(CloseComandaMutation);
+  const [closeComanda, closeState] = useMutation<CloseComandaResult>(CloseComandaMutation, {
+    // Fechar conclui os agendamentos da comanda: a agenda aberta precisa refletir (261124-ijh).
+    refetchQueries: ['Appointments'],
+  });
   const busy =
     removeItemState.loading ||
     linkItemState.loading ||

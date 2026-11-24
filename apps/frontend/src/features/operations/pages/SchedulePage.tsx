@@ -820,6 +820,9 @@ export function SchedulePage() {
         // o pedido explícito.
         professionalId: ownOnly ? memberId : null,
       },
+      // Fechar a comanda conclui os agendamentos em outra tela; ao voltar, a agenda
+      // precisa buscar de novo em vez de mostrar o cache (261124-ijh).
+      fetchPolicy: "cache-and-network",
     });
 
   // Fase 7 (D-14): toque na notificação abre o atendimento no dia.

@@ -77,7 +77,13 @@ test.describe('Fluxo: agendamento com sinal, comanda, pagamento dividido e comis
     await expect(card).toHaveCount(1);
     await card.click();
     await expect(page.getByTestId('appointment-details')).toBeVisible();
-    await page.getByTestId('appointment-open-comanda').click();
+    // inicia o atendimento; em atendimento, o modal leva a finalizar na comanda (261124-ijh)
+    await page.getByTestId('appointment-start').click();
+    await expect(page.getByTestId('appointment-details')).toBeHidden();
+    await card.click();
+    await expect(page.getByTestId('appointment-details')).toContainText('Em atendimento');
+    await expect(page.getByTestId('appointment-finish-hint')).toBeVisible();
+    await page.getByTestId('appointment-finish-comanda').click();
     await page.waitForURL(/\/comanda\/[0-9a-f-]+\?agenda=\d{4}-\d{2}-\d{2}&visao=day$/);
     expect(page.url()).toContain(`agenda=${spDate(ahead)}&visao=day`);
     const comandaId = new URL(page.url()).pathname.split('/').pop()!;
@@ -125,9 +131,13 @@ test.describe('Fluxo: agendamento com sinal, comanda, pagamento dividido e comis
     await page.getByTestId('comanda-back-to-agenda').click();
     await page.waitForURL(new RegExp(`/agenda\\?data=${spDate(ahead)}&visao=day$`));
     await expect(page.getByTestId('view-day')).toHaveAttribute('aria-pressed', 'true');
-    await expect(
-      page.getByTestId(`lane-${pro.id}`).locator('[data-testid^="appointment-card-"]'),
-    ).toHaveCount(1);
+    const backCard = page.getByTestId(`lane-${pro.id}`).locator('[data-testid^="appointment-card-"]');
+    await expect(backCard).toHaveCount(1);
+    // a agenda busca de novo: o atendimento aparece concluído, sem precisar recarregar
+    await backCard.click();
+    await expect(page.getByTestId('appointment-details')).toContainText('Concluído');
+    await expect(page.getByTestId('appointment-finish-comanda')).toHaveCount(0);
+    await page.keyboard.press('Escape');
 
     // ---- verificações pela API ----
     expect(await readStock()).toBe(stockBefore - 1);

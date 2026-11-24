@@ -47,6 +47,7 @@ export function AppointmentDetailsDialog({
   const canConfirm = status === 'scheduled';
   const canStart = status === 'scheduled' || status === 'confirmed';
   const canCancel = status !== 'cancelled' && status !== 'completed' && status !== 'no_show';
+  const inProgress = status === 'in_progress';
   const comandaLinkEnabled = Boolean(appointment.comandaId) && isPathEnabled('/comanda');
 
   async function change(next: 'confirmed' | 'in_progress') {
@@ -114,6 +115,11 @@ export function AppointmentDetailsDialog({
               </div>
             )}
           </dl>
+          {inProgress && comandaLinkEnabled && (
+            <p className="text-sm text-neutral-700" data-testid="appointment-finish-hint">
+              Para encerrar o atendimento, feche a comanda.
+            </p>
+          )}
           {appointment.notes && (
             <p className="text-sm text-neutral-700 rounded-md bg-neutral-50 p-sm">
               {appointment.notes}
@@ -141,16 +147,17 @@ export function AppointmentDetailsDialog({
               </Button>
             )}
             {comandaLinkEnabled && (
-              <Button asChild variant="outline" size="sm">
+              // Em atendimento, o encerramento é o fechamento da comanda (261124-ijh).
+              <Button asChild variant={inProgress ? 'default' : 'outline'} size="sm">
                 <Link
                   to={comandaHrefFromAgenda(
                     appointment.comandaId as string,
                     agendaDate ?? start,
                     agendaView ?? 'day',
                   )}
-                  data-testid="appointment-open-comanda"
+                  data-testid={inProgress ? 'appointment-finish-comanda' : 'appointment-open-comanda'}
                 >
-                  Abrir comanda
+                  {inProgress ? 'Finalizar na comanda' : 'Abrir comanda'}
                 </Link>
               </Button>
             )}
