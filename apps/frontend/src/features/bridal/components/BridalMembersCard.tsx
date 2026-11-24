@@ -33,6 +33,15 @@ interface Props {
   group: BridalGroupData;
 }
 
+/** Nomes dos serviços do evento ainda sem agendamento (261124-n98). */
+function unscheduledNames(m: BridalMemberData): string[] {
+  return m.unscheduledServiceIds.map(
+    (id) =>
+      m.services.find((s) => s.serviceId === id && s.purpose === 'event')?.serviceName ??
+      'Serviço',
+  );
+}
+
 function ServicesDialog({
   member,
   onClose,
@@ -261,6 +270,37 @@ export function BridalMembersCard({ group }: Props) {
                               `${s.serviceName}${s.purpose === 'trial' ? ' (teste)' : ''}`,
                           )
                           .join(', ')}
+                    {group.status === 'active' && m.unscheduledServiceIds.length > 0 && (
+                      <span
+                        className="mt-xs flex flex-wrap items-center gap-xs"
+                        data-testid={`unscheduled-${m.id}`}
+                      >
+                        <Badge variant="warning">
+                          Falta agendar: {unscheduledNames(m).join(', ')}
+                        </Badge>
+                        {canSchedule && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            data-testid={`schedule-missing-${m.id}`}
+                            aria-label={`Agendar ${unscheduledNames(m).join(', ')} de ${m.clientName}`}
+                            onClick={() =>
+                              navigate(
+                                agendaNewVisitHref(
+                                  group.eventDate,
+                                  m.clientId,
+                                  m.clientName,
+                                  m.unscheduledServiceIds,
+                                ),
+                              )
+                            }
+                          >
+                            Agendar
+                          </Button>
+                        )}
+                      </span>
+                    )}
                     {editable && (
                       <Button
                         type="button"

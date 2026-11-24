@@ -133,6 +133,17 @@ export function BridalGroupsPage() {
                       >
                         {g.name}
                       </Link>
+                      {g.status === 'active' && g.unscheduledServiceCount > 0 && (
+                        <Badge
+                          variant="warning"
+                          className="ml-xs"
+                          data-testid={`group-unscheduled-${g.id}`}
+                        >
+                          {g.unscheduledServiceCount === 1
+                            ? '1 serviço sem agendar'
+                            : `${g.unscheduledServiceCount} serviços sem agendar`}
+                        </Badge>
+                      )}
                     </td>
                     <td className="p-sm">{formatEventDate(g.eventDate)}</td>
                     <td className="p-sm">{bride?.clientName ?? ROLE_LABEL.bride}</td>

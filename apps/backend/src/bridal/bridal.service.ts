@@ -380,7 +380,7 @@ async function buildViews(
       bridalGroupId: { in: ids },
       status: { in: BLOCKING_APPOINTMENT_STATUSES },
     },
-    select: { bridalGroupId: true },
+    select: { bridalGroupId: true, clientId: true, serviceId: true, purpose: true },
   });
   const closed = await tx.appointment.findMany({
     where: { bridalGroupId: { in: ids }, comanda: { status: "closed" } },
@@ -394,13 +394,15 @@ async function buildViews(
   });
   return rows.map((row) => {
     const contract = contracts.find((c) => c.bridalGroupId === row.id) ?? null;
+    const active = appts.filter((a) => a.bridalGroupId === row.id);
     return serializeBridalGroup(row, {
       appointments: details.filter((a) => a.bridalGroupId === row.id),
       groupMemberIdByClient: new Map(
         row.members.map((m) => [m.clientId, m.id]),
       ),
       contract,
-      appointmentCount: appts.filter((a) => a.bridalGroupId === row.id).length,
+      appointmentCount: active.length,
+      activeAppointments: active,
       closedComandaClientIds: new Set(
         closed.filter((c) => c.bridalGroupId === row.id).map((c) => c.clientId),
       ),

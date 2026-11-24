@@ -25,6 +25,7 @@ export const BRIDAL_GROUP_LIST_FIELDS = gql`
     packageId
     packageName
     appointmentCount
+    unscheduledServiceCount
     createdAt
     members {
       id
@@ -35,6 +36,7 @@ export const BRIDAL_GROUP_LIST_FIELDS = gql`
       relationLabel
       coveredByContract
       hasClosedComanda
+      unscheduledServiceIds
       services {
         id
         serviceId
@@ -253,6 +255,8 @@ export interface BridalMemberData {
   relationLabel: string | null;
   coveredByContract: boolean;
   hasClosedComanda: boolean;
+  /** Serviços do evento sem agendamento ativo no grupo (261124-n98). */
+  unscheduledServiceIds: string[];
   services: BridalMemberServiceData[];
 }
 
@@ -296,6 +300,8 @@ export interface BridalGroupData {
   packageId: string | null;
   packageName: string | null;
   appointmentCount: number;
+  /** Serviços do evento sem agendar; 0 enquanto a agenda do evento não foi montada (261124-n98). */
+  unscheduledServiceCount: number;
   createdAt: string;
   members: BridalMemberData[];
   /** Só vem no detalhe (BridalGroupFields). */

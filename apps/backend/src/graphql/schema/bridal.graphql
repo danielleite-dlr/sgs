@@ -26,6 +26,8 @@ type BridalGroup {
   packageId: UUID
   packageName: String
   appointmentCount: Int!
+  "Serviços do evento sem agendamento ativo; 0 enquanto a agenda do evento não foi montada (261124-n98)"
+  unscheduledServiceCount: Int!
   appointments: [BridalAppointment!]!
   createdAt: DateTime!
 }
@@ -40,6 +42,8 @@ type BridalGroupMember {
   coveredByContract: Boolean!
   services: [BridalMemberService!]!
   hasClosedComanda: Boolean!
+  "Serviços do evento (serviceId) ainda sem agendamento ativo no grupo (261124-n98)"
+  unscheduledServiceIds: [UUID!]!
 }
 
 type BridalMemberService {

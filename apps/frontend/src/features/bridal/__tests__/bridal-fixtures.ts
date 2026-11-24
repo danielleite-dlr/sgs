@@ -12,6 +12,7 @@ export function member(p: Partial<BridalMemberData> & { id: string }): BridalMem
     relationLabel: null,
     coveredByContract: false,
     hasClosedComanda: false,
+    unscheduledServiceIds: [],
     services: [],
     ...p,
   };
@@ -43,6 +44,7 @@ export function group(p: Partial<BridalGroupData> & { id: string }): BridalGroup
     packageId: null,
     packageName: null,
     appointmentCount: 0,
+    unscheduledServiceCount: 0,
     createdAt: '2026-11-01T12:00:00.000Z',
     members: [],
     appointments: [],
