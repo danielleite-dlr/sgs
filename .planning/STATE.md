@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 Phase: 09 (comercial-crm-do-atimos-no-sgs) — EXECUTING
 Plan: 4 of 17
 Status: Ready to execute
-Last activity: 2026-11-24 - Completed quick task 261124-pkz: ficha da cliente com contrato só da noiva e comandas abertas no histórico
+Last activity: 2026-11-24 - Completed quick task 261124-qhs: profissional vê só a comissão + Total a pagar
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -286,6 +286,7 @@ Recent decisions affecting current work:
 | 261124-n98 | Grupo da noiva avisa "Falta agendar: <serviços>" por pessoa (serviço do evento sem agendamento ativo), com botão Agendar que abre a agenda preenchida; lista de grupos mostra "N serviços sem agendar" depois que a agenda do evento foi montada | 2026-11-24 | — | [261124-n98-aviso-falta-agendar-no-grupo-da-noiva](./quick/261124-n98-aviso-falta-agendar-no-grupo-da-noiva/) |
 | 261124-owd | Agendamento novo (agenda ou grupo da noiva) reaproveita a comanda aberta da cliente com atendimento ativo no mesmo dia; comanda fechada ou outro dia abre nova. Edna (20/11) juntada na C-2026-025 e C-2026-117 cancelada | 2026-11-24 | a55f873 | [261124-owd-comanda-unica-por-cliente-no-dia-ao-agen](./quick/261124-owd-comanda-unica-por-cliente-no-dia-ao-agen/) |
 | 261124-pkz | Ficha da cliente: acompanhante não vê mais o contrato do grupo (só noiva/debutante/responsável ou quem está no contrato); Histórico com bloco "Comandas abertas", comandas abertas e atendimentos passados em aberto na lista, contador no trigger | 2026-11-24 | a96ea04 | [261124-pkz-ficha-da-cliente-contrato-so-da-noiva-e-](./quick/261124-pkz-ficha-da-cliente-contrato-so-da-noiva-e-/) |
+| 261124-qhs | Profissional vê só a comissão: relatório impresso sem "Valor cobrado"; tela sem Cobrado/Regra/cheio para PROFESSIONAL; API mascara cobrado/base/regra para PROFESSIONAL (comissões e comanda); linha "Total a pagar" na tabela de todas as profissionais | 2026-11-24 | 713f4df | [261124-qhs-comissao-profissional-ve-so-o-que-recebe](./quick/261124-qhs-comissao-profissional-ve-so-o-que-recebe/) |
 
 ## Session Continuity
 
