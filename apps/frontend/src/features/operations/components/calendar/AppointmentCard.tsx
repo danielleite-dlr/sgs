@@ -33,7 +33,7 @@ export function AppointmentCard({
   const starts = formatHM(appointment.start);
   const ends = formatHM(appointment.end);
   const displayName = toDisplayName(appointment.clientName);
-  const ariaLabel = `${appointment.clientName}, ${appointment.service}, ${starts} a ${ends}${appointment.isTrial ? ", teste" : ""}${draggable ? ". Pressione espaço para mover" : ""}`;
+  const ariaLabel = `${appointment.clientName}, ${appointment.service}, ${starts} a ${ends}${appointment.bridalBadge ? `, ${appointment.bridalBadge.toLowerCase()}` : ""}${appointment.isTrial ? ", teste" : ""}${draggable ? ". Pressione espaço para mover" : ""}`;
   const merged: CSSProperties = {
     ...style,
     ...(transform
@@ -81,15 +81,25 @@ export function AppointmentCard({
           )}
           style={merged}
         >
-          {appointment.isTrial ? (
+          {appointment.isTrial || appointment.bridalBadge ? (
             <div className="flex min-w-0 items-center gap-1">
               {nameEl}
-              <span
-                data-testid={`appointment-trial-${appointment.id}`}
-                className="shrink-0 rounded-md border border-primary-200 bg-primary-50 px-1 text-[11px] font-semibold leading-4 text-primary-700"
-              >
-                Teste
-              </span>
+              {appointment.bridalBadge && (
+                <span
+                  data-testid={`appointment-bride-${appointment.id}`}
+                  className="shrink-0 rounded-md border border-primary-700 bg-primary-700 px-1 text-[11px] font-semibold leading-4 text-white"
+                >
+                  {appointment.bridalBadge}
+                </span>
+              )}
+              {appointment.isTrial && (
+                <span
+                  data-testid={`appointment-trial-${appointment.id}`}
+                  className="shrink-0 rounded-md border border-primary-200 bg-primary-50 px-1 text-[11px] font-semibold leading-4 text-primary-700"
+                >
+                  Teste
+                </span>
+              )}
             </div>
           ) : (
             nameEl
@@ -124,6 +134,9 @@ export function AppointmentCard({
         <div className="text-sm space-y-xs">
           <p className="font-semibold">{displayName}</p>
           <p className="text-white/80">{appointment.service}</p>
+          {appointment.bridalBadge && (
+            <p className="text-white/80 text-xs">{appointment.bridalBadge}</p>
+          )}
           {appointment.isTrial && (
             <p className="text-white/80 text-xs">Teste do evento</p>
           )}

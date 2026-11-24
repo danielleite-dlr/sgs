@@ -34,6 +34,8 @@ export interface ScheduleAppointment {
   status: string;
   // Teste do evento (purpose "trial") ganha o selo "Teste" na agenda.
   isTrial: boolean;
+  // Card da protagonista do grupo (bridalRole "bride") ganha o selo "Noiva"/"Debutante".
+  bridalBadge?: "Noiva" | "Debutante" | null;
 }
 
 // Todas aceitam texto branco com contraste AA (fase 6, D-11/D-12).
@@ -68,6 +70,12 @@ export function appointmentToSchedule(
     durationMinutes: Math.round((end.getTime() - start.getTime()) / 60000),
     status: appointment.status,
     isTrial: appointment.purpose === "trial",
+    bridalBadge:
+      appointment.bridalRole === "bride"
+        ? appointment.bridalEventKind === "debutante"
+          ? "Debutante"
+          : "Noiva"
+        : null,
   };
 }
 
