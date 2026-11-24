@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 Phase: 09 (comercial-crm-do-atimos-no-sgs) — EXECUTING
 Plan: 4 of 17
 Status: Ready to execute
-Last activity: 2026-11-24 - Completed quick task 261124-n98: aviso "Falta agendar" no grupo da noiva
+Last activity: 2026-11-24 - Completed quick task 261124-owd: agendamento reaproveita a comanda aberta da cliente no mesmo dia
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -284,6 +284,7 @@ Recent decisions affecting current work:
 | 261124-s3n | Selo "Noiva"/"Debutante" no card da noiva na agenda (dia e semana), junto do selo "Teste"; acompanhantes sem selo | 2026-11-24 | 01e665e | [261124-s3n-selo-noiva-no-card-da-agenda](./quick/261124-s3n-selo-noiva-no-card-da-agenda/) |
 | 261124-mkp | Agendamento pela agenda de pessoa do grupo no dia do evento entra no grupo (filtro da noiva); "Agendar agora?" ao incluir serviço no grupo abre a agenda preenchida | 2026-11-24 | 9c81178 | [261124-mkp-agenda-liga-grupo-e-agendar-agora](./quick/261124-mkp-agenda-liga-grupo-e-agendar-agora/) |
 | 261124-n98 | Grupo da noiva avisa "Falta agendar: <serviços>" por pessoa (serviço do evento sem agendamento ativo), com botão Agendar que abre a agenda preenchida; lista de grupos mostra "N serviços sem agendar" depois que a agenda do evento foi montada | 2026-11-24 | — | [261124-n98-aviso-falta-agendar-no-grupo-da-noiva](./quick/261124-n98-aviso-falta-agendar-no-grupo-da-noiva/) |
+| 261124-owd | Agendamento novo (agenda ou grupo da noiva) reaproveita a comanda aberta da cliente com atendimento ativo no mesmo dia; comanda fechada ou outro dia abre nova. Edna (20/11) juntada na C-2026-025 e C-2026-117 cancelada | 2026-11-24 | a55f873 | [261124-owd-comanda-unica-por-cliente-no-dia-ao-agen](./quick/261124-owd-comanda-unica-por-cliente-no-dia-ao-agen/) |
 
 ## Session Continuity
 
