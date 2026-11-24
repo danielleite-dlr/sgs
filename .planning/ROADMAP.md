@@ -397,6 +397,16 @@ Plans:
 - [x] 09-16-gate-deploy-staging-PLAN.md — gate completo, backup, deploy no staging (worktree limpo se preciso) e CI verde (onda 7)
 - [ ] 09-17-verificacao-humana-PLAN.md — push no aparelho, toque no kanban e iframe (onda 8)
 
+### Phase 09.1: Assistente de noiva (INSERTED)
+
+**Goal:** Pedido da usuária em 2026-11-24. Noivas atendidas **no estúdio** com pacote marcado "inclui assistente da noiva" têm uma **assistente** (profissional com a função "Assistente da Noiva", sem uso do sistema) que acompanha a noiva o dia todo. Diária da configuração do salão (padrão **R$ 220**, snapshot ao vincular), só **custo interno** (não muda preço nem contrato); vínculo/troca no grupo da noiva (ADMIN/MANAGER/ATTENDANT); agenda dela **bloqueada o dia todo** ("Acompanhando noiva X"); repasse da diária **ao fechar a comanda** (cancelou, não paga); noivas já cadastradas ficam pendentes, com aviso no grupo e filtro "Sem assistente" na lista. Noiva externa e debutantes ficam fora. Decisões D-01..D-18 em `.planning/phases/09.1-assistente-de-noiva/09.1-CONTEXT.md`.
+**Requirements**: TBD
+**Depends on:** Phase 9
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 09.1 to break down)
+
 ### Phase 10: Permissões por usuário
 
 **Goal:** Cada papel (Admin, Gerente, Atendente, Profissional) continua vindo com permissões padrão, mas o Admin/Gerente consegue **ligar e desligar funcionalidades por pessoa**, no nível de **item do menu/área** (Agenda, Clientes, Comandas, Financeiro, Previsão de caixa, Contratos, Noivas, Comercial, Relatórios, Catálogo, Profissionais…). Desligado ⇒ some do menu, a rota bloqueia e a **API recusa**. Ex.: um gerente que não vê Financeiro; uma profissional que não vê X. Pedido da usuária em 2026-11-18; decisões: granularidade por item do menu (não por ação), fazer logo depois da fase 9 e antes do app nativo iOS.

@@ -224,6 +224,7 @@ Recent decisions affecting current work:
 
 ### Roadmap Evolution
 
+- Phase 09.1 inserted after Phase 9: Assistente de noiva — assistente acompanha a noiva o dia todo, diária R$ 220 como custo interno de todo pacote de noiva, agenda bloqueada o dia todo, diária a pagar como repasse (URGENT)
 - Phase 02.1 inserted after Phase 2: Equipe e profissionais — cadastro completo de profissionais (URGENT)
 - Phase 02.1 executada 2026-09-29: 2 waves, 2/2 planos. Backend e frontend mesclados no master. Falta a verificacao manual ponta a ponta do criterio do M1 (convite -> aceite -> aparece em /profissionais, /agenda e /catalogo/comissoes), que exige as duas apps no ar.
 - Phase 04.1 inserted after Phase 4: Layout e regras do contrato (modelo Studio JS) — PDF em 2 páginas com tabelas, cláusulas I–VIII e assinaturas; Noiva/Debutante; dados completos da contratante; extras/desconto; à vista ou sinal parcelado com alertas; dados do studio configuráveis (URGENT)
