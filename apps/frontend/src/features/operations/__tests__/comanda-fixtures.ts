@@ -9,6 +9,7 @@ export function makeComanda(over: Partial<ComandaData> = {}): ComandaData {
     client: { id: 'c1', fullName: 'Maria Souza', phone: '(11) 98765-4321' },
     openedAt: '2026-11-02T13:00:00.000Z',
     closedAt: null,
+    serviceAt: null,
     closeCycle: 0,
     total: '135.00',
     covered: '0.00',

@@ -128,6 +128,9 @@ test.describe('Fluxo: agendamento com sinal, comanda, pagamento dividido e comis
     await expect(commissions).toContainText(brl(Number(servicePrice) * 0.4)); // 40% do preço cheio
 
     // ---- volta para a agenda no mesmo dia ----
+    // Os toasts ficam no canto superior direito, em cima do botão; com o mouse parado neles o
+    // sonner não os fecha e o clique fica preso (261124-k9b). Espera saírem antes de clicar.
+    await expect(page.locator('[data-sonner-toast]')).toHaveCount(0, { timeout: 20_000 });
     await page.getByTestId('comanda-back-to-agenda').click();
     await page.waitForURL(new RegExp(`/agenda\\?data=${spDate(ahead)}&visao=day$`));
     await expect(page.getByTestId('view-day')).toHaveAttribute('aria-pressed', 'true');

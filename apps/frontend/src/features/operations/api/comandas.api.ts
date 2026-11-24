@@ -14,6 +14,7 @@ export const COMANDA_FIELDS = gql`
     }
     openedAt
     closedAt
+    serviceAt
     closeCycle
     total
     covered
@@ -206,8 +207,8 @@ export const RemoveComandaPaymentMutation = gql`
 
 export const CloseComandaMutation = gql`
   ${COMANDA_FIELDS}
-  mutation CloseComanda($id: UUID!) {
-    closeComanda(id: $id) {
+  mutation CloseComanda($id: UUID!, $closedOn: String) {
+    closeComanda(id: $id, closedOn: $closedOn) {
       comanda {
         ...ComandaFields
       }
@@ -293,6 +294,8 @@ export interface ComandaData {
   client: { id: string; fullName: string; phone: string | null };
   openedAt: string;
   closedAt: string | null;
+  /** Início do primeiro atendimento da comanda; padrão da data de fechamento (261124-k9b). */
+  serviceAt: string | null;
   closeCycle: number;
   total: string;
   /** Parte coberta por contrato de noiva (D-08). */

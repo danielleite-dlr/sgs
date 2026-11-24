@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { PaymentPanel } from '../components/comanda/PaymentPanel';
+import { defaultCloseDate } from '../lib/close-date';
 import { makeComanda } from './comanda-fixtures';
 import type { ComandaData } from '../api/comandas.api';
 
@@ -146,4 +147,59 @@ describe('PaymentPanel', () => {
     );
     expect(screen.getByTestId('comanda-close')).toBeEnabled();
   });
+
+  describe('data do fechamento (261124-k9b)', () => {
+    const paid = {
+      canClose: true,
+      closeError: null,
+      paid: '135.00',
+      remaining: '0.00',
+      payments: [{ id: 'p1', method: 'pix', amount: '135.00', paidAt: '', memberId: null }],
+    };
+    const local = (y: number, m: number, d: number, h = 13) => new Date(y, m - 1, d, h);
+
+    it('padrão é o dia do atendimento e vai no fechamento', async () => {
+      const onClose = vi.fn().mockResolvedValue(undefined);
+      renderPanel(makeComanda({ ...paid, serviceAt: local(2026, 11, 20).toISOString() }), {
+        onClose,
+      });
+      expect(screen.getByTestId('comanda-close-date')).toHaveValue('2026-11-20');
+      expect(screen.getByTestId('comanda-close-date-hint')).toHaveTextContent(
+        'Caixa e comissão entram em 20/11/2026.',
+      );
+      fireEvent.click(screen.getByTestId('comanda-close'));
+      await waitFor(() => expect(onClose).toHaveBeenCalledWith('2026-11-20'));
+    });
+
+    it('pessoa troca a data manualmente', async () => {
+      const onClose = vi.fn().mockResolvedValue(undefined);
+      renderPanel(makeComanda({ ...paid, serviceAt: local(2026, 11, 20).toISOString() }), {
+        onClose,
+      });
+      fireEvent.change(screen.getByTestId('comanda-close-date'), {
+        target: { value: '2026-11-21' },
+      });
+      fireEvent.click(screen.getByTestId('comanda-close'));
+      await waitFor(() => expect(onClose).toHaveBeenCalledWith('2026-11-21'));
+    });
+
+    it('data futura bloqueia o fechamento', () => {
+      renderPanel(makeComanda(paid));
+      fireEvent.change(screen.getByTestId('comanda-close-date'), {
+        target: { value: '2999-01-01' },
+      });
+      expect(screen.getByTestId('comanda-close')).toBeDisabled();
+      expect(screen.getByTestId('comanda-close-date-hint')).toHaveTextContent(
+        'Escolha uma data de hoje ou anterior.',
+      );
+    });
+
+    it('sem atendimento, ou atendimento futuro, o padrão é hoje', () => {
+      const now = local(2026, 11, 24);
+      expect(defaultCloseDate(null, now)).toBe('2026-11-24');
+      expect(defaultCloseDate(local(2026, 11, 30).toISOString(), now)).toBe('2026-11-24');
+      expect(defaultCloseDate(local(2026, 11, 20, 23).toISOString(), now)).toBe('2026-11-20');
+    });
+  });
 });
+

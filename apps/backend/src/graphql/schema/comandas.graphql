@@ -13,7 +13,8 @@ extend type Mutation {
   addComandaPackage(input: AddComandaPackageInput!): ComandaPayload!
   addComandaPayment(input: AddComandaPaymentInput!): ComandaPayload!
   removeComandaPayment(comandaId: UUID!, paymentId: UUID!): ComandaPayload!
-  closeComanda(id: UUID!): ComandaPayload!
+  "closedOn: YYYY-MM-DD no fuso da org (padrão hoje; não pode ser futura). Caixa, comissão e pagamentos entram nessa data (261124-k9b)."
+  closeComanda(id: UUID!, closedOn: String): ComandaPayload!
   reopenComanda(input: ReopenComandaInput!): ComandaPayload!
 }
 
@@ -47,6 +48,8 @@ type Comanda {
   client: Client!
   openedAt: DateTime!
   closedAt: DateTime
+  "Início do primeiro atendimento ligado à comanda; padrão da data de fechamento (261124-k9b)"
+  serviceAt: DateTime
   closeCycle: Int!
   total: String!
   "Parte coberta por contrato de noiva (D-08); owed = total - covered"

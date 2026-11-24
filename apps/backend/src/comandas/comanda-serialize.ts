@@ -24,7 +24,7 @@ const COMANDA_INCLUDE = {
     orderBy: { createdAt: 'asc' },
   },
   payments: { orderBy: { paidAt: 'asc' } },
-  appointments: { select: { id: true } },
+  appointments: { select: { id: true, startsAt: true } },
 } as const;
 
 type ComandaRow = NonNullable<
@@ -43,6 +43,12 @@ function findRows(tx: TenantPrismaClient, ids: string[]) {
 function linkableFields(i: ComandaRow['items'][number]) {
   const c = linkableTrialContract(i);
   return { linkableContractId: c?.id ?? null, linkableContractCode: c?.code ?? null };
+}
+
+/** Início do primeiro atendimento da comanda (direto ou via item); null em comanda avulsa. */
+function firstServiceAt(row: ComandaRow): Date | null {
+  const times = row.appointments.map((a) => a.startsAt.getTime());
+  return times.length > 0 ? new Date(Math.min(...times)) : null;
 }
 
 const money = (v: unknown) => fromCents(toCents(v as string | number));
@@ -125,6 +131,7 @@ export function serializeComanda(
     client: row.client,
     openedAt: row.openedAt,
     closedAt: row.closedAt,
+    serviceAt: firstServiceAt(row),
     closeCycle: row.closeCycle,
     total: fromCents(totalCents),
     covered: fromCents(covered),

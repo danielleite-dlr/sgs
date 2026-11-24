@@ -124,8 +124,12 @@ export class ComandasResolver {
 
   @Mutation('closeComanda')
   @RequirePermission(PERMISSIONS.COMANDA_CLOSE)
-  close(@CurrentTenant() tenant: TenantContext, @Args('id') id: string) {
-    return this.comandas.close(tenant.organizationId, tenant, id);
+  close(
+    @CurrentTenant() tenant: TenantContext,
+    @Args('id') id: string,
+    @Args('closedOn') closedOn?: string | null,
+  ) {
+    return this.comandas.close(tenant.organizationId, tenant, id, closedOn);
   }
 
   @Mutation('reopenComanda')

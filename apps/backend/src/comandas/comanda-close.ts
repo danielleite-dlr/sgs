@@ -87,6 +87,7 @@ export async function closeComandaTx(
   memberId: string,
   comandaId: string,
   now = new Date(),
+  opts: { backdated?: boolean } = {},
 ): Promise<void> {
   const comanda = await lockComanda(tx, comandaId);
   if (comanda.status !== 'open') {
@@ -279,6 +280,11 @@ export async function closeComandaTx(
        SET status = 'closed', closed_at = ${now}, closed_by = ${memberId}::uuid,
            close_cycle = ${cycle}, updated_at = now()
      WHERE id = ${comandaId}::uuid`;
+
+  // Fechamento retroativo (261124-k9b): o recebimento entra no dia escolhido, não no do lançamento.
+  if (opts.backdated) {
+    await tx.comandaPayment.updateMany({ where: { comandaId }, data: { paidAt: now } });
+  }
 
   await tx.appointment.updateMany({
     where: { comandaId, status: { in: ['scheduled', 'confirmed', 'in_progress'] } },

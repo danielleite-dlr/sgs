@@ -187,10 +187,10 @@ export function ComandaPage() {
     }
   }
 
-  async function handleClose() {
+  async function handleClose(closedOn: string) {
     if (!comanda) return;
     try {
-      const res = await closeComanda({ variables: { id: comanda.id } });
+      const res = await closeComanda({ variables: { id: comanda.id, closedOn } });
       const err = firstError(res.data?.closeComanda);
       if (err) {
         toast.error(err);

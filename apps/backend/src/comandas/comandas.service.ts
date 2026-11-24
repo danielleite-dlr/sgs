@@ -19,6 +19,8 @@ import {
 import { openComandaTx } from './comanda-open';
 import { linkableTrialContract, TRIAL_LINK_APPOINTMENT_SELECT } from './comanda-trial-link';
 import { closeComandaTx, reopenComandaTx } from './comanda-close';
+import { resolveCloseInstant } from './comanda-close-date';
+import { orgTimezone } from '../financial/financial.service';
 import { StockError } from '../catalog/products/stock';
 import { CreditError } from '../financial/client-credit';
 import {
@@ -425,12 +427,14 @@ export class ComandasService {
     orgId: string,
     tenant: Pick<TenantContext, 'roleName' | 'memberId'>,
     id: string,
+    closedOn?: string | null,
   ): Promise<ComandaPayload> {
     try {
       return await this.tenant.runWithTenant(
         orgId,
         async (tx) => {
-          await closeComandaTx(tx, orgId, tenant.memberId, id);
+          const { at, backdated } = resolveCloseInstant(closedOn, await orgTimezone(tx, orgId));
+          await closeComandaTx(tx, orgId, tenant.memberId, id, at, { backdated });
           return { comanda: scopeCommissions(await loadComandaView(tx, id), tenant), errors: [] };
         },
         CLOSE_TX_OPTIONS,

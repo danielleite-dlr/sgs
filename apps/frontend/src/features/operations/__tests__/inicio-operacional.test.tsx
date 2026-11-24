@@ -66,6 +66,7 @@ const COMANDA = {
   client: { __typename: 'Client', id: 'c1', fullName: 'SOFIA DRUMMOND', phone: null },
   openedAt: '2026-11-12T10:00:00.000Z',
   closedAt: null,
+  serviceAt: null,
   closeCycle: 0,
   total: '290.00',
   covered: '0.00',

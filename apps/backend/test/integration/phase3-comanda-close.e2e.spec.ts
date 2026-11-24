@@ -150,4 +150,49 @@ describe('Phase 3 - fechamento da comanda (D-12)', () => {
     const r = (await close(w.tokens.attendant, id)).data.closeComanda as Payload;
     expect(r.errors[0].code).toBe('INVALID_CHANGE');
   });
+
+  describe('data do fechamento (261124-k9b)', () => {
+    const CLOSE_ON = `mutation($id: UUID!, $on: String) { closeComanda(id: $id, closedOn: $on) { comanda { id status closedAt serviceAt payments { paidAt } } errors { code message field } } }`;
+    const closeOn = (id: string, on: string | null) =>
+      gqlAs(w, w.tokens.attendant)(CLOSE_ON, { id, on });
+
+    it('data passada: caixa, comissão, pagamentos e closed_at entram nesse dia', async () => {
+      await createServiceRule(w, w.serviceId, '40');
+      const { comandaId } = await buildFlow135(w);
+      const r = (await closeOn(comandaId, '2026-11-20')).data.closeComanda;
+      expect(r.errors).toEqual([]);
+      const at = '2026-11-20T15:00:00.000Z'; // 12:00 em São Paulo
+      expect(new Date(r.comanda.closedAt).toISOString()).toBe(at);
+      expect(r.comanda.serviceAt).not.toBeNull();
+      for (const p of r.comanda.payments) expect(new Date(p.paidAt).toISOString()).toBe(at);
+
+      const cash = await adminPrisma.cashMovement.findMany({
+        where: { comandaId, kind: { in: ['payment_in', 'change_out'] } },
+      });
+      expect(cash).toHaveLength(3);
+      for (const c of cash) expect(c.occurredAt.toISOString()).toBe(at);
+      const recs = await adminPrisma.commissionRecord.findMany({ where: { comandaId } });
+      expect(recs).toHaveLength(2);
+      for (const c of recs) expect(c.calculatedAt.toISOString()).toBe(at);
+    });
+
+    it('data futura é recusada e nada muda', async () => {
+      const { comandaId } = await buildFlow135(w);
+      const r = (await closeOn(comandaId, '2999-01-01')).data.closeComanda;
+      expect(r.errors[0]).toMatchObject({ code: 'INVALID_CLOSE_DATE', field: 'closedOn' });
+      expect((await adminPrisma.comanda.findUnique({ where: { id: comandaId } }))!.status).toBe('open');
+      expect(await adminPrisma.cashMovement.count({ where: { comandaId, kind: 'payment_in' } })).toBe(0);
+    });
+
+    it('sem data fecha agora e não mexe no paid_at', async () => {
+      const { comandaId } = await buildFlow135(w);
+      const before = await adminPrisma.comandaPayment.findMany({ where: { comandaId }, orderBy: { id: 'asc' } });
+      const t0 = Date.now();
+      const r = (await closeOn(comandaId, null)).data.closeComanda;
+      expect(r.errors).toEqual([]);
+      expect(Math.abs(new Date(r.comanda.closedAt).getTime() - t0)).toBeLessThan(60_000);
+      const after = await adminPrisma.comandaPayment.findMany({ where: { comandaId }, orderBy: { id: 'asc' } });
+      expect(after.map((p) => p.paidAt.toISOString())).toEqual(before.map((p) => p.paidAt.toISOString()));
+    });
+  });
 });

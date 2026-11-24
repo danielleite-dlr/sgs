@@ -23,6 +23,7 @@ import {
   paymentMethodLabel,
 } from '../../lib/operations-labels';
 import type { ComandaData } from '../../api/comandas.api';
+import { defaultCloseDate, localDateKey } from '../../lib/close-date';
 
 const brl = (v: string) => `R$ ${formatCurrencyDisplay(v)}`;
 
@@ -41,8 +42,11 @@ export interface PaymentPanelProps {
   busy: boolean;
   onAddPayment: (p: { method: string; amount: string }) => Promise<void>;
   onRemovePayment: (id: string) => Promise<void>;
-  onClose: () => Promise<void>;
+  /** closedOn = YYYY-MM-DD: caixa e comissão entram nesse dia (261124-k9b). */
+  onClose: (closedOn: string) => Promise<void>;
 }
+
+const formatDay = (key: string) => key.split('-').reverse().join('/');
 
 /** Valor digitado ("50,00") -> decimal do backend ("50.00") ou null quando vazio/zero/inválido. */
 function parseTyped(masked: string): string | null {
@@ -64,6 +68,9 @@ export function PaymentPanel({
   const [method, setMethod] = useState<string>('cash');
   const [typed, setTyped] = useState('');
   const [dirty, setDirty] = useState(false);
+  const today = localDateKey(new Date());
+  const [closeDate, setCloseDate] = useState(() => defaultCloseDate(comanda.serviceAt));
+  const closeDateValid = /^\d{4}-\d{2}-\d{2}$/.test(closeDate) && closeDate <= today;
 
   const lines = comanda.payments.map((p) => ({ method: p.method, amount: p.amount }));
   const base = computePaymentSummary(comanda.owed, lines);
@@ -102,7 +109,7 @@ export function PaymentPanel({
   // Comanda vazia não fecha (o backend recusa com EMPTY_COMANDA). Total > 0 implica itens.
   const hasItems = comanda.items.length > 0 || decimalToCents(comanda.total) > 0;
   const readyToClose = hasItems && comanda.canClose && base.canClose;
-  const closeEnabled = readyToClose && !busy;
+  const closeEnabled = readyToClose && closeDateValid && !busy;
   // Motivo visível quando o botão está realmente bloqueado (UX-06). O erro de
   // troco já tem o próprio aviso acima.
   const closeBlockedReason = readyToClose
@@ -331,6 +338,30 @@ export function PaymentPanel({
 
         {isOpen && canClose && (
           <div className="space-y-xs">
+            <div>
+              <Label htmlFor="comanda-close-date" className={FIELD_LABEL_CLASS}>
+                Data do fechamento
+              </Label>
+              <Input
+                id="comanda-close-date"
+                data-testid="comanda-close-date"
+                type="date"
+                className="mt-xs tabular-nums"
+                max={today}
+                value={closeDate}
+                onChange={(e) => setCloseDate(e.target.value)}
+              />
+              <p
+                data-testid="comanda-close-date-hint"
+                className={`mt-xs text-[12px] leading-4 tabular-nums ${closeDateValid ? 'text-neutral-500' : 'font-semibold text-error-600'}`}
+              >
+                {!closeDateValid
+                  ? 'Escolha uma data de hoje ou anterior.'
+                  : closeDate === today
+                    ? 'Caixa e comissão entram hoje.'
+                    : `Caixa e comissão entram em ${formatDay(closeDate)}.`}
+              </p>
+            </div>
             <Button
               type="button"
               size="lg"
@@ -341,7 +372,7 @@ export function PaymentPanel({
               disabled={!closeEnabled}
               aria-busy={readyToClose && busy ? true : undefined}
               data-testid="comanda-close"
-              onClick={() => void onClose()}
+              onClick={() => void onClose(closeDate)}
             >
               <CircleCheck className="h-4 w-4" aria-hidden="true" />
               Fechar comanda
