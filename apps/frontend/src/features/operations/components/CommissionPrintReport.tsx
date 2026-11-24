@@ -31,14 +31,13 @@ export function CommissionPrintReport({ report }: { report: CommissionReportInpu
             <th className="py-1 pr-2">Data</th>
             <th className="py-1 pr-2">Cliente</th>
             <th className="py-1 pr-2">Serviço</th>
-            <th className="py-1 pr-2 text-right">Valor cobrado</th>
             <th className="py-1 text-right">Comissão</th>
           </tr>
         </thead>
         <tbody>
           {report.rows.length === 0 ? (
             <tr>
-              <td colSpan={5} className="py-3 text-center text-neutral-600">
+              <td colSpan={4} className="py-3 text-center text-neutral-600">
                 Nenhum atendimento com comissão no período.
               </td>
             </tr>
@@ -52,7 +51,6 @@ export function CommissionPrintReport({ report }: { report: CommissionReportInpu
                   {r.kind === 'reversal' && ' (estorno)'}
                   {r.note && <span className="block text-xs text-neutral-600">{r.note}</span>}
                 </td>
-                <td className="py-1 pr-2 text-right">{brl(r.chargedAmount)}</td>
                 <td className="py-1 text-right">{brl(r.calculatedAmount)}</td>
               </tr>
             ))
@@ -60,7 +58,7 @@ export function CommissionPrintReport({ report }: { report: CommissionReportInpu
         </tbody>
         <tfoot>
           <tr className="border-t-2 border-neutral-400 font-bold">
-            <td colSpan={4} className="py-2 text-right">
+            <td colSpan={3} className="py-2 text-right">
               Total
             </td>
             <td className="py-2 text-right">{brl(report.total)}</td>

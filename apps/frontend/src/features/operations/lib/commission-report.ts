@@ -52,6 +52,14 @@ export interface CommissionRowLike extends CommissionReportRow {
 const cents = (v: string) => Math.round(Number(v) * 100);
 const fromCents = (c: number) => (c / 100).toFixed(2);
 
+/** Soma, em centavos, os atendimentos e o total ganho de várias profissionais. */
+export function sumMemberTotals(rows: { records: number; total: string }[]) {
+  return {
+    records: rows.reduce((acc, r) => acc + r.records, 0),
+    total: fromCents(rows.reduce((acc, r) => acc + cents(r.total), 0)),
+  };
+}
+
 /**
  * Linhas do relatório (261117-mtn), uma por atendimento:
  * - lançamento estornado + estorno, os dois no período, somem (a comanda foi reaberta e fechada de novo);

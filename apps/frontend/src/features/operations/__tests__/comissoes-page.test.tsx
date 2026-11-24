@@ -70,12 +70,16 @@ const bridalRecords = [
   },
 ];
 
-function renderPage(extra: MockedResponse[] = [], recs: unknown[] = anaRecords) {
+function renderPage(
+  extra: MockedResponse[] = [],
+  recs: unknown[] = anaRecords,
+  totalsData: unknown[] = totals,
+) {
   const mocks: MockedResponse[] = [
     {
       request: { query: CommissionTotalsQuery },
       variableMatcher: () => true,
-      result: { data: { commissionTotals: totals } },
+      result: { data: { commissionTotals: totalsData } },
       maxUsageCount: 5,
     },
     {
@@ -139,6 +143,61 @@ describe('ComissoesCalculadasPage', () => {
     expect(screen.getByText('Atendimentos de Ana')).toBeInTheDocument();
     expect(screen.getByTestId('commission-total-a')).toHaveAttribute('data-state', 'selected');
     expect(screen.getByTestId('commission-print-report')).toHaveTextContent('Relatório de comissões');
+  });
+
+  it('relatório impresso não traz o valor cobrado, só a comissão', async () => {
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver atendimentos de Ana' }));
+    const report = await screen.findByTestId('commission-print-report');
+    expect(report).not.toHaveTextContent('Valor cobrado');
+    expect(within(report).getAllByRole('columnheader').map((h) => h.textContent)).toEqual([
+      'Data',
+      'Cliente',
+      'Serviço',
+      'Comissão',
+    ]);
+    expect(report).toHaveTextContent('R$ 25,00');
+    expect(report).not.toHaveTextContent('R$ 100,00');
+  });
+
+  it('admin/gerente vê Cobrado e Regra; PROFESSIONAL não', async () => {
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver atendimentos de Ana' }));
+    const table = await screen.findByTestId('commission-records');
+    await within(table).findAllByText('Beatriz');
+    const heads = within(table).getAllByRole('columnheader').map((h) => h.textContent);
+    expect(heads).toContain('Cobrado');
+    expect(heads).toContain('Regra');
+  });
+
+  it('rodapé "Total a pagar" soma atendimentos e total ganho em centavos', async () => {
+    renderPage([], anaRecords, [
+      { ...totals[0], total: '120.10', records: 2 },
+      { ...totals[1], total: '20.20', records: 1 },
+    ]);
+    const sum = await screen.findByTestId('commission-totals-sum');
+    expect(sum).toHaveTextContent('Total a pagar');
+    expect(sum).toHaveTextContent('3');
+    expect(sum).toHaveTextContent('R$ 140,30');
+  });
+
+  it('rodapé de total não aparece para PROFESSIONAL', async () => {
+    useAuthStore.setState({ permissions: ['commissionRecord.read'], roleName: 'PROFESSIONAL' });
+    renderPage();
+    await screen.findByTestId('commission-total-a');
+    expect(screen.queryByTestId('commission-totals-sum')).not.toBeInTheDocument();
+  });
+
+  it('PROFESSIONAL não vê as colunas Cobrado e Regra nem o "cheio"', async () => {
+    useAuthStore.setState({ permissions: ['commissionRecord.read'], roleName: 'PROFESSIONAL' });
+    renderPage();
+    const table = await screen.findByTestId('commission-records');
+    await within(table).findAllByText('Beatriz');
+    const heads = within(table).getAllByRole('columnheader').map((h) => h.textContent);
+    expect(heads).toEqual(['Data', 'Cliente', 'Serviço', 'Comissão', 'Comanda']);
+    expect(table).not.toHaveTextContent('cheio');
+    expect(table).not.toHaveTextContent('20,00%');
+    expect(table).toHaveTextContent('R$ 15,00');
   });
 
   it('Enviar por WhatsApp abre wa.me com o telefone e o resumo', async () => {

@@ -18,6 +18,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -43,6 +44,7 @@ import {
   formatDay,
   periodLabel,
   reportRows,
+  sumMemberTotals,
   whatsAppUrl,
   type CommissionReportInput,
 } from '../lib/commission-report';
@@ -288,6 +290,21 @@ export function ComissoesCalculadasPage() {
                     })
                   )}
                 </TableBody>
+                {!isProfessional && totalRows.length > 0 && (
+                  <TableFooter>
+                    <TableRow data-testid="commission-totals-sum">
+                      <TableCell className="text-sm font-semibold text-neutral-800">
+                        {t('operations.commissions.totalToPay', 'Total a pagar')}
+                      </TableCell>
+                      <TableCell className="text-sm font-semibold text-neutral-800 text-right">
+                        {sumMemberTotals(totalRows).records}
+                      </TableCell>
+                      <TableCell className="text-sm font-semibold text-neutral-800 text-right">
+                        {brl(sumMemberTotals(totalRows).total)}
+                      </TableCell>
+                    </TableRow>
+                  </TableFooter>
+                )}
               </Table>
             </div>
           )}
@@ -360,16 +377,20 @@ export function ComissoesCalculadasPage() {
                       <TableHead className={HEAD}>{t('operations.commissions.date', 'Data')}</TableHead>
                       <TableHead className={HEAD}>{t('operations.commissions.client', 'Cliente')}</TableHead>
                       <TableHead className={HEAD}>{t('operations.commissions.service', 'Serviço')}</TableHead>
-                      <TableHead className={`${HEAD} text-right`}>{t('operations.commissions.charged', 'Cobrado')}</TableHead>
+                      {!isProfessional && (
+                        <TableHead className={`${HEAD} text-right`}>{t('operations.commissions.charged', 'Cobrado')}</TableHead>
+                      )}
                       <TableHead className={`${HEAD} text-right`}>{t('operations.commissions.commission', 'Comissão')}</TableHead>
-                      <TableHead className={HEAD}>{t('operations.commissions.rule', 'Regra')}</TableHead>
+                      {!isProfessional && (
+                        <TableHead className={HEAD}>{t('operations.commissions.rule', 'Regra')}</TableHead>
+                      )}
                       <TableHead className={HEAD}>{t('operations.commissions.comanda', 'Comanda')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {tableRows.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-xl text-neutral-500 text-sm">
+                        <TableCell colSpan={isProfessional ? 4 : 7} className="text-center py-xl text-neutral-500 text-sm">
                           {t('operations.commissions.empty', 'Nenhuma comissão no período.')}
                         </TableCell>
                       </TableRow>
@@ -419,18 +440,22 @@ export function ComissoesCalculadasPage() {
                                 </Badge>
                               )}
                             </TableCell>
-                            <TableCell className="text-sm text-right whitespace-nowrap">
-                              {brl(r.chargedAmount)}
-                            </TableCell>
+                            {!isProfessional && (
+                              <TableCell className="text-sm text-right whitespace-nowrap">
+                                {brl(r.chargedAmount)}
+                              </TableCell>
+                            )}
                             <TableCell className="text-sm font-semibold text-right whitespace-nowrap">
                               {brl(r.calculatedAmount)}
                             </TableCell>
-                            <TableCell className="text-xs text-neutral-500 whitespace-nowrap">
-                              {rule}
-                              {r.baseAmount !== r.chargedAmount && (
-                                <span className="block">cheio {brl(r.baseAmount)}</span>
-                              )}
-                            </TableCell>
+                            {!isProfessional && (
+                              <TableCell className="text-xs text-neutral-500 whitespace-nowrap">
+                                {rule}
+                                {r.baseAmount !== r.chargedAmount && (
+                                  <span className="block">cheio {brl(r.baseAmount)}</span>
+                                )}
+                              </TableCell>
+                            )}
                             <TableCell className="text-xs text-neutral-500">
                               {comandaLinks ? (
                                 <Link to={`/comanda/${r.comandaId}`} className="underline">
