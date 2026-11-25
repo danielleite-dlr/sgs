@@ -28,10 +28,17 @@ export const TIME_BLOCK_KINDS = [
     label: 'Deslocamento',
     className: 'border-warning-500 text-neutral-800',
   },
+  {
+    value: 'acompanhamento',
+    label: 'Acompanhando noiva',
+    className: 'border-primary-500 text-neutral-800',
+  },
 ] as const; // D-02
 
-/** Bloqueios criados à mão (deslocamento é gerado pelo grupo de noivas). */
-export const MANUAL_TIME_BLOCK_KINDS = TIME_BLOCK_KINDS.filter((k) => k.value !== 'deslocamento');
+/** Bloqueios criados à mão (deslocamento e acompanhamento são gerados pelo grupo de noivas). */
+export const MANUAL_TIME_BLOCK_KINDS = TIME_BLOCK_KINDS.filter(
+  (k) => k.value !== 'deslocamento' && k.value !== 'acompanhamento',
+);
 
 export const APPOINTMENT_STATUS_LABELS: Record<string, string> = {
   scheduled: 'Agendado',
