@@ -102,8 +102,8 @@
 - [x] **PERM-02**: O padrão de cada item para cada papel é derivado das permissões que o papel já tem no banco; quem ganha um item passa a poder nele o mesmo que o Gerente, e quem tem o item ligado por padrão mantém o que o papel já permitia _(10 D-04, D-05)_
 - [x] **PERM-03**: Admin/Gerente liga ou desliga cada item para uma pessoa (tirar e dar); só a diferença em relação ao padrão é guardada, por membro e por salão, com isolamento por salão (RLS forçada) _(10 D-04, D-12)_
 - [x] **PERM-04**: Item desligado para a pessoa: a API recusa com um erro de acesso próprio (sem derrubar a sessão) na próxima ação, e o item ligado a mais passa a funcionar na API; o acesso é lido do banco a cada requisição, não do token _(10 D-02, D-13)_
-- [ ] **PERM-05**: Toda operação da API que hoje exige permissão passa a declarar também o(s) item(ns) de acesso que a servem; um teste automático falha se alguma ficar de fora _(10 D-02, critério do Claude)_
-- [ ] **PERM-06**: Quem ganha um item do Comercial passa a ver como o Gerente: Atendente com Relatórios vê os relatórios de todos (sem ganhar poder de excluir/trocar responsável nos Leads e Pipeline) e Profissional com Comercial vê todos os leads e negócios _(10 D-05, D-06)_
+- [x] **PERM-05**: Toda operação da API que hoje exige permissão passa a declarar também o(s) item(ns) de acesso que a servem; um teste automático falha se alguma ficar de fora _(10 D-02, critério do Claude)_
+- [x] **PERM-06**: Quem ganha um item do Comercial passa a ver como o Gerente: Atendente com Relatórios vê os relatórios de todos (sem ganhar poder de excluir/trocar responsável nos Leads e Pipeline) e Profissional com Comercial vê todos os leads e negócios _(10 D-05, D-06)_
 - [ ] **PERM-07**: Quem ganha Financeiro (controle, previsão ou despesas fixas) vê também os custos e a diária da assistente que antes eram só do Gerente; recortes "só os meus" de itens que o papel já tinha (comandas e comissões da Profissional, agenda) continuam valendo _(10 D-05)_
 - [ ] **PERM-08**: Admin sempre vê tudo e não é ajustável; Admin ajusta qualquer pessoa; Gerente ajusta só Atendente e Profissional (nunca a si, outro Gerente ou Admin) e só concede itens que ele mesmo tem; Atendente e Profissional não ajustam acessos _(10 D-08)_
 - [ ] **PERM-09**: "Perfis de acesso" não pode ser ligado para Atendente nem Profissional _(10 D-09)_
@@ -227,8 +227,8 @@
 | PERM-02 | Phase 10 | Complete |
 | PERM-03 | Phase 10 | Complete |
 | PERM-04 | Phase 10 | Complete |
-| PERM-05 | Phase 10 | Pending |
-| PERM-06 | Phase 10 | Pending |
+| PERM-05 | Phase 10 | Complete |
+| PERM-06 | Phase 10 | Complete |
 | PERM-07 | Phase 10 | Pending |
 | PERM-08 | Phase 10 | Pending |
 | PERM-09 | Phase 10 | Pending |
