@@ -163,6 +163,7 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
         }
         if (p?.group) {
           toast.success('Grupo atualizado.');
+          if (p.warning) toast.warning(p.warning);
           onSaved(p.group);
           onOpenChange(false);
         }

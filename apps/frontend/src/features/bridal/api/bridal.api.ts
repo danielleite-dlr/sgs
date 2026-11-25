@@ -26,6 +26,11 @@ export const BRIDAL_GROUP_LIST_FIELDS = gql`
     packageName
     appointmentCount
     unscheduledServiceCount
+    assistantRequired
+    assistantPending
+    assistantMemberId
+    assistantName
+    assistantDailyRate
     createdAt
     members {
       id
@@ -94,6 +99,7 @@ export const CreateBridalGroupMutation = gql`
       group {
         ...BridalGroupFields
       }
+      warning
       errors {
         code
         message
@@ -110,6 +116,7 @@ export const UpdateBridalGroupMutation = gql`
       group {
         ...BridalGroupFields
       }
+      warning
       errors {
         code
         message
@@ -126,6 +133,7 @@ export const AddBridalGroupMemberMutation = gql`
       group {
         ...BridalGroupFields
       }
+      warning
       errors {
         code
         message
@@ -142,6 +150,7 @@ export const RemoveBridalGroupMemberMutation = gql`
       group {
         ...BridalGroupFields
       }
+      warning
       errors {
         code
         message
@@ -158,6 +167,7 @@ export const SetBridalMemberCoverageMutation = gql`
       group {
         ...BridalGroupFields
       }
+      warning
       errors {
         code
         message
@@ -174,6 +184,7 @@ export const SetBridalMemberServicesMutation = gql`
       group {
         ...BridalGroupFields
       }
+      warning
       errors {
         code
         message
@@ -191,6 +202,7 @@ export const ScheduleBridalEventMutation = gql`
       group {
         ...BridalGroupFields
       }
+      warning
       errors {
         code
         message
@@ -207,6 +219,7 @@ export const CancelBridalGroupMutation = gql`
       group {
         ...BridalGroupFields
       }
+      warning
       errors {
         code
         message
@@ -230,7 +243,44 @@ export const DeleteBridalGroupPermanentlyMutation = gql`
   }
 `;
 
+export const BridalAssistantCandidatesQuery = gql`
+  query BridalAssistantCandidates($groupId: UUID!) {
+    bridalAssistantCandidates(groupId: $groupId) {
+      memberId
+      displayName
+      available
+      reason
+      current
+    }
+  }
+`;
+
+export const SetBridalGroupAssistantMutation = gql`
+  mutation SetBridalGroupAssistant($groupId: UUID!, $memberId: UUID) {
+    setBridalGroupAssistant(groupId: $groupId, memberId: $memberId) {
+      group {
+        ...BridalGroupFields
+      }
+      warning
+      errors {
+        code
+        message
+        field
+      }
+    }
+  }
+  ${BRIDAL_GROUP_FIELDS}
+`;
+
 // ---- Tipos manuais ----
+
+export interface BridalAssistantCandidate {
+  memberId: string;
+  displayName: string;
+  available: boolean;
+  reason: string | null;
+  current: boolean;
+}
 
 export interface BridalUserError {
   code: string;
@@ -302,6 +352,14 @@ export interface BridalGroupData {
   appointmentCount: number;
   /** Serviços do evento sem agendar; 0 enquanto a agenda do evento não foi montada (261124-n98). */
   unscheduledServiceCount: number;
+  /** Pacote exige assistente e o grupo é elegível (noiva, estúdio, ativo). */
+  assistantRequired: boolean;
+  /** Elegível, sem assistente, evento hoje/futuro e comanda do evento aberta. */
+  assistantPending: boolean;
+  assistantMemberId: string | null;
+  assistantName: string | null;
+  /** Só ADMIN/MANAGER recebem o valor (ex.: "220.00"). */
+  assistantDailyRate: string | null;
   createdAt: string;
   members: BridalMemberData[];
   /** Só vem no detalhe (BridalGroupFields). */
@@ -317,6 +375,7 @@ export interface BridalGroupResult {
 
 export interface BridalGroupPayload {
   group: BridalGroupData | null;
+  warning?: string | null;
   errors: BridalUserError[];
 }
 

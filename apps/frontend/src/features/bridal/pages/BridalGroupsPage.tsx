@@ -26,12 +26,14 @@ export function BridalGroupsPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [formOpen, setFormOpen] = useState(false);
+  const [onlyPendingAssistant, setOnlyPendingAssistant] = useState(false);
 
   const { data, loading, error } = useQuery<BridalGroupsResult>(BridalGroupsQuery, {
     variables: { status: status || null, from: from || null, to: to || null },
     fetchPolicy: 'cache-and-network',
   });
-  const groups = data?.bridalGroups ?? [];
+  const allGroups = data?.bridalGroups ?? [];
+  const groups = allGroups.filter((g) => !onlyPendingAssistant || g.assistantPending);
 
   return (
     <div>
@@ -89,6 +91,19 @@ export function BridalGroupsPage() {
             onChange={(e) => setTo(e.target.value)}
           />
         </div>
+        <div className="flex items-center gap-xs pb-xs">
+          <input
+            id="grp-no-assistant"
+            data-testid="grp-no-assistant"
+            type="checkbox"
+            className="h-4 w-4"
+            checked={onlyPendingAssistant}
+            onChange={(e) => setOnlyPendingAssistant(e.target.checked)}
+          />
+          <Label className="text-xs font-semibold text-neutral-700" htmlFor="grp-no-assistant">
+            Sem assistente
+          </Label>
+        </div>
       </div>
 
       {error && (
@@ -99,7 +114,9 @@ export function BridalGroupsPage() {
       {loading && !data && <Skeleton className="h-40 w-full" />}
       {data && groups.length === 0 && (
         <p className="text-sm text-neutral-600" data-testid="groups-empty">
-          Nenhum grupo de noivas ainda.
+          {onlyPendingAssistant && allGroups.length > 0
+            ? 'Nenhuma noiva sem assistente.'
+            : 'Nenhum grupo de noivas ainda.'}
         </p>
       )}
 
@@ -142,6 +159,15 @@ export function BridalGroupsPage() {
                           {g.unscheduledServiceCount === 1
                             ? '1 serviço sem agendar'
                             : `${g.unscheduledServiceCount} serviços sem agendar`}
+                        </Badge>
+                      )}
+                      {g.status === 'active' && g.assistantPending && (
+                        <Badge
+                          variant="outline"
+                          className="ml-xs border-warning-500"
+                          data-testid={`badge-no-assistant-${g.id}`}
+                        >
+                          Sem assistente
                         </Badge>
                       )}
                     </td>
