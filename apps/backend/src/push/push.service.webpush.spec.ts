@@ -2,6 +2,11 @@ import { Logger } from '@nestjs/common';
 import { PushService } from './push.service';
 import type { PushJob, PushProvider, PushSendResult } from './push.types';
 
+// Fase 10: o acesso efetivo tem teste próprio; aqui todo mundo tem o item ligado.
+jest.mock('../authz/access/access.service', () => ({
+  membersWithItemTx: jest.fn(async (_tx: unknown, ids: string[]) => new Set(ids)),
+}));
+
 const START = new Date('2030-05-03T13:00:00Z');
 const ENDPOINT = 'https://web.push.apple.com/endpoint-muito-secreto-123456';
 const KEYS = { p256dh: 'B' + 'a'.repeat(86), auth: 'c'.repeat(22) };

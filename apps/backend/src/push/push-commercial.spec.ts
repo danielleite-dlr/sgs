@@ -1,6 +1,10 @@
 import { buildCommercialReminderMessage, buildReminderRoute } from './push-messages';
+import { membersWithItemTx } from '../authz/access/access.service';
 import { PushService } from './push.service';
 import type { PushJob, PushProvider, PushSendResult } from './push.types';
+
+jest.mock('../authz/access/access.service', () => ({ membersWithItemTx: jest.fn() }));
+const withItem = membersWithItemTx as jest.Mock;
 
 const JOB: PushJob = { kind: 'commercial.reminder', orgId: 'o1', reminderId: 'r1' };
 
@@ -63,20 +67,26 @@ function setup(opts: {
   tokens?: { id: string; memberId: string; token: string; provider: string }[];
   fcm?: PushProvider;
 }) {
+  withItem.mockReset();
+  withItem.mockImplementation(async (_tx: unknown, ids: string[]) =>
+    new Set(ids.filter((id) => (opts.eligible ?? []).includes(id))),
+  );
   const tx = {
     commercialReminder: { findFirst: jest.fn().mockResolvedValue(opts.reminder) },
     organization: { findUnique: jest.fn().mockResolvedValue({ timezone: 'America/Sao_Paulo' }) },
     member: {
-      findMany: jest
-        .fn()
-        .mockImplementation((a: { where: { id?: unknown } }) =>
-          Promise.resolve((a.where.id ? (opts.eligible ?? []) : (opts.managers ?? [])).map((id) => ({ id }))),
-        ),
+      findMany: jest.fn().mockResolvedValue((opts.managers ?? []).map((id) => ({ id }))),
     },
     deviceToken: {
       findMany: jest
         .fn()
-        .mockResolvedValue((opts.tokens ?? []).map((t) => ({ ...t, p256dh: null, auth: null }))),
+        .mockImplementation((a: { where: { memberId: { in: string[] } } }) =>
+          Promise.resolve(
+            (opts.tokens ?? [])
+              .filter((t) => a.where.memberId.in.includes(t.memberId))
+              .map((t) => ({ ...t, p256dh: null, auth: null })),
+          ),
+        ),
       deleteMany: jest.fn(),
     },
   };
@@ -114,18 +124,44 @@ describe('PushService.dispatch commercial.reminder', () => {
     const r = await service.dispatch(JOB);
     expect(r).toMatchObject({ sent: 2, failed: 0 });
     expect(fcm.send).toHaveBeenCalledTimes(2);
-    const where = tx.member.findMany.mock.calls[1][0].where;
-    expect([...where.id.in].sort()).toEqual(['adm', 'attB', 'ger']);
+    expect(withItem.mock.calls[0][1].slice().sort()).toEqual(['adm', 'attB', 'ger']);
+    expect(withItem.mock.calls[0][2]).toBe('comercial-lembretes');
+    expect(tx.member.findMany).toHaveBeenCalledTimes(1);
   });
 
   it('sem negócio usa quem criou', async () => {
-    const { service, tx } = setup({
+    const { service } = setup({
       reminder: { ...REMINDER, deal: null, lead: { fullName: 'Ana' } },
       managers: ['adm'],
       eligible: ['att', 'adm'],
     });
     await service.dispatch(JOB);
-    expect([...tx.member.findMany.mock.calls[1][0].where.id.in].sort()).toEqual(['adm', 'att']);
+    expect(withItem.mock.calls[0][1].slice().sort()).toEqual(['adm', 'att']);
+  });
+
+  it('gerente com comercial-lembretes desligado não recebe; só o dono', async () => {
+    const { service, fcm } = setup({
+      reminder: REMINDER,
+      managers: ['ger'],
+      eligible: ['attB'],
+      tokens: [
+        { id: 't1', memberId: 'attB', token: 'tok-1', provider: 'fcm' },
+        { id: 't3', memberId: 'ger', token: 'tok-3', provider: 'fcm' },
+      ],
+    });
+    expect(await service.dispatch(JOB)).toMatchObject({ sent: 1 });
+    expect(fcm.send).toHaveBeenCalledTimes(1);
+  });
+
+  it('dono Profissional que ganhou o item recebe', async () => {
+    const { service, fcm } = setup({
+      reminder: REMINDER,
+      managers: [],
+      eligible: ['attB'],
+      tokens: [{ id: 't1', memberId: 'attB', token: 'tok-1', provider: 'fcm' }],
+    });
+    expect(await service.dispatch(JOB)).toMatchObject({ sent: 1 });
+    expect(fcm.send).toHaveBeenCalledTimes(1);
   });
 
   it('lembrete concluído ou inexistente não envia', async () => {

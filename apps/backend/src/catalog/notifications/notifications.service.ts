@@ -10,12 +10,18 @@ export class NotificationsService {
    * Returns org-wide notifications (memberId IS NULL) and member-specific ones.
    * Default: unread only (unreadOnly = true).
    */
-  async list(orgId: string, memberId: string, unreadOnly = true) {
+  async list(
+    orgId: string,
+    memberId: string,
+    unreadOnly = true,
+    excludeKinds: readonly string[] = [],
+  ) {
     return this.tenant.runWithTenant(orgId, (tx) =>
       tx.notification.findMany({
         where: {
           OR: [{ memberId }, { memberId: null }],
           ...(unreadOnly ? { readAt: null } : {}),
+          ...(excludeKinds.length > 0 ? { kind: { notIn: [...excludeKinds] } } : {}),
         },
         orderBy: { createdAt: 'desc' },
         take: 100,
@@ -40,10 +46,18 @@ export class NotificationsService {
   }
 
   /** Marks all unread notifications visible to the member as read; returns how many. */
-  async markAllRead(orgId: string, memberId: string): Promise<number> {
+  async markAllRead(
+    orgId: string,
+    memberId: string,
+    excludeKinds: readonly string[] = [],
+  ): Promise<number> {
     return this.tenant.runWithTenant(orgId, async (tx) => {
       const { count } = await tx.notification.updateMany({
-        where: { readAt: null, OR: [{ memberId }, { memberId: null }] },
+        where: {
+          readAt: null,
+          OR: [{ memberId }, { memberId: null }],
+          ...(excludeKinds.length > 0 ? { kind: { notIn: [...excludeKinds] } } : {}),
+        },
         data: { readAt: new Date() },
       });
       return count;
@@ -54,12 +68,17 @@ export class NotificationsService {
    * Count of unread notifications for the current member (org-wide + member-specific).
    * Used for sidebar badge count.
    */
-  async unreadCount(orgId: string, memberId: string): Promise<number> {
+  async unreadCount(
+    orgId: string,
+    memberId: string,
+    excludeKinds: readonly string[] = [],
+  ): Promise<number> {
     return this.tenant.runWithTenant(orgId, async (tx) => {
       const count = await tx.notification.count({
         where: {
           OR: [{ memberId }, { memberId: null }],
           readAt: null,
+          ...(excludeKinds.length > 0 ? { kind: { notIn: [...excludeKinds] } } : {}),
         },
       });
       return count;

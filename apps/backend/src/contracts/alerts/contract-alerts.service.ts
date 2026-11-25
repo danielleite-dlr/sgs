@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { BLOCKING_STATUSES } from '../../appointments/appointment-status';
+import { membersWithItemTx } from '../../authz/access/access.service';
 import { toCents } from '../../common/money';
 import { TenantContextService } from '../../database/tenant-context.service';
 import { EmailService } from '../../email/email.service';
@@ -178,7 +179,7 @@ export class ContractAlertsService {
           companions,
         });
 
-        const recipients = await tx.member.findMany({
+        const baseRecipients = await tx.member.findMany({
           where: {
             status: 'active',
             deletedAt: null,
@@ -186,6 +187,14 @@ export class ContractAlertsService {
           },
           select: { id: true, user: { select: { email: true } } },
         });
+        // Fase 10 v1: papéis-base menos quem tem Contratos desligado; quem GANHOU
+        // Contratos não entra (limite registrado).
+        const withContracts = await membersWithItemTx(
+          tx,
+          baseRecipients.map((r) => r.id),
+          'contratos',
+        );
+        const recipients = baseRecipients.filter((r) => withContracts.has(r.id));
 
         // Notificações já existentes (lidas ou não) para dedupe; abertas para auto-resolução.
         const existing = await tx.notification.findMany({
