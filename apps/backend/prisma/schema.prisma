@@ -11,6 +11,7 @@ datasource db {
 // ===== Identity & Organization =====
 
 model Organization {
+  memberAccessOverrides  MemberAccessOverride[]
   commercialStages       CommercialStage[]
   commercialLeads        CommercialLead[]
   commercialDeals        CommercialDeal[]
@@ -137,6 +138,8 @@ model RolePermission {
 }
 
 model Member {
+  accessOverrides         MemberAccessOverride[]   @relation("MemberAccessOverrides")
+  accessOverridesUpdated  MemberAccessOverride[]   @relation("MemberAccessOverrideUpdatedBy")
   commercialLeadsCreated  CommercialLead[]         @relation("CommercialLeadCreatedBy")
   commercialDealsAssigned CommercialDeal[]         @relation("CommercialDealAssignee")
   commercialDealsCreated  CommercialDeal[]         @relation("CommercialDealCreatedBy")
@@ -1450,4 +1453,21 @@ model CommercialFormSettings {
   updater         Member?      @relation("CommercialFormUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
 
   @@map("commercial_form_settings")
+}
+
+/// Fase 10: ajuste de acesso por pessoa (só diferenças do padrão do papel). RLS forçada.
+model MemberAccessOverride {
+  memberId       String       @map("member_id") @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  itemId         String       @map("item_id") @db.VarChar(60)
+  enabled        Boolean
+  updatedBy      String?      @map("updated_by") @db.Uuid
+  updatedAt      DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  member         Member       @relation("MemberAccessOverrides", fields: [memberId], references: [id], onDelete: Cascade)
+  updater        Member?      @relation("MemberAccessOverrideUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@id([memberId, itemId])
+  @@index([organizationId], map: "ix_mao_org")
+  @@map("member_access_overrides")
 }

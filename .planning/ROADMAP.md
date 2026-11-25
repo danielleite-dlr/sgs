@@ -427,7 +427,7 @@ Plans:
 
 Plans:
 - [x] 10-01-PLAN.md — TDD do catálogo de itens de acesso, matriz padrão por papel e resolveAccess (onda 1)
-- [ ] 10-02-PLAN.md — migração member_access_overrides (RLS forçada), Prisma e mundo de teste da fase 10 (onda 1)
+- [x] 10-02-PLAN.md — migração member_access_overrides (RLS forçada), Prisma e mundo de teste da fase 10 (onda 1)
 - [ ] 10-03-PLAN.md — AccessService, @RequireAccess, ACCESS_DENIED, guard lendo papel/ajustes do banco e query myAccess (onda 2)
 - [ ] 10-04-PLAN.md — acesso por item em financeiro, comandas, clientes, agenda e catálogo; custos para quem ganhou Financeiro (onda 3)
 - [ ] 10-05-PLAN.md — acesso por item em noivas e contratos; diária e cronograma pelo acesso efetivo (onda 3)
