@@ -3,6 +3,7 @@ import {
   CurrentTenant,
   TenantContext,
 } from '../authz/decorators/current-tenant.decorator';
+import { RequireAccess } from '../authz/decorators/require-access.decorator';
 import { RequirePermission } from '../authz/decorators/require-permission.decorator';
 import { PERMISSIONS } from '../authz/permissions.catalog';
 import { FixedExpenseInputDto, FixedExpenseService } from './fixed-expense.service';
@@ -12,12 +13,14 @@ export class FixedExpenseResolver {
   constructor(private readonly fixedExpenses: FixedExpenseService) {}
 
   @Query('fixedExpenses')
+  @RequireAccess('fin-despesas-fixas', 'fin-previsao')
   @RequirePermission(PERMISSIONS.FINANCIAL_READ)
   list(@CurrentTenant() tenant: TenantContext) {
     return this.fixedExpenses.list(tenant.organizationId);
   }
 
   @Mutation('createFixedExpense')
+  @RequireAccess('fin-despesas-fixas')
   @RequirePermission(PERMISSIONS.FINANCIAL_EXPENSE_WRITE)
   create(
     @CurrentTenant() tenant: TenantContext,
@@ -27,6 +30,7 @@ export class FixedExpenseResolver {
   }
 
   @Mutation('updateFixedExpense')
+  @RequireAccess('fin-despesas-fixas')
   @RequirePermission(PERMISSIONS.FINANCIAL_EXPENSE_WRITE)
   update(
     @CurrentTenant() tenant: TenantContext,
@@ -37,6 +41,7 @@ export class FixedExpenseResolver {
   }
 
   @Mutation('deleteFixedExpense')
+  @RequireAccess('fin-despesas-fixas')
   @RequirePermission(PERMISSIONS.FINANCIAL_EXPENSE_WRITE)
   remove(@CurrentTenant() tenant: TenantContext, @Args('id') id: string) {
     return this.fixedExpenses.remove(tenant.organizationId, id);

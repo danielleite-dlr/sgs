@@ -3,6 +3,7 @@ import {
   CurrentTenant,
   TenantContext,
 } from "../authz/decorators/current-tenant.decorator";
+import { RequireAccess } from "../authz/decorators/require-access.decorator";
 import { RequirePermission } from "../authz/decorators/require-permission.decorator";
 import { PERMISSIONS } from "../authz/permissions.catalog";
 import {
@@ -35,6 +36,7 @@ export class AppointmentsResolver {
   ) {}
 
   @Query("appointments")
+  @RequireAccess('agenda')
   @RequirePermission(PERMISSIONS.APPOINTMENT_READ)
   list(
     @CurrentTenant() tenant: TenantContext,
@@ -50,6 +52,7 @@ export class AppointmentsResolver {
   }
 
   @Mutation("createAppointment")
+  @RequireAccess('agenda')
   @RequirePermission(PERMISSIONS.APPOINTMENT_WRITE)
   create(
     @CurrentTenant() tenant: TenantContext,
@@ -63,6 +66,7 @@ export class AppointmentsResolver {
   }
 
   @Mutation("createVisit")
+  @RequireAccess('agenda')
   @RequirePermission(PERMISSIONS.APPOINTMENT_WRITE)
   createVisit(
     @CurrentTenant() tenant: TenantContext,
@@ -76,6 +80,7 @@ export class AppointmentsResolver {
   }
 
   @Mutation("moveAppointment")
+  @RequireAccess('agenda')
   @RequirePermission(PERMISSIONS.APPOINTMENT_WRITE)
   move(
     @CurrentTenant() tenant: TenantContext,
@@ -86,6 +91,7 @@ export class AppointmentsResolver {
   }
 
   @Mutation("updateAppointmentStatus")
+  @RequireAccess('agenda')
   @RequirePermission(PERMISSIONS.APPOINTMENT_WRITE)
   updateStatus(
     @CurrentTenant() tenant: TenantContext,
@@ -95,6 +101,7 @@ export class AppointmentsResolver {
   }
 
   @Mutation("cancelAppointment")
+  @RequireAccess('agenda')
   @RequirePermission(PERMISSIONS.APPOINTMENT_WRITE)
   cancel(
     @CurrentTenant() tenant: TenantContext,
@@ -105,6 +112,7 @@ export class AppointmentsResolver {
   }
 
   @Query("timeBlocks")
+  @RequireAccess('agenda')
   @RequirePermission(PERMISSIONS.APPOINTMENT_READ)
   listTimeBlocks(
     @CurrentTenant() tenant: TenantContext,
@@ -120,6 +128,7 @@ export class AppointmentsResolver {
   }
 
   @Mutation("createTimeBlock")
+  @RequireAccess('agenda')
   @RequirePermission(PERMISSIONS.APPOINTMENT_WRITE)
   createTimeBlock(
     @CurrentTenant() tenant: TenantContext,
@@ -129,6 +138,7 @@ export class AppointmentsResolver {
   }
 
   @Mutation("deleteTimeBlock")
+  @RequireAccess('agenda')
   @RequirePermission(PERMISSIONS.APPOINTMENT_WRITE)
   deleteTimeBlock(
     @CurrentTenant() tenant: TenantContext,

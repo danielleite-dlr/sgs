@@ -3,6 +3,7 @@ import {
   CurrentTenant,
   TenantContext,
 } from '../authz/decorators/current-tenant.decorator';
+import { RequireAccess } from '../authz/decorators/require-access.decorator';
 import { RequirePermission } from '../authz/decorators/require-permission.decorator';
 import { PERMISSIONS } from '../authz/permissions.catalog';
 import { ComandasService } from './comandas.service';
@@ -12,12 +13,14 @@ export class ComandasResolver {
   constructor(private readonly comandas: ComandasService) {}
 
   @Query('comanda')
+  @RequireAccess('fin-comandas')
   @RequirePermission(PERMISSIONS.COMANDA_READ)
   get(@CurrentTenant() tenant: TenantContext, @Args('id') id: string) {
     return this.comandas.get(tenant.organizationId, tenant, id);
   }
 
   @Query('comandas')
+  @RequireAccess('fin-comandas')
   @RequirePermission(PERMISSIONS.COMANDA_READ)
   list(
     @CurrentTenant() tenant: TenantContext,
@@ -35,6 +38,7 @@ export class ComandasResolver {
   }
 
   @Mutation('openWalkInComanda')
+  @RequireAccess('fin-comandas')
   @RequirePermission(PERMISSIONS.COMANDA_WRITE)
   openWalkIn(
     @CurrentTenant() tenant: TenantContext,
@@ -48,6 +52,7 @@ export class ComandasResolver {
   }
 
   @Mutation('addComandaItem')
+  @RequireAccess('fin-comandas')
   @RequirePermission(PERMISSIONS.COMANDA_WRITE)
   addItem(
     @CurrentTenant() tenant: TenantContext,
@@ -66,6 +71,7 @@ export class ComandasResolver {
   }
 
   @Mutation('removeComandaItem')
+  @RequireAccess('fin-comandas')
   @RequirePermission(PERMISSIONS.COMANDA_WRITE)
   removeItem(
     @CurrentTenant() tenant: TenantContext,
@@ -76,6 +82,7 @@ export class ComandasResolver {
   }
 
   @Mutation('linkComandaItemToContract')
+  @RequireAccess('fin-comandas')
   @RequirePermission(PERMISSIONS.COMANDA_WRITE)
   linkItemToContract(
     @CurrentTenant() tenant: TenantContext,
@@ -86,6 +93,7 @@ export class ComandasResolver {
   }
 
   @Mutation('addComandaPackage')
+  @RequireAccess('fin-comandas')
   @RequirePermission(PERMISSIONS.COMANDA_WRITE)
   addPackage(
     @CurrentTenant() tenant: TenantContext,
@@ -104,6 +112,7 @@ export class ComandasResolver {
   }
 
   @Mutation('addComandaPayment')
+  @RequireAccess('fin-comandas')
   @RequirePermission(PERMISSIONS.COMANDA_WRITE)
   addPayment(
     @CurrentTenant() tenant: TenantContext,
@@ -113,6 +122,7 @@ export class ComandasResolver {
   }
 
   @Mutation('removeComandaPayment')
+  @RequireAccess('fin-comandas')
   @RequirePermission(PERMISSIONS.COMANDA_WRITE)
   removePayment(
     @CurrentTenant() tenant: TenantContext,
@@ -123,6 +133,7 @@ export class ComandasResolver {
   }
 
   @Mutation('closeComanda')
+  @RequireAccess('fin-comandas')
   @RequirePermission(PERMISSIONS.COMANDA_CLOSE)
   close(
     @CurrentTenant() tenant: TenantContext,
@@ -133,6 +144,7 @@ export class ComandasResolver {
   }
 
   @Mutation('reopenComanda')
+  @RequireAccess('fin-comandas')
   @RequirePermission(PERMISSIONS.COMANDA_REOPEN)
   reopen(
     @CurrentTenant() tenant: TenantContext,
