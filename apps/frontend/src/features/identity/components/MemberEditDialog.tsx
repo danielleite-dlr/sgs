@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -30,6 +30,16 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { ShieldCheck } from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { useAccess } from '@/features/access/access-hooks';
+import { MemberAccessPanel } from '@/features/access/components/MemberAccessPanel';
 import {
   UpdateMemberMutation,
   ROLE_OPTIONS,
@@ -136,6 +146,8 @@ export function MemberEditDialog({ member, open, onClose }: MemberEditDialogProp
   }, [open, member.id]);
 
   const roleName = form.watch('roleName');
+  const canManageAccess = useAccess()?.canManageAccess === true;
+  const [accessOpen, setAccessOpen] = useState(false);
   const isProfessionalChecked = form.watch('isProfessional');
   // Papel PROFESSIONAL implica profissional (o backend também força).
   const isProfessional = roleName === 'PROFESSIONAL' || isProfessionalChecked;
@@ -375,7 +387,27 @@ export function MemberEditDialog({ member, open, onClose }: MemberEditDialogProp
               )}
             />
 
+            {roleName !== member.roleName && (
+              <p
+                role="status"
+                className="rounded-md border border-neutral-300 bg-neutral-50 p-3 text-sm text-neutral-800"
+              >
+                {t('access.roleChangeWarning')}
+              </p>
+            )}
+
             <DialogFooter>
+              {canManageAccess && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="sm:mr-auto"
+                  onClick={() => setAccessOpen(true)}
+                >
+                  <ShieldCheck className="mr-2 h-4 w-4" aria-hidden="true" />
+                  {t('access.shortcut')}
+                </Button>
+              )}
               <Button type="button" variant="outline" onClick={onClose}>
                 {t('team.editDialog.cancel')}
               </Button>
@@ -388,6 +420,19 @@ export function MemberEditDialog({ member, open, onClose }: MemberEditDialogProp
           </form>
         </Form>
       </DialogContent>
+      {canManageAccess && (
+        <Sheet open={accessOpen} onOpenChange={setAccessOpen}>
+          <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>{t('access.openFor', { name: member.displayName })}</SheetTitle>
+              <SheetDescription className="sr-only">{t('access.subtitle')}</SheetDescription>
+            </SheetHeader>
+            <div className="mt-3">
+              <MemberAccessPanel memberId={member.id} />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
     </Dialog>
   );
 }

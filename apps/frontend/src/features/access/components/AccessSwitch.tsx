@@ -47,7 +47,7 @@ export function AccessSwitch({
       >
         <span
           className={cn(
-            'absolute h-5 w-5 rounded-full bg-white shadow transition-all',
+            'absolute h-5 w-5 rounded-full bg-white shadow-sm transition-all',
             on ? 'left-[22px]' : mixed ? 'left-[11px]' : 'left-0.5',
           )}
         />
