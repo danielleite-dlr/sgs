@@ -2,8 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { CalendarDays, Gem, MoreHorizontal, Receipt, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isPathEnabled } from '@/config/features';
-import { useHasPermission } from '@/features/operations/operations-permissions';
-import { useBridalPermission } from '@/features/bridal/bridal-permissions';
+import { useHasAccess } from '@/features/access/access-hooks';
 
 interface BottomNavProps {
   /** Abre a gaveta "Mais" (AppDrawer). */
@@ -15,14 +14,14 @@ const ITEM =
 
 /**
  * Barra inferior do celular (D-17), escondida em ≥ lg: Agenda, Comanda, Clientes, Noivas e
- * Mais. Item sem permissão (ou com a rota desligada em config/features) não aparece e os
+ * Mais. Item desligado para a pessoa em myAccess (ou com a rota desligada em config/features) não aparece e os
  * demais dividem a largura. Início e Notificações ficam na gaveta "Mais".
  */
 export function BottomNav({ onOpenMenu }: BottomNavProps) {
-  const canAgenda = isPathEnabled('/agenda');
-  const canComanda = useHasPermission('comanda.read') && isPathEnabled('/comanda');
-  const canClientes = isPathEnabled('/clientes');
-  const canNoivas = useBridalPermission('bridal.read') && isPathEnabled('/noivas');
+  const canAgenda = useHasAccess('agenda') && isPathEnabled('/agenda');
+  const canComanda = useHasAccess('fin-comandas') && isPathEnabled('/comanda');
+  const canClientes = useHasAccess('clientes-todos') && isPathEnabled('/clientes');
+  const canNoivas = useHasAccess('noivas') && isPathEnabled('/noivas');
 
   return (
     <nav

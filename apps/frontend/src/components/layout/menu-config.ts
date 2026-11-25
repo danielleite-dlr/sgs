@@ -51,7 +51,6 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { isPathEnabled } from '@/config/features';
-import { COMMERCIAL_ROLES } from '@/features/commercial/commercial-permissions';
 
 export interface MenuItem {
   id: string;
@@ -461,7 +460,6 @@ const ALL_MENU: MenuItem[] = [
     id: 'comercial',
     label: 'Comercial',
     icon: Handshake,
-    roles: COMMERCIAL_ROLES,
     children: [
       {
         id: 'comercial-painel',
@@ -496,7 +494,6 @@ const ALL_MENU: MenuItem[] = [
         label: 'Relatórios',
         to: '/comercial/relatorios',
         icon: BarChart3,
-        roles: ['ADMIN', 'MANAGER'],
         searchTerms: ['relatório comercial', 'conversão', 'perdas'],
       },
       {
@@ -504,7 +501,6 @@ const ALL_MENU: MenuItem[] = [
         label: 'Etapas e formulário',
         to: '/comercial/configuracoes',
         icon: Settings2,
-        roles: ['ADMIN', 'MANAGER'],
         searchTerms: ['etapas', 'formulário', 'site'],
       },
     ],
@@ -540,7 +536,8 @@ export const MENU: MenuItem[] = pruneMenu(ALL_MENU);
 export const MENU_DEFINITION: readonly MenuItem[] = ALL_MENU;
 
 /**
- * Remove os itens cujo `roles` não inclui o papel (item sem `roles` é de todos) e
+ * Fallback antigo (fase 10: o menu passa a seguir `filterMenuByAccess`). Só é usado enquanto
+ * o myAccess não carregou; remove os itens cujo `roles` não inclui o papel (item sem `roles` é de todos) e
  * os grupos que ficam sem filhos por causa disso.
  */
 export function filterMenuByRole(
@@ -559,6 +556,34 @@ export function filterMenuByRole(
     kept.push(item);
   }
   return kept;
+}
+
+/** Fase 10: mantém só folhas com o item ligado (home sempre); grupo sem filhos some. */
+export function filterMenuByAccess(
+  items: readonly MenuItem[],
+  enabledIds: ReadonlySet<string>,
+): MenuItem[] {
+  const kept: MenuItem[] = [];
+  for (const item of items) {
+    if (item.children && item.children.length > 0) {
+      const children = filterMenuByAccess(item.children, enabledIds);
+      if (children.length === 0) continue;
+      kept.push({ ...item, children });
+      continue;
+    }
+    if (item.id === 'home' || enabledIds.has(item.id)) kept.push(item);
+  }
+  return kept;
+}
+
+/** Sem myAccess ainda (primeira abertura): cai no filtro antigo por papel. */
+export function menuForAccess(
+  access: { items: Array<{ id: string; enabled: boolean }> } | null,
+  roleName: string | null | undefined,
+): MenuItem[] {
+  if (!access) return menuForRole(roleName);
+  const enabled = new Set(access.items.filter((i) => i.enabled).map((i) => i.id));
+  return filterMenuByAccess(MENU, enabled);
 }
 
 export function menuForRole(roleName: string | null | undefined): MenuItem[] {
