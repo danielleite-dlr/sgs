@@ -9,6 +9,8 @@ import { adminPrisma } from '../setup';
 export async function deletePhase3Rows(orgFilterSql: string): Promise<void> {
   const org = `organization_id IN (${orgFilterSql})`;
   const statements = [
+    // Fase 10: ajustes de acesso (FK para members)
+    `DELETE FROM member_access_overrides WHERE ${org}`,
     `DELETE FROM device_tokens WHERE ${org}`,
     `DELETE FROM commission_records WHERE ${org}`,
     `DELETE FROM audit_log WHERE ${org}`,
