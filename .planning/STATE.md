@@ -306,3 +306,4 @@ Resume file: None
 | 2026-11-12 | fast | Montar manualmente (noivas) sem duplicar serviços do teste | ✅ |
 | 2026-11-13 | fast | Comanda: crédito do cliente em destaque no pagamento e no card da cliente | ✅ |
 | 2026-11-19 | fast | Comercial como último grupo do menu | ✅ |
+| 2026-11-25 | fast | Tirar warning da ScheduleBridalEventMutation (BridalSchedulePayload não tem o campo; CI frontend-codegen vermelho e agendamento do cronograma quebrado no staging) | ✅ |

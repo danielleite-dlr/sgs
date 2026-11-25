@@ -202,7 +202,6 @@ export const ScheduleBridalEventMutation = gql`
       group {
         ...BridalGroupFields
       }
-      warning
       errors {
         code
         message
