@@ -168,6 +168,11 @@ export function ProfissionaisPage() {
                         {t('team.badge.professional')}
                       </Badge>
                     )}
+                    {r.isBridalAssistant && (
+                      <Badge variant="outline" data-testid="badge-bridal-assistant">
+                        {t('team.table.bridalAssistantBadge')}
+                      </Badge>
+                    )}
                   </div>
                 ),
               },

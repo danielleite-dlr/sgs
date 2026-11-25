@@ -48,6 +48,7 @@ export interface MemberCategoryData {
 
 export interface AdminMemberData extends MemberData {
   status: MemberStatus;
+  isBridalAssistant: boolean;
   /** Dados pessoais: null para papéis que não são ADMIN/MANAGER e para members antigos. */
   phone?: string | null;
   pixKey?: string | null;
@@ -75,6 +76,7 @@ export const AllMembersQuery = gql`
       roleName
       seniorityTier
       isProfessional
+      isBridalAssistant
       status
       phone
       pixKey
@@ -100,6 +102,7 @@ export const UpdateMemberMutation = gql`
         roleName
         seniorityTier
         isProfessional
+        isBridalAssistant
         status
         phone
         pixKey
@@ -135,6 +138,7 @@ export const CreateMemberMutation = gql`
         roleName
         seniorityTier
         isProfessional
+        isBridalAssistant
         status
         phone
         pixKey
@@ -163,6 +167,7 @@ export interface CreateMemberInputData {
   birthDate?: string | null;
   roleName: string;
   isProfessional: boolean;
+  isBridalAssistant: boolean;
   categoryIds?: string[];
   temporaryPassword: string;
 }

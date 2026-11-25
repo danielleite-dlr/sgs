@@ -61,6 +61,7 @@ function buildSchema(member: AdminMemberData) {
   return z.object({
     roleName: z.enum(ROLE_OPTIONS),
     isProfessional: z.boolean(),
+    isBridalAssistant: z.boolean(),
     seniorityTier: z.enum(SENIORITY_OPTIONS).nullable(),
     phone: z
       .string()
@@ -106,6 +107,7 @@ function defaultsFor(member: AdminMemberData): FormValues {
   return {
     roleName: member.roleName as FormValues['roleName'],
     isProfessional: member.isProfessional,
+    isBridalAssistant: member.isBridalAssistant ?? false,
     seniorityTier: (member.seniorityTier ?? null) as FormValues['seniorityTier'],
     phone: maskBrPhone(member.phone ?? ''),
     pixKeyType: detectPixKeyType(member.pixKey),
@@ -158,6 +160,7 @@ export function MemberEditDialog({ member, open, onClose }: MemberEditDialogProp
       id: member.id,
       roleName: values.roleName,
       isProfessional: professional,
+      isBridalAssistant: professional ? values.isBridalAssistant : false,
       seniorityTier: professional ? values.seniorityTier : null,
     };
 
@@ -312,6 +315,32 @@ export function MemberEditDialog({ member, open, onClose }: MemberEditDialogProp
                 value={form.watch('categoryIds')}
                 onChange={(next) => form.setValue('categoryIds', next)}
                 error={form.formState.errors.categoryIds?.message}
+              />
+            )}
+
+            {isProfessional && (
+              <FormField
+                control={form.control}
+                name="isBridalAssistant"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="member-bridal-assistant"
+                        data-testid="member-bridal-assistant"
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                      />
+                      <Label htmlFor="member-bridal-assistant">
+                        {t('team.editDialog.isBridalAssistantLabel')}
+                      </Label>
+                    </div>
+                    <p className="text-xs text-neutral-600">
+                      {t('team.editDialog.isBridalAssistantHint')}
+                    </p>
+                  </FormItem>
+                )}
               />
             )}
 

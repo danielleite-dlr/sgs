@@ -6,6 +6,7 @@ import type {
   AppointmentData,
   TimeBlockData,
 } from "../api/appointments.api";
+import { MANUAL_TIME_BLOCK_KINDS } from "../lib/operations-labels";
 import { NEUTRAL_TONE, PROFESSIONAL_TONES } from "../lib/professional-colors";
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
@@ -110,6 +111,24 @@ describe("DayGrid", () => {
     expect(screen.getAllByLabelText(/Feriado das 20:00 às 21:00/)).toHaveLength(2);
     const lane1 = screen.getByTestId("lane-p1");
     expect(within(lane1).getByTestId("time-block-b1")).toHaveAttribute("data-kind", "intervalo");
+  });
+
+  it("mostra o bloqueio Acompanhando noiva na coluna da assistente, fora dos manuais", () => {
+    renderGrid({
+      timeBlocks: [
+        {
+          ...block("b9", "acompanhamento", "p2", 7, 22),
+          allDay: true,
+          note: "Acompanhando noiva Maria",
+        },
+      ],
+    });
+    const lane2 = screen.getByTestId("lane-p2");
+    const el = within(lane2).getByTestId("time-block-b9");
+    expect(el).toHaveAttribute("data-kind", "acompanhamento");
+    expect(el).toHaveTextContent("Acompanhando noiva");
+    expect(el).toHaveTextContent("Acompanhando noiva Maria");
+    expect(MANUAL_TIME_BLOCK_KINDS.map((k) => k.value)).not.toContain("acompanhamento");
   });
 
   it("desabilita slots cobertos por bloqueio", () => {
