@@ -87,8 +87,8 @@
 ### Assistente de noiva (Fase 09.1)
 
 - [ ] **AN-01**: Profissional pode ter a função "Assistente da Noiva" (marcada em Profissionais, sem uso do sistema e sem notificação) _(09.1 D-01, D-02)_
-- [ ] **AN-02**: Pacote tem a marcação "Inclui assistente da noiva (no estúdio)"; a migração marca Decidida, Essencial, Elegance, Essence, Experience e Glam da Studio JS _(09.1 D-03, D-04)_
-- [ ] **AN-03**: Diária da assistente é configuração do salão (padrão R$ 220, editável por ADMIN/MANAGER) e cada vínculo guarda o valor vigente ao vincular _(09.1 D-06, D-07, D-08)_
+- [x] **AN-02**: Pacote tem a marcação "Inclui assistente da noiva (no estúdio)"; a migração marca Decidida, Essencial, Elegance, Essence, Experience e Glam da Studio JS _(09.1 D-03, D-04)_
+- [x] **AN-03**: Diária da assistente é configuração do salão (padrão R$ 220, editável por ADMIN/MANAGER) e cada vínculo guarda o valor vigente ao vincular _(09.1 D-06, D-07, D-08)_
 - [ ] **AN-04**: Pacote marcado mostra a diária no custo/lucro (só ADMIN/MANAGER); a diária não muda preço, contrato nem cobrança da noiva _(09.1 D-09, D-10)_
 - [ ] **AN-05**: ADMIN/MANAGER/ATTENDANT vinculam ou trocam a assistente no grupo da noiva, escolhendo entre assistentes livres no dia (ocupadas aparecem indisponíveis) _(09.1 D-13, D-15, D-16)_
 - [ ] **AN-06**: Agenda da assistente fica bloqueada o dia todo no dia do evento ("Acompanhando noiva X") e recusa outro atendimento ou bloqueio nesse dia _(09.1 D-14)_
@@ -196,8 +196,8 @@
 | COM-11 | Phase 9 | Complete |
 | COM-12 | Phase 9 | Complete |
 | AN-01 | Phase 09.1 | Pending |
-| AN-02 | Phase 09.1 | Pending |
-| AN-03 | Phase 09.1 | Pending |
+| AN-02 | Phase 09.1 | Complete |
+| AN-03 | Phase 09.1 | Complete |
 | AN-04 | Phase 09.1 | Pending |
 | AN-05 | Phase 09.1 | Pending |
 | AN-06 | Phase 09.1 | Pending |

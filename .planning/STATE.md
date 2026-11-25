@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 09.1 context gathered
-last_updated: "2026-11-25T01:03:25.391Z"
+stopped_at: Completed 09.1-01-PLAN.md
+last_updated: "2026-11-25T01:09:35.166Z"
 last_activity: 2026-11-25
 progress:
   total_phases: 16
   completed_phases: 11
   total_plans: 154
-  completed_plans: 142
+  completed_plans: 143
   percent: 100
 ---
 
@@ -109,6 +109,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 09 P03 | 25min | 3 tasks | 25 files |
 | Phase 9 P15 | 50min | 2 tasks | 7 files |
 | Phase 09 P16 | 2h | 2 tasks | 3 files |
+| Phase 09.1 P01 | 25min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -210,6 +211,7 @@ Recent decisions affecting current work:
 - [Phase 09]: 09-03: menu filtrado por papel via useMenu(); flag comercial false até o 09-15
 - [Phase 09]: 09-02: visibilityWhere tipado como Record<string, unknown> até o client Prisma do 09-01; D-21 em WIN_DEAL_ROLES (ADMIN, MANAGER, ATTENDANT)
 - [Phase 9]: 09-15: E2E arrasta o card pelo texto do tipo (link do nome barra o drag) com mouse em passos
+- [Phase 09.1]: Vínculo da assistente em colunas de bridal_groups com snapshot da diária; função como boolean em members
 
 ### Pending Todos
 
@@ -290,9 +292,9 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-24T04:55:17.561Z
-Stopped at: Phase 09.1 context gathered
-Resume file: .planning/phases/09.1-assistente-de-noiva/09.1-CONTEXT.md
+Last session: 2026-11-25T01:09:35.152Z
+Stopped at: Completed 09.1-01-PLAN.md
+Resume file: None
 | 2026-11-12 | fast | Montar manualmente (noivas) sem duplicar serviços do teste | ✅ |
 | 2026-11-13 | fast | Comanda: crédito do cliente em destaque no pagamento e no card da cliente | ✅ |
 | 2026-11-19 | fast | Comercial como último grupo do menu | ✅ |
