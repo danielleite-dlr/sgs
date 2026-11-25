@@ -1,3 +1,4 @@
+import { RequireAccess } from '../../authz/decorators/require-access.decorator';
 import { Mutation, Resolver } from '@nestjs/graphql';
 import {
   CurrentTenant,
@@ -12,6 +13,7 @@ export class ContractAlertsResolver {
   constructor(private readonly alerts: ContractAlertsService) {}
 
   @Mutation('runContractAlertsNow')
+  @RequireAccess('contratos')
   @RequirePermission(PERMISSIONS.CONTRACT_CANCEL)
   run(@CurrentTenant() tenant: TenantContext) {
     return this.alerts.runForOrg(tenant.organizationId, new Date(), { force: true });

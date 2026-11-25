@@ -1,3 +1,4 @@
+import { RequireAccess } from '../authz/decorators/require-access.decorator';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import {
   CurrentTenant,
@@ -15,6 +16,11 @@ import {
   type UpdateContractSettingsInput,
 } from './contract-settings.service';
 
+/*
+ * Fase 10: Noivas e Contratos se abrem um pelo outro (ContractLinkCard), por isso o
+ * porteiro é OU (NOIVAS_CONTRATOS); desligar só um esconde menu e rota, a API segue
+ * servindo pelo outro (limite registrado em 10-05-SUMMARY).
+ */
 @Resolver()
 export class ContractsResolver {
   constructor(
@@ -23,6 +29,7 @@ export class ContractsResolver {
   ) {}
 
   @Query('contracts')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.CONTRACT_READ)
   list(
     @CurrentTenant() tenant: TenantContext,
@@ -33,24 +40,28 @@ export class ContractsResolver {
   }
 
   @Query('contract')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.CONTRACT_READ)
   get(@CurrentTenant() tenant: TenantContext, @Args('id') id: string) {
     return this.contracts.get(tenant.organizationId, id);
   }
 
   @Query('contractReadiness')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.CONTRACT_READ)
   readiness(@CurrentTenant() tenant: TenantContext, @Args('id') id: string) {
     return this.contracts.readiness(tenant.organizationId, id);
   }
 
   @Mutation('createContract')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.CONTRACT_WRITE)
   create(@CurrentTenant() tenant: TenantContext, @Args('input') input: CreateContractInput) {
     return this.contracts.create(tenant.organizationId, tenant.memberId, input);
   }
 
   @Mutation('updateContract')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.CONTRACT_WRITE)
   update(
     @CurrentTenant() tenant: TenantContext,
@@ -61,18 +72,21 @@ export class ContractsResolver {
   }
 
   @Mutation('generateContractLink')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.CONTRACT_WRITE)
   generateLink(@CurrentTenant() tenant: TenantContext, @Args('id') id: string) {
     return this.contracts.generateLink(tenant.organizationId, tenant.memberId, id);
   }
 
   @Query('contractSettings')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.CONTRACT_READ)
   contractSettings(@CurrentTenant() tenant: TenantContext) {
     return this.settings.get(tenant.organizationId);
   }
 
   @Mutation('updateContractSettings')
+  @RequireAccess('contratos')
   @RequirePermission(PERMISSIONS.CONTRACT_SETTINGS)
   updateContractSettings(
     @CurrentTenant() tenant: TenantContext,

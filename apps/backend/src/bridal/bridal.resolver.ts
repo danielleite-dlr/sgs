@@ -1,5 +1,19 @@
-import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
-import { canSeeCatalogCosts } from '../catalog/catalog-costs';
+import { RequireAccess } from '../authz/decorators/require-access.decorator';
+import {
+  Args,
+  Context,
+  Mutation,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
+import { AccessService } from '../authz/access/access.service';
+import { hasCostVisibility } from '../authz/access/access-resolve';
+import {
+  resolveTenantFromGqlContext,
+  type GuardGqlContext,
+} from '../authz/guards/permission.guard';
 import {
   CurrentTenant,
   TenantContext,
@@ -15,11 +29,17 @@ import {
 } from './bridal.service';
 import type { BridalScheduleInput } from './bridal-schedule';
 
+/*
+ * Fase 10: Noivas e Contratos se abrem um pelo outro (ContractLinkCard), por isso o
+ * porteiro é OU (NOIVAS_CONTRATOS); desligar só um esconde menu e rota, a API segue
+ * servindo pelo outro (limite registrado em 10-05-SUMMARY).
+ */
 @Resolver()
 export class BridalResolver {
   constructor(private readonly bridal: BridalService) {}
 
   @Query('bridalGroups')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.BRIDAL_READ)
   list(
     @CurrentTenant() tenant: TenantContext,
@@ -31,12 +51,14 @@ export class BridalResolver {
   }
 
   @Query('bridalGroup')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.BRIDAL_READ)
   get(@CurrentTenant() tenant: TenantContext, @Args('id') id: string) {
     return this.bridal.get(tenant.organizationId, id);
   }
 
   @Query('bridalAssistantCandidates')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.BRIDAL_WRITE)
   assistantCandidates(
     @CurrentTenant() tenant: TenantContext,
@@ -46,6 +68,7 @@ export class BridalResolver {
   }
 
   @Mutation('setBridalGroupAssistant')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.BRIDAL_WRITE)
   setAssistant(
     @CurrentTenant() tenant: TenantContext,
@@ -61,6 +84,7 @@ export class BridalResolver {
   }
 
   @Mutation('createBridalGroup')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.BRIDAL_WRITE)
   create(
     @CurrentTenant() tenant: TenantContext,
@@ -70,6 +94,7 @@ export class BridalResolver {
   }
 
   @Mutation('updateBridalGroup')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.BRIDAL_WRITE)
   update(
     @CurrentTenant() tenant: TenantContext,
@@ -80,6 +105,7 @@ export class BridalResolver {
   }
 
   @Mutation('scheduleBridalEvent')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.BRIDAL_WRITE, PERMISSIONS.APPOINTMENT_WRITE)
   schedule(
     @CurrentTenant() tenant: TenantContext,
@@ -89,6 +115,7 @@ export class BridalResolver {
   }
 
   @Mutation('cancelBridalGroup')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.CONTRACT_CANCEL)
   cancelGroup(
     @CurrentTenant() tenant: TenantContext,
@@ -98,6 +125,7 @@ export class BridalResolver {
   }
 
   @Mutation('deleteBridalGroupPermanently')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.CONTRACT_CANCEL)
   deleteGroupPermanently(
     @CurrentTenant() tenant: TenantContext,
@@ -107,6 +135,7 @@ export class BridalResolver {
   }
 
   @Mutation('addBridalGroupMember')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.BRIDAL_WRITE)
   addMember(
     @CurrentTenant() tenant: TenantContext,
@@ -117,6 +146,7 @@ export class BridalResolver {
   }
 
   @Mutation('removeBridalGroupMember')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.BRIDAL_WRITE)
   removeMember(
     @CurrentTenant() tenant: TenantContext,
@@ -126,6 +156,7 @@ export class BridalResolver {
   }
 
   @Mutation('setBridalMemberCoverage')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.BRIDAL_WRITE)
   setCoverage(
     @CurrentTenant() tenant: TenantContext,
@@ -136,6 +167,7 @@ export class BridalResolver {
   }
 
   @Mutation('setBridalMemberServices')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.BRIDAL_WRITE)
   setServices(
     @CurrentTenant() tenant: TenantContext,
@@ -146,14 +178,18 @@ export class BridalResolver {
   }
 }
 
-/** Campos do BridalGroup que dependem de quem pergunta (diária só para ADMIN/MANAGER). */
+/** Campos do BridalGroup que dependem de quem pergunta (diária só com custo visível: PERM-07). */
 @Resolver('BridalGroup')
 export class BridalGroupFieldsResolver {
+  constructor(private readonly access: AccessService) {}
+
   @ResolveField('assistantDailyRate')
-  assistantDailyRate(
-    @CurrentTenant() t: TenantContext | undefined,
+  async assistantDailyRate(
+    @Context() ctx: GuardGqlContext,
     @Parent() g: { assistantDailyRate?: string | null },
   ) {
-    return canSeeCatalogCosts(t?.roleName) ? (g.assistantDailyRate ?? null) : null;
+    if (!resolveTenantFromGqlContext(ctx)) return null;
+    const access = await this.access.forContext(ctx);
+    return access && hasCostVisibility(access) ? (g.assistantDailyRate ?? null) : null;
   }
 }

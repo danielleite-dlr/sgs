@@ -1,3 +1,4 @@
+import { RequireAccess } from '../../authz/decorators/require-access.decorator';
 import { Args, Query, Resolver } from '@nestjs/graphql';
 import { CurrentTenant, TenantContext } from '../../authz/decorators/current-tenant.decorator';
 import { RequirePermission } from '../../authz/decorators/require-permission.decorator';
@@ -29,6 +30,7 @@ export class ContractPreviewResolver {
   ) {}
 
   @Query('contractPreviewPdf')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.CONTRACT_WRITE)
   async contractPreviewPdf(
     @CurrentTenant() tenant: TenantContext,
