@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import type { Client } from '@prisma/client';
-import type { TenantContext } from '../authz/decorators/current-tenant.decorator';
 import { mapBridalError } from '../bridal/bridal-errors';
 import { ClientFieldError, createClientTx, updateClientTx } from '../clients/client-tx';
 import { ContractsService } from '../contracts/contracts.service';
@@ -8,7 +7,7 @@ import { mapContractError } from '../contracts/contract-errors';
 import { recordContractPaymentsTx } from '../contracts/payments/contract-payments';
 import { TenantContextService } from '../database/tenant-context.service';
 import type { TenantPrismaClient } from '../database/types';
-import { canWinDeal, visibilityWhere, type CommercialViewer } from './commercial-access';
+import { canWinAs, visibilityWhere, type CommercialViewer } from './commercial-access';
 import { CommercialError, mapCommercialError, type CommercialUserError } from './commercial-errors';
 import { findDuplicatesTx } from './commercial-leads.service';
 import { ensureDefaultStagesTx } from './commercial-stages.service';
@@ -81,16 +80,15 @@ export class CommercialWinService {
    */
   async win(
     orgId: string,
-    tenant: TenantContext,
+    viewer: CommercialViewer,
     input: WinCommercialDealDto,
   ): Promise<CommercialWinPayload> {
-    // D-21: único ponto de decisão de quem pode ganhar (commercial-access.ts)
-    if (!canWinDeal(tenant.roleName)) {
+    // D-21 + fase 10: único ponto de decisão de quem pode ganhar (commercial-access.ts)
+    if (!canWinAs(viewer)) {
       return this.fail(
         new CommercialError('WIN_NOT_ALLOWED', 'Seu perfil não pode marcar negócios como ganhos.'),
       );
     }
-    const viewer: CommercialViewer = { roleName: tenant.roleName, memberId: tenant.memberId };
     try {
       return await this.tenant.runWithTenant(orgId, (tx) => this.winTx(tx, orgId, viewer, input), {
         timeout: 30_000,

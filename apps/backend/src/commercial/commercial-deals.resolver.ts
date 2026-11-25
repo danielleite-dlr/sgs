@@ -1,8 +1,11 @@
-import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { ForbiddenException } from '@nestjs/common';
+import { Args, Context, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { AccessService, type AccessGqlContext } from '../authz/access/access.service';
+import { RequireAccess } from '../authz/decorators/require-access.decorator';
 import { CurrentTenant, TenantContext } from '../authz/decorators/current-tenant.decorator';
 import { RequirePermission } from '../authz/decorators/require-permission.decorator';
 import { PERMISSIONS } from '../authz/permissions.catalog';
-import type { CommercialViewer } from './commercial-access';
+import { commercialViewerFrom, type CommercialViewer } from './commercial-access';
 import {
   CommercialDealsService,
   type CommercialDealFilterDto,
@@ -14,126 +17,216 @@ import {
   type CreateCommercialInteractionDto,
 } from './commercial-interactions.service';
 
-const viewerOf = (t: TenantContext): CommercialViewer => ({
-  roleName: t.roleName,
-  memberId: t.memberId,
-});
-
 @Resolver()
 export class CommercialDealsResolver {
   constructor(
     private readonly deals: CommercialDealsService,
     private readonly interactions: CommercialInteractionsService,
+    private readonly access: AccessService,
   ) {}
+
+  private async viewer(ctx: AccessGqlContext, items: readonly string[]): Promise<CommercialViewer> {
+    const access = await this.access.forContext(ctx);
+    if (!access) throw new ForbiddenException('FORBIDDEN: membro inativo ou inexistente');
+    return commercialViewerFrom(access, access.memberId, items);
+  }
 
   // ---------- Negócios ----------
 
   @Query('commercialDeals')
+  @RequireAccess('COMERCIAL_NEGOCIOS')
   @RequirePermission(PERMISSIONS.COMMERCIAL_READ)
-  commercialDeals(
+  async commercialDeals(
     @CurrentTenant() tenant: TenantContext,
+    @Context() ctx: AccessGqlContext,
     @Args('filter') filter?: CommercialDealFilterDto,
   ) {
-    return this.deals.list(tenant.organizationId, viewerOf(tenant), filter);
+    return this.deals.list(
+      tenant.organizationId,
+      await this.viewer(ctx, ['COMERCIAL_NEGOCIOS']),
+      filter,
+    );
   }
 
   @Query('commercialDeal')
+  @RequireAccess('COMERCIAL_NEGOCIOS')
   @RequirePermission(PERMISSIONS.COMMERCIAL_READ)
-  commercialDeal(@CurrentTenant() tenant: TenantContext, @Args('id') id: string) {
-    return this.deals.get(tenant.organizationId, viewerOf(tenant), id);
+  async commercialDeal(
+    @CurrentTenant() tenant: TenantContext,
+    @Context() ctx: AccessGqlContext,
+    @Args('id') id: string,
+  ) {
+    return this.deals.get(
+      tenant.organizationId,
+      await this.viewer(ctx, ['COMERCIAL_NEGOCIOS']),
+      id,
+    );
   }
 
   @Mutation('createCommercialDeal')
+  @RequireAccess('COMERCIAL_NEGOCIOS')
   @RequirePermission(PERMISSIONS.COMMERCIAL_WRITE)
-  createCommercialDeal(
+  async createCommercialDeal(
     @CurrentTenant() tenant: TenantContext,
+    @Context() ctx: AccessGqlContext,
     @Args('input') input: CreateCommercialDealDto,
   ) {
-    return this.deals.create(tenant.organizationId, viewerOf(tenant), input);
+    return this.deals.create(
+      tenant.organizationId,
+      await this.viewer(ctx, ['COMERCIAL_NEGOCIOS']),
+      input,
+    );
   }
 
   @Mutation('updateCommercialDeal')
+  @RequireAccess('COMERCIAL_NEGOCIOS')
   @RequirePermission(PERMISSIONS.COMMERCIAL_WRITE)
-  updateCommercialDeal(
+  async updateCommercialDeal(
     @CurrentTenant() tenant: TenantContext,
+    @Context() ctx: AccessGqlContext,
     @Args('input') input: UpdateCommercialDealDto,
   ) {
-    return this.deals.update(tenant.organizationId, viewerOf(tenant), input);
+    return this.deals.update(
+      tenant.organizationId,
+      await this.viewer(ctx, ['COMERCIAL_NEGOCIOS']),
+      input,
+    );
   }
 
   @Mutation('moveCommercialDeal')
+  @RequireAccess('COMERCIAL_NEGOCIOS')
   @RequirePermission(PERMISSIONS.COMMERCIAL_WRITE)
-  moveCommercialDeal(
+  async moveCommercialDeal(
     @CurrentTenant() tenant: TenantContext,
+    @Context() ctx: AccessGqlContext,
     @Args('id') id: string,
     @Args('stageId') stageId: string,
   ) {
-    return this.deals.move(tenant.organizationId, viewerOf(tenant), id, stageId);
+    return this.deals.move(
+      tenant.organizationId,
+      await this.viewer(ctx, ['COMERCIAL_NEGOCIOS']),
+      id,
+      stageId,
+    );
   }
 
   @Mutation('assignCommercialDeal')
+  @RequireAccess('COMERCIAL_NEGOCIOS')
   @RequirePermission(PERMISSIONS.COMMERCIAL_MANAGE)
-  assignCommercialDeal(
+  async assignCommercialDeal(
     @CurrentTenant() tenant: TenantContext,
+    @Context() ctx: AccessGqlContext,
     @Args('id') id: string,
     @Args('assigneeMemberId') assigneeMemberId?: string,
   ) {
-    return this.deals.assign(tenant.organizationId, viewerOf(tenant), id, assigneeMemberId);
+    return this.deals.assign(
+      tenant.organizationId,
+      await this.viewer(ctx, ['COMERCIAL_NEGOCIOS']),
+      id,
+      assigneeMemberId,
+    );
   }
 
   @Mutation('loseCommercialDeal')
+  @RequireAccess('COMERCIAL_NEGOCIOS')
   @RequirePermission(PERMISSIONS.COMMERCIAL_WRITE)
-  loseCommercialDeal(
+  async loseCommercialDeal(
     @CurrentTenant() tenant: TenantContext,
+    @Context() ctx: AccessGqlContext,
     @Args('id') id: string,
     @Args('reasonCode') reasonCode: string,
     @Args('reasonText') reasonText?: string,
   ) {
-    return this.deals.lose(tenant.organizationId, viewerOf(tenant), id, reasonCode, reasonText);
+    return this.deals.lose(
+      tenant.organizationId,
+      await this.viewer(ctx, ['COMERCIAL_NEGOCIOS']),
+      id,
+      reasonCode,
+      reasonText,
+    );
   }
 
   @Mutation('reopenCommercialDeal')
+  @RequireAccess('COMERCIAL_NEGOCIOS')
   @RequirePermission(PERMISSIONS.COMMERCIAL_MANAGE)
-  reopenCommercialDeal(
+  async reopenCommercialDeal(
     @CurrentTenant() tenant: TenantContext,
+    @Context() ctx: AccessGqlContext,
     @Args('id') id: string,
     @Args('stageId') stageId?: string,
   ) {
-    return this.deals.reopen(tenant.organizationId, viewerOf(tenant), id, stageId);
+    return this.deals.reopen(
+      tenant.organizationId,
+      await this.viewer(ctx, ['COMERCIAL_NEGOCIOS']),
+      id,
+      stageId,
+    );
   }
 
   @Mutation('deleteCommercialDeal')
+  @RequireAccess('COMERCIAL_NEGOCIOS')
   @RequirePermission(PERMISSIONS.COMMERCIAL_MANAGE)
-  deleteCommercialDeal(@CurrentTenant() tenant: TenantContext, @Args('id') id: string) {
-    return this.deals.remove(tenant.organizationId, viewerOf(tenant), id);
+  async deleteCommercialDeal(
+    @CurrentTenant() tenant: TenantContext,
+    @Context() ctx: AccessGqlContext,
+    @Args('id') id: string,
+  ) {
+    return this.deals.remove(
+      tenant.organizationId,
+      await this.viewer(ctx, ['COMERCIAL_NEGOCIOS']),
+      id,
+    );
   }
 
   // ---------- Interações ----------
 
   @Query('commercialInteractions')
+  @RequireAccess('COMERCIAL_NEGOCIOS')
   @RequirePermission(PERMISSIONS.COMMERCIAL_READ)
-  commercialInteractions(
+  async commercialInteractions(
     @CurrentTenant() tenant: TenantContext,
+    @Context() ctx: AccessGqlContext,
     @Args('leadId') leadId: string,
     @Args('dealId') dealId?: string,
     @Args('limit') limit?: number,
   ) {
-    return this.interactions.list(tenant.organizationId, viewerOf(tenant), leadId, dealId, limit);
+    return this.interactions.list(
+      tenant.organizationId,
+      await this.viewer(ctx, ['COMERCIAL_NEGOCIOS']),
+      leadId,
+      dealId,
+      limit,
+    );
   }
 
   @Mutation('createCommercialInteraction')
+  @RequireAccess('COMERCIAL_NEGOCIOS')
   @RequirePermission(PERMISSIONS.COMMERCIAL_WRITE)
-  createCommercialInteraction(
+  async createCommercialInteraction(
     @CurrentTenant() tenant: TenantContext,
+    @Context() ctx: AccessGqlContext,
     @Args('input') input: CreateCommercialInteractionDto,
   ) {
-    return this.interactions.create(tenant.organizationId, viewerOf(tenant), input);
+    return this.interactions.create(
+      tenant.organizationId,
+      await this.viewer(ctx, ['COMERCIAL_NEGOCIOS']),
+      input,
+    );
   }
 
   @Mutation('deleteCommercialInteraction')
+  @RequireAccess('COMERCIAL_NEGOCIOS')
   @RequirePermission(PERMISSIONS.COMMERCIAL_MANAGE)
-  deleteCommercialInteraction(@CurrentTenant() tenant: TenantContext, @Args('id') id: string) {
-    return this.interactions.remove(tenant.organizationId, viewerOf(tenant), id);
+  async deleteCommercialInteraction(
+    @CurrentTenant() tenant: TenantContext,
+    @Context() ctx: AccessGqlContext,
+    @Args('id') id: string,
+  ) {
+    return this.interactions.remove(
+      tenant.organizationId,
+      await this.viewer(ctx, ['COMERCIAL_NEGOCIOS']),
+      id,
+    );
   }
 }
 
@@ -143,21 +236,45 @@ export class CommercialLeadDealsResolver {
   constructor(
     private readonly deals: CommercialDealsService,
     private readonly interactions: CommercialInteractionsService,
+    private readonly access: AccessService,
   ) {}
 
+  private async viewer(ctx: AccessGqlContext, items: readonly string[]): Promise<CommercialViewer> {
+    const access = await this.access.forContext(ctx);
+    if (!access) throw new ForbiddenException('FORBIDDEN: membro inativo ou inexistente');
+    return commercialViewerFrom(access, access.memberId, items);
+  }
+
   @ResolveField('deals')
+  @RequireAccess('COMERCIAL_NEGOCIOS')
   @RequirePermission(PERMISSIONS.COMMERCIAL_READ)
-  leadDeals(@CurrentTenant() tenant: TenantContext, @Parent() lead: { id: string }) {
-    return this.deals.dealsOfLead(tenant.organizationId, viewerOf(tenant), lead.id);
+  async leadDeals(
+    @CurrentTenant() tenant: TenantContext,
+    @Context() ctx: AccessGqlContext,
+    @Parent() lead: { id: string },
+  ) {
+    return this.deals.dealsOfLead(
+      tenant.organizationId,
+      await this.viewer(ctx, ['COMERCIAL_NEGOCIOS']),
+      lead.id,
+    );
   }
 
   @ResolveField('interactions')
+  @RequireAccess('COMERCIAL_NEGOCIOS')
   @RequirePermission(PERMISSIONS.COMMERCIAL_READ)
-  leadInteractions(
+  async leadInteractions(
     @CurrentTenant() tenant: TenantContext,
+    @Context() ctx: AccessGqlContext,
     @Parent() lead: { id: string },
     @Args('limit') limit?: number,
   ) {
-    return this.interactions.list(tenant.organizationId, viewerOf(tenant), lead.id, null, limit);
+    return this.interactions.list(
+      tenant.organizationId,
+      await this.viewer(ctx, ['COMERCIAL_NEGOCIOS']),
+      lead.id,
+      null,
+      limit,
+    );
   }
 }
