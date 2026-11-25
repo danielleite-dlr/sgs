@@ -32,7 +32,48 @@ type MyAccess {
   canManageAccess: Boolean!
 }
 
+"Acessos de uma pessoa, vistos por quem administra."
+type MemberAccess {
+  memberId: UUID!
+  displayName: String!
+  roleName: String!
+  "Quem está vendo pode ajustar esta pessoa."
+  editable: Boolean!
+  lockReason: String
+  items: [AccessItem!]!
+  adjustedCount: Int!
+}
+
+type MemberAccessSummary {
+  memberId: UUID!
+  adjustedCount: Int!
+}
+
+input AccessChangeInput {
+  itemId: String!
+  enabled: Boolean!
+}
+
+input SetMemberAccessInput {
+  memberId: UUID!
+  changes: [AccessChangeInput!]!
+}
+
+type SetMemberAccessPayload {
+  access: MemberAccess
+  errors: [UserError!]!
+}
+
 extend type Query {
   "Acessos de quem está logado. Sem @RequirePermission: qualquer membro autenticado e ativo."
   myAccess: MyAccess!
+  memberAccess(memberId: UUID!): MemberAccess!
+  "Quantos ajustes cada membro ativo tem (lista da tela Perfis de acesso)."
+  memberAccessOverview: [MemberAccessSummary!]!
+}
+
+extend type Mutation {
+  setMemberAccess(input: SetMemberAccessInput!): SetMemberAccessPayload!
+  "Voltar ao padrão do papel."
+  resetMemberAccess(memberId: UUID!): SetMemberAccessPayload!
 }
