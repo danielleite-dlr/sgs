@@ -80,15 +80,12 @@ describe('evaluateCompanionRules', () => {
 });
 
 describe('canOverrideTimeline', () => {
-  it('libera Administrador e Gerente', () => {
-    expect(canOverrideTimeline('ADMIN')).toBe(true);
-    expect(canOverrideTimeline('MANAGER')).toBe(true);
+  it('libera quem tem a permissão efetiva bridal.scheduleOverride', () => {
+    expect(canOverrideTimeline(new Set(['bridal.scheduleOverride']))).toBe(true);
   });
 
-  it('nega Atendente, Profissional e papel ausente', () => {
-    expect(canOverrideTimeline('ATTENDANT')).toBe(false);
-    expect(canOverrideTimeline('PROFESSIONAL')).toBe(false);
-    expect(canOverrideTimeline(null)).toBe(false);
-    expect(canOverrideTimeline(undefined)).toBe(false);
+  it('nega quando a permissão não está no conjunto efetivo', () => {
+    expect(canOverrideTimeline(new Set())).toBe(false);
+    expect(canOverrideTimeline(new Set(['bridal.write']))).toBe(false);
   });
 });
