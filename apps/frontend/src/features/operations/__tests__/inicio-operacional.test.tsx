@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import { MemoryRouter } from 'react-router-dom';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
+import { accessWithout, PAINEL_ITEMS } from '@/features/access/__tests__/access-fixture';
 import DashboardPage from '@/pages/DashboardPage';
 import { AppointmentsQuery } from '../api/appointments.api';
 import { ComandasQuery } from '../api/comandas.api';
@@ -195,7 +196,7 @@ function renderPage(list: MockedResponse[] = mocks()) {
 
 describe('Início operacional', () => {
   beforeEach(() => {
-    useAuthStore.setState({ roleName: 'ADMIN', permissions: [] });
+    useAuthStore.setState({ roleName: 'ADMIN', permissions: [], access: null });
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-11-12T12:00:00-03:00'));
   });
@@ -243,8 +244,12 @@ describe('Início operacional', () => {
     expect(within(contratos).getByRole('link', { name: 'Ver todos' })).toHaveAttribute('href', '/contratos');
   });
 
-  it('sem financial.read não há R$ nos blocos nem chamada de FinancialSummary', async () => {
-    useAuthStore.setState({ roleName: 'ATTENDANT', permissions: [] });
+  it('sem fin-controle não há R$ nos blocos nem chamada de FinancialSummary', async () => {
+    useAuthStore.setState({
+      roleName: 'ATTENDANT',
+      permissions: [],
+      access: accessWithout(['fin-controle'], PAINEL_ITEMS),
+    });
     const resumo = vi.fn();
     const semFin = mocks().map((x) =>
       x.request.query === FinancialSummaryQuery
@@ -268,8 +273,12 @@ describe('Início operacional', () => {
     expect(resumo).not.toHaveBeenCalled();
   });
 
-  it('sem contract.read somem o KPI de noivas e o bloco de contratos', async () => {
-    useAuthStore.setState({ roleName: 'PROFESSIONAL', permissions: [] });
+  it('sem contratos somem o KPI de noivas e o bloco de contratos', async () => {
+    useAuthStore.setState({
+      roleName: 'PROFESSIONAL',
+      permissions: [],
+      access: accessWithout(['contratos'], PAINEL_ITEMS),
+    });
     const contratos = vi.fn();
     const lista = mocks().map((x) =>
       x.request.query === DashboardContractsQuery

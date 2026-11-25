@@ -52,8 +52,11 @@ Toda rota de item no `router.tsx` declara `access: [...]` (29 entradas, inclusiv
 
 ## Verificação
 
-- vitest inteiro, typecheck e lint do frontend (ver resultado abaixo).
+- Depois do merge do 10-11 e 10-12 no master: typecheck e lint do frontend limpos; vitest 163 arquivos / 1146 testes verdes.
+- Três testes antigos do painel (`forecast-card`, `inicio-operacional`) ainda montavam o cenário só pelo papel; com o 10-11 os cartões seguem o item de acesso (sem acesso carregado nada é escondido), então passaram a desligar o item em `access` via `access-fixture.ts`.
 
 ## Known Stubs
 
 Nenhum.
+
+## Self-Check: PASSED

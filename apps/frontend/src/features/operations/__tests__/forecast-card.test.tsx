@@ -3,6 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import { MemoryRouter } from 'react-router-dom';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
+import { accessWithout, PAINEL_ITEMS } from '@/features/access/__tests__/access-fixture';
 import { CashForecastQuery } from '../api/forecast.api';
 import { ForecastCard } from '../components/ForecastCard';
 
@@ -80,7 +81,7 @@ const ok = (over: Record<string, unknown> = {}): MockedResponse => ({
 
 describe('ForecastCard', () => {
   beforeEach(() => {
-    useAuthStore.setState({ roleName: 'ADMIN', permissions: [] });
+    useAuthStore.setState({ roleName: 'ADMIN', permissions: [], access: null });
   });
   afterEach(() => {
     vi.useRealTimers();
@@ -138,8 +139,12 @@ describe('ForecastCard', () => {
     expect(link).toHaveAttribute('href', '/financeiro/previsao');
   });
 
-  it('não renderiza para PROFESSIONAL', () => {
-    useAuthStore.setState({ roleName: 'PROFESSIONAL', permissions: [] });
+  it('não renderiza com fin-previsao desligado', () => {
+    useAuthStore.setState({
+      roleName: 'PROFESSIONAL',
+      permissions: [],
+      access: accessWithout(['fin-previsao'], PAINEL_ITEMS),
+    });
     renderCard(ok());
     expect(screen.queryByText('Previsão de caixa')).not.toBeInTheDocument();
   });
