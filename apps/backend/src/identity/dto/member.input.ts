@@ -25,6 +25,10 @@ export class UpdateMemberInput {
   isProfessional?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  isBridalAssistant?: boolean;
+
+  @IsOptional()
   @IsEnum(['junior', 'pleno', 'senior'])
   seniorityTier?: SeniorityTier | null;
 
@@ -72,6 +76,10 @@ export class CreateMemberInput {
   isProfessional?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  isBridalAssistant?: boolean;
+
+  @IsOptional()
   @IsArray()
   @IsUUID(undefined, { each: true })
   categoryIds?: string[];
@@ -92,7 +100,6 @@ export class InviteMemberInput {
   @IsOptional()
   @IsBoolean()
   isProfessional?: boolean;
-
   @IsOptional()
   @IsEnum(['junior', 'pleno', 'senior'])
   seniorityTier?: SeniorityTier;

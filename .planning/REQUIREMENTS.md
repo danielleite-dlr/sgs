@@ -86,7 +86,7 @@
 
 ### Assistente de noiva (Fase 09.1)
 
-- [ ] **AN-01**: Profissional pode ter a função "Assistente da Noiva" (marcada em Profissionais, sem uso do sistema e sem notificação) _(09.1 D-01, D-02)_
+- [x] **AN-01**: Profissional pode ter a função "Assistente da Noiva" (marcada em Profissionais, sem uso do sistema e sem notificação) _(09.1 D-01, D-02)_
 - [x] **AN-02**: Pacote tem a marcação "Inclui assistente da noiva (no estúdio)"; a migração marca Decidida, Essencial, Elegance, Essence, Experience e Glam da Studio JS _(09.1 D-03, D-04)_
 - [x] **AN-03**: Diária da assistente é configuração do salão (padrão R$ 220, editável por ADMIN/MANAGER) e cada vínculo guarda o valor vigente ao vincular _(09.1 D-06, D-07, D-08)_
 - [x] **AN-04**: Pacote marcado mostra a diária no custo/lucro (só ADMIN/MANAGER); a diária não muda preço, contrato nem cobrança da noiva _(09.1 D-09, D-10)_
@@ -195,7 +195,7 @@
 | COM-10 | Phase 9 | Complete |
 | COM-11 | Phase 9 | Complete |
 | COM-12 | Phase 9 | Complete |
-| AN-01 | Phase 09.1 | Pending |
+| AN-01 | Phase 09.1 | Complete |
 | AN-02 | Phase 09.1 | Complete |
 | AN-03 | Phase 09.1 | Complete |
 | AN-04 | Phase 09.1 | Complete |

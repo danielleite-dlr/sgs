@@ -17,6 +17,8 @@ import {
 } from './dto/member.input';
 import { normalizeBrPhone, normalizePixKey } from './member-contact';
 import { recordAudit } from '../common/audit-log';
+import { orgTimezone } from '../bridal/bridal-schedule';
+import { localDateYmd } from '../push/push-messages';
 import { loadCategoryParents, memberServesCategory } from './member-categories';
 
 export interface UserError {
@@ -64,6 +66,22 @@ export function openWorkMessage(
   return `${name} tem ${parts.join(' e ')}. Conclua ou remaneje antes de excluir.`;
 }
 
+/** Grupos de noiva ativos, com evento de hoje (fuso da org) em diante, em que a pessoa é a assistente. */
+async function countActiveBridalLinks(
+  tx: TenantPrismaClient,
+  memberId: string,
+): Promise<number> {
+  const tz = await orgTimezone(tx);
+  const today = new Date(`${localDateYmd(new Date(), tz)}T00:00:00.000Z`);
+  return tx.bridalGroup.count({
+    where: {
+      assistantMemberId: memberId,
+      status: 'active',
+      eventDate: { gte: today },
+    },
+  });
+}
+
 const createErr = (code: string, message: string, field?: string) => ({
   member: null,
   existingAccount: false,
@@ -85,6 +103,7 @@ const MEMBER_SELECT = {
   displayName: true,
   seniorityTier: true,
   isProfessional: true,
+  isBridalAssistant: true,
   status: true,
   phone: true,
   pixKey: true,
@@ -104,6 +123,7 @@ type MemberRow = {
   displayName: string;
   seniorityTier: string | null;
   isProfessional: boolean;
+  isBridalAssistant: boolean;
   status: string;
   phone: string | null;
   pixKey: string | null;
@@ -187,6 +207,7 @@ function toMemberDto(r: MemberRow) {
     roleName: r.role?.name ?? 'UNKNOWN',
     seniorityTier: r.seniorityTier ?? null,
     isProfessional: r.isProfessional,
+    isBridalAssistant: r.isBridalAssistant,
     status: r.status,
     phone: r.phone ?? null,
     pixKey: r.pixKey ?? null,
@@ -287,6 +308,7 @@ export class MembersService {
       const data: {
         roleId?: string;
         isProfessional?: boolean;
+        isBridalAssistant?: boolean;
         seniorityTier?: string | null;
         phone?: string;
         pixKey?: string;
@@ -350,6 +372,30 @@ export class MembersService {
         finalIsProfessional !== existing.isProfessional
       ) {
         data.isProfessional = finalIsProfessional;
+      }
+
+      if (input.isBridalAssistant === true && !finalIsProfessional) {
+        return errPayload(
+          'BRIDAL_ASSISTANT_REQUIRES_PROFESSIONAL',
+          'Só profissionais podem ser Assistente da Noiva.',
+          'isBridalAssistant',
+        );
+      }
+      const finalIsBridalAssistant = finalIsProfessional
+        ? (input.isBridalAssistant ?? existing.isBridalAssistant)
+        : false;
+      if (existing.isBridalAssistant && !finalIsBridalAssistant) {
+        const linked = await countActiveBridalLinks(tx, input.id);
+        if (linked > 0) {
+          return errPayload(
+            'MEMBER_IS_BRIDAL_ASSISTANT',
+            `${existing.displayName} é assistente de ${linked} noiva(s) com evento a partir de hoje. Troque a assistente nesses grupos antes de tirar a função.`,
+            'isBridalAssistant',
+          );
+        }
+      }
+      if (finalIsBridalAssistant !== existing.isBridalAssistant) {
+        data.isBridalAssistant = finalIsBridalAssistant;
       }
 
       if (input.seniorityTier !== undefined) {
@@ -418,6 +464,13 @@ export class MembersService {
 
     const isProfessional =
       input.roleName === PROFESSIONAL_ROLE_NAME ? true : !!input.isProfessional;
+    if (input.isBridalAssistant === true && !isProfessional) {
+      return createErr(
+        'BRIDAL_ASSISTANT_REQUIRES_PROFESSIONAL',
+        'Só profissionais podem ser Assistente da Noiva.',
+        'isBridalAssistant',
+      );
+    }
     const categoryIds = isProfessional
       ? [...new Set(input.categoryIds ?? [])]
       : [];
@@ -507,6 +560,7 @@ export class MembersService {
             roleId: role.id,
             displayName,
             isProfessional,
+            isBridalAssistant: isProfessional ? !!input.isBridalAssistant : false,
             status: MEMBER_STATUS_ACTIVE,
             phone,
             pixKey: pix.value,
@@ -782,6 +836,23 @@ export class MembersService {
             {
               code: 'MEMBER_HAS_FUTURE_APPOINTMENTS',
               message: `${existing.displayName} tem ${futureAppointmentCount} agendamento(s) futuro(s) — o primeiro em ${firstDate}. Remaneje-os antes de desativar.`,
+              field: null,
+            },
+          ] as UserError[],
+        };
+      }
+
+      const bridalLinks = await countActiveBridalLinks(tx, id);
+      if (bridalLinks > 0) {
+        return {
+          member: null,
+          futureAppointmentCount: 0,
+          blockingAppointments: [] as BlockingAppointment[],
+          activeCommissionRuleCount,
+          errors: [
+            {
+              code: 'MEMBER_IS_BRIDAL_ASSISTANT',
+              message: `${existing.displayName} é assistente de ${bridalLinks} noiva(s) com evento a partir de hoje. Troque a assistente nesses grupos antes de desativar.`,
               field: null,
             },
           ] as UserError[],

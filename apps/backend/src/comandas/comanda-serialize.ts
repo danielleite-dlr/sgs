@@ -62,6 +62,7 @@ function memberView(m: ComandaRow['items'][number]['professional']) {
     roleName: m.role.name,
     seniorityTier: m.seniorityTier,
     isProfessional: m.isProfessional,
+    isBridalAssistant: m.isBridalAssistant ?? false,
     status: m.status,
     phone: null,
     pixKey: null,
