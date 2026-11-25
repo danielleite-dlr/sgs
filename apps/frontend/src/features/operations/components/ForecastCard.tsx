@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
-import { useHasPermission } from '../operations-permissions';
+import { useHasAccess } from '@/features/access/access-hooks';
 import { CashForecastQuery, FORECAST_COST_GROUP_LABELS, forecastWindow, weekLabel, type CashForecastResult } from '../api/forecast.api';
 import { CHART_COLORS, CHART_GRID_STROKE, CHART_TICK, CHART_TOOLTIP_STYLE } from '../lib/chart-theme';
 
@@ -32,7 +32,7 @@ function lastDay(toExclusive: string): string {
 }
 
 export function ForecastCard() {
-  const canRead = useHasPermission('financial.read');
+  const canRead = useHasAccess('fin-previsao');
   const { data, error, refetch } = useQuery<CashForecastResult>(CashForecastQuery, {
     variables: forecastWindow(),
     fetchPolicy: 'cache-and-network',

@@ -2,13 +2,12 @@ import { useQuery } from '@apollo/client';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
-import { useBridalPermission } from '@/features/bridal/bridal-permissions';
+import { useHasAccess } from '@/features/access/access-hooks';
 import { cn } from '@/lib/utils';
 import { FinancialSummaryQuery } from '../../api/financial.api';
 import { DashboardContractsQuery, type DashboardContractsResult } from '../../api/dashboard.api';
 import { ORG_TIMEZONE_DEFAULT, addDays, todayInTimeZone } from '../../lib/period';
 import { contractsKpi, summarizeAppointments } from '../../lib/operational-dashboard';
-import { useHasPermission } from '../../operations-permissions';
 import { useTodayAppointments } from './use-today-appointments';
 
 const brl = (v: string) => `R$ ${formatCurrencyDisplay(v)}`;
@@ -56,11 +55,12 @@ function ColumnError({ onRetry }: { onRetry: () => void }) {
 }
 
 export function DayKpiStrip() {
-  const canFinance = useHasPermission('financial.read');
-  const canContract = useBridalPermission('contract.read');
+  const canAgenda = useHasAccess('agenda');
+  const canFinance = useHasAccess('fin-controle');
+  const canContract = useHasAccess('contratos');
   const today = todayInTimeZone(ORG_TIMEZONE_DEFAULT);
 
-  const appts = useTodayAppointments();
+  const appts = useTodayAppointments(!canAgenda);
   const fin = useQuery<SummaryResult>(FinancialSummaryQuery, {
     variables: { from: today, to: addDays(today, 1), granularity: 'day' },
     fetchPolicy: 'cache-and-network',
@@ -74,7 +74,7 @@ export function DayKpiStrip() {
   const summary = appts.data ? summarizeAppointments(appts.data.appointments) : null;
   const kpi = contracts.data ? contractsKpi(contracts.data.contracts, today) : null;
   const money = fin.data?.financialSummary;
-  const colCount = 1 + (canFinance ? 2 : 0) + (canContract ? 1 : 0);
+  const colCount = (canAgenda ? 1 : 0) + (canFinance ? 2 : 0) + (canContract ? 1 : 0);
 
   return (
     <Card data-testid="day-kpi-strip" className="max-w-none">
@@ -87,6 +87,7 @@ export function DayKpiStrip() {
           COLS[colCount],
         )}
       >
+        {canAgenda && (
         <Column label="Atendimentos hoje" testId="kpi-appointments">
           {appts.error && !summary ? (
             <ColumnError onRetry={() => void appts.refetch()} />
@@ -111,6 +112,7 @@ export function DayKpiStrip() {
             </>
           )}
         </Column>
+        )}
 
         {canFinance && (
           <Column label="Faturado hoje" testId="kpi-billed">
