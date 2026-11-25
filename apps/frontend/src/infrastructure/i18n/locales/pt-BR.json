@@ -1,6 +1,28 @@
 {
   "access": {
-    "changed": "Seu acesso a esta área foi alterado."
+    "changed": "Seu acesso a esta área foi alterado.",
+    "title": "Perfis de acesso",
+    "subtitle": "Ligue ou desligue as áreas do menu para cada pessoa. O papel define o ponto de partida.",
+    "default": "Padrão do papel",
+    "adjusted": "Ajustado",
+    "groupToggle": "Toda a área {{group}}",
+    "reset": "Voltar ao padrão do papel",
+    "resetConfirmTitle": "Voltar ao padrão?",
+    "resetConfirmBody": "Os ajustes de {{name}} serão desfeitos e os acessos voltam ao padrão de {{role}}.",
+    "resetConfirmAction": "Voltar ao padrão",
+    "cancel": "Cancelar",
+    "saved": "Acesso atualizado.",
+    "adjustedCount_one": "{{count}} ajuste",
+    "adjustedCount_other": "{{count}} ajustes",
+    "none": "Sem ajustes",
+    "openFor": "Acessos de {{name}}",
+    "roleChangeWarning": "Ao trocar o papel, os acessos ajustados desta pessoa voltam ao padrão do novo papel.",
+    "shortcut": "Acessos",
+    "search": "Buscar pessoa",
+    "empty": "Nenhuma pessoa ativa.",
+    "you": "Você",
+    "loadError": "Não foi possível carregar os acessos.",
+    "saveError": "Não foi possível salvar o acesso."
   },
   "native": {
     "offline": {
