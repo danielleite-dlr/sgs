@@ -18,7 +18,7 @@ export const TIME_BLOCK_KINDS = [
 ] as const;
 
 /** Bloqueios gerados pelo sistema (grupo de noivas); não são criados/editados à mão. */
-export const SYSTEM_TIME_BLOCK_KINDS = ["deslocamento"] as const;
+export const SYSTEM_TIME_BLOCK_KINDS = ["deslocamento", "acompanhamento"] as const;
 
 export interface CreateTimeBlockInput {
   kind: string;
@@ -85,7 +85,7 @@ export class TimeBlocksService {
     if ((SYSTEM_TIME_BLOCK_KINDS as readonly string[]).includes(input.kind)) {
       return err(
         "SYSTEM_BLOCK",
-        "Bloqueio de deslocamento é gerado pelo grupo de noivas.",
+        "Bloqueio de deslocamento ou acompanhamento é gerado pelo grupo de noivas.",
         "kind",
       );
     }
@@ -152,6 +152,26 @@ export class TimeBlocksService {
             );
           }
 
+          if (professionalId !== null) {
+            // 09.1 D-14: dia inteiro da assistente já está reservado para uma noiva.
+            const escorting = await tx.timeBlock.findFirst({
+              where: {
+                professionalId,
+                kind: "acompanhamento",
+                startsAt: { lt: interval.endsAt },
+                endsAt: { gt: interval.startsAt },
+              },
+              select: { id: true },
+            });
+            if (escorting) {
+              throw new SchedulingError(
+                "PROFESSIONAL_ESCORTING_BRIDE",
+                "A profissional está acompanhando uma noiva neste dia.",
+                "startsAt",
+              );
+            }
+          }
+
           const timeBlock = await tx.timeBlock.create({
             data: {
               organizationId: orgId,
@@ -188,7 +208,7 @@ export class TimeBlocksService {
           errors: [
             {
               code: "SYSTEM_BLOCK",
-              message: "Bloqueio de deslocamento é gerado pelo grupo de noivas.",
+              message: "Bloqueio de deslocamento ou acompanhamento é gerado pelo grupo de noivas.",
               field: "id",
             },
           ],
