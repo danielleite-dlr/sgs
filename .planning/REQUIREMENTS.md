@@ -90,8 +90,8 @@
 - [x] **AN-02**: Pacote tem a marcação "Inclui assistente da noiva (no estúdio)"; a migração marca Decidida, Essencial, Elegance, Essence, Experience e Glam da Studio JS _(09.1 D-03, D-04)_
 - [x] **AN-03**: Diária da assistente é configuração do salão (padrão R$ 220, editável por ADMIN/MANAGER) e cada vínculo guarda o valor vigente ao vincular _(09.1 D-06, D-07, D-08)_
 - [x] **AN-04**: Pacote marcado mostra a diária no custo/lucro (só ADMIN/MANAGER); a diária não muda preço, contrato nem cobrança da noiva _(09.1 D-09, D-10)_
-- [ ] **AN-05**: ADMIN/MANAGER/ATTENDANT vinculam ou trocam a assistente no grupo da noiva, escolhendo entre assistentes livres no dia (ocupadas aparecem indisponíveis) _(09.1 D-13, D-15, D-16)_
-- [ ] **AN-06**: Agenda da assistente fica bloqueada o dia todo no dia do evento ("Acompanhando noiva X") e recusa outro atendimento ou bloqueio nesse dia _(09.1 D-14)_
+- [x] **AN-05**: ADMIN/MANAGER/ATTENDANT vinculam ou trocam a assistente no grupo da noiva, escolhendo entre assistentes livres no dia (ocupadas aparecem indisponíveis) _(09.1 D-13, D-15, D-16)_
+- [x] **AN-06**: Agenda da assistente fica bloqueada o dia todo no dia do evento ("Acompanhando noiva X") e recusa outro atendimento ou bloqueio nesse dia _(09.1 D-14)_
 - [ ] **AN-07**: Diária vira repasse "a pagar" ao fechar a comanda do evento da noiva, junto das comissões; noiva cancelada não paga; reabrir reverte _(09.1 D-11, D-12)_
 - [ ] **AN-08**: Noiva que vira externa ou pacote sem assistente remove a assistente com aviso e libera a agenda; mudar a data move o bloqueio _(09.1 D-05)_
 - [x] **AN-09**: Noivas elegíveis sem assistente (inclusive as já cadastradas) ficam pendentes: aviso no grupo e filtro/selo "Sem assistente" na lista _(09.1 D-17, D-18)_
@@ -199,8 +199,8 @@
 | AN-02 | Phase 09.1 | Complete |
 | AN-03 | Phase 09.1 | Complete |
 | AN-04 | Phase 09.1 | Complete |
-| AN-05 | Phase 09.1 | Pending |
-| AN-06 | Phase 09.1 | Pending |
+| AN-05 | Phase 09.1 | Complete |
+| AN-06 | Phase 09.1 | Complete |
 | AN-07 | Phase 09.1 | Pending |
 | AN-08 | Phase 09.1 | Pending |
 | AN-09 | Phase 09.1 | Complete |
