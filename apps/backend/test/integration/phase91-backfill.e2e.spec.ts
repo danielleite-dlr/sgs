@@ -56,7 +56,7 @@ describe('09.1 — backfill da assistente da noiva', () => {
     return p.id;
   }
 
-  it('marca só os 6 pacotes da org guardada e apaga o custo "Assistente" deles', async () => {
+  it('marca só os 6 pacotes da org guardada e mantém o custo manual "Assistente"', async () => {
     const ids: Record<string, string> = {};
     for (const n of MARKED) ids[n] = await mkPackage(w.orgId, n, n === 'Essence' || n === 'Glam');
     for (const n of OTHERS) ids[n] = await mkPackage(w.orgId, n, n === 'Ouro Rosa');
@@ -73,7 +73,7 @@ describe('09.1 — backfill da assistente da noiva', () => {
           .trim(),
       )
       .filter((s) => s.length > 0);
-    expect(statements).toHaveLength(2);
+    expect(statements).toHaveLength(1);
     for (const stmt of statements) {
       expect(stmt).toContain(SEED_ORG);
       await adminPrisma.$executeRawUnsafe(stmt.split(SEED_ORG).join(w.orgId));
@@ -98,8 +98,8 @@ describe('09.1 — backfill da assistente da noiva', () => {
 
     const count = (packageId: string) =>
       adminPrisma.packageCostItem.count({ where: { packageId, name: 'Assistente' } });
-    expect(await count(ids['Essence']!)).toBe(0);
-    expect(await count(ids['Glam']!)).toBe(0);
+    expect(await count(ids['Essence']!)).toBe(1);
+    expect(await count(ids['Glam']!)).toBe(1);
     expect(await count(ids['Ouro Rosa']!)).toBe(1);
 
     const other = await adminPrisma.package.findUniqueOrThrow({ where: { id: otherGlam } });
