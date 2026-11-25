@@ -54,6 +54,8 @@ const FLAGS = {
   assinatura: false,
   /** Ajuda e tutoriais no header — botões decorativos. */
   ajudaTutoriais: false,
+  /** Fase 10: Perfis de acesso — backend real 10-07, tela 10-13. */
+  perfisAcesso: true,
   /** Comercial (fase 9): backend real 09-04..09-10, telas 09-11..09-14 e E2E 09-15. */
   comercial: true,
 } as const;
@@ -95,7 +97,7 @@ const GATED_PATHS: ReadonlyArray<readonly [string, FeatureKey]> = [
   ['/catalogo/servicos/ranking', 'rankings'],
   ['/catalogo/produtos/ranking', 'rankings'],
   ['/profissionais/ranking', 'rankings'],
-  ['/profissionais/perfis', 'configuracoes'],
+  ['/profissionais/perfis', 'perfisAcesso'],
   ['/profissionais', 'equipe'],
   ['/comanda', 'comanda'],
   ['/financeiro/comissoes', 'financeiroComissoes'],

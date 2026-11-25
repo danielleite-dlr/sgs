@@ -113,7 +113,7 @@
 - [ ] **PERM-13**: O menu (barra lateral, gaveta do celular, barra inferior e busca global) mostra só os itens ligados para a pessoa; grupo sem itens some; cartões do painel inicial não aparecem nem consultam o que está desligado _(10 D-02, D-06)_
 - [ ] **PERM-14**: A rota (inclusive telas de detalhe) de um item desligado bloqueia e leva a pessoa para uma tela inicial válida, sem laço e sem logout _(10 D-02)_
 - [x] **PERM-15**: O app consulta os acessos da pessoa e atualiza o menu em até 1 minuto, ao trocar de tela, ao voltar do segundo plano (iPhone instalado e Android) e quando a API recusa, sem sair e entrar _(10 D-13)_
-- [ ] **PERM-16**: A tela Profissionais › Perfis de acesso lista as pessoas ativas e, para cada uma, as áreas e itens com liga/desliga acessível, controle de grupo, indicação do que é padrão do papel e do que foi ajustado e "voltar ao padrão"; o atalho "Acessos" no editar profissional abre o mesmo ajuste _(10 D-06, D-10, D-11)_
+- [x] **PERM-16**: A tela Profissionais › Perfis de acesso lista as pessoas ativas e, para cada uma, as áreas e itens com liga/desliga acessível, controle de grupo, indicação do que é padrão do papel e do que foi ajustado e "voltar ao padrão"; o atalho "Acessos" no editar profissional abre o mesmo ajuste _(10 D-06, D-10, D-11)_
 
 ### Qualidade / Observabilidade
 
@@ -238,7 +238,7 @@
 | PERM-13 | Phase 10 | Pending |
 | PERM-14 | Phase 10 | Pending |
 | PERM-15 | Phase 10 | Complete |
-| PERM-16 | Phase 10 | Pending |
+| PERM-16 | Phase 10 | Complete |
 | QA-01 | Backlog | Deferred |
 | QA-02 | Backlog | Deferred |
 | QA-03 | Backlog | Deferred |

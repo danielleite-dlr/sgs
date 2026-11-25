@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 10-10-PLAN.md
-last_updated: "2026-11-25T16:23:56.294Z"
+stopped_at: Completed 10-13-PLAN.md
+last_updated: "2026-11-25T16:48:39.325Z"
 last_activity: 2026-11-25
 progress:
   total_phases: 16
   completed_phases: 11
   total_plans: 170
-  completed_plans: 165
+  completed_plans: 166
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 10 (permissões por usuário) — EXECUTING
-Plan: 6 of 16
+Plan: 7 of 16
 Status: Ready to execute
 Last activity: 2026-11-25
 
@@ -121,6 +121,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 10 P03 | 25min | 3 tasks | 11 files |
 | Phase 10 P04 | 45min | 2 tasks | 13 files |
 | Phase 10 P10 | 45min | 2 tasks | 12 files |
+| Phase 10 P13 | 40min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -223,6 +224,7 @@ Recent decisions affecting current work:
 - [Phase 09]: 09-02: visibilityWhere tipado como Record<string, unknown> até o client Prisma do 09-01; D-21 em WIN_DEAL_ROLES (ADMIN, MANAGER, ATTENDANT)
 - [Phase 9]: 09-15: E2E arrasta o card pelo texto do tipo (link do nome barra o drag) com mouse em passos
 - [Phase 09.1]: Vínculo da assistente em colunas de bridal_groups com snapshot da diária; função como boolean em members
+- [Phase 10]: AccessItem sem normalização no cache Apollo para não misturar acessos de pessoas
 
 ### Pending Todos
 
@@ -303,8 +305,8 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-25T05:28:31.394Z
-Stopped at: Completed 10-10-PLAN.md
+Last session: 2026-11-25T16:48:39.313Z
+Stopped at: Completed 10-13-PLAN.md
 Resume file: None
 | 2026-11-12 | fast | Montar manualmente (noivas) sem duplicar serviços do teste | ✅ |
 | 2026-11-13 | fast | Comanda: crédito do cliente em destaque no pagamento e no card da cliente | ✅ |

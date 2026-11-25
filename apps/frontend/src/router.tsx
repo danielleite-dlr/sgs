@@ -25,6 +25,7 @@ import { ClienteDetailPage } from '@/pages/ClienteDetailPage';
 import { ClienteEditPage } from '@/pages/ClienteEditPage';
 import { ClienteNovoPage } from '@/pages/ClienteNovoPage';
 import { ProfissionaisPage } from '@/pages/ProfissionaisPage';
+import { PerfisAcessoPage } from '@/features/access/pages/PerfisAcessoPage';
 // Phase 3 — Operations
 import { SchedulePage } from '@/features/operations/pages/SchedulePage';
 import { ComandaPage } from '@/features/operations/pages/ComandaPage';
@@ -119,6 +120,7 @@ const PROTECTED_ROUTES: GatedRoute[] = [
   { path: '/clientes/novo', access: ['clientes-todos'], element: <ClienteNovoPage /> },
   { path: '/clientes/:id', access: ['clientes-todos'], element: <ClienteDetailPage /> },
   { path: '/clientes/:id/editar', access: ['clientes-todos'], element: <ClienteEditPage /> },
+  { path: '/profissionais/perfis', access: ['profissionais-perfis'], element: <PerfisAcessoPage /> },
   { path: '/profissionais', access: ['profissionais-todos'], element: <ProfissionaisPage /> },
   { path: '/agenda', access: ['agenda'], element: <SchedulePage /> },
   { path: '/comanda', access: ['fin-comandas'], element: <ComandaListPage /> },

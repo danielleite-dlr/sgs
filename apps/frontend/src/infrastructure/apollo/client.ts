@@ -21,6 +21,9 @@ export const apolloClient = new ApolloClient({
       Query: {
         fields: {},
       },
+      // Itens de acesso dependem da pessoa: sem normalizar por id, o acesso de outra
+      // pessoa (Perfis de acesso) sobrescreveria o `myAccess` de quem está logado.
+      AccessItem: { keyFields: false },
     },
   }),
   defaultOptions: {

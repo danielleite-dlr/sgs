@@ -1,8 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
 import '@/infrastructure/i18n';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/infrastructure/stores/auth.store';
+import { accessWithout } from '@/features/access/__tests__/access-fixture';
 import { MemberEditDialog } from '../components/MemberEditDialog';
 import { InviteMemberDialog } from '../components/InviteMemberDialog';
 import { CreateMemberDialog } from '../components/CreateMemberDialog';
@@ -17,6 +19,10 @@ import {
 } from '@/features/catalog/api/members.api';
 import { CategoriesQuery } from '@/features/catalog/api/categorias.api';
 import type { AdminMemberData } from '@/features/catalog/api/members.api';
+
+vi.mock('@/features/access/components/MemberAccessPanel', () => ({
+  MemberAccessPanel: ({ memberId }: { memberId: string }) => <div>painel de {memberId}</div>,
+}));
 
 vi.mock('sonner', () => ({
   toast: {
@@ -1126,5 +1132,54 @@ describe('ResetMemberPasswordDialog', () => {
     });
     expect(screen.queryByTestId('temporary-password')).toBeNull();
     expect(screen.getByRole('button', { name: 'Gerar senha' })).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// MemberEditDialog — Acessos (fase 10)
+// ---------------------------------------------------------------------------
+
+describe('MemberEditDialog (acessos)', () => {
+  afterEach(() => useAuthStore.setState({ access: null }));
+
+  it('com canManageAccess mostra o botão Acessos e abre o painel da pessoa', async () => {
+    useAuthStore.setState({
+      access: { ...accessWithout([], ['agenda']), canManageAccess: true },
+    });
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <MemberEditDialog member={professionalMember} open onClose={vi.fn()} />
+      </MockedProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Acessos' }));
+    expect(await screen.findByText('painel de mem-1')).toBeInTheDocument();
+    expect(screen.getByText('Acessos de Ana Silva')).toBeInTheDocument();
+  });
+
+  it('sem canManageAccess o botão Acessos não aparece', () => {
+    useAuthStore.setState({ access: accessWithout([], ['agenda']) });
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <MemberEditDialog member={professionalMember} open onClose={vi.fn()} />
+      </MockedProvider>,
+    );
+    expect(screen.queryByRole('button', { name: 'Acessos' })).toBeNull();
+  });
+
+  it('trocar o papel mostra o aviso e voltar ao papel original esconde', async () => {
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <MemberEditDialog member={professionalMember} open onClose={vi.fn()} />
+      </MockedProvider>,
+    );
+    expect(screen.queryByText(/voltam ao padrão do novo papel/)).toBeNull();
+    fireEvent.click(screen.getByRole('combobox', { name: 'Papel' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Atendente' }));
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Ao trocar o papel, os acessos ajustados desta pessoa voltam ao padrão do novo papel.',
+    );
+    fireEvent.click(screen.getByRole('combobox', { name: 'Papel' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Profissional' }));
+    await waitFor(() => expect(screen.queryByText(/voltam ao padrão do novo papel/)).toBeNull());
   });
 });
