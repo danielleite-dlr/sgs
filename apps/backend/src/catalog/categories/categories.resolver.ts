@@ -4,6 +4,7 @@ import {
   CurrentTenant,
   TenantContext,
 } from '../../authz/decorators/current-tenant.decorator';
+import { RequireAccess } from '../../authz/decorators/require-access.decorator';
 import { RequirePermission } from '../../authz/decorators/require-permission.decorator';
 import { PERMISSIONS } from '../../authz/permissions.catalog';
 import {
@@ -25,18 +26,21 @@ export class CategoriesResolver {
   constructor(private readonly svc: CategoriesService) {}
 
   @Query('categories')
+  @RequireAccess('CATALOGO_REF')
   @RequirePermission(PERMISSIONS.CATEGORY_READ)
   list(@CurrentTenant() t: TenantContext) {
     return this.svc.list(t.organizationId);
   }
 
   @Query('category')
+  @RequireAccess('CATALOGO_REF')
   @RequirePermission(PERMISSIONS.CATEGORY_READ)
   one(@CurrentTenant() t: TenantContext, @Args('id') id: string) {
     return this.svc.getById(t.organizationId, id);
   }
 
   @Mutation('createCategory')
+  @RequireAccess('categorias')
   @RequirePermission(PERMISSIONS.CATEGORY_WRITE)
   create(
     @CurrentTenant() t: TenantContext,
@@ -46,6 +50,7 @@ export class CategoriesResolver {
   }
 
   @Mutation('updateCategory')
+  @RequireAccess('categorias')
   @RequirePermission(PERMISSIONS.CATEGORY_WRITE)
   update(
     @CurrentTenant() t: TenantContext,
@@ -55,6 +60,7 @@ export class CategoriesResolver {
   }
 
   @Mutation('reorderCategory')
+  @RequireAccess('categorias')
   @RequirePermission(PERMISSIONS.CATEGORY_WRITE)
   reorder(
     @CurrentTenant() t: TenantContext,
@@ -64,6 +70,7 @@ export class CategoriesResolver {
   }
 
   @Mutation('softDeleteCategory')
+  @RequireAccess('categorias')
   @RequirePermission(PERMISSIONS.CATEGORY_WRITE)
   remove(
     @CurrentTenant() t: TenantContext,

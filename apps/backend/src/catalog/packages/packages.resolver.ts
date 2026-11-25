@@ -1,10 +1,12 @@
-import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
-import { canSeeCatalogCosts } from '../catalog-costs';
+import { Args, Context, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { AccessService, type AccessGqlContext } from '../../authz/access/access.service';
+import { hasCostVisibility } from '../../authz/access/access-resolve';
 import { PackagesService } from './packages.service';
 import {
   CurrentTenant,
   TenantContext,
 } from '../../authz/decorators/current-tenant.decorator';
+import { RequireAccess } from '../../authz/decorators/require-access.decorator';
 import { RequirePermission } from '../../authz/decorators/require-permission.decorator';
 import { PERMISSIONS } from '../../authz/permissions.catalog';
 import {
@@ -26,27 +28,34 @@ import {
  */
 @Resolver('Package')
 export class PackagesResolver {
-  constructor(private readonly svc: PackagesService) {}
+  constructor(
+    private readonly svc: PackagesService,
+    private readonly access: AccessService,
+  ) {}
 
   @Query('packages')
+  @RequireAccess('CATALOGO_REF')
   @RequirePermission(PERMISSIONS.PACKAGE_READ)
   list(@CurrentTenant() t: TenantContext) {
     return this.svc.list(t.organizationId);
   }
 
   @Query('package')
+  @RequireAccess('CATALOGO_REF')
   @RequirePermission(PERMISSIONS.PACKAGE_READ)
   one(@CurrentTenant() t: TenantContext, @Args('id') id: string) {
     return this.svc.getById(t.organizationId, id);
   }
 
   @Query('bridalAssistantSettings')
+  @RequireAccess('CATALOGO_REF')
   @RequirePermission(PERMISSIONS.PACKAGE_READ)
   bridalAssistantSettings(@CurrentTenant() t: TenantContext) {
     return this.svc.getBridalAssistantSettings(t.organizationId);
   }
 
   @Mutation('updateBridalAssistantSettings')
+  @RequireAccess('pacotes-todos')
   @RequirePermission(PERMISSIONS.PACKAGE_WRITE)
   updateBridalAssistantSettings(
     @CurrentTenant() t: TenantContext,
@@ -56,6 +65,7 @@ export class PackagesResolver {
   }
 
   @Mutation('createPackage')
+  @RequireAccess('pacotes-todos')
   @RequirePermission(PERMISSIONS.PACKAGE_WRITE)
   create(
     @CurrentTenant() t: TenantContext,
@@ -65,6 +75,7 @@ export class PackagesResolver {
   }
 
   @Mutation('updatePackage')
+  @RequireAccess('pacotes-todos')
   @RequirePermission(PERMISSIONS.PACKAGE_WRITE)
   update(
     @CurrentTenant() t: TenantContext,
@@ -74,6 +85,7 @@ export class PackagesResolver {
   }
 
   @Mutation('softDeletePackage')
+  @RequireAccess('pacotes-todos')
   @RequirePermission(PERMISSIONS.PACKAGE_WRITE)
   remove(
     @CurrentTenant() t: TenantContext,
@@ -82,52 +94,63 @@ export class PackagesResolver {
     return this.svc.softDelete(t.organizationId, input.id);
   }
 
-  // Custos e lucro só para ADMIN/MANAGER (o service sempre calcula).
+  // Custos e lucro só para quem tem acesso efetivo a custos (o service sempre calcula).
   @ResolveField('costItems')
-  costItems(@Parent() p: { costItems?: unknown[] }, @CurrentTenant() t: TenantContext | null) {
-    return canSeeCatalogCosts(t?.roleName) ? (p.costItems ?? []) : null;
+  async costItems(@Parent() p: { costItems?: unknown[] }, @Context() ctx: AccessGqlContext) {
+    return (await this.canSeeCosts(ctx)) ? (p.costItems ?? []) : null;
   }
 
   @ResolveField('totalCost')
-  totalCost(@Parent() p: { totalCost?: string }, @CurrentTenant() t: TenantContext | null) {
-    return canSeeCatalogCosts(t?.roleName) ? (p.totalCost ?? null) : null;
+  async totalCost(@Parent() p: { totalCost?: string }, @Context() ctx: AccessGqlContext) {
+    return (await this.canSeeCosts(ctx)) ? (p.totalCost ?? null) : null;
   }
 
   @ResolveField('profit')
-  profit(@Parent() p: { profit?: string }, @CurrentTenant() t: TenantContext | null) {
-    return canSeeCatalogCosts(t?.roleName) ? (p.profit ?? null) : null;
+  async profit(@Parent() p: { profit?: string }, @Context() ctx: AccessGqlContext) {
+    return (await this.canSeeCosts(ctx)) ? (p.profit ?? null) : null;
   }
 
   @ResolveField('bridalAssistantDailyCost')
-  bridalAssistantDailyCost(
+  async bridalAssistantDailyCost(
     @Parent() p: { bridalAssistantDailyCost?: string | null },
-    @CurrentTenant() t: TenantContext | null,
+    @Context() ctx: AccessGqlContext,
   ) {
-    return canSeeCatalogCosts(t?.roleName) ? (p.bridalAssistantDailyCost ?? null) : null;
+    return (await this.canSeeCosts(ctx)) ? (p.bridalAssistantDailyCost ?? null) : null;
   }
 
   @ResolveField('profitPercent')
-  profitPercent(@Parent() p: { profitPercent?: string }, @CurrentTenant() t: TenantContext | null) {
-    return canSeeCatalogCosts(t?.roleName) ? (p.profitPercent ?? null) : null;
+  async profitPercent(@Parent() p: { profitPercent?: string }, @Context() ctx: AccessGqlContext) {
+    return (await this.canSeeCosts(ctx)) ? (p.profitPercent ?? null) : null;
+  }
+
+  private async canSeeCosts(ctx: AccessGqlContext): Promise<boolean> {
+    const access = await this.access.forContext(ctx);
+    return !!access && hasCostVisibility(access);
   }
 }
 
-/** Repasse por linha do pacote: só ADMIN/MANAGER. */
+/** Repasse por linha do pacote: só quem tem acesso efetivo a custos. */
 @Resolver('PackageServiceItem')
 export class PackageServiceItemResolver {
+  constructor(private readonly access: AccessService) {}
   @ResolveField('professionalCost')
-  professionalCost(
+  async professionalCost(
     @Parent() line: { professionalCost?: string | null },
-    @CurrentTenant() t: TenantContext | null,
+    @Context() ctx: AccessGqlContext,
   ) {
-    return canSeeCatalogCosts(t?.roleName) ? (line.professionalCost ?? null) : null;
+    return (await this.canSeeCosts(ctx)) ? (line.professionalCost ?? null) : null;
   }
 
   @ResolveField('hasCommissionRule')
-  hasCommissionRule(
+  async hasCommissionRule(
     @Parent() line: { hasCommissionRule?: boolean | null },
-    @CurrentTenant() t: TenantContext | null,
+    @Context() ctx: AccessGqlContext,
   ) {
-    return canSeeCatalogCosts(t?.roleName) ? (line.hasCommissionRule ?? null) : null;
+    return (await this.canSeeCosts(ctx)) ? (line.hasCommissionRule ?? null) : null;
+  }
+
+  private async canSeeCosts(ctx: AccessGqlContext): Promise<boolean> {
+    const access = await this.access.forContext(ctx);
+    return !!access && hasCostVisibility(access);
   }
 }

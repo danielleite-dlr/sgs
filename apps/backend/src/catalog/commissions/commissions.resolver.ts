@@ -1,6 +1,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { CommissionsService } from './commissions.service';
 import { CreateCommissionRuleInput, UpdateCommissionRuleInput } from './dto/commission.input';
+import { RequireAccess } from '../../authz/decorators/require-access.decorator';
 import { RequirePermission } from '../../authz/decorators/require-permission.decorator';
 import { CurrentTenant } from '../../authz/decorators/current-tenant.decorator';
 import { PERMISSIONS } from '../../authz/permissions.catalog';
@@ -15,12 +16,14 @@ import type { TenantContext } from '../../authz/decorators/current-tenant.decora
 export class CommissionsResolver {
   constructor(private readonly commissions: CommissionsService) {}
 
+  @RequireAccess('CATALOGO_REF')
   @RequirePermission(PERMISSIONS.COMMISSION_READ)
   @Query('commissionRules')
   async listRules(@CurrentTenant() tenantCtx: TenantContext) {
     return this.commissions.list(tenantCtx.organizationId);
   }
 
+  @RequireAccess('CATALOGO_REF')
   @RequirePermission(PERMISSIONS.COMMISSION_READ)
   @Query('commissionRule')
   async getRule(
@@ -30,6 +33,7 @@ export class CommissionsResolver {
     return this.commissions.byId(tenantCtx.organizationId, id);
   }
 
+  @RequireAccess('fin-regras-comissao')
   @RequirePermission(PERMISSIONS.COMMISSION_WRITE)
   @Mutation('createCommissionRule')
   async create(
@@ -39,6 +43,7 @@ export class CommissionsResolver {
     return this.commissions.create(tenantCtx.organizationId, input);
   }
 
+  @RequireAccess('fin-regras-comissao')
   @RequirePermission(PERMISSIONS.COMMISSION_WRITE)
   @Mutation('updateCommissionRule')
   async update(
@@ -48,6 +53,7 @@ export class CommissionsResolver {
     return this.commissions.update(tenantCtx.organizationId, input);
   }
 
+  @RequireAccess('fin-regras-comissao')
   @RequirePermission(PERMISSIONS.COMMISSION_WRITE)
   @Mutation('softDeleteCommissionRule')
   async softDelete(

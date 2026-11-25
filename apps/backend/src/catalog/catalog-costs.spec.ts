@@ -118,9 +118,15 @@ describe('catalog-costs', () => {
   });
 
   describe('field resolvers escondem custo por papel', () => {
-    const admin = { organizationId: 'o', memberId: 'm', roleName: 'ADMIN' };
-    const pro = { organizationId: 'o', memberId: 'm', roleName: 'PROFESSIONAL' };
-    const pkgResolver = new PackagesResolver({} as never);
+    // Contexto simulado: o AccessService falso devolve as permissões efetivas.
+    const ctxWith = (permissions: string[]) => ({ permissions }) as never;
+    const accessSvc = {
+      forContext: (c: { permissions: string[] }) =>
+        Promise.resolve({ permissions: new Set(c.permissions) }),
+    } as never;
+    const admin = ctxWith(['financial.read']);
+    const pro = ctxWith(['appointment.read']);
+    const pkgResolver = new PackagesResolver({} as never, accessSvc);
     const pkg = {
       costItems: [{ id: '1', name: 'Lanche', cost: '200.00', displayOrder: 0 }],
       totalCost: '1240.00',
@@ -128,28 +134,28 @@ describe('catalog-costs', () => {
       profitPercent: '36.57',
     };
 
-    it('ADMIN vê custos do pacote', () => {
-      expect(pkgResolver.totalCost(pkg, admin)).toBe('1240.00');
-      expect(pkgResolver.profit(pkg, admin)).toBe('715.00');
-      expect(pkgResolver.profitPercent(pkg, admin)).toBe('36.57');
-      expect(pkgResolver.costItems(pkg, admin)).toHaveLength(1);
+    it('ADMIN vê custos do pacote', async () => {
+      expect(await pkgResolver.totalCost(pkg, admin)).toBe('1240.00');
+      expect(await pkgResolver.profit(pkg, admin)).toBe('715.00');
+      expect(await pkgResolver.profitPercent(pkg, admin)).toBe('36.57');
+      expect(await pkgResolver.costItems(pkg, admin)).toHaveLength(1);
     });
 
-    it('PROFESSIONAL recebe null nos custos do pacote', () => {
-      expect(pkgResolver.totalCost(pkg, pro)).toBeNull();
-      expect(pkgResolver.profit(pkg, pro)).toBeNull();
-      expect(pkgResolver.profitPercent(pkg, pro)).toBeNull();
-      expect(pkgResolver.costItems(pkg, pro)).toBeNull();
+    it('PROFESSIONAL recebe null nos custos do pacote', async () => {
+      expect(await pkgResolver.totalCost(pkg, pro)).toBeNull();
+      expect(await pkgResolver.profit(pkg, pro)).toBeNull();
+      expect(await pkgResolver.profitPercent(pkg, pro)).toBeNull();
+      expect(await pkgResolver.costItems(pkg, pro)).toBeNull();
     });
 
-    it('repasse por linha: ADMIN vê, PROFESSIONAL null', () => {
-      const r = new PackageServiceItemResolver();
+    it('repasse por linha: ADMIN vê, PROFESSIONAL null', async () => {
+      const r = new PackageServiceItemResolver(accessSvc);
       const l = { professionalCost: '400.00', hasCommissionRule: true };
-      expect(r.professionalCost(l, admin)).toBe('400.00');
-      expect(r.hasCommissionRule(l, admin)).toBe(true);
-      expect(r.professionalCost(l, pro)).toBeNull();
-      expect(r.hasCommissionRule(l, pro)).toBeNull();
-      expect(r.professionalCost(l, null)).toBeNull();
+      expect(await r.professionalCost(l, admin)).toBe('400.00');
+      expect(await r.hasCommissionRule(l, admin)).toBe(true);
+      expect(await r.professionalCost(l, pro)).toBeNull();
+      expect(await r.hasCommissionRule(l, pro)).toBeNull();
+      expect(await r.professionalCost(l, ctxWith([]))).toBeNull();
     });
   });
 });

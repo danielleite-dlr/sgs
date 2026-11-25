@@ -4,6 +4,7 @@ import {
   CurrentTenant,
   TenantContext,
 } from '../../authz/decorators/current-tenant.decorator';
+import { RequireAccess } from '../../authz/decorators/require-access.decorator';
 import { RequirePermission } from '../../authz/decorators/require-permission.decorator';
 import { PERMISSIONS } from '../../authz/permissions.catalog';
 import { CreateServiceInput, SoftDeleteServiceInput, UpdateServiceInput } from './dto/service.input';
@@ -20,6 +21,7 @@ export class ServicesResolver {
   constructor(private readonly svc: ServicesService) {}
 
   @Query('services')
+  @RequireAccess('CATALOGO_REF')
   @RequirePermission(PERMISSIONS.SERVICE_READ)
   list(
     @CurrentTenant() t: TenantContext,
@@ -29,12 +31,14 @@ export class ServicesResolver {
   }
 
   @Query('service')
+  @RequireAccess('CATALOGO_REF')
   @RequirePermission(PERMISSIONS.SERVICE_READ)
   one(@CurrentTenant() t: TenantContext, @Args('id') id: string) {
     return this.svc.getById(t.organizationId, id);
   }
 
   @Mutation('createService')
+  @RequireAccess('servicos-todos')
   @RequirePermission(PERMISSIONS.SERVICE_WRITE)
   create(
     @CurrentTenant() t: TenantContext,
@@ -44,6 +48,7 @@ export class ServicesResolver {
   }
 
   @Mutation('updateService')
+  @RequireAccess('servicos-todos')
   @RequirePermission(PERMISSIONS.SERVICE_WRITE)
   update(
     @CurrentTenant() t: TenantContext,
@@ -53,6 +58,7 @@ export class ServicesResolver {
   }
 
   @Mutation('softDeleteService')
+  @RequireAccess('servicos-todos')
   @RequirePermission(PERMISSIONS.SERVICE_WRITE)
   remove(
     @CurrentTenant() t: TenantContext,
