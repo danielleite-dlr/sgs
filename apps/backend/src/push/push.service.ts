@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
+import { membersWithItemTx } from '../authz/access/access.service';
 import { TenantContextService } from '../database/tenant-context.service';
 import {
   buildCommercialReminderMessage,
@@ -26,7 +27,6 @@ export interface PushDispatchResult {
 const CONCURRENCY = 10;
 const DEFAULT_TIMEZONE = 'America/Sao_Paulo';
 const MANAGER_ROLES = ['ADMIN', 'MANAGER'];
-const COMMERCIAL_ROLES = ['ADMIN', 'MANAGER', 'ATTENDANT'];
 
 interface SendItem {
   tokenId: string;
@@ -116,6 +116,12 @@ export class PushService {
         where: { id: { in: profIds }, status: 'active', deletedAt: null },
         select: { id: true },
       });
+      // Fase 10: quem tem Agenda desligada não recebe push de agenda.
+      const withAgenda = await membersWithItemTx(
+        tx,
+        [...new Set([...managers.map((m) => m.id), ...activeProfs.map((m) => m.id)])],
+        'agenda',
+      );
 
       const views: PushAppointmentView[] = rows.map((r) => ({
         id: r.id,
@@ -137,8 +143,8 @@ export class PushService {
 
       const targets = resolvePushTargets({
         appointments: rows.map((r) => ({ id: r.id, professionalId: r.professionalId })),
-        managerMemberIds: managers.map((m) => m.id),
-        activeMemberIds: new Set(activeProfs.map((m) => m.id)),
+        managerMemberIds: managers.filter((m) => withAgenda.has(m.id)).map((m) => m.id),
+        activeMemberIds: new Set(activeProfs.filter((m) => withAgenda.has(m.id)).map((m) => m.id)),
         actorMemberId: job.actorMemberId,
       });
       if (targets.length === 0) return { skipped: 'no-targets' as const };
@@ -213,16 +219,9 @@ export class PushService {
         select: { id: true },
       });
       const candidateIds = [...new Set([...(ownerId ? [ownerId] : []), ...managers.map((m) => m.id)])];
-      const eligible = await tx.member.findMany({
-        where: {
-          id: { in: candidateIds },
-          status: 'active',
-          deletedAt: null,
-          role: { name: { in: COMMERCIAL_ROLES } },
-        },
-        select: { id: true },
-      });
-      const memberIds = [...new Set(eligible.map((m) => m.id))];
+      // Fase 10: acesso efetivo a comercial-lembretes (dono Profissional que ganhou o item recebe).
+      const eligible = await membersWithItemTx(tx, candidateIds, 'comercial-lembretes');
+      const memberIds = [...eligible];
       if (memberIds.length === 0) return { skipped: 'no-targets' as const };
 
       const lead = reminder.deal?.lead ?? reminder.lead;
