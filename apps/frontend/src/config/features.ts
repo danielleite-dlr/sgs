@@ -69,9 +69,19 @@ export const HOME_PATH: string = FEATURES.dashboard ? '/dashboard' : '/agenda';
 /** D-11: quem cai no painel ao entrar. Os demais papéis vão para a Agenda. */
 export const DASHBOARD_HOME_ROLES: readonly string[] = ['ADMIN', 'MANAGER'];
 
-export function homePathForRole(roleName: string | null | undefined): string {
+/**
+ * Tela inicial (D-11 + fase 10): gestor vai ao painel; os demais vão à Agenda e, se a
+ * Agenda estiver desligada para a pessoa, ao painel (renderiza para qualquer papel),
+ * de modo que a navegação nunca entra em laço.
+ */
+export function homePathFor(roleName: string | null | undefined, hasAgenda: boolean): string {
   if (!FEATURES.dashboard) return '/agenda';
-  return roleName != null && DASHBOARD_HOME_ROLES.includes(roleName) ? '/dashboard' : '/agenda';
+  if (roleName != null && DASHBOARD_HOME_ROLES.includes(roleName)) return '/dashboard';
+  return hasAgenda ? '/agenda' : '/dashboard';
+}
+
+export function homePathForRole(roleName: string | null | undefined): string {
+  return homePathFor(roleName, true);
 }
 
 /**
