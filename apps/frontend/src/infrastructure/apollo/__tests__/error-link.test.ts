@@ -3,7 +3,11 @@ import { ApolloLink, Observable, execute, from, gql, type FetchResult } from '@a
 import { useAuthStore } from '../../stores/auth.store';
 
 vi.mock('../refresh-session', () => ({ refreshAccessToken: vi.fn() }));
+vi.mock('sonner', () => ({ toast: vi.fn() }));
+vi.mock('@/features/access/access-events', () => ({ notifyAccessChanged: vi.fn() }));
 
+import { toast } from 'sonner';
+import { notifyAccessChanged } from '@/features/access/access-events';
 import { refreshAccessToken } from '../refresh-session';
 import { errorLink } from '../error-link';
 import { authLink } from '../auth-link';
@@ -101,5 +105,21 @@ describe('errorLink', () => {
     expect(takePlatformStash).toHaveBeenCalled();
     expect(assign).toHaveBeenCalledWith('/admin');
     expect(refreshMock).not.toHaveBeenCalled();
+  });
+
+  it('ACCESS_DENIED não desloga, relê os acessos e avisa uma vez a cada 30 s', async () => {
+    const denied = {
+      errors: [{ message: 'x', extensions: { code: 'ACCESS_DENIED' } }],
+    };
+    const first = run([denied]);
+    await first.result;
+    const second = run([denied]);
+    await second.result;
+    expect(useAuthStore.getState().accessToken).toBe('velho');
+    expect(assign).not.toHaveBeenCalled();
+    expect(refreshMock).not.toHaveBeenCalled();
+    expect(notifyAccessChanged).toHaveBeenCalledTimes(2);
+    expect(toast).toHaveBeenCalledTimes(1);
+    expect(toast).toHaveBeenCalledWith('Seu acesso a esta área foi alterado.');
   });
 });

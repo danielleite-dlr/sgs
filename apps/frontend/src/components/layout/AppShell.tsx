@@ -9,6 +9,8 @@ import { AppDrawer } from './AppDrawer';
 import { ChatBubble } from './ChatBubble';
 import { LowStockCountQuery } from '@/features/catalog/api/produtos.api';
 import { FEATURES } from '@/config/features';
+import { useHasAccess } from '@/features/access/access-hooks';
+import { useMyAccessSync } from '@/features/access/use-my-access';
 
 /**
  * AppShell — casco autenticado do layout Gestor Beauty (D-15 a D-17).
@@ -63,9 +65,12 @@ export function AppShell() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   // Poll every 60s for low stock — non-blocking
+  useMyAccessSync();
+  const canSeeStock = useHasAccess('produtos-todos');
   const { data: lowStockData } = useQuery(LowStockCountQuery, {
     pollInterval: 60_000,
     errorPolicy: 'ignore',
+    skip: !canSeeStock,
   });
   const lowStockCount = lowStockData?.lowStockCount ?? 0;
 

@@ -1,4 +1,7 @@
 {
+  "access": {
+    "changed": "Seu acesso a esta área foi alterado."
+  },
   "native": {
     "offline": {
       "title": "Sem conexão",
