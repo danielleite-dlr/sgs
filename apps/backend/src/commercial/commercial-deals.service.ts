@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { TenantContextService } from '../database/tenant-context.service';
 import type { TenantPrismaClient } from '../database/types';
-import { isManagerRole, visibilityWhere, type CommercialViewer } from './commercial-access';
+import { eligibleAssigneeIds } from './commercial-assignees';
+import { visibilityWhere, type CommercialViewer } from './commercial-access';
 import { isCommercialSource, isDealKind, isLostReason } from './commercial-constants';
 import { CommercialError, mapCommercialError, type CommercialUserError } from './commercial-errors';
 import { isDealOverdue, overdueSince } from './commercial-sla';
@@ -261,19 +262,10 @@ export class CommercialDealsService {
     return first;
   }
 
-  /** Responsável válido (D-14): membro ativo ADMIN/MANAGER/ATTENDANT. */
+  /** Responsável válido (D-14): membro ativo com Leads ou Pipeline ligado. */
   private async assertAssignee(tx: TenantPrismaClient, orgId: string, memberId: string) {
-    const m = await tx.member.findFirst({
-      where: {
-        id: memberId,
-        organizationId: orgId,
-        status: 'active',
-        deletedAt: null,
-        role: { name: { in: ['ADMIN', 'MANAGER', 'ATTENDANT'] } },
-      },
-      select: { id: true },
-    });
-    if (!m) {
+    const ok = (await eligibleAssigneeIds(tx, orgId)).has(memberId);
+    if (!ok) {
       throw new CommercialError(
         'ASSIGNEE_INVALID',
         'Responsável inválido para o Comercial.',
@@ -361,7 +353,7 @@ export class CommercialDealsService {
 
         // D-13/D-14: atendente é sempre a responsável; gestão escolhe ou deixa sem
         let assigneeMemberId: string | null = null;
-        if (viewer.roleName === 'ATTENDANT') {
+        if (!viewer.scopeAll) {
           assigneeMemberId = viewer.memberId;
         } else if (input.assigneeMemberId) {
           await this.assertAssignee(tx, orgId, input.assigneeMemberId);
@@ -478,7 +470,7 @@ export class CommercialDealsService {
 
   async assign(orgId: string, viewer: CommercialViewer, id: string, memberId?: string | null) {
     try {
-      if (!isManagerRole(viewer.roleName)) {
+      if (!viewer.scopeAll) {
         throw new CommercialError('FORBIDDEN_ROLE', 'Só gestão atribui responsável.', 'id');
       }
       return await this.tenant.runWithTenant(orgId, async (tx) => {
@@ -555,7 +547,7 @@ export class CommercialDealsService {
   /** D-19: só gestão reabre um negócio perdido. */
   async reopen(orgId: string, viewer: CommercialViewer, id: string, stageId?: string | null) {
     try {
-      if (!isManagerRole(viewer.roleName)) {
+      if (!viewer.scopeAll) {
         throw new CommercialError('FORBIDDEN_ROLE', 'Só gestão reabre negócios.', 'id');
       }
       return await this.tenant.runWithTenant(orgId, async (tx) => {

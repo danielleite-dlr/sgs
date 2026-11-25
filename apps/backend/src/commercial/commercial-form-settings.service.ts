@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { TenantContextService } from '../database/tenant-context.service';
 import type { TenantPrismaClient } from '../database/types';
 import { CommercialError, mapCommercialError, type CommercialUserError } from './commercial-errors';
+import { eligibleAssigneeIds } from './commercial-assignees';
 
 export interface UpdateCommercialFormSettingsDto {
   isActive?: boolean | null;
@@ -74,15 +75,10 @@ export class CommercialFormSettingsService {
         if (input.clearDefaultAssignee) {
           data.defaultAssigneeMemberId = null;
         } else if (input.defaultAssigneeMemberId) {
-          const m = await tx.member.findFirst({
-            where: {
-              id: input.defaultAssigneeMemberId,
-              organizationId: orgId,
-              status: 'active',
-              deletedAt: null,
-              role: { name: { in: ['ADMIN', 'MANAGER', 'ATTENDANT'] } },
-            },
-          });
+          const eligible = await eligibleAssigneeIds(tx, orgId);
+          const m = eligible.has(input.defaultAssigneeMemberId)
+            ? { id: input.defaultAssigneeMemberId }
+            : null;
           if (!m) {
             throw new CommercialError(
               'ASSIGNEE_INVALID',

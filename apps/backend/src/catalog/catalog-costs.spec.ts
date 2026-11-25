@@ -1,4 +1,4 @@
-import { canSeeCatalogCosts, computePackageCosts, professionalCostCents } from './catalog-costs';
+import { computePackageCosts, professionalCostCents } from './catalog-costs';
 import type { RuleLite } from '../financial/commission-resolver';
 import { PackagesResolver } from './packages/packages.resolver';
 import { PackageServiceItemResolver } from './packages/packages.resolver';
@@ -97,23 +97,6 @@ describe('catalog-costs', () => {
     it('regra apagada é ignorada', () => {
       const ctx = { rules: [rule({ serviceId: 'svc', value: '120', deletedAt: new Date() })], parents };
       expect(professionalCostCents(ctx, line()).hasRule).toBe(false);
-    });
-  });
-
-  describe('canSeeCatalogCosts', () => {
-    it.each([
-      ['ADMIN', true],
-      ['MANAGER', true],
-      ['ATTENDANT', false],
-      ['PROFESSIONAL', false],
-      ['DESCONHECIDO', false],
-    ])('%s -> %s', (role, expected) => {
-      expect(canSeeCatalogCosts(role)).toBe(expected);
-    });
-
-    it('sem papel -> false', () => {
-      expect(canSeeCatalogCosts(undefined)).toBe(false);
-      expect(canSeeCatalogCosts(null)).toBe(false);
     });
   });
 
