@@ -84,6 +84,18 @@
 - [x] **COM-11**: Lembretes com lista (vencidos, hoje, próximos), destaque no Painel e push Android/iPhone na hora marcada para o responsável e gerentes/admins _(09 D-16)_
 - [x] **COM-12**: Painel comercial (números do dia, follow-ups pendentes, últimas interações, funil, conversão, valor em negociação) e Relatórios só ADMIN/MANAGER com filtros, motivos de perda, origem e exportação Excel/PDF _(09 D-13)_
 
+### Assistente de noiva (Fase 09.1)
+
+- [ ] **AN-01**: Profissional pode ter a função "Assistente da Noiva" (marcada em Profissionais, sem uso do sistema e sem notificação) _(09.1 D-01, D-02)_
+- [ ] **AN-02**: Pacote tem a marcação "Inclui assistente da noiva (no estúdio)"; a migração marca Decidida, Essencial, Elegance, Essence, Experience e Glam da Studio JS _(09.1 D-03, D-04)_
+- [ ] **AN-03**: Diária da assistente é configuração do salão (padrão R$ 220, editável por ADMIN/MANAGER) e cada vínculo guarda o valor vigente ao vincular _(09.1 D-06, D-07, D-08)_
+- [ ] **AN-04**: Pacote marcado mostra a diária no custo/lucro (só ADMIN/MANAGER); a diária não muda preço, contrato nem cobrança da noiva _(09.1 D-09, D-10)_
+- [ ] **AN-05**: ADMIN/MANAGER/ATTENDANT vinculam ou trocam a assistente no grupo da noiva, escolhendo entre assistentes livres no dia (ocupadas aparecem indisponíveis) _(09.1 D-13, D-15, D-16)_
+- [ ] **AN-06**: Agenda da assistente fica bloqueada o dia todo no dia do evento ("Acompanhando noiva X") e recusa outro atendimento ou bloqueio nesse dia _(09.1 D-14)_
+- [ ] **AN-07**: Diária vira repasse "a pagar" ao fechar a comanda do evento da noiva, junto das comissões; noiva cancelada não paga; reabrir reverte _(09.1 D-11, D-12)_
+- [ ] **AN-08**: Noiva que vira externa ou pacote sem assistente remove a assistente com aviso e libera a agenda; mudar a data move o bloqueio _(09.1 D-05)_
+- [ ] **AN-09**: Noivas elegíveis sem assistente (inclusive as já cadastradas) ficam pendentes: aviso no grupo e filtro/selo "Sem assistente" na lista _(09.1 D-17, D-18)_
+
 ### Qualidade / Observabilidade
 
 - [ ] **QA-01**: Cobertura de testes unitários ≥80% do código de domínio no backend (regras de negócio, entidades, value objects)
@@ -183,16 +195,25 @@
 | COM-10 | Phase 9 | Complete |
 | COM-11 | Phase 9 | Complete |
 | COM-12 | Phase 9 | Complete |
+| AN-01 | Phase 09.1 | Pending |
+| AN-02 | Phase 09.1 | Pending |
+| AN-03 | Phase 09.1 | Pending |
+| AN-04 | Phase 09.1 | Pending |
+| AN-05 | Phase 09.1 | Pending |
+| AN-06 | Phase 09.1 | Pending |
+| AN-07 | Phase 09.1 | Pending |
+| AN-08 | Phase 09.1 | Pending |
+| AN-09 | Phase 09.1 | Pending |
 | QA-01 | Backlog | Deferred |
 | QA-02 | Backlog | Deferred |
 | QA-03 | Backlog | Deferred |
 | QA-04 | Backlog | Deferred |
 
 **Coverage:**
-- v1 requirements: 47 total
-- Mapped to phases: 47/47 ✓
+- v1 requirements: 56 total
+- Mapped to phases: 56/56 ✓
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-02*
-*Last updated: 2026-11-18 — COM-01..COM-12 (fase 9, Comercial) acrescentados no plan-phase*
+*Last updated: 2026-11-24 — AN-01..AN-09 (fase 09.1, Assistente de noiva) acrescentados no plan-phase*
