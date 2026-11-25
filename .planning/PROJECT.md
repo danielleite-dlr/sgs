@@ -14,6 +14,8 @@ Profissional do beleza consegue agendar, atender, cobrar e comunicar com cliente
 
 - ✓ Cronograma do dia da noiva por pacote (Experience, Glam, Elegance) com texto para WhatsApp, "ok do studio" na agenda e trava das madrinhas/acompanhantes (BRI-01, BRI-02) — Validated in Phase 04.2: Cronograma da noiva e das acompanhantes (aprovado no staging em 2026-11-14)
 
+- ✓ Menu Comercial (CRM do Atimos no SGS): painel, leads com interações, pipeline kanban com etapas por salão, ganho/perdido com motivo, lembretes com push, relatórios com Excel/PDF, formulário do site e importação; negócio ganho vira cliente + contrato rascunho (COM-01..COM-12) — Validated in Phase 9: Comercial - CRM do Atimos no SGS (aprovado no staging em 2026-11-24)
+
 ### Active
 
 - [ ] Organização multi-tenant com isolamento por Row-Level Security no PostgreSQL
@@ -85,7 +87,7 @@ Profissional do beleza consegue agendar, atender, cobrar e comunicar com cliente
 | Plataforma modular por nichos | Templates de onboarding ativam módulos específicos; catálogo permite adicionar módulos depois sem duplicar domínio | — Accepted |
 
 ---
-*Last updated: 2026-11-14 after Phase 04.2*
+*Last updated: 2026-11-24 after Phase 9*
 
 ## Evolution
 
