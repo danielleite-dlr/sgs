@@ -98,8 +98,8 @@
 
 ### Permissões por usuário (Fase 10)
 
-- [ ] **PERM-01**: Existe um catálogo de itens de acesso (um por submenu ativo do menu, mais o grupo como agrupador na tela); itens placeholder (flag desligada) ficam fora do catálogo e da tela; "Início", notificações e a troca de senha/perfil ficam sempre ligados e fora do ajuste _(10 D-06, D-07, critério do Claude)_
-- [ ] **PERM-02**: O padrão de cada item para cada papel é derivado das permissões que o papel já tem no banco; quem ganha um item passa a poder nele o mesmo que o Gerente, e quem tem o item ligado por padrão mantém o que o papel já permitia _(10 D-04, D-05)_
+- [x] **PERM-01**: Existe um catálogo de itens de acesso (um por submenu ativo do menu, mais o grupo como agrupador na tela); itens placeholder (flag desligada) ficam fora do catálogo e da tela; "Início", notificações e a troca de senha/perfil ficam sempre ligados e fora do ajuste _(10 D-06, D-07, critério do Claude)_
+- [x] **PERM-02**: O padrão de cada item para cada papel é derivado das permissões que o papel já tem no banco; quem ganha um item passa a poder nele o mesmo que o Gerente, e quem tem o item ligado por padrão mantém o que o papel já permitia _(10 D-04, D-05)_
 - [ ] **PERM-03**: Admin/Gerente liga ou desliga cada item para uma pessoa (tirar e dar); só a diferença em relação ao padrão é guardada, por membro e por salão, com isolamento por salão (RLS forçada) _(10 D-04, D-12)_
 - [ ] **PERM-04**: Item desligado para a pessoa: a API recusa com um erro de acesso próprio (sem derrubar a sessão) na próxima ação, e o item ligado a mais passa a funcionar na API; o acesso é lido do banco a cada requisição, não do token _(10 D-02, D-13)_
 - [ ] **PERM-05**: Toda operação da API que hoje exige permissão passa a declarar também o(s) item(ns) de acesso que a servem; um teste automático falha se alguma ficar de fora _(10 D-02, critério do Claude)_
@@ -223,8 +223,8 @@
 | AN-07 | Phase 09.1 | Complete |
 | AN-08 | Phase 09.1 | Complete |
 | AN-09 | Phase 09.1 | Complete |
-| PERM-01 | Phase 10 | Pending |
-| PERM-02 | Phase 10 | Pending |
+| PERM-01 | Phase 10 | Complete |
+| PERM-02 | Phase 10 | Complete |
 | PERM-03 | Phase 10 | Pending |
 | PERM-04 | Phase 10 | Pending |
 | PERM-05 | Phase 10 | Pending |
