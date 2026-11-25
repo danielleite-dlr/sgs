@@ -105,10 +105,10 @@
 - [x] **PERM-05**: Toda operação da API que hoje exige permissão passa a declarar também o(s) item(ns) de acesso que a servem; um teste automático falha se alguma ficar de fora _(10 D-02, critério do Claude)_
 - [x] **PERM-06**: Quem ganha um item do Comercial passa a ver como o Gerente: Atendente com Relatórios vê os relatórios de todos (sem ganhar poder de excluir/trocar responsável nos Leads e Pipeline) e Profissional com Comercial vê todos os leads e negócios _(10 D-05, D-06)_
 - [x] **PERM-07**: Quem ganha Financeiro (controle, previsão ou despesas fixas) vê também os custos e a diária da assistente que antes eram só do Gerente; recortes "só os meus" de itens que o papel já tinha (comandas e comissões da Profissional, agenda) continuam valendo _(10 D-05)_
-- [ ] **PERM-08**: Admin sempre vê tudo e não é ajustável; Admin ajusta qualquer pessoa; Gerente ajusta só Atendente e Profissional (nunca a si, outro Gerente ou Admin) e só concede itens que ele mesmo tem; Atendente e Profissional não ajustam acessos _(10 D-08)_
-- [ ] **PERM-09**: "Perfis de acesso" não pode ser ligado para Atendente nem Profissional _(10 D-09)_
-- [ ] **PERM-10**: Cada mudança de acesso (e cada "voltar ao padrão") grava no registro de auditoria quem mudou, em quem, quais itens e de qual valor para qual _(10, critério do Claude)_
-- [ ] **PERM-11**: Quando a pessoa muda de papel, os ajustes dela voltam ao padrão do novo papel, com aviso na tela de edição, e a mudança é auditada _(10, critério do Claude)_
+- [x] **PERM-08**: Admin sempre vê tudo e não é ajustável; Admin ajusta qualquer pessoa; Gerente ajusta só Atendente e Profissional (nunca a si, outro Gerente ou Admin) e só concede itens que ele mesmo tem; Atendente e Profissional não ajustam acessos _(10 D-08)_
+- [x] **PERM-09**: "Perfis de acesso" não pode ser ligado para Atendente nem Profissional _(10 D-09)_
+- [x] **PERM-10**: Cada mudança de acesso (e cada "voltar ao padrão") grava no registro de auditoria quem mudou, em quem, quais itens e de qual valor para qual _(10, critério do Claude)_
+- [x] **PERM-11**: Quando a pessoa muda de papel, os ajustes dela voltam ao padrão do novo papel, com aviso na tela de edição, e a mudança é auditada _(10, critério do Claude)_
 - [x] **PERM-12**: Lembretes do Comercial, avisos de agenda (push), alertas de contrato (notificação e e-mail), estoque baixo e o contador do sino respeitam o item desligado: quem perdeu o item não recebe nem vê o aviso _(10 critério do Claude)_
 - [ ] **PERM-13**: O menu (barra lateral, gaveta do celular, barra inferior e busca global) mostra só os itens ligados para a pessoa; grupo sem itens some; cartões do painel inicial não aparecem nem consultam o que está desligado _(10 D-02, D-06)_
 - [ ] **PERM-14**: A rota (inclusive telas de detalhe) de um item desligado bloqueia e leva a pessoa para uma tela inicial válida, sem laço e sem logout _(10 D-02)_
@@ -230,10 +230,10 @@
 | PERM-05 | Phase 10 | Complete |
 | PERM-06 | Phase 10 | Complete |
 | PERM-07 | Phase 10 | Complete |
-| PERM-08 | Phase 10 | Pending |
-| PERM-09 | Phase 10 | Pending |
-| PERM-10 | Phase 10 | Pending |
-| PERM-11 | Phase 10 | Pending |
+| PERM-08 | Phase 10 | Complete |
+| PERM-09 | Phase 10 | Complete |
+| PERM-10 | Phase 10 | Complete |
+| PERM-11 | Phase 10 | Complete |
 | PERM-12 | Phase 10 | Complete |
 | PERM-13 | Phase 10 | Pending |
 | PERM-14 | Phase 10 | Pending |

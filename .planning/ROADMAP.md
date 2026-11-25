@@ -432,7 +432,7 @@ Plans:
 - [x] 10-04-PLAN.md — acesso por item em financeiro, comandas, clientes, agenda e catálogo; custos para quem ganhou Financeiro (onda 3)
 - [x] 10-05-PLAN.md — acesso por item em noivas e contratos; diária e cronograma pelo acesso efetivo (onda 3)
 - [x] 10-06-PLAN.md — acesso por item no Comercial e viewer com escopo do Gerente para quem ganhou (onda 3)
-- [ ] 10-07-PLAN.md — administração de acessos (D-08/D-09/D-15) com auditoria, troca de papel e equipe (onda 3)
+- [x] 10-07-PLAN.md — administração de acessos (D-08/D-09/D-15) com auditoria, troca de papel e equipe (onda 3)
 - [x] 10-08-PLAN.md — push, alertas de contrato e sino respeitam o item desligado (onda 3)
 - [x] 10-09-PLAN.md — frontend: myAccess no store, atualização ao vivo, ACCESS_DENIED sem logout (onda 3)
 - [ ] 10-10-PLAN.md — serviços do Comercial pelo acesso efetivo e inventário automático da API (onda 4)

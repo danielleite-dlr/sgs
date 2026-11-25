@@ -5,6 +5,7 @@ import {
   ResetMemberPasswordInput,
   UpdateMemberInput,
 } from './dto/member.input';
+import { RequireAccess } from '../authz/decorators/require-access.decorator';
 import { RequirePermission } from '../authz/decorators/require-permission.decorator';
 import { CurrentTenant } from '../authz/decorators/current-tenant.decorator';
 import { PERMISSIONS } from '../authz/permissions.catalog';
@@ -26,6 +27,7 @@ import type { TenantContext } from '../authz/decorators/current-tenant.decorator
 export class MembersResolver {
   constructor(private readonly members: MembersService) {}
 
+  // fase 10: referência de todas as telas (ACCESS_EXEMPT)
   @RequirePermission(PERMISSIONS.MEMBER_READ)
   @Query('members')
   async listMembers(@CurrentTenant() tenantCtx: TenantContext) {
@@ -33,6 +35,7 @@ export class MembersResolver {
     return rows.map((r) => redactPersonal(r, tenantCtx.roleName));
   }
 
+  // fase 10: referência de todas as telas (ACCESS_EXEMPT)
   @RequirePermission(PERMISSIONS.MEMBER_READ)
   @Query('allMembers')
   async listAllMembers(@CurrentTenant() tenantCtx: TenantContext) {
@@ -40,6 +43,7 @@ export class MembersResolver {
     return rows.map((r) => redactPersonal(r, tenantCtx.roleName));
   }
 
+  // fase 10: referência de todas as telas (ACCESS_EXEMPT)
   @RequirePermission(PERMISSIONS.MEMBER_READ)
   @Query('professionalsForService')
   async professionalsForService(
@@ -54,6 +58,7 @@ export class MembersResolver {
   }
 
   @RequirePermission(PERMISSIONS.MEMBER_INVITE)
+  @RequireAccess('profissionais-todos')
   @Mutation('createMember')
   async createMember(
     @Args('input') input: CreateMemberInput,
@@ -67,6 +72,7 @@ export class MembersResolver {
   }
 
   @RequirePermission(PERMISSIONS.MEMBER_EDIT_ROLE)
+  @RequireAccess('profissionais-todos')
   @Mutation('resetMemberPassword')
   async resetMemberPassword(
     @Args('input') input: ResetMemberPasswordInput,
@@ -80,15 +86,21 @@ export class MembersResolver {
   }
 
   @RequirePermission(PERMISSIONS.MEMBER_EDIT_ROLE)
+  @RequireAccess('profissionais-todos')
   @Mutation('updateMember')
   async updateMember(
     @Args('input') input: UpdateMemberInput,
     @CurrentTenant() tenantCtx: TenantContext,
   ) {
-    return this.members.update(tenantCtx.organizationId, input);
+    return this.members.update(
+      tenantCtx.organizationId,
+      input,
+      tenantCtx.memberId,
+    );
   }
 
   @RequirePermission(PERMISSIONS.MEMBER_REMOVE)
+  @RequireAccess('profissionais-todos')
   @Mutation('deactivateMember')
   async deactivateMember(
     @Args('id') id: string,
@@ -98,6 +110,7 @@ export class MembersResolver {
   }
 
   @RequirePermission(PERMISSIONS.MEMBER_REMOVE)
+  @RequireAccess('profissionais-todos')
   @Mutation('deleteMemberPermanently')
   async deleteMemberPermanently(
     @Args('id') id: string,
@@ -111,6 +124,7 @@ export class MembersResolver {
   }
 
   @RequirePermission(PERMISSIONS.MEMBER_REMOVE)
+  @RequireAccess('profissionais-todos')
   @Mutation('reactivateMember')
   async reactivateMember(
     @Args('id') id: string,

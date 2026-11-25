@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AccessResolver } from './access/access.resolver';
+import { AccessAdminService } from './access/access-admin.service';
 import { AccessService } from './access/access.service';
 import { PermissionGuard } from './guards/permission.guard';
 import { TenantContextInterceptor } from './tenant-context.middleware';
@@ -23,6 +24,7 @@ import { TenantContextInterceptor } from './tenant-context.middleware';
     { provide: APP_INTERCEPTOR, useClass: TenantContextInterceptor },
     { provide: APP_GUARD, useClass: PermissionGuard },
     AccessService,
+    AccessAdminService,
     AccessResolver,
   ],
   exports: [AccessService],
