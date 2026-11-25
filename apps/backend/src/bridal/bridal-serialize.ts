@@ -1,8 +1,10 @@
 import type { Prisma } from '@prisma/client';
+import { isAssistantEligible, isAssistantPending } from './bridal-assistant-rules';
 
 // 'bride' < 'companion' em ordem alfabética: noiva primeiro, depois por sort_order.
 export const BRIDAL_GROUP_INCLUDE = {
-  package: { select: { id: true, name: true } },
+  package: { select: { id: true, name: true, includesBridalAssistant: true, deletedAt: true } },
+  assistant: { select: { id: true, displayName: true } },
   responsible: { select: { fullName: true } },
   members: {
     orderBy: [{ role: 'asc' }, { sortOrder: 'asc' }],
@@ -41,6 +43,10 @@ export interface BridalGroupExtras {
   /** Agendamentos ativos do grupo (BLOCKING), para o "falta agendar" (quick 261124-n98). */
   activeAppointments?: ActiveAppointmentKey[];
   closedComandaClientIds: Set<string>;
+  /** Hoje (YYYY-MM-DD) no fuso da org, para a pendência da assistente. */
+  todayYmd: string;
+  /** Comanda do evento da noiva já fechada (09.1 D-17). */
+  eventComandaClosed: boolean;
 }
 
 export interface ActiveAppointmentKey {
@@ -79,10 +85,17 @@ export function serializeBridalGroup(row: BridalGroupRow, extras: BridalGroupExt
   const missing = unscheduledEventServices(row.members, active);
   const hasEventSchedule = active.some((a) => a.purpose !== 'trial');
   const totalMissing = [...missing.values()].reduce((n, l) => n + l.length, 0);
+  const eventDateYmd = row.eventDate.toISOString().slice(0, 10);
+  const assistantLike = {
+    eventKind: row.eventKind,
+    locationKind: row.locationKind,
+    status: row.status,
+    pkg: row.package,
+  };
   return {
     id: row.id,
     name: row.name,
-    eventDate: row.eventDate.toISOString().slice(0, 10),
+    eventDate: eventDateYmd,
     readyBy: row.readyBy,
     locationKind: row.locationKind,
     locationAddress: row.locationAddress,
@@ -105,6 +118,17 @@ export function serializeBridalGroup(row: BridalGroupRow, extras: BridalGroupExt
     appointmentCount: extras.appointmentCount,
     // Só conta depois que a agenda do evento foi montada: antes disso tudo está "por agendar".
     unscheduledServiceCount: hasEventSchedule ? totalMissing : 0,
+    assistantRequired: isAssistantEligible(assistantLike),
+    assistantPending: isAssistantPending({
+      ...assistantLike,
+      assistantMemberId: row.assistantMemberId,
+      eventDateYmd,
+      todayYmd: extras.todayYmd,
+      eventComandaClosed: extras.eventComandaClosed,
+    }),
+    assistantMemberId: row.assistantMemberId,
+    assistantName: row.assistant?.displayName ?? null,
+    assistantDailyRate: row.assistantDailyRate ? row.assistantDailyRate.toFixed(2) : null,
     createdAt: row.createdAt,
     appointments: (extras.appointments ?? []).map((a) => ({
       id: a.id,
