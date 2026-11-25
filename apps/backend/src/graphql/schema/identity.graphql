@@ -30,6 +30,8 @@ type Member {
   roleName: String!
   seniorityTier: SeniorityTier
   isProfessional: Boolean!
+  "Função Assistente da Noiva (09.1): acompanha a noiva no estúdio o dia todo. Só para profissionais."
+  isBridalAssistant: Boolean!
   status: MemberStatus!
   "Dados pessoais: só ADMIN/MANAGER recebem valores (LGPD); os demais recebem null."
   phone: String
@@ -53,6 +55,7 @@ input CreateMemberInput {
   birthDate: DateTime
   roleName: String!
   isProfessional: Boolean
+  isBridalAssistant: Boolean
   categoryIds: [UUID!]
   temporaryPassword: String!
 }
@@ -95,6 +98,7 @@ input UpdateMemberInput {
   id: UUID!
   roleName: String
   isProfessional: Boolean
+  isBridalAssistant: Boolean
   seniorityTier: SeniorityTier
   phone: String
   pixKey: String
