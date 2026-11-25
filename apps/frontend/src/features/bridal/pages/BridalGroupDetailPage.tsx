@@ -17,6 +17,7 @@ import {
 } from '../api/bridal.api';
 import { useBridalPermission } from '../bridal-permissions';
 import { AiSuggestionPanel } from '../components/AiSuggestionPanel';
+import { BridalAssistantCard } from '../components/BridalAssistantCard';
 import { BridalTrialCard } from '../components/BridalTrialCard';
 import { BridalGroupFormDialog } from '../components/BridalGroupFormDialog';
 import { BridalMembersCard } from '../components/BridalMembersCard';
@@ -220,6 +221,8 @@ export function BridalGroupDetailPage() {
           </dd>
         </div>
       </dl>
+
+      <BridalAssistantCard group={group} canWrite={canWrite && active} />
 
       <Tabs defaultValue="people">
         <TabsList>
