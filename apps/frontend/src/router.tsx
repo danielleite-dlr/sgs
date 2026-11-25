@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { VerifyEmailPendingPage } from '@/features/auth/pages/VerifyEmailPendingPage';
 import { VerifyEmailSuccessPage } from '@/features/auth/pages/VerifyEmailSuccessPage';
@@ -12,6 +12,7 @@ import { ImpersonationBanner } from '@/components/ImpersonationBanner';
 import { ChangePasswordPage } from '@/features/auth/pages/ChangePasswordPage';
 import { AdminClientsPage } from '@/features/admin/pages/AdminClientsPage';
 import { AppShell } from '@/components/layout/AppShell';
+import { AccessRoute } from '@/features/access/AccessRoute';
 import { FEATURES, HOME_PATH, isPathEnabled } from '@/config/features';
 import { HomeRoute } from '@/pages/HomeRoute';
 import { CategoriasPage } from '@/pages/CategoriasPage';
@@ -38,7 +39,6 @@ import { BridalGroupDetailPage } from '@/features/bridal/pages/BridalGroupDetail
 import { ContractsPage } from '@/features/bridal/pages/ContractsPage';
 import { ContractDetailPage } from '@/features/bridal/pages/ContractDetailPage';
 import { ContractAcceptPage } from '@/features/bridal/public/ContractAcceptPage';
-import { CommercialRoute } from '@/features/commercial/components/CommercialRoute';
 import { CommercialDashboardPage } from '@/features/commercial/pages/CommercialDashboardPage';
 import { LeadsPage } from '@/features/commercial/pages/LeadsPage';
 import { LeadDetailPage } from '@/features/commercial/pages/LeadDetailPage';
@@ -103,34 +103,36 @@ import { RelatoriosPage } from '@/pages/RelatoriosPage';
 interface GatedRoute {
   path: string;
   element: ReactElement;
+  /** Itens de acesso (fase 10): basta um ligado para abrir a rota. Sem campo = sempre aberta. */
+  access?: readonly string[];
 }
 
 /** Tabela completa; o filtro abaixo decide o que vai ao ar. */
 const PROTECTED_ROUTES: GatedRoute[] = [
   { path: '/dashboard',             element: <HomeRoute /> },
-  { path: '/catalogo/categorias',   element: <CategoriasPage /> },
-  { path: '/catalogo/servicos',     element: <ServicosPage /> },
-  { path: '/catalogo/pacotes',      element: <PacotesPage /> },
-  { path: '/catalogo/produtos',     element: <ProdutosPage /> },
-  { path: '/catalogo/comissoes',    element: <ComissoesPage /> },
-  { path: '/clientes',              element: <ClientesPage /> },
-  { path: '/clientes/novo',         element: <ClienteNovoPage /> },
-  { path: '/clientes/:id',          element: <ClienteDetailPage /> },
-  { path: '/clientes/:id/editar',   element: <ClienteEditPage /> },
-  { path: '/profissionais',         element: <ProfissionaisPage /> },
-  { path: '/agenda',                element: <SchedulePage /> },
-  { path: '/comanda',               element: <ComandaListPage /> },
-  { path: '/comanda/:id',           element: <ComandaPage /> },
-  { path: '/financeiro',                         element: <FinanceiroPage /> },
-  { path: '/financeiro/comissoes',               element: <ComissoesCalculadasPage /> },
-  { path: '/financeiro/despesas-fixas',          element: <DespesasFixasPage /> },
-  { path: '/financeiro/previsao',               element: <PrevisaoPage /> },
+  { path: '/catalogo/categorias', access: ['categorias'], element: <CategoriasPage /> },
+  { path: '/catalogo/servicos', access: ['servicos-todos'], element: <ServicosPage /> },
+  { path: '/catalogo/pacotes', access: ['pacotes-todos'], element: <PacotesPage /> },
+  { path: '/catalogo/produtos', access: ['produtos-todos'], element: <ProdutosPage /> },
+  { path: '/catalogo/comissoes', access: ['fin-regras-comissao'], element: <ComissoesPage /> },
+  { path: '/clientes', access: ['clientes-todos'], element: <ClientesPage /> },
+  { path: '/clientes/novo', access: ['clientes-todos'], element: <ClienteNovoPage /> },
+  { path: '/clientes/:id', access: ['clientes-todos'], element: <ClienteDetailPage /> },
+  { path: '/clientes/:id/editar', access: ['clientes-todos'], element: <ClienteEditPage /> },
+  { path: '/profissionais', access: ['profissionais-todos'], element: <ProfissionaisPage /> },
+  { path: '/agenda', access: ['agenda'], element: <SchedulePage /> },
+  { path: '/comanda', access: ['fin-comandas'], element: <ComandaListPage /> },
+  { path: '/comanda/:id', access: ['fin-comandas'], element: <ComandaPage /> },
+  { path: '/financeiro', access: ['fin-controle'], element: <FinanceiroPage /> },
+  { path: '/financeiro/comissoes', access: ['fin-comissoes'], element: <ComissoesCalculadasPage /> },
+  { path: '/financeiro/despesas-fixas', access: ['fin-despesas-fixas'], element: <DespesasFixasPage /> },
+  { path: '/financeiro/previsao', access: ['fin-previsao'], element: <PrevisaoPage /> },
   { path: '/financeiro/caixa',                   element: <FinanceiroCaixaPage /> },
   { path: '/financeiro/pagamento-profissionais', element: <PagamentoProfissionaisPage /> },
   { path: '/financeiro/fluxo',                   element: <FluxoFinanceiroPage /> },
   { path: '/financeiro/despesas',                element: <DespesasPage /> },
   { path: '/financeiro/clientes-debito',         element: <ClientesDebitoPage /> },
-  { path: '/financeiro/credito-cliente',         element: <CreditoClientePage /> },
+  { path: '/financeiro/credito-cliente', access: ['fin-credito'], element: <CreditoClientePage /> },
   { path: '/financeiro/contas',                  element: <ContasFinanceirasPage /> },
   { path: '/financeiro/exportacao',              element: <ExportacaoLancamentosPage /> },
   { path: '/financeiro/antecipacao',             element: <LancamentoAntecipacaoPage /> },
@@ -139,26 +141,26 @@ const PROTECTED_ROUTES: GatedRoute[] = [
   { path: '/configuracoes/sistema',              element: <ConfiguracoesPage /> },
   { path: '/configuracoes/adicionais',           element: <ConfiguracoesPage /> },
   { path: '/relatorios',                         element: <RelatoriosPage /> },
-  { path: '/noivas',                element: <BridalGroupsPage /> },
-  { path: '/noivas/:id',            element: <BridalGroupDetailPage /> },
-  { path: '/contratos',             element: <ContractsPage /> },
-  { path: '/contratos/:id',         element: <ContractDetailPage /> },
+  { path: '/noivas', access: ['noivas'], element: <BridalGroupsPage /> },
+  { path: '/noivas/:id', access: ['noivas'], element: <BridalGroupDetailPage /> },
+  { path: '/contratos', access: ['contratos'], element: <ContractsPage /> },
+  { path: '/contratos/:id', access: ['contratos'], element: <ContractDetailPage /> },
   { path: '/campanhas',             element: <CampaignsPlaceholder /> },
-  { path: '/comercial',             element: <CommercialRoute><CommercialDashboardPage /></CommercialRoute> },
-  { path: '/comercial/leads',       element: <CommercialRoute><LeadsPage /></CommercialRoute> },
-  { path: '/comercial/leads/:id',   element: <CommercialRoute><LeadDetailPage /></CommercialRoute> },
-  { path: '/comercial/pipeline',    element: <CommercialRoute><PipelinePage /></CommercialRoute> },
-  { path: '/comercial/lembretes',   element: <CommercialRoute><RemindersPage /></CommercialRoute> },
-  { path: '/comercial/relatorios',  element: <CommercialRoute managerOnly><ReportsPage /></CommercialRoute> },
-  {
-    path: '/comercial/configuracoes',
-    element: <CommercialRoute managerOnly><CommercialSettingsPage /></CommercialRoute>,
-  },
+  { path: '/comercial', access: ['comercial-painel'], element: <CommercialDashboardPage /> },
+  { path: '/comercial/leads', access: ['comercial-leads'], element: <LeadsPage /> },
+  { path: '/comercial/leads/:id', access: ['comercial-leads', 'comercial-pipeline'], element: <LeadDetailPage /> },
+  { path: '/comercial/pipeline', access: ['comercial-pipeline'], element: <PipelinePage /> },
+  { path: '/comercial/lembretes', access: ['comercial-lembretes'], element: <RemindersPage /> },
+  { path: '/comercial/relatorios', access: ['comercial-relatorios'], element: <ReportsPage /> },
+  { path: '/comercial/configuracoes', access: ['comercial-config'], element: <CommercialSettingsPage /> },
 ];
 
-const enabledRoutes: GatedRoute[] = PROTECTED_ROUTES.filter((r) =>
+const enabledRoutes: RouteObject[] = PROTECTED_ROUTES.filter((r) =>
   isPathEnabled(r.path),
-);
+).map(({ path, element, access }) => ({
+  path,
+  element: access ? <AccessRoute items={access}>{element}</AccessRoute> : element,
+}));
 
 // Enquanto a home não existe, /dashboard segue resolvendo: várias telas
 // (login, troca de senha, aceite de convite, logo do header) navegam para lá.
