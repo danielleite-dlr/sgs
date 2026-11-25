@@ -1,3 +1,4 @@
+import { RequireAccess } from '../../authz/decorators/require-access.decorator';
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
 import { CurrentTenant, TenantContext } from '../../authz/decorators/current-tenant.decorator';
 import { RequirePermission } from '../../authz/decorators/require-permission.decorator';
@@ -9,12 +10,14 @@ export class AiScheduleResolver {
   constructor(private readonly ai: AiScheduleService) {}
 
   @Mutation('suggestBridalSchedule')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.BRIDAL_AI_SUGGEST)
   suggest(@CurrentTenant() tenant: TenantContext, @Args('groupId') groupId: string) {
     return this.ai.suggest(tenant.organizationId, tenant.memberId, groupId);
   }
 
   @Mutation('confirmBridalSchedule')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.BRIDAL_WRITE, PERMISSIONS.APPOINTMENT_WRITE)
   confirm(
     @CurrentTenant() tenant: TenantContext,

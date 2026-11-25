@@ -1,3 +1,4 @@
+import { RequireAccess } from '../../authz/decorators/require-access.decorator';
 import { Args, Query, Resolver } from '@nestjs/graphql';
 import {
   CurrentTenant,
@@ -16,6 +17,7 @@ export class ContractDocumentsResolver {
   ) {}
 
   @Query('contractPdf')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.CONTRACT_READ)
   async contractPdf(@CurrentTenant() tenant: TenantContext, @Args('id') id: string) {
     const data = await this.acceptance.pdfDataForOwner(tenant.organizationId, id);

@@ -1,7 +1,8 @@
 import { recordAudit } from '../../common/audit-log';
 import { BLOCKING_STATUSES } from '../../appointments/appointment-status';
 import { SchedulingError } from '../../appointments/scheduling-guard';
-import { PERMISSIONS, ROLE_PERMISSIONS } from '../../authz/permissions.catalog';
+import { resolveAccess } from '../../authz/access/access-resolve';
+import { PERMISSIONS } from '../../authz/permissions.catalog';
 import type { TenantPrismaClient } from '../../database/types';
 import { localDate, orgTimezone } from '../bridal-schedule';
 import { formatHour } from './timeline-domain';
@@ -75,13 +76,9 @@ export function evaluateCompanionRules(
   return null;
 }
 
-export function canOverrideTimeline(roleName: string | null | undefined): boolean {
-  if (!roleName) return false;
-  return (
-    (ROLE_PERMISSIONS as Record<string, readonly string[]>)[roleName]?.includes(
-      PERMISSIONS.BRIDAL_SCHEDULE_OVERRIDE,
-    ) ?? false
-  );
+/** Forçar horário fora do cronograma: permissão efetiva (papel + ajustes) do ator. */
+export function canOverrideTimeline(permissions: ReadonlySet<string>): boolean {
+  return permissions.has(PERMISSIONS.BRIDAL_SCHEDULE_OVERRIDE);
 }
 
 type TimelineRow = {
@@ -179,9 +176,19 @@ export async function assertTimelineRulesTx(
     }
     const actor = await tx.member.findFirst({
       where: { id: a.actorMemberId },
-      select: { role: { select: { name: true } } },
+      select: {
+        role: { select: { name: true, permissions: { select: { permission: true } } } },
+        accessOverrides: { select: { itemId: true, enabled: true } },
+      },
     });
-    if (!canOverrideTimeline(actor?.role?.name)) {
+    const effective = actor?.role
+      ? resolveAccess({
+          roleName: actor.role.name,
+          rolePermissions: actor.role.permissions.map((p) => p.permission),
+          overrides: actor.accessOverrides,
+        }).permissions
+      : new Set<string>();
+    if (!canOverrideTimeline(effective)) {
       throw new SchedulingError(
         'OVERRIDE_FORBIDDEN',
         'Só Gerente ou Administrador pode forçar um horário fora do cronograma da noiva.',

@@ -1,3 +1,4 @@
+import { RequireAccess } from '../../authz/decorators/require-access.decorator';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import {
   CurrentTenant,
@@ -16,6 +17,7 @@ export class ContractPaymentsResolver {
   constructor(private readonly payments: ContractPaymentsService) {}
 
   @Mutation('recordContractPayment')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.CONTRACT_PAYMENT)
   record(
     @CurrentTenant() tenant: TenantContext,
@@ -25,6 +27,7 @@ export class ContractPaymentsResolver {
   }
 
   @Mutation('reverseContractPayment')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.CONTRACT_CANCEL)
   reverse(
     @CurrentTenant() tenant: TenantContext,
@@ -34,12 +37,14 @@ export class ContractPaymentsResolver {
   }
 
   @Mutation('cancelContract')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.CONTRACT_CANCEL)
   cancel(@CurrentTenant() tenant: TenantContext, @Args('input') input: CancelContractInput) {
     return this.payments.cancel(tenant.organizationId, tenant.memberId, input);
   }
 
   @Query('contractCancellationPreview')
+  @RequireAccess('NOIVAS_CONTRATOS')
   @RequirePermission(PERMISSIONS.CONTRACT_CANCEL)
   preview(
     @CurrentTenant() tenant: TenantContext,
