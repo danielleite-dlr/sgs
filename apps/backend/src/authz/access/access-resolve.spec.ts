@@ -157,7 +157,9 @@ describe('10 — resolveAccess', () => {
   it.each(['PROFESSIONAL', 'ATTENDANT'] as const)(
     '%s não ganha profissionais-perfis (D-09)',
     (role) => {
-      const a = access(role, [{ itemId: 'profissionais-perfis', enabled: true }]);
+      const a = access(role, [
+        { itemId: 'profissionais-perfis', enabled: true },
+      ]);
       expect(a.items.get('profissionais-perfis')!.enabled).toBe(false);
     },
   );
@@ -175,16 +177,22 @@ describe('10 — resolveAccess', () => {
     expect(
       checkAccess(a, ['comercial-relatorios'], ['commercial.manage']),
     ).toEqual({ ok: true });
-    expect(checkAccess(a, ['COMERCIAL_NEGOCIOS'], ['commercial.manage'])).toEqual(
-      { ok: false, reason: 'MISSING_PERMISSIONS', missing: ['commercial.manage'] },
-    );
+    expect(
+      checkAccess(a, ['COMERCIAL_NEGOCIOS'], ['commercial.manage']),
+    ).toEqual({
+      ok: false,
+      reason: 'MISSING_PERMISSIONS',
+      missing: ['commercial.manage'],
+    });
   });
 
   it('PROFESSIONAL + comercial-leads passa em COMERCIAL_NEGOCIOS (D-05)', () => {
     const a = access('PROFESSIONAL', [
       { itemId: 'comercial-leads', enabled: true },
     ]);
-    expect(checkAccess(a, ['COMERCIAL_NEGOCIOS'], ['commercial.manage'])).toEqual({
+    expect(
+      checkAccess(a, ['COMERCIAL_NEGOCIOS'], ['commercial.manage']),
+    ).toEqual({
       ok: true,
     });
   });
@@ -192,7 +200,11 @@ describe('10 — resolveAccess', () => {
   it('Pitfall 5: PROFESSIONAL + noivas escreve noivas, agenda segue o papel', () => {
     const a = access('PROFESSIONAL', [{ itemId: 'noivas', enabled: true }]);
     expect(
-      checkAccess(a, ['NOIVAS_CONTRATOS'], ['bridal.write', 'appointment.write']),
+      checkAccess(
+        a,
+        ['NOIVAS_CONTRATOS'],
+        ['bridal.write', 'appointment.write'],
+      ),
     ).toEqual({ ok: true });
     expect(checkAccess(a, ['agenda'], ['appointment.write'])).toEqual({
       ok: false,
@@ -204,7 +216,9 @@ describe('10 — resolveAccess', () => {
   it('porteiro CLIENTES_REF é OU entre os consumidores', () => {
     const off = (id: string): Override => ({ itemId: id, enabled: false });
     const a = access('PROFESSIONAL', [off('agenda')]);
-    expect(checkAccess(a, ['CLIENTES_REF'], ['client.read'])).toEqual({ ok: true });
+    expect(checkAccess(a, ['CLIENTES_REF'], ['client.read'])).toEqual({
+      ok: true,
+    });
     const b = access('PROFESSIONAL', [
       off('agenda'),
       off('clientes-todos'),
