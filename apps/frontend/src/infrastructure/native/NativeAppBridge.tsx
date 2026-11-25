@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { router } from '@/router';
 import { selectIsAuthenticated, useAuthStore } from '@/infrastructure/stores/auth.store';
+import { notifyAccessChanged } from '@/features/access/access-events';
 import { registerDeviceToken } from './device-token.api';
 import { addPushListeners, registerForPush } from './native-push';
 import { OfflineOverlay } from './OfflineOverlay';
@@ -27,6 +28,7 @@ export function NativeAppBridge() {
     let cancelled = false;
     let removePush: (() => void) | undefined;
     let backHandle: { remove: () => Promise<void> } | undefined;
+    let stateHandle: { remove: () => Promise<void> } | undefined;
 
     void (async () => {
       const [{ SplashScreen }, { StatusBar, Style }, { App }] = await Promise.all([
@@ -54,6 +56,16 @@ export function NativeAppBridge() {
       }
       backHandle = back;
 
+      // Volta do segundo plano: relê os acessos (fase 10, D-13).
+      const state = await App.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) notifyAccessChanged();
+      });
+      if (cancelled) {
+        void state.remove();
+        return;
+      }
+      stateHandle = state;
+
       const remove = await addPushListeners({
         onToken: (token) => {
           registerDeviceToken(token).catch((e) =>
@@ -80,6 +92,7 @@ export function NativeAppBridge() {
       cancelled = true;
       removePush?.();
       void backHandle?.remove();
+      void stateHandle?.remove();
     };
   }, []);
 

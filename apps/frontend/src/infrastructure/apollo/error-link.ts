@@ -1,7 +1,21 @@
 import { fromPromise, Observable, type FetchResult } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { useAuthStore } from '../stores/auth.store';
+import { toast } from 'sonner';
+import i18n from '../i18n';
+import { notifyAccessChanged } from '@/features/access/access-events';
 import { refreshAccessToken } from './refresh-session';
+
+const ACCESS_TOAST_LOCK_MS = 30_000;
+let lastAccessToast = 0;
+
+/** Aviso de acesso alterado, no máximo um a cada 30 s. */
+function warnAccessChanged() {
+  const now = Date.now();
+  if (now - lastAccessToast < ACCESS_TOAST_LOCK_MS) return;
+  lastAccessToast = now;
+  toast(i18n.t('access.changed'));
+}
 
 /** Operações de autenticação não passam pela renovação (evita laço). */
 const AUTH_OPERATIONS = new Set(['Login', 'RefreshSession', 'Logout']);
@@ -20,6 +34,8 @@ function goToLogin() {
  * renova pelo refresh token (30 dias) e repete a operação. Só vai para o login
  * se a renovação for recusada. Sem rede, mantém a sessão.
  * FORBIDDEN: clears session (security — assume token tampering).
+ * ACCESS_DENIED (fase 10): área desligada ou permissão faltante. NÃO desloga:
+ * relê os acessos e avisa a pessoa.
  *
  * Exceção: se o admin está dentro do salão de um cliente, o token de lá vale 15
  * minutos e não renova. Quando ele vence, derrubar a sessão inteira jogaria o
@@ -30,6 +46,13 @@ export const errorLink = onError(({ graphQLErrors, networkError, operation, forw
   if (graphQLErrors) {
     for (const err of graphQLErrors) {
       const code = err.extensions?.code as string | undefined;
+
+      if (code === 'ACCESS_DENIED') {
+        // Fase 10: não é token adulterado, não desloga.
+        notifyAccessChanged();
+        warnAccessChanged();
+        continue;
+      }
 
       if (code === 'UNAUTHENTICATED' || code === 'FORBIDDEN') {
         const state = useAuthStore.getState();

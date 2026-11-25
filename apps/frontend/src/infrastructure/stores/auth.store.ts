@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import type { MyAccessData } from '@/features/access/access.api';
 
 export interface AuthSession {
   accessToken: string | null;
@@ -30,7 +31,16 @@ interface PlatformStash {
   platformSession: AuthSession | null;
 }
 
+interface AccessState {
+  /** Último myAccess lido. Persistido só para o menu abrir rápido; rota só nega com accessFresh (fase 10). */
+  access: MyAccessData | null;
+  /** true só quando o access veio da rede nesta sessão do app (nunca persistido). */
+  accessFresh: boolean;
+}
+
 interface AuthActions {
+  setAccess: (a: MyAccessData) => void;
+  markAccessStale: () => void;
   setSession: (s: AuthSession) => void;
   updateAccessToken: (accessToken: string) => void;
   setMustChangePassword: (mustChangePassword: boolean) => void;
@@ -41,7 +51,7 @@ interface AuthActions {
   clearSession: () => void;
 }
 
-export type AuthStore = AuthSession & PlatformStash & AuthActions;
+export type AuthStore = AuthSession & PlatformStash & AccessState & AuthActions;
 
 const initialState: AuthSession = {
   accessToken: null,
@@ -62,11 +72,24 @@ const initialState: AuthSession = {
 
 const initialStash: PlatformStash = { platformSession: null };
 
+const initialAccess: AccessState = { access: null, accessFresh: false };
+
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
       ...initialState,
       ...initialStash,
+      ...initialAccess,
+
+      setAccess: (a: MyAccessData) =>
+        set({
+          access: a,
+          accessFresh: true,
+          roleName: a.roleName,
+          permissions: a.permissions,
+        }),
+
+      markAccessStale: () => set({ accessFresh: false }),
 
       setSession: (s: AuthSession) => set(s),
 
@@ -79,6 +102,7 @@ export const useAuthStore = create<AuthStore>()(
         const current = get();
         set({
           ...next,
+          ...initialAccess,
           platformSession: {
             accessToken: current.accessToken,
             refreshToken: current.refreshToken,
@@ -101,11 +125,11 @@ export const useAuthStore = create<AuthStore>()(
       takePlatformStash: () => {
         const stash = get().platformSession;
         if (!stash) return null;
-        set({ ...stash, platformSession: null });
+        set({ ...stash, ...initialAccess, platformSession: null });
         return stash;
       },
 
-      clearSession: () => set({ ...initialState, ...initialStash }),
+      clearSession: () => set({ ...initialState, ...initialStash, ...initialAccess }),
     }),
     {
       name: 'sgs-auth',
@@ -127,6 +151,7 @@ export const useAuthStore = create<AuthStore>()(
         fullName: s.fullName,
         permissions: s.permissions,
         platformSession: s.platformSession,
+        access: s.access,
       }),
     },
   ),

@@ -44,8 +44,9 @@ vi.mock('@capacitor/status-bar', () => ({
 }));
 vi.mock('@capacitor/app', () => ({
   App: {
-    addListener: (_: string, cb: (e: { canGoBack: boolean }) => void) => {
-      h.backCb = cb;
+    addListener: (name: string, cb: (e: { canGoBack: boolean }) => void) => {
+      // O ponte registra também appStateChange (fase 10): só o backButton alimenta backCb.
+      if (name === 'backButton') h.backCb = cb;
       return Promise.resolve({ remove: h.removeBack });
     },
     exitApp: h.exitApp,
@@ -194,6 +195,7 @@ describe('NativeAppBridge', () => {
     const { unmount } = await mount();
     unmount();
     expect(h.removePush).toHaveBeenCalledTimes(1);
-    expect(h.removeBack).toHaveBeenCalledTimes(1);
+    // backButton + appStateChange
+    expect(h.removeBack).toHaveBeenCalledTimes(2);
   });
 });
