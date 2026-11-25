@@ -1,4 +1,3 @@
-import { PERMISSIONS, ROLE_PERMISSIONS } from '../authz/permissions.catalog';
 import { fromCents } from '../common/money';
 import {
   categoryChain,
@@ -6,17 +5,6 @@ import {
   resolveCommissionRule,
   type RuleLite,
 } from '../financial/commission-resolver';
-
-/**
- * Custos e lucro do catálogo só aparecem para quem pode editar o catálogo
- * (ADMIN/MANAGER). Os demais papéis leem pacotes, mas recebem null nesses
- * campos (corte nos field resolvers).
- */
-export function canSeeCatalogCosts(roleName: string | null | undefined): boolean {
-  if (!roleName) return false;
-  const perms = (ROLE_PERMISSIONS as Record<string, readonly string[]>)[roleName] ?? [];
-  return perms.includes(PERMISSIONS.PACKAGE_WRITE) || perms.includes(PERMISSIONS.SERVICE_WRITE);
-}
 
 type DecimalLike = string | number | { toString(): string } | null | undefined;
 
