@@ -131,12 +131,26 @@ type ServicePayload {
 extend type Query {
   packages: [Package!]!
   package(id: UUID!): Package
+  "Diária vigente da assistente da noiva (09.1 D-06)"
+  bridalAssistantSettings: BridalAssistantSettings!
 }
 
 extend type Mutation {
   createPackage(input: CreatePackageInput!): PackagePayload!
   updatePackage(input: UpdatePackageInput!): PackagePayload!
   softDeletePackage(input: SoftDeleteInput!): PackagePayload!
+  "Altera a diária da assistente da noiva (ADMIN/MANAGER); não retroage vínculos existentes (D-08)"
+  updateBridalAssistantSettings(dailyRate: String!): BridalAssistantSettingsPayload!
+}
+
+type BridalAssistantSettings {
+  "Diária vigente da assistente da noiva (R$)"
+  dailyRate: String!
+}
+
+type BridalAssistantSettingsPayload {
+  settings: BridalAssistantSettings
+  errors: [UserError!]!
 }
 
 type Package {
@@ -161,6 +175,10 @@ type Package {
   totalCost: String
   profit: String
   profitPercent: String
+  "Inclui assistente da noiva (no estúdio) — 09.1 D-04"
+  includesBridalAssistant: Boolean!
+  "Diária da assistente somada ao custo (só ADMIN/MANAGER; null se o pacote não inclui assistente)"
+  bridalAssistantDailyCost: String
   coverImageUrl: String
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -207,6 +225,7 @@ input CreatePackageInput {
   contractDescription: String
   services: [PackageServiceInput!]!
   costItems: [PackageCostItemInput!]
+  includesBridalAssistant: Boolean
 }
 
 input UpdatePackageInput {
@@ -220,6 +239,7 @@ input UpdatePackageInput {
   contractDescription: String
   services: [PackageServiceInput!]
   costItems: [PackageCostItemInput!]
+  includesBridalAssistant: Boolean
 }
 
 type PackagePayload {

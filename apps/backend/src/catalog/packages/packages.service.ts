@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { parseMoneyInput, fromCents } from '../../common/money';
+import { parseMoneyInput, fromCents, toCents } from '../../common/money';
+import { recordAudit } from '../../common/audit-log';
 import { TenantContextService } from '../../database/tenant-context.service';
+import type { TenantPrismaClient } from '../../database/types';
+import {
+  loadBridalAssistantDailyRate,
+  saveBridalAssistantDailyRate,
+} from './bridal-assistant-rate';
 import {
   computePackageCosts,
   loadCostContext,
@@ -116,7 +122,9 @@ const PACKAGE_INCLUDE = {
  * quem não edita o catálogo).
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toPackageView(pkg: any, ctx: CostContext) {
+function toPackageView(pkg: any, ctx: CostContext, assistantRate: string | null = null) {
+  // Custo interno (09.1 D-09): a diária soma no custo/lucro, não altera price, depósito nem contrato.
+  const assistantOn = Boolean(pkg.includesBridalAssistant) && assistantRate !== null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const services = ((pkg.services ?? []) as any[]).map((ps) => {
     const pc = professionalCostCents(ctx, ps);
@@ -143,7 +151,9 @@ function toPackageView(pkg: any, ctx: CostContext) {
       price: pkg.price,
       serviceCostCents: services.map((ps) => ps._costCents as number),
       costItems,
+      ...(assistantOn ? { assistantDailyCents: toCents(assistantRate as string) } : {}),
     }),
+    bridalAssistantDailyCost: assistantOn ? assistantRate : null,
   });
 }
 
@@ -200,8 +210,9 @@ export class PackagesService {
         include: PACKAGE_INCLUDE,
       });
       const ctx = await loadCostContext(tx);
+      const rate = await loadBridalAssistantDailyRate(tx);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return pkgs.map((p: any) => toPackageView(p, ctx));
+      return pkgs.map((p: any) => toPackageView(p, ctx, rate));
     });
   }
 
@@ -215,7 +226,8 @@ export class PackagesService {
         where: { id, deletedAt: null },
         include: PACKAGE_INCLUDE,
       });
-      return pkg ? toPackageView(pkg, await loadCostContext(tx)) : null;
+      if (!pkg) return null;
+      return toPackageView(pkg, await loadCostContext(tx), await loadBridalAssistantDailyRate(tx));
     });
   }
 
@@ -267,6 +279,7 @@ export class PackagesService {
           depositKind: dep.kind,
           depositValue: dep.value,
           contractDescription: desc.value,
+          includesBridalAssistant: input.includesBridalAssistant ?? false,
         },
       });
 
@@ -348,6 +361,9 @@ export class PackagesService {
             input.validForDays === undefined ? existing.validForDays : input.validForDays,
           ...(depositData ?? {}),
           ...(descData ?? {}),
+          ...(input.includesBridalAssistant === undefined || input.includesBridalAssistant === null
+            ? {}
+            : { includesBridalAssistant: input.includesBridalAssistant }),
         },
       });
 
@@ -409,6 +425,47 @@ export class PackagesService {
     });
   }
 
+  /** Diária vigente da assistente da noiva (09.1 D-06). */
+  async getBridalAssistantSettings(orgId: string) {
+    return this.tenant.runWithTenant(orgId, async (tx) => ({
+      dailyRate: await loadBridalAssistantDailyRate(tx),
+    }));
+  }
+
+  /**
+   * Altera a diária (0..99999,99; aceita vírgula). Só muda o custo dos pacotes
+   * daqui para frente: vínculos já feitos guardam o próprio snapshot (D-08).
+   */
+  async updateBridalAssistantSettings(orgId: string, memberId: string, dailyRate: string) {
+    const normalized = typeof dailyRate === 'string' ? dailyRate.trim().replace(',', '.') : '';
+    const cents = /^\d{1,5}(\.\d{1,2})?$/.test(normalized) ? parseMoneyInput(normalized) : null;
+    if (cents === null || cents < 0 || cents > 9999999) {
+      return {
+        settings: null,
+        errors: [
+          {
+            code: 'INVALID_DAILY_RATE',
+            message: 'Informe a diária entre R$ 0,00 e R$ 99.999,99.',
+            field: 'dailyRate',
+          },
+        ] as UserError[],
+      };
+    }
+    return this.tenant.runWithTenant(orgId, async (tx: TenantPrismaClient) => {
+      const before = await loadBridalAssistantDailyRate(tx);
+      const saved = await saveBridalAssistantDailyRate(tx, orgId, memberId, fromCents(cents));
+      await recordAudit(tx, {
+        orgId,
+        actorMemberId: memberId,
+        action: 'bridal.assistant.rate.update',
+        entityType: 'contract_settings',
+        entityId: orgId,
+        metadata: { from: before, to: saved },
+      });
+      return { settings: { dailyRate: saved }, errors: [] as UserError[] };
+    });
+  }
+
   /**
    * Soft-deletes a package by setting deletedAt.
    * Packages are leaf nodes — no FK blocks apply.
@@ -443,6 +500,7 @@ export class PackagesService {
       where: { id },
       include: PACKAGE_INCLUDE,
     });
-    return pkg ? toPackageView(pkg, await loadCostContext(tx)) : null;
+    if (!pkg) return null;
+    return toPackageView(pkg, await loadCostContext(tx), await loadBridalAssistantDailyRate(tx));
   }
 }

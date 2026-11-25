@@ -40,6 +40,21 @@ export class PackagesResolver {
     return this.svc.getById(t.organizationId, id);
   }
 
+  @Query('bridalAssistantSettings')
+  @RequirePermission(PERMISSIONS.PACKAGE_READ)
+  bridalAssistantSettings(@CurrentTenant() t: TenantContext) {
+    return this.svc.getBridalAssistantSettings(t.organizationId);
+  }
+
+  @Mutation('updateBridalAssistantSettings')
+  @RequirePermission(PERMISSIONS.PACKAGE_WRITE)
+  updateBridalAssistantSettings(
+    @CurrentTenant() t: TenantContext,
+    @Args('dailyRate') dailyRate: string,
+  ) {
+    return this.svc.updateBridalAssistantSettings(t.organizationId, t.memberId, dailyRate);
+  }
+
   @Mutation('createPackage')
   @RequirePermission(PERMISSIONS.PACKAGE_WRITE)
   create(
@@ -81,6 +96,14 @@ export class PackagesResolver {
   @ResolveField('profit')
   profit(@Parent() p: { profit?: string }, @CurrentTenant() t: TenantContext | null) {
     return canSeeCatalogCosts(t?.roleName) ? (p.profit ?? null) : null;
+  }
+
+  @ResolveField('bridalAssistantDailyCost')
+  bridalAssistantDailyCost(
+    @Parent() p: { bridalAssistantDailyCost?: string | null },
+    @CurrentTenant() t: TenantContext | null,
+  ) {
+    return canSeeCatalogCosts(t?.roleName) ? (p.bridalAssistantDailyCost ?? null) : null;
   }
 
   @ResolveField('profitPercent')

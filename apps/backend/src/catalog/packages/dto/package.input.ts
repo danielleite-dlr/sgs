@@ -82,6 +82,11 @@ export class CreatePackageInput {
   @ValidateNested({ each: true })
   @Type(() => PackageCostItemInput)
   costItems?: PackageCostItemInput[];
+
+  /** Inclui assistente da noiva no estúdio (09.1 D-04). */
+  @IsOptional()
+  @IsBoolean()
+  includesBridalAssistant?: boolean;
 }
 
 export class UpdatePackageInput {
@@ -128,6 +133,11 @@ export class UpdatePackageInput {
   @ValidateNested({ each: true })
   @Type(() => PackageCostItemInput)
   costItems?: PackageCostItemInput[];
+
+  /** Inclui assistente da noiva no estúdio (09.1 D-04). */
+  @IsOptional()
+  @IsBoolean()
+  includesBridalAssistant?: boolean;
 }
 
 export class SoftDeletePackageInput {
