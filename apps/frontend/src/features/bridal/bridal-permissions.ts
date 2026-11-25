@@ -2,9 +2,9 @@
  * Gates de UI das telas de noivas e contratos (Fase 4). Espelham ROLE_PERMISSIONS
  * em apps/backend/src/authz/permissions.catalog.ts (plano 04-01).
  *
- * Mesmo padrão de operations-permissions.ts: `permissions` do auth store nunca é
- * populado pelo login, então o gate é por `roleName`; a lista do store continua
- * valendo quando preenchida. Papel desconhecido/ausente não tem permissão alguma.
+ * Mesmo padrão de operations-permissions.ts. Fase 10: a fonte é `myAccess`; o
+ * espelho por papel só vale até a primeira leitura. Papel desconhecido/ausente
+ * não tem permissão alguma.
  */
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
 
@@ -36,9 +36,11 @@ export function roleHasBridalPermission(
   return BRIDAL_ROLE_PERMISSIONS[roleName]?.includes(permission) ?? false;
 }
 
-/** true se a permissão veio na sessão (store) ou é concedida ao papel atual. */
+/** Permissão efetiva (myAccess); sem myAccess, cai no espelho por papel. */
 export function useBridalPermission(permission: string): boolean {
+  const access = useAuthStore((s) => s.access);
   const permissions = useAuthStore((s) => s.permissions);
   const roleName = useAuthStore((s) => s.roleName);
+  if (access) return access.permissions.includes(permission);
   return permissions.includes(permission) || roleHasBridalPermission(roleName, permission);
 }

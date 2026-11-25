@@ -3,10 +3,9 @@
  * apps/backend/src/authz/permissions.catalog.ts (somente as permissões usadas
  * pelas telas de operação).
  *
- * `permissions` do auth store nunca é populado pelo login (ver
- * identity/team-permissions.ts), então o gate é por `roleName`; a lista do
- * store continua valendo quando preenchida (testes e futura sessão completa).
- * Papel desconhecido/ausente não tem permissão alguma.
+ * Fase 10: a fonte é `myAccess` (permissões efetivas, com os ajustes por
+ * pessoa). O espelho por papel abaixo só vale até a primeira leitura, ou se a
+ * leitura falhar. Papel desconhecido/ausente não tem permissão alguma.
  */
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
 
@@ -48,9 +47,11 @@ export function roleHasPermission(
   return ROLE_OPERATION_PERMISSIONS[roleName]?.includes(permission) ?? false;
 }
 
-/** true se a permissão veio na sessão (store) ou é concedida ao papel atual. */
+/** Permissão efetiva (myAccess); sem myAccess, cai no espelho por papel. */
 export function useHasPermission(permission: string): boolean {
+  const access = useAuthStore((s) => s.access);
   const permissions = useAuthStore((s) => s.permissions);
   const roleName = useAuthStore((s) => s.roleName);
+  if (access) return access.permissions.includes(permission);
   return permissions.includes(permission) || roleHasPermission(roleName, permission);
 }
