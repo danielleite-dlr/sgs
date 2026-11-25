@@ -423,7 +423,7 @@ Plans:
 **Goal:** Cada papel (Admin, Gerente, Atendente, Profissional) continua vindo com permissões padrão, mas o Admin/Gerente consegue **ligar e desligar funcionalidades por pessoa**, no nível de **item do menu/área** (Agenda, Clientes, Comandas, Financeiro, Previsão de caixa, Contratos, Noivas, Comercial, Relatórios, Catálogo, Profissionais…). Desligado ⇒ some do menu, a rota bloqueia e a **API recusa**. Ex.: um gerente que não vê Financeiro; uma profissional que não vê X. Pedido da usuária em 2026-11-18; decisões: granularidade por item do menu (não por ação), fazer logo depois da fase 9 e antes do app nativo iOS.
 **Requirements**: PERM-01, PERM-02, PERM-03, PERM-04, PERM-05, PERM-06, PERM-07, PERM-08, PERM-09, PERM-10, PERM-11, PERM-12, PERM-13, PERM-14, PERM-15, PERM-16
 **Depends on:** Phase 9
-**Plans:** 13/16 plans executed
+**Plans:** 14/16 plans executed
 
 Plans:
 - [x] 10-01-PLAN.md — TDD do catálogo de itens de acesso, matriz padrão por papel e resolveAccess (onda 1)
@@ -439,7 +439,7 @@ Plans:
 - [x] 10-11-PLAN.md — menu, barra inferior, busca e cartões do painel por item (onda 4)
 - [x] 10-12-PLAN.md — rotas por item, tela inicial sem laço, Comercial e link de contrato por item (onda 4)
 - [x] 10-13-PLAN.md — tela Profissionais › Perfis de acesso e atalho "Acessos" (onda 5)
-- [ ] 10-14-PLAN.md — E2E Playwright das permissões e E2E de menu por papel atualizados (onda 6)
+- [x] 10-14-PLAN.md — E2E Playwright das permissões e E2E de menu por papel atualizados (onda 6)
 - [ ] 10-15-PLAN.md — gate, backup, deploy no staging e CI (onda 7)
 - [ ] 10-16-PLAN.md — verificação humana no staging: matriz padrão, iPhone/Android e tela (onda 8)
 
