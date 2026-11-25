@@ -38,6 +38,11 @@ Cada papel (Admin, Gerente, Atendente, Profissional) continua com o seu padrão 
 ### Quando vale
 - **D-13:** Vale **na hora**: a API já recusa na próxima ação; o menu da pessoa se atualiza sozinho em até ~1 minuto ou ao trocar de tela, sem sair e entrar (inclui o app instalado no iPhone e o Android).
 
+### Respostas às perguntas da pesquisa (24/11/2026)
+- **D-14:** O padrão de cada papel no menu é **derivado do que a API já permite** (`requires` do item ↔ `ROLE_PERMISSIONS`). Aceito que a Profissional deixa de ver Financeiro/Noivas/Contratos e a Atendente deixa de ver Previsão de caixa e Despesas fixas. A matriz padrão completa vai para a usuária aprovar no checkpoint de verificação.
+- **D-15:** O Gerente **só concede item que ele mesmo tem efetivo** (se o Admin tirou o Financeiro dele, ele não liga Financeiro para ninguém). Registrar como requisito PERM-08.
+- **D-16:** "Profissionais › Todos os profissionais" é **padrão ligado para todos os papéis** (leitura da equipe). Convidar/editar papel/remover seguem pelo papel (`member.invite/editRole/remove`), não pelo item.
+
 ### Claude's Discretion
 - Modelo de dados dos ajustes (overrides por membro: concedido/negado por item) e como o catálogo de itens do menu se liga às permissões do backend (um item pode exigir várias permissões; um resolver pode servir a vários itens).
 - Itens sempre ligados que não entram no ajuste (ex.: Início, o próprio perfil/troca de senha, notificações).

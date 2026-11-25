@@ -96,6 +96,25 @@
 - [x] **AN-08**: Noiva que vira externa ou pacote sem assistente remove a assistente com aviso e libera a agenda; mudar a data move o bloqueio _(09.1 D-05)_
 - [x] **AN-09**: Noivas elegíveis sem assistente (inclusive as já cadastradas) ficam pendentes: aviso no grupo e filtro/selo "Sem assistente" na lista _(09.1 D-17, D-18)_
 
+### Permissões por usuário (Fase 10)
+
+- [ ] **PERM-01**: Existe um catálogo de itens de acesso (um por submenu ativo do menu, mais o grupo como agrupador na tela); itens placeholder (flag desligada) ficam fora do catálogo e da tela; "Início", notificações e a troca de senha/perfil ficam sempre ligados e fora do ajuste _(10 D-06, D-07, critério do Claude)_
+- [ ] **PERM-02**: O padrão de cada item para cada papel é derivado das permissões que o papel já tem no banco; quem ganha um item passa a poder nele o mesmo que o Gerente, e quem tem o item ligado por padrão mantém o que o papel já permitia _(10 D-04, D-05)_
+- [ ] **PERM-03**: Admin/Gerente liga ou desliga cada item para uma pessoa (tirar e dar); só a diferença em relação ao padrão é guardada, por membro e por salão, com isolamento por salão (RLS forçada) _(10 D-04, D-12)_
+- [ ] **PERM-04**: Item desligado para a pessoa: a API recusa com um erro de acesso próprio (sem derrubar a sessão) na próxima ação, e o item ligado a mais passa a funcionar na API; o acesso é lido do banco a cada requisição, não do token _(10 D-02, D-13)_
+- [ ] **PERM-05**: Toda operação da API que hoje exige permissão passa a declarar também o(s) item(ns) de acesso que a servem; um teste automático falha se alguma ficar de fora _(10 D-02, critério do Claude)_
+- [ ] **PERM-06**: Quem ganha um item do Comercial passa a ver como o Gerente: Atendente com Relatórios vê os relatórios de todos (sem ganhar poder de excluir/trocar responsável nos Leads e Pipeline) e Profissional com Comercial vê todos os leads e negócios _(10 D-05, D-06)_
+- [ ] **PERM-07**: Quem ganha Financeiro (controle, previsão ou despesas fixas) vê também os custos e a diária da assistente que antes eram só do Gerente; recortes "só os meus" de itens que o papel já tinha (comandas e comissões da Profissional, agenda) continuam valendo _(10 D-05)_
+- [ ] **PERM-08**: Admin sempre vê tudo e não é ajustável; Admin ajusta qualquer pessoa; Gerente ajusta só Atendente e Profissional (nunca a si, outro Gerente ou Admin) e só concede itens que ele mesmo tem; Atendente e Profissional não ajustam acessos _(10 D-08)_
+- [ ] **PERM-09**: "Perfis de acesso" não pode ser ligado para Atendente nem Profissional _(10 D-09)_
+- [ ] **PERM-10**: Cada mudança de acesso (e cada "voltar ao padrão") grava no registro de auditoria quem mudou, em quem, quais itens e de qual valor para qual _(10, critério do Claude)_
+- [ ] **PERM-11**: Quando a pessoa muda de papel, os ajustes dela voltam ao padrão do novo papel, com aviso na tela de edição, e a mudança é auditada _(10, critério do Claude)_
+- [ ] **PERM-12**: Lembretes do Comercial, avisos de agenda (push), alertas de contrato (notificação e e-mail), estoque baixo e o contador do sino respeitam o item desligado: quem perdeu o item não recebe nem vê o aviso _(10 critério do Claude)_
+- [ ] **PERM-13**: O menu (barra lateral, gaveta do celular, barra inferior e busca global) mostra só os itens ligados para a pessoa; grupo sem itens some; cartões do painel inicial não aparecem nem consultam o que está desligado _(10 D-02, D-06)_
+- [ ] **PERM-14**: A rota (inclusive telas de detalhe) de um item desligado bloqueia e leva a pessoa para uma tela inicial válida, sem laço e sem logout _(10 D-02)_
+- [ ] **PERM-15**: O app consulta os acessos da pessoa e atualiza o menu em até 1 minuto, ao trocar de tela, ao voltar do segundo plano (iPhone instalado e Android) e quando a API recusa, sem sair e entrar _(10 D-13)_
+- [ ] **PERM-16**: A tela Profissionais › Perfis de acesso lista as pessoas ativas e, para cada uma, as áreas e itens com liga/desliga acessível, controle de grupo, indicação do que é padrão do papel e do que foi ajustado e "voltar ao padrão"; o atalho "Acessos" no editar profissional abre o mesmo ajuste _(10 D-06, D-10, D-11)_
+
 ### Qualidade / Observabilidade
 
 - [ ] **QA-01**: Cobertura de testes unitários ≥80% do código de domínio no backend (regras de negócio, entidades, value objects)
@@ -204,16 +223,32 @@
 | AN-07 | Phase 09.1 | Complete |
 | AN-08 | Phase 09.1 | Complete |
 | AN-09 | Phase 09.1 | Complete |
+| PERM-01 | Phase 10 | Pending |
+| PERM-02 | Phase 10 | Pending |
+| PERM-03 | Phase 10 | Pending |
+| PERM-04 | Phase 10 | Pending |
+| PERM-05 | Phase 10 | Pending |
+| PERM-06 | Phase 10 | Pending |
+| PERM-07 | Phase 10 | Pending |
+| PERM-08 | Phase 10 | Pending |
+| PERM-09 | Phase 10 | Pending |
+| PERM-10 | Phase 10 | Pending |
+| PERM-11 | Phase 10 | Pending |
+| PERM-12 | Phase 10 | Pending |
+| PERM-13 | Phase 10 | Pending |
+| PERM-14 | Phase 10 | Pending |
+| PERM-15 | Phase 10 | Pending |
+| PERM-16 | Phase 10 | Pending |
 | QA-01 | Backlog | Deferred |
 | QA-02 | Backlog | Deferred |
 | QA-03 | Backlog | Deferred |
 | QA-04 | Backlog | Deferred |
 
 **Coverage:**
-- v1 requirements: 56 total
-- Mapped to phases: 56/56 ✓
+- v1 requirements: 72 total
+- Mapped to phases: 72/72 ✓
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-02*
-*Last updated: 2026-11-24 — AN-01..AN-09 (fase 09.1, Assistente de noiva) acrescentados no plan-phase*
+*Last updated: 2026-11-24 — PERM-01..PERM-16 (fase 10, Permissões por usuário) acrescentados no plan-phase*
