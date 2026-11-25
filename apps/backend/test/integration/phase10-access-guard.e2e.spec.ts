@@ -11,6 +11,11 @@ import {
 const FORECAST = `query { cashForecast(from: "2026-11-01", to: "2026-12-01") { from to } }`;
 const SUMMARY = `query { financialSummary(from: "2026-11-01", to: "2026-12-01", granularity: "day") { __typename } }`;
 const COMANDAS = `query { comandas(from: "2026-11-01", to: "2026-12-01") { id } }`;
+const MY_ACCESS = `query { myAccess {
+  memberId roleName permissions canManageAccess
+  items { id label group groupLabel enabled defaultEnabled source adjustable lockReason permissions }
+} }`;
+
 type GqlErrors = { message: string; extensions?: Record<string, unknown> }[];
 function firstError(res: { errors?: GqlErrors }) {
   return res.errors?.[0];
@@ -105,5 +110,37 @@ describe('10 — guard de acesso por pessoa', () => {
     });
     const res = await asManager(FORECAST);
     expect(firstError(res)?.extensions?.code).toBe('ACCESS_DENIED');
+  });
+
+  describe('myAccess', () => {
+    it('Profissional: papel do banco, 23 itens, 9 ligados, sem gerenciar acessos', async () => {
+      const res = await gqlAs(w, w.tokens.proA)(MY_ACCESS);
+      expect(res.errors).toBeUndefined();
+      const a = res.data.myAccess;
+      expect(a.roleName).toBe('PROFESSIONAL');
+      expect(a.items).toHaveLength(23);
+      expect(a.items.filter((i: { enabled: boolean }) => i.enabled)).toHaveLength(9);
+      expect(a.canManageAccess).toBe(false);
+      expect(a.items[0].adjustable).toBe(false);
+      expect(a.items[0].lockReason).toBeNull();
+    });
+
+    it('Gerente com fin-previsao negado recebe source DENIED', async () => {
+      await setOverrideRow(w, w.members.manager, 'fin-previsao', false);
+      const res = await gqlAs(w, w.tokens.manager)(MY_ACCESS);
+      const item = res.data.myAccess.items.find((i: { id: string }) => i.id === 'fin-previsao');
+      expect(item).toMatchObject({ enabled: false, defaultEnabled: true, source: 'DENIED' });
+      expect(res.data.myAccess.canManageAccess).toBe(true);
+    });
+
+    it('Atendente com fin-controle ganho recebe GRANTED e financial.read', async () => {
+      await setOverrideRow(w, w.members.attendant, 'fin-controle', true);
+      const res = await gqlAs(w, w.tokens.attendant)(MY_ACCESS);
+      const a = res.data.myAccess;
+      const item = a.items.find((i: { id: string }) => i.id === 'fin-controle');
+      expect(item.source).toBe('GRANTED');
+      expect(item.enabled).toBe(true);
+      expect(a.permissions).toContain('financial.read');
+    });
   });
 });

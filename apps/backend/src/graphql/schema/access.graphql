@@ -1,0 +1,38 @@
+"Origem do estado do item para a pessoa (fase 10)."
+enum AccessSource {
+  DEFAULT
+  GRANTED
+  DENIED
+}
+
+"Item de acesso (submenu) com o estado efetivo para a pessoa."
+type AccessItem {
+  id: String!
+  label: String!
+  group: String!
+  groupLabel: String!
+  enabled: Boolean!
+  defaultEnabled: Boolean!
+  source: AccessSource!
+  "Quem está vendo pode ligar/desligar este item desta pessoa (sempre false em myAccess)."
+  adjustable: Boolean!
+  "Motivo de não poder ajustar, em PT-BR (ou null)."
+  lockReason: String
+  permissions: [String!]!
+}
+
+type MyAccess {
+  memberId: UUID!
+  "Papel lido do banco (corrige o papel guardado no login)."
+  roleName: String!
+  items: [AccessItem!]!
+  "Permissões do papel mais as dos itens ganhos."
+  permissions: [String!]!
+  "Admin/Gerente podem abrir Perfis de acesso."
+  canManageAccess: Boolean!
+}
+
+extend type Query {
+  "Acessos de quem está logado. Sem @RequirePermission: qualquer membro autenticado e ativo."
+  myAccess: MyAccess!
+}
