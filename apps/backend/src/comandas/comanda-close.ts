@@ -11,6 +11,7 @@ import {
   resolveCommissionRule,
   type RuleLite,
 } from '../financial/commission-resolver';
+import { bridalAssistantAccrualsTx } from '../bridal/bridal-assistant';
 import { loadCategoryParents } from '../identity/member-categories';
 import { CLIENT_CREDIT_METHOD, computeComandaTotals, coveredCents } from './comanda-math';
 import { ComandaError, recalcComandaTotal } from './comanda-items';
@@ -244,6 +245,8 @@ export async function closeComandaTx(
       calculatedAt: now,
     };
   });
+  // 09.1: diária da assistente da noiva (custo interno; não entra no total da comanda)
+  records.push(...(await bridalAssistantAccrualsTx(tx, { orgId, comandaId, cycle, now })));
   await tx.commissionRecord.createMany({ data: records });
 
   // Caixa

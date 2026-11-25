@@ -14,11 +14,13 @@ import {
   acquireScheduleLocks,
   assertSlotFree,
 } from '../appointments/scheduling-guard';
+import type { Prisma } from '@prisma/client';
 import { loadBridalAssistantDailyRate } from '../catalog/packages/bridal-assistant-rate';
 import { recordAudit } from '../common/audit-log';
 import type { TenantPrismaClient } from '../database/types';
 import {
   BRIDAL_ASSISTANT_BLOCK_KIND,
+  assistantAccrualItemName,
   assistantBlockNote,
   assistantIneligibilityReason,
   type AssistantGroupLike,
@@ -318,4 +320,112 @@ export async function assistantCandidatesTx(
       current: a.id === g.assistantMemberId,
     };
   });
+}
+
+/**
+ * Repasse da diária da assistente (09.1 D-11): accrual avulso em commission_records.
+ * comanda_item_id recebe o id do GRUPO (coluna sem FK por design; Pitfall 1) e o snapshot
+ * marca kind 'bridal_assistant'. Não mexe no total, pagamentos, caixa nem estoque da comanda.
+ * Paga uma vez só: grupo com accrual vivo (sem reversal) não gera outro (Pitfall 6).
+ */
+export async function bridalAssistantAccrualsTx(
+  tx: TenantPrismaClient,
+  args: { orgId: string; comandaId: string; cycle: number; now: Date },
+): Promise<Prisma.CommissionRecordCreateManyInput[]> {
+  const { orgId, comandaId, cycle, now } = args;
+  const rows = await tx.$queryRaw<
+    { id: string; name: string; assistant_member_id: string; rate: string }[]
+  >`
+    SELECT g.id, g.name, g.assistant_member_id, g.assistant_daily_rate::text AS rate
+      FROM bridal_groups g
+     WHERE g.status = 'active' AND g.assistant_member_id IS NOT NULL AND g.assistant_daily_rate > 0
+       AND EXISTS (SELECT 1 FROM appointments a
+                     JOIN bridal_group_members m
+                       ON m.group_id = g.id AND m.role = 'bride' AND m.client_id = a.client_id
+                    WHERE a.comanda_id = ${comandaId}::uuid AND a.bridal_group_id = g.id
+                      AND COALESCE(a.purpose, 'event') = 'event')
+       AND NOT EXISTS (SELECT 1 FROM commission_records r
+                        WHERE r.comanda_item_id = g.id AND r.kind = 'accrual'
+                          AND NOT EXISTS (SELECT 1 FROM commission_records v
+                                           WHERE v.reverses_record_id = r.id))`;
+  return rows.map((g) => ({
+    organizationId: orgId,
+    comandaId,
+    comandaItemId: g.id,
+    memberId: g.assistant_member_id,
+    kind: 'accrual',
+    cycle,
+    baseAmount: g.rate,
+    chargedAmount: '0.00',
+    ruleId: null,
+    ruleKind: 'fixed',
+    ruleValue: g.rate,
+    noRule: false,
+    calculatedAmount: g.rate,
+    ruleSnapshot: {
+      kind: 'bridal_assistant',
+      bridalGroupId: g.id,
+      itemName: assistantAccrualItemName(g.name),
+      dailyRate: g.rate,
+      quantity: 1,
+      fixedPer: 'unit',
+      noRule: false,
+    },
+    calculatedAt: now,
+  }));
+}
+
+/** Depois de editar o grupo: remove a assistente se ficou inelegível (D-05) ou move o bloqueio. */
+export async function syncAssistantAfterUpdateTx(
+  tx: TenantPrismaClient,
+  orgId: string,
+  actorId: string,
+  groupId: string,
+  previousEventDateYmd: string,
+): Promise<string | null> {
+  const g = await loadAssistantGroupTx(tx, groupId);
+  if (!g || !g.assistantMemberId) return null;
+  const motivo = assistantIneligibilityReason(g);
+  if (motivo) {
+    const { removedName } = await clearAssistantTx(tx, orgId, actorId, groupId, 'ineligible');
+    return `A assistente ${removedName ?? ''} foi removida e a agenda dela no dia foi liberada (${motivo}).`;
+  }
+  if (g.eventDateYmd === previousEventDateYmd) return null;
+
+  await acquireScheduleLocks(tx, orgId, [g.assistantMemberId]);
+  await tx.timeBlock.deleteMany({
+    where: { bridalGroupId: groupId, kind: BRIDAL_ASSISTANT_BLOCK_KIND },
+  });
+  const day = await eventDayBoundsTx(tx, g.eventDateYmd);
+  try {
+    await assertSlotFree(tx, { professionalId: g.assistantMemberId, ...day });
+  } catch (e) {
+    if (e instanceof SchedulingError) {
+      const m = await tx.member.findFirst({
+        where: { id: g.assistantMemberId },
+        select: { displayName: true },
+      });
+      throw new BridalError(
+        'ASSISTANT_BUSY_ON_NEW_DATE',
+        `A assistente ${m?.displayName ?? ''} já está ocupada em ${formatBr(g.eventDateYmd)}. ` +
+          'Troque a assistente antes de mudar a data.',
+        'eventDate',
+      );
+    }
+    throw e;
+  }
+  await tx.timeBlock.create({
+    data: {
+      organizationId: orgId,
+      professionalId: g.assistantMemberId,
+      kind: BRIDAL_ASSISTANT_BLOCK_KIND,
+      startsAt: day.startsAt,
+      endsAt: day.endsAt,
+      allDay: true,
+      note: assistantBlockNote(g.brideName ?? g.name),
+      bridalGroupId: groupId,
+      createdBy: actorId,
+    },
+  });
+  return null;
 }
