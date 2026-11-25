@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@apollo/client';
 import { Package, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -27,6 +28,8 @@ import { DataTable } from '@/components/ui/data-table';
 import { EntityAvatar } from '@/components/ui/entity-avatar';
 import { PackagePriceSummary } from '@/features/catalog/components/PackagePriceSummary';
 import { PackageCostSummary } from '@/features/catalog/components/PackageCostSummary';
+import { BridalAssistantRateCard } from '@/features/catalog/components/BridalAssistantRateCard';
+import { useHasPermission } from '@/features/operations/operations-permissions';
 import { PacoteForm } from '@/features/catalog/components/PacoteForm';
 import { PackageTimelineDialog } from '@/features/catalog/components/PackageTimelineDialog';
 import type {
@@ -42,6 +45,8 @@ const fmt = (v: string | number) =>
 export function PacotesPage() {
   const { t } = useTranslation();
   const { data, loading } = useQuery(PackagesQuery);
+  // Diária da assistente é custo: mesmo gate do lucro (ADMIN/MANAGER)
+  const canEditRate = useHasPermission('financial.read');
   const [softDelete] = useMutation(SoftDeletePackageMutation, {
     refetchQueries: [{ query: PackagesQuery }],
   });
@@ -80,6 +85,11 @@ export function PacotesPage() {
         <div className="flex items-center gap-2">
           <EntityAvatar name={row.name} kind="package" />
           <span className="font-medium text-neutral-800">{row.name}</span>
+          {row.includesBridalAssistant && (
+            <Badge variant="outline" data-testid="pkg-badge-bridal-assistant">
+              {t('catalog.pacote.bridalAssistantBadge')}
+            </Badge>
+          )}
         </div>
       ),
     },
@@ -169,6 +179,8 @@ export function PacotesPage() {
         cta={<Button onClick={() => setCreateOpen(true)}>{t('pages.pacotes.newCta')}</Button>}
       />
 
+      {canEditRate && <BridalAssistantRateCard />}
+
       <DataTable
         columns={columns}
         rows={packages}
@@ -202,6 +214,7 @@ export function PacotesPage() {
                 depositKind: editTarget.depositKind ?? null,
                 depositValue: editTarget.depositValue ?? null,
                 contractDescription: editTarget.contractDescription ?? null,
+                includesBridalAssistant: editTarget.includesBridalAssistant,
                 costItems: (editTarget.costItems ?? []).map((c) => ({
                   name: c.name,
                   cost: c.cost,
