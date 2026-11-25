@@ -77,9 +77,9 @@ describe('visibilityWhere', () => {
   });
 
   it('PROFESSIONAL lança FORBIDDEN', () => {
-    expect(() => visibilityWhere({ roleName: 'PROFESSIONAL', memberId: 'p', scopeAll: false })).toThrow(
-      'FORBIDDEN',
-    );
+    expect(() =>
+      visibilityWhere({ roleName: 'PROFESSIONAL', memberId: 'p', scopeAll: false }),
+    ).toThrow('FORBIDDEN');
   });
 });
 
