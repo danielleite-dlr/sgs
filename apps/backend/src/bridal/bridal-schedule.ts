@@ -265,6 +265,7 @@ export async function rebuildTravelBlocksTx(
   const profIds = [...new Set(appts.map((a) => a.professionalId))];
   if (profIds.length > 0) await acquireScheduleLocks(tx, orgId, profIds);
 
+  // Só os deslocamentos: o bloqueio 'acompanhamento' da assistente (09.1) fica.
   await tx.timeBlock.deleteMany({
     where: { bridalGroupId: groupId, kind: 'deslocamento' },
   });
@@ -332,8 +333,7 @@ export async function cancelGroupAppointmentsTx(
       reason: a.reason,
     });
   }
-  await tx.timeBlock.deleteMany({
-    where: { bridalGroupId: a.groupId, kind: 'deslocamento' },
-  });
+  // Cancelamento apaga TODOS os bloqueios do grupo, inclusive o 'acompanhamento' (09.1 D-12).
+  await tx.timeBlock.deleteMany({ where: { bridalGroupId: a.groupId } });
   return appts.length;
 }
