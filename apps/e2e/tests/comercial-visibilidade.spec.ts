@@ -47,8 +47,14 @@ test.describe('Fase 9: visibilidade do Comercial por papel', () => {
     await expect(nav.getByRole('link', { name: 'Relatórios', exact: true })).toHaveCount(0);
     await expect(nav.getByRole('link', { name: 'Etapas e formulário', exact: true })).toHaveCount(0);
 
+    // Matriz padrão (D-14): a Atendente não tem Controle/Previsão/Despesas fixas/Comissões.
+    for (const label of ['Controle de entrada e saída', 'Previsão de caixa', 'Despesas fixas']) {
+      await expect(nav.getByRole('link', { name: label, exact: true })).toHaveCount(0);
+    }
+
+    // Rota sem acesso leva à tela inicial da pessoa (Agenda para a Atendente), sem ir ao login.
     await page.goto('/comercial/relatorios');
-    await expect(page).toHaveURL(/\/comercial$/);
+    await expect(page).toHaveURL(/\/agenda/);
   });
 
   test('gerente vê o negócio e o menu Relatórios', async ({ page }) => {
@@ -68,6 +74,9 @@ test.describe('Fase 9: visibilidade do Comercial por papel', () => {
     const nav = page.getByRole('navigation', { name: 'Navegação principal' });
     await expect(nav).toBeVisible();
     await expect(nav.getByRole('button', { name: 'Comercial', exact: true })).toHaveCount(0);
+    // Matriz padrão (D-14): sem Noivas/Contratos e sem Financeiro além de Comissões e Comandas.
+    await expect(nav.getByRole('button', { name: 'Eventos', exact: true })).toHaveCount(0);
+    await expect(nav.getByRole('link', { name: 'Controle de entrada e saída', exact: true })).toHaveCount(0);
     await page.goto('/comercial');
     await expect(page).toHaveURL(/\/agenda/);
   });
