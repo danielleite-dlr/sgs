@@ -13,6 +13,7 @@ import {
   type ContractData,
   type GenerateContractLinkResult,
 } from '../api/contracts.api';
+import { useHasAccess } from '@/features/access/access-hooks';
 import { useHasPermission } from '@/features/operations/operations-permissions';
 import { contractErrorMessage, formatDateTime } from '../lib/contract-labels';
 import { contractorFieldsFor } from '../lib/contractor-fields';
@@ -28,6 +29,7 @@ function MissingAction({
   onEditContract?: () => void;
 }) {
   const cls = 'underline text-primary';
+  const canOpenContracts = useHasAccess('contratos');
   switch (field.target) {
     // Dados da cliente: resolvidos de uma vez pelo botão "Completar dados da contratante" (UX-13).
     case 'group':
@@ -37,6 +39,8 @@ function MissingAction({
         </Link>
       );
     case 'settings':
+      // Fase 10: o link para Contratos só aparece com o item ligado.
+      if (!canOpenContracts) return null;
       return (
         <Link className={cls} to="/contratos?aba=configuracoes">
           Abrir configurações

@@ -2,9 +2,10 @@
  * Gates de UI do Comercial (fase 9). Espelham as permissões commercial.* do
  * backend (apps/backend/src/authz/permissions.catalog.ts).
  *
- * Mesmo padrão de bridal-permissions.ts: o gate é por `roleName`. Quem protege de
- * verdade é a API; aqui é só conforto de UI.
+ * Quem protege de verdade é a API; aqui é só conforto de UI. Antes da primeira leitura
+ * de myAccess o gate é por `roleName`; depois, pelos itens de acesso (fase 10).
  */
+import { hasAccessIn, useAccess, useItemPermission } from '@/features/access/access-hooks';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
 
 /** D-11: papéis que acessam o Comercial (com ou sem isProfessional). */
@@ -37,14 +38,35 @@ export function canWinDeal(roleName: string | null | undefined): boolean {
   return roleName != null && WIN_DEAL_ROLES.includes(roleName);
 }
 
+const COMMERCIAL_ITEMS = [
+  'comercial-painel',
+  'comercial-leads',
+  'comercial-pipeline',
+  'comercial-lembretes',
+  'comercial-relatorios',
+  'comercial-config',
+] as const;
+
+/**
+ * Fase 10 (D-05): com o acesso lido (myAccess), `canUse` e `isManager` seguem os itens
+ * comercial-* ligados; o espelho por papel vale só até a primeira leitura.
+ */
 export function useCommercialAccess() {
   const roleName = useAuthStore((s) => s.roleName);
   const memberId = useAuthStore((s) => s.memberId);
-  return {
-    roleName,
-    memberId,
-    canUse: canUseCommercial(roleName),
-    isManager: isCommercialManager(roleName),
-    canWin: canWinDeal(roleName),
-  };
+  const access = useAccess();
+  const manageLeads = useItemPermission('comercial-leads', 'commercial.manage');
+  const managePipeline = useItemPermission('comercial-pipeline', 'commercial.manage');
+  if (!access) {
+    return {
+      roleName,
+      memberId,
+      canUse: canUseCommercial(roleName),
+      isManager: isCommercialManager(roleName),
+      canWin: canWinDeal(roleName),
+    };
+  }
+  const canUse = COMMERCIAL_ITEMS.some((id) => hasAccessIn(access, id));
+  const isManager = manageLeads || managePipeline;
+  return { roleName, memberId, canUse, isManager, canWin: canUse && (isManager || canWinDeal(roleName)) };
 }
