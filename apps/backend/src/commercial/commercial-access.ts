@@ -1,7 +1,10 @@
 /**
  * Regras de acesso do Comercial (D-12, D-20, D-21). Único ponto de decisão:
  * todo serviço importa daqui, nenhum compara papel por conta própria.
+ * Fase 10: a decisão vem do acesso efetivo (papel do banco + itens ganhos/negados);
+ * `scopeAll` (D-05) dá a visão do Gerente a quem ganhou o item da operação.
  */
+import { expandGates, isGranted, type ResolvedAccess } from '../authz/access/access-resolve';
 
 export const COMMERCIAL_ROLES = ['ADMIN', 'MANAGER', 'ATTENDANT'] as const;
 
@@ -24,7 +27,27 @@ export const canWinDeal = (r: string | null | undefined): boolean =>
 export interface CommercialViewer {
   roleName: string;
   memberId: string;
+  /** D-05 (fase 10): vê como o Gerente. */
+  scopeAll: boolean;
 }
+
+/**
+ * Viewer da operação: Gerente pelo papel do banco ou item do Comercial GANHO entre os itens
+ * do porteiro da operação (ganhar Relatórios não vira poder de gerente em Leads/Pipeline).
+ */
+export function commercialViewerFrom(
+  access: ResolvedAccess,
+  memberId: string,
+  items: readonly string[],
+): CommercialViewer {
+  const scopeAll =
+    isManagerRole(access.roleName) || expandGates(items).some((id) => isGranted(access, id));
+  return { roleName: access.roleName, memberId, scopeAll };
+}
+
+/** Marca ganho: papéis de D-21 ou quem tem a visão do Gerente na operação. */
+export const canWinAs = (v: Pick<CommercialViewer, 'roleName' | 'scopeAll'>): boolean =>
+  v.scopeAll || canWinDeal(v.roleName);
 
 // Record<string, unknown> por enquanto: o 09-04 pode estreitar para Prisma.*WhereInput.
 export interface CommercialVisibility {
@@ -40,7 +63,7 @@ export interface CommercialVisibility {
  * leads criados por ela ou com negócio dela; negócio sem responsável fica só para gestão.
  */
 export function visibilityWhere(v: CommercialViewer): CommercialVisibility {
-  if (isManagerRole(v.roleName)) {
+  if (v.scopeAll || isManagerRole(v.roleName)) {
     return {
       deal: { deletedAt: null },
       lead: { deletedAt: null },
