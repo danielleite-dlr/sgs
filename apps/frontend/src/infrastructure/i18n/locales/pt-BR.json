@@ -719,6 +719,14 @@
       "empty": "Nenhum resultado."
     },
     "pacote": {
+      "includesBridalAssistantLabel": "Inclui assistente da noiva (no estúdio)",
+      "includesBridalAssistantHint": "A diária da assistente entra no custo do pacote. Não muda o preço nem o contrato.",
+      "bridalAssistantDailyCostLabel": "Diária da assistente",
+      "bridalAssistantRateTitle": "Diária da assistente da noiva",
+      "bridalAssistantRateHint": "Vale para as próximas noivas vinculadas. Noivas que já têm assistente mantêm o valor de quando foram vinculadas.",
+      "bridalAssistantRateSave": "Salvar diária",
+      "bridalAssistantRateSaved": "Diária atualizada.",
+      "bridalAssistantBadge": "Com assistente",
       "summary": {
         "individual": "Soma individual",
         "package": "Preço do pacote"
@@ -878,7 +886,8 @@
       "categories": "Categorias",
       "seniority": "Senioridade",
       "status": "Status",
-      "actions": "Ações"
+      "actions": "Ações",
+      "bridalAssistantBadge": "Assistente da Noiva"
     },
     "roles": {
       "ADMIN": "Admin",
@@ -960,6 +969,8 @@
       "roleLabel": "Papel",
       "rolePlaceholder": "Selecione o papel",
       "alsoProfessionalLabel": "Também atende clientes",
+      "isBridalAssistantLabel": "Assistente da Noiva",
+      "isBridalAssistantHint": "Acompanha a noiva no estúdio o dia todo. Não usa o sistema e não recebe notificações.",
       "passwordLabel": "Senha provisória",
       "generate": "Gerar",
       "cancel": "Cancelar",
@@ -987,6 +998,8 @@
       "birthLabel": "Data de nascimento",
       "roleLabel": "Papel",
       "isProfessionalLabel": "É profissional",
+      "isBridalAssistantLabel": "Assistente da Noiva",
+      "isBridalAssistantHint": "Acompanha a noiva no estúdio o dia todo. Não usa o sistema e não recebe notificações.",
       "seniorityLabel": "Senioridade",
       "seniorityPlaceholder": "Selecione a senioridade",
       "cancel": "Cancelar",

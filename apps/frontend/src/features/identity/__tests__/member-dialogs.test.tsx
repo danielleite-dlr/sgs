@@ -33,6 +33,7 @@ const professionalMember: AdminMemberData = {
   roleName: 'PROFESSIONAL',
   seniorityTier: 'senior',
   isProfessional: true,
+  isBridalAssistant: false,
   status: 'active',
   phone: '+5511987654321',
   pixKey: '12345678909',
@@ -47,6 +48,7 @@ const attendantMember: AdminMemberData = {
   roleName: 'ATTENDANT',
   seniorityTier: null,
   isProfessional: false,
+  isBridalAssistant: false,
   status: 'active',
   phone: null,
   pixKey: null,
@@ -148,6 +150,7 @@ describe('MemberEditDialog', () => {
             id: 'mem-1',
             roleName: 'PROFESSIONAL',
             isProfessional: true,
+            isBridalAssistant: false,
             seniorityTier: 'senior',
             categoryIds: ['cat-1'],
           },
@@ -162,6 +165,7 @@ describe('MemberEditDialog', () => {
               roleName: 'PROFESSIONAL',
               seniorityTier: 'senior',
               isProfessional: true,
+              isBridalAssistant: false,
               status: 'active',
               phone: '+5511987654321',
               pixKey: '12345678909',
@@ -197,6 +201,7 @@ describe('MemberEditDialog', () => {
             id: 'mem-1',
             roleName: 'PROFESSIONAL',
             isProfessional: true,
+            isBridalAssistant: false,
             seniorityTier: 'senior',
             categoryIds: ['cat-1'],
           },
@@ -242,6 +247,7 @@ describe('MemberEditDialog', () => {
             id: 'mem-1',
             roleName: 'PROFESSIONAL',
             isProfessional: true,
+            isBridalAssistant: false,
             seniorityTier: 'senior',
             categoryIds: ['cat-1'],
           },
@@ -575,6 +581,7 @@ describe('MemberEditDialog (contato e categorias)', () => {
             id: 'mem-2',
             roleName: 'ATTENDANT',
             isProfessional: false,
+            isBridalAssistant: false,
             seniorityTier: null,
           },
         },
@@ -640,6 +647,7 @@ describe('MemberEditDialog (contato e categorias)', () => {
             id: 'mem-1',
             roleName: 'PROFESSIONAL',
             isProfessional: true,
+            isBridalAssistant: false,
             seniorityTier: 'senior',
             phone: '+551133334444',
             pixKey: 'ana@pix.com',
@@ -683,6 +691,88 @@ describe('MemberEditDialog (contato e categorias)', () => {
   });
 });
 
+describe('MemberEditDialog - Assistente da Noiva', () => {
+  const assistantMember: AdminMemberData = {
+    ...attendantMember,
+    isProfessional: true,
+    isBridalAssistant: true,
+  };
+
+  function updateMock(input: Record<string, unknown>, member: AdminMemberData) {
+    return {
+      request: { query: UpdateMemberMutation, variables: { input } },
+      result: { data: { updateMember: { member, errors: [] } } },
+    };
+  }
+
+  it('só mostra a caixa quando é profissional', () => {
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <MemberEditDialog member={attendantMember} open onClose={vi.fn()} />
+      </MockedProvider>,
+    );
+
+    expect(screen.queryByTestId('member-bridal-assistant')).toBeNull();
+    fireEvent.click(screen.getByLabelText('É profissional'));
+    expect(screen.getByTestId('member-bridal-assistant')).toBeInTheDocument();
+    expect(screen.getByLabelText('Assistente da Noiva')).not.toBeChecked();
+  });
+
+  it('envia isBridalAssistant true ao editar profissional com a caixa marcada', async () => {
+    const onClose = vi.fn();
+    const mock = updateMock(
+      {
+        id: 'mem-1',
+        roleName: 'PROFESSIONAL',
+        isProfessional: true,
+        isBridalAssistant: true,
+        seniorityTier: 'senior',
+        categoryIds: ['cat-1'],
+      },
+      { ...professionalMember, isBridalAssistant: true },
+    );
+    render(
+      <MockedProvider mocks={[mock, categoriesMock]} addTypename={false}>
+        <MemberEditDialog member={professionalMember} open onClose={onClose} />
+      </MockedProvider>,
+    );
+
+    fireEvent.click(screen.getByTestId('member-bridal-assistant'));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  it('desmarcar "É profissional" envia isBridalAssistant false', async () => {
+    const onClose = vi.fn();
+    const mock = updateMock(
+      {
+        id: 'mem-2',
+        roleName: 'ATTENDANT',
+        isProfessional: false,
+        isBridalAssistant: false,
+        seniorityTier: null,
+      },
+      attendantMember,
+    );
+    render(
+      <MockedProvider mocks={[mock, categoriesMock]} addTypename={false}>
+        <MemberEditDialog member={assistantMember} open onClose={onClose} />
+      </MockedProvider>,
+    );
+
+    expect(screen.getByTestId('member-bridal-assistant')).toBeChecked();
+    fireEvent.click(screen.getByLabelText('É profissional'));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+});
+
 // ---------------------------------------------------------------------------
 // CreateMemberDialog
 // ---------------------------------------------------------------------------
@@ -694,6 +784,7 @@ const createdMember = {
   roleName: 'PROFESSIONAL',
   seniorityTier: null,
   isProfessional: true,
+  isBridalAssistant: false,
   status: 'active',
   phone: '+5511987654321',
   pixKey: '12345678909',
@@ -818,6 +909,7 @@ describe('CreateMemberDialog', () => {
           birthDate: null,
           roleName: 'PROFESSIONAL',
           isProfessional: true,
+          isBridalAssistant: false,
           categoryIds: ['cat-1'],
         });
         return true;

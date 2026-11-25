@@ -61,6 +61,7 @@ const schema = z
       errorMap: () => ({ message: 'Selecione um papel.' }),
     }),
     alsoProfessional: z.boolean(),
+    isBridalAssistant: z.boolean(),
     categoryIds: z.array(z.string()),
     temporaryPassword: z
       .string()
@@ -94,6 +95,7 @@ function defaultValues(): FormValues {
     birthDate: '',
     roleName: undefined as unknown as FormValues['roleName'],
     alsoProfessional: false,
+    isBridalAssistant: false,
     categoryIds: [],
     temporaryPassword: generateTemporaryPassword(),
   };
@@ -190,6 +192,7 @@ export function CreateMemberDialog({
           birthDate: values.birthDate ? `${values.birthDate}T00:00:00.000Z` : null,
           roleName: values.roleName,
           isProfessional: professional,
+          isBridalAssistant: professional ? values.isBridalAssistant : false,
           categoryIds: professional ? values.categoryIds : [],
           temporaryPassword: values.temporaryPassword,
         },
@@ -402,6 +405,32 @@ export function CreateMemberDialog({
                       })
                     }
                     error={form.formState.errors.categoryIds?.message}
+                  />
+                )}
+
+                {isProfessional && (
+                  <FormField
+                    control={form.control}
+                    name="isBridalAssistant"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id="member-bridal-assistant"
+                            data-testid="member-bridal-assistant"
+                            checked={field.value}
+                            onChange={(e) => field.onChange(e.target.checked)}
+                          />
+                          <Label htmlFor="member-bridal-assistant">
+                            {t('team.createDialog.isBridalAssistantLabel')}
+                          </Label>
+                        </div>
+                        <p className="text-xs text-neutral-600">
+                          {t('team.createDialog.isBridalAssistantHint')}
+                        </p>
+                      </FormItem>
+                    )}
                   />
                 )}
 
