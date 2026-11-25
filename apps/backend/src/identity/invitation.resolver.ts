@@ -6,6 +6,7 @@ import { TenantContextService } from '../database/tenant-context.service';
 import { Public } from '../auth/decorators/public.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { CurrentTenant } from '../authz/decorators/current-tenant.decorator';
+import { RequireAccess } from '../authz/decorators/require-access.decorator';
 import { RequirePermission } from '../authz/decorators/require-permission.decorator';
 import { PERMISSIONS } from '../authz/permissions.catalog';
 import { AuthError } from '../auth/types';
@@ -21,6 +22,7 @@ export class InvitationResolver {
   ) {}
 
   @RequirePermission(PERMISSIONS.MEMBER_INVITE)
+  @RequireAccess('profissionais-todos')
   @Mutation('inviteMember')
   async invite(
     @Args('input') input: InviteMemberInput,
@@ -90,6 +92,7 @@ export class InvitationResolver {
   }
 
   @RequirePermission(PERMISSIONS.MEMBER_INVITE)
+  @RequireAccess('profissionais-todos')
   @Mutation('revokeInvitation')
   async revoke(
     @Args('invitationId') invitationId: string,
@@ -104,6 +107,7 @@ export class InvitationResolver {
     return { success: true, errors: [] };
   }
 
+  // fase 10: referência de todas as telas (ACCESS_EXEMPT)
   @RequirePermission(PERMISSIONS.MEMBER_READ)
   @Query('pendingInvitations')
   async pending(@CurrentTenant() tenantCtx: TenantContext) {

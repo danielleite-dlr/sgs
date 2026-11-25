@@ -295,7 +295,11 @@ export class MembersService {
    * `seniorityTier: null` is an explicit clear. Implements EQUIPE-02
    * (updateMember → member.editRole).
    */
-  async update(orgId: string, input: UpdateMemberInput) {
+  async update(
+    orgId: string,
+    input: UpdateMemberInput,
+    actorMemberId: string | null = null,
+  ) {
     return this.tenant.runWithTenant(orgId, async (tx) => {
       const existing = await tx.member.findFirst({
         where: { id: input.id, organizationId: orgId, deletedAt: null },
@@ -359,6 +363,33 @@ export class MembersService {
           );
         }
         data.roleId = role.id;
+
+        // Trocar o papel volta os acessos ao padrão do novo papel (PERM-11),
+        // na mesma transação da troca.
+        if (role.id !== existing.roleId) {
+          const removed = await tx.memberAccessOverride.findMany({
+            where: { memberId: input.id },
+            select: { itemId: true, enabled: true },
+          });
+          if (removed.length > 0) {
+            await tx.memberAccessOverride.deleteMany({
+              where: { memberId: input.id },
+            });
+            await recordAudit(tx, {
+              orgId,
+              actorMemberId,
+              action: 'member.access.reset',
+              entityType: 'member',
+              entityId: input.id,
+              metadata: {
+                reason: 'role_change',
+                fromRole: existing.role?.name,
+                toRole: input.roleName,
+                removed,
+              },
+            });
+          }
+        }
       }
 
       const finalRoleName = input.roleName ?? existing.role?.name;
