@@ -79,11 +79,15 @@ created: 2026-11-18
 
 ## Manual-Only Verifications
 
-| Behavior | Requirement | Why Manual | Test Instructions |
-|----------|-------------|------------|-------------------|
-| Push do lembrete chega no iPhone e abre `/comercial/lembretes` | COM-11 | depende de dispositivo real com app instalado | no staging, criar lembrete para daqui a 2 min com o usuário inscrito no push; tocar na notificação |
-| Arrastar no kanban pelo toque no celular | COM-06 | gesto de toque real | abrir Pipeline no iPhone, arrastar um card e usar "Mover para…" |
-| Formulário público embutido (iframe) no site do salão | COM-03 | depende do nginx/site externo | colar o snippet numa página de teste e enviar um lead |
+| Behavior | Requirement | Why Manual | Test Instructions | Resultado |
+|----------|-------------|------------|-------------------|-----------|
+| Push do lembrete chega no iPhone e abre `/comercial/lembretes` | COM-11 | depende de dispositivo real com app instalado | no staging, criar lembrete para daqui a 2 min com o usuário inscrito no push; tocar na notificação | ✅ aprovado pela usuária em 2026-11-24 (iPhone + Android, staging) |
+| Arrastar no kanban pelo toque no celular | COM-06 | gesto de toque real | abrir Pipeline no iPhone, arrastar um card e usar "Mover para…" | ✅ aprovado pela usuária em 2026-11-24 |
+| Formulário público embutido (iframe) no site do salão | COM-03 | depende do nginx/site externo | colar o snippet numa página de teste e enviar um lead | ✅ aprovado pela usuária em 2026-11-24 (página de teste em outra origem) |
+
+---
+
+Ganho com sinal Pix → contrato rascunho + sinal no caixa do dia (D-21): ✅ aprovado pela usuária em 2026-11-24.
 
 ---
 
