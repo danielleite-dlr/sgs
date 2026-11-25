@@ -4,6 +4,7 @@ import {
   CurrentTenant,
   TenantContext,
 } from '../authz/decorators/current-tenant.decorator';
+import { RequireAccess } from '../authz/decorators/require-access.decorator';
 import { RequirePermission } from '../authz/decorators/require-permission.decorator';
 import { PERMISSIONS } from '../authz/permissions.catalog';
 import { ClientCreditService } from './client-credit.service';
@@ -36,6 +37,7 @@ export class FinancialResolver {
   ) {}
 
   @Query('financialSummary')
+  @RequireAccess('fin-controle')
   @RequirePermission(PERMISSIONS.FINANCIAL_READ)
   summary(
     @CurrentTenant() tenant: TenantContext,
@@ -47,6 +49,7 @@ export class FinancialResolver {
   }
 
   @Query('cashMovements')
+  @RequireAccess('fin-controle')
   @RequirePermission(PERMISSIONS.FINANCIAL_READ)
   cashMovements(
     @CurrentTenant() tenant: TenantContext,
@@ -57,6 +60,7 @@ export class FinancialResolver {
   }
 
   @Query('commissionRecords')
+  @RequireAccess('fin-comissoes')
   @RequirePermission(PERMISSIONS.COMMISSION_RECORD_READ)
   async commissionRecords(
     @CurrentTenant() tenant: TenantContext,
@@ -73,6 +77,7 @@ export class FinancialResolver {
   }
 
   @Query('commissionTotals')
+  @RequireAccess('fin-comissoes')
   @RequirePermission(PERMISSIONS.COMMISSION_RECORD_READ)
   commissionTotals(
     @CurrentTenant() tenant: TenantContext,
@@ -88,12 +93,14 @@ export class FinancialResolver {
   }
 
   @Query('clientCreditBalances')
+  @RequireAccess('fin-credito')
   @RequirePermission(PERMISSIONS.CREDIT_READ)
   balances(@CurrentTenant() tenant: TenantContext) {
     return this.credit.balances(tenant.organizationId);
   }
 
   @Query('clientCreditMovements')
+  @RequireAccess('fin-credito')
   @RequirePermission(PERMISSIONS.CREDIT_READ)
   movements(
     @CurrentTenant() tenant: TenantContext,
@@ -103,6 +110,7 @@ export class FinancialResolver {
   }
 
   @Mutation('adjustClientCredit')
+  @RequireAccess('fin-credito')
   @RequirePermission(PERMISSIONS.CREDIT_ADJUST)
   adjust(
     @CurrentTenant() tenant: TenantContext,

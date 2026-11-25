@@ -1,6 +1,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { ClientsService } from './clients.service';
 import { CreateClientInput, UpdateClientInput } from './dto/client.input';
+import { RequireAccess } from '../authz/decorators/require-access.decorator';
 import { RequirePermission } from '../authz/decorators/require-permission.decorator';
 import { CurrentTenant } from '../authz/decorators/current-tenant.decorator';
 import { PERMISSIONS } from '../authz/permissions.catalog';
@@ -15,6 +16,7 @@ import type { TenantContext } from '../authz/decorators/current-tenant.decorator
 export class ClientsResolver {
   constructor(private readonly clients: ClientsService) {}
 
+  @RequireAccess('CLIENTES_REF')
   @RequirePermission(PERMISSIONS.CLIENT_READ)
   @Query('clients')
   async listClients(
@@ -26,6 +28,7 @@ export class ClientsResolver {
     return this.clients.list(tenantCtx.organizationId, { search, limit, offset });
   }
 
+  @RequireAccess('CLIENTES_REF')
   @RequirePermission(PERMISSIONS.CLIENT_READ)
   @Query('client')
   async getClient(
@@ -35,6 +38,7 @@ export class ClientsResolver {
     return this.clients.byId(tenantCtx.organizationId, id);
   }
 
+  @RequireAccess('CLIENTES_REF')
   @RequirePermission(PERMISSIONS.CLIENT_READ)
   @Query('clientsByField')
   async clientsByField(
@@ -52,6 +56,7 @@ export class ClientsResolver {
     });
   }
 
+  @RequireAccess('CLIENTES_REF')
   @RequirePermission(PERMISSIONS.CLIENT_READ)
   @Query('clientOverview')
   async clientOverview(
@@ -61,6 +66,7 @@ export class ClientsResolver {
     return this.clients.overview(tenantCtx.organizationId, clientId);
   }
 
+  @RequireAccess('CLIENTES_REF')
   @RequirePermission(PERMISSIONS.CLIENT_READ)
   @Query('clientHistory')
   async clientHistory(
@@ -71,6 +77,7 @@ export class ClientsResolver {
     return this.clients.history(tenantCtx.organizationId, clientId, filters);
   }
 
+  @RequireAccess('CLIENTES_REF')
   @RequirePermission(PERMISSIONS.CLIENT_WRITE)
   @Mutation('createClient')
   async createClient(
@@ -80,6 +87,7 @@ export class ClientsResolver {
     return this.clients.create(tenantCtx.organizationId, input);
   }
 
+  @RequireAccess('clientes-todos')
   @RequirePermission(PERMISSIONS.CLIENT_WRITE)
   @Mutation('updateClient')
   async updateClient(
@@ -89,6 +97,7 @@ export class ClientsResolver {
     return this.clients.update(tenantCtx.organizationId, input);
   }
 
+  @RequireAccess('clientes-todos')
   @RequirePermission(PERMISSIONS.CLIENT_WRITE)
   @Mutation('softDeleteClient')
   async softDeleteClient(
@@ -98,6 +107,7 @@ export class ClientsResolver {
     return this.clients.softDelete(tenantCtx.organizationId, input.id);
   }
 
+  @RequireAccess('clientes-todos')
   @RequirePermission(PERMISSIONS.CLIENT_WRITE)
   @Mutation('restoreClient')
   async restoreClient(

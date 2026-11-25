@@ -4,6 +4,7 @@ import {
   CurrentTenant,
   TenantContext,
 } from '../../authz/decorators/current-tenant.decorator';
+import { RequireAccess } from '../../authz/decorators/require-access.decorator';
 import { RequirePermission } from '../../authz/decorators/require-permission.decorator';
 import { PERMISSIONS } from '../../authz/permissions.catalog';
 import { AdjustStockInput, CreateProductInput, UpdateProductInput } from './dto/product.input';
@@ -13,6 +14,7 @@ export class ProductsResolver {
   constructor(private readonly svc: ProductsService) {}
 
   @Query('products')
+  @RequireAccess('CATALOGO_REF')
   @RequirePermission(PERMISSIONS.PRODUCT_READ)
   list(
     @CurrentTenant() t: TenantContext,
@@ -22,18 +24,21 @@ export class ProductsResolver {
   }
 
   @Query('product')
+  @RequireAccess('CATALOGO_REF')
   @RequirePermission(PERMISSIONS.PRODUCT_READ)
   one(@CurrentTenant() t: TenantContext, @Args('id') id: string) {
     return this.svc.byId(t.organizationId, id);
   }
 
   @Query('lowStockCount')
+  @RequireAccess('produtos-todos')
   @RequirePermission(PERMISSIONS.PRODUCT_READ)
   count(@CurrentTenant() t: TenantContext) {
     return this.svc.lowStockCount(t.organizationId);
   }
 
   @Query('productStockMovements')
+  @RequireAccess('produtos-todos')
   @RequirePermission(PERMISSIONS.PRODUCT_READ)
   movements(
     @CurrentTenant() t: TenantContext,
@@ -43,6 +48,7 @@ export class ProductsResolver {
   }
 
   @Mutation('createProduct')
+  @RequireAccess('produtos-todos')
   @RequirePermission(PERMISSIONS.PRODUCT_WRITE)
   create(
     @CurrentTenant() t: TenantContext,
@@ -52,6 +58,7 @@ export class ProductsResolver {
   }
 
   @Mutation('updateProduct')
+  @RequireAccess('produtos-todos')
   @RequirePermission(PERMISSIONS.PRODUCT_WRITE)
   update(
     @CurrentTenant() t: TenantContext,
@@ -61,6 +68,7 @@ export class ProductsResolver {
   }
 
   @Mutation('softDeleteProduct')
+  @RequireAccess('produtos-todos')
   @RequirePermission(PERMISSIONS.PRODUCT_WRITE)
   remove(
     @CurrentTenant() t: TenantContext,
@@ -70,6 +78,7 @@ export class ProductsResolver {
   }
 
   @Mutation('adjustStock')
+  @RequireAccess('produtos-todos')
   @RequirePermission(PERMISSIONS.PRODUCT_ADJUST_STOCK)
   adjustStock(
     @CurrentTenant() t: TenantContext,
