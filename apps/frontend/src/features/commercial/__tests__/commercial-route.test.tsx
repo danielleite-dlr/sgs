@@ -2,23 +2,46 @@ import { render, screen } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it } from 'vitest';
-import { CommercialRoute } from '../components/CommercialRoute';
+import { AccessRoute } from '@/features/access/AccessRoute';
+import type { AccessItemData } from '@/features/access/access.api';
+import { useAuthStore } from '@/infrastructure/stores/auth.store';
 import { CommercialSettingsPage } from '../pages/CommercialSettingsPage';
-import { setRole } from './commercial-fixtures';
 
-function renderAt(managerOnly: boolean) {
+function item(id: string, enabled: boolean): AccessItemData {
+  return {
+    id,
+    label: id,
+    group: 'comercial',
+    groupLabel: 'Comercial',
+    enabled,
+    defaultEnabled: enabled,
+    source: 'DEFAULT',
+    adjustable: true,
+    lockReason: null,
+    permissions: [],
+  };
+}
+
+function setAccess(roleName: string, items: AccessItemData[]) {
+  useAuthStore.setState({
+    roleName,
+    accessFresh: true,
+    access: { memberId: 'm-1', roleName, permissions: [], canManageAccess: false, items },
+  });
+}
+
+function renderRelatorios() {
   return render(
-    <MemoryRouter initialEntries={['/comercial/x']}>
+    <MemoryRouter initialEntries={['/comercial/relatorios']}>
       <Routes>
         <Route
-          path="/comercial/x"
+          path="/comercial/relatorios"
           element={
-            <CommercialRoute managerOnly={managerOnly}>
+            <AccessRoute items={['comercial-relatorios']}>
               <div>conteudo</div>
-            </CommercialRoute>
+            </AccessRoute>
           }
         />
-        <Route path="/comercial" element={<div>painel</div>} />
         <Route path="/agenda" element={<div>agenda</div>} />
         <Route path="/dashboard" element={<div>dashboard</div>} />
       </Routes>
@@ -26,28 +49,18 @@ function renderAt(managerOnly: boolean) {
   );
 }
 
-afterEach(() => setRole(null, null));
+afterEach(() => useAuthStore.setState({ roleName: null, access: null, accessFresh: false }));
 
-describe('CommercialRoute', () => {
-  it('PROFESSIONAL vai para a home do papel', () => {
-    setRole('PROFESSIONAL');
-    renderAt(false);
+describe('rotas do Comercial por item de acesso', () => {
+  it('Atendente sem comercial-relatorios vai para a home', () => {
+    setAccess('ATTENDANT', [item('comercial-relatorios', false), item('agenda', true)]);
+    renderRelatorios();
     expect(screen.getByText('agenda')).toBeInTheDocument();
   });
 
-  it('ATTENDANT em rota managerOnly volta para /comercial', () => {
-    setRole('ATTENDANT');
-    renderAt(true);
-    expect(screen.getByText('painel')).toBeInTheDocument();
-  });
-
-  it('ATTENDANT vê rota comum; ADMIN vê rota managerOnly', () => {
-    setRole('ATTENDANT');
-    const a = renderAt(false);
-    expect(screen.getByText('conteudo')).toBeInTheDocument();
-    a.unmount();
-    setRole('ADMIN');
-    renderAt(true);
+  it('Atendente com comercial-relatorios ganho abre a rota', () => {
+    setAccess('ATTENDANT', [item('comercial-relatorios', true)]);
+    renderRelatorios();
     expect(screen.getByText('conteudo')).toBeInTheDocument();
   });
 });
