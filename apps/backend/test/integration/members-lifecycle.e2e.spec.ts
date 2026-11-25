@@ -334,7 +334,7 @@ describe('Member lifecycle (EQUIPE-01..04)', () => {
         }`,
         { i: { id: targetMemberId, isProfessional: true } },
       );
-      expect(forbiddenCode(res)).toMatch(/FORBIDDEN/);
+      expect(forbiddenCode(res)).toMatch(/FORBIDDEN|ACCESS_DENIED/);
     });
 
     it('ADMIN calls deactivateMember → succeeds', async () => {
@@ -360,7 +360,7 @@ describe('Member lifecycle (EQUIPE-01..04)', () => {
         }`,
         { id: targetMemberId },
       );
-      expect(forbiddenCode(res)).toMatch(/FORBIDDEN/);
+      expect(forbiddenCode(res)).toMatch(/FORBIDDEN|ACCESS_DENIED/);
     });
 
     it('PROFESSIONAL calls reactivateMember → FORBIDDEN', async () => {
@@ -372,7 +372,7 @@ describe('Member lifecycle (EQUIPE-01..04)', () => {
         }`,
         { id: targetMemberId },
       );
-      expect(forbiddenCode(res)).toMatch(/FORBIDDEN/);
+      expect(forbiddenCode(res)).toMatch(/FORBIDDEN|ACCESS_DENIED/);
     });
 
     it('PROFESSIONAL calls allMembers → succeeds (has member.read)', async () => {

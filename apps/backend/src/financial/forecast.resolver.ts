@@ -3,6 +3,7 @@ import {
   CurrentTenant,
   TenantContext,
 } from '../authz/decorators/current-tenant.decorator';
+import { RequireAccess } from '../authz/decorators/require-access.decorator';
 import { RequirePermission } from '../authz/decorators/require-permission.decorator';
 import { PERMISSIONS } from '../authz/permissions.catalog';
 import { ForecastService } from './forecast.service';
@@ -12,6 +13,7 @@ export class ForecastResolver {
   constructor(private readonly forecast: ForecastService) {}
 
   @Query('cashForecast')
+  @RequireAccess('fin-previsao')
   @RequirePermission(PERMISSIONS.FINANCIAL_READ)
   cashForecast(
     @CurrentTenant() tenant: TenantContext,
