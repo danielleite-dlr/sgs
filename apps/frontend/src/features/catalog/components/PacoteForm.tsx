@@ -18,11 +18,17 @@ import {
 } from '@/components/ui/form';
 import { DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { useHasPermission } from '@/features/operations/operations-permissions';
 import { ServicesQuery } from '../api/servicos.api';
 import { CategoriesQuery, type CategoriesQueryResult } from '../api/categorias.api';
 import { CommissionRulesQuery, type CommissionRulesQueryResult } from '../api/comissoes.api';
 import { professionalCost } from '../utils/package-profit';
-import { CreatePackageMutation, UpdatePackageMutation, PackagesQuery } from '../api/pacotes.api';
+import {
+  CreatePackageMutation,
+  UpdatePackageMutation,
+  PackagesQuery,
+  BridalAssistantSettingsQuery,
+} from '../api/pacotes.api';
 import { PackagePriceSummary } from './PackagePriceSummary';
 import { PackageCostSummary } from './PackageCostSummary';
 import { PackageServicesPicker } from './PackageServicesPicker';
@@ -52,6 +58,7 @@ const schema = z.object({
   depositKind: z.enum(['none', 'fixed', 'percent']),
   depositValue: z.string(),
   contractDescription: z.string().max(2000, 'Use no máximo 2000 caracteres.'),
+  includesBridalAssistant: z.boolean(),
   // Custos que não são serviços (lanche, champagne, assistente...)
   costItems: z.array(
     z.object({
@@ -94,6 +101,7 @@ export interface PacoteFormInitial {
   depositKind?: 'fixed' | 'percent' | null;
   depositValue?: string | null;
   contractDescription?: string | null;
+  includesBridalAssistant?: boolean;
   costItems?: Array<{ name: string; cost: string }>;
 }
 
@@ -122,6 +130,14 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
     return m;
   }, [catData?.categories]);
 
+  // Custos só para quem enxerga o financeiro (ADMIN/MANAGER); o backend também esconde.
+  const canSeeCosts = useHasPermission('financial.read');
+  const { data: assistantData } = useQuery<{ bridalAssistantSettings: { dailyRate: string } }>(
+    BridalAssistantSettingsQuery,
+    { skip: !canSeeCosts },
+  );
+  const assistantRate = Number(assistantData?.bridalAssistantSettings?.dailyRate ?? 0);
+
   const [createPkg, { loading: creating }] = useMutation(CreatePackageMutation, {
     refetchQueries: [{ query: PackagesQuery }],
   });
@@ -148,6 +164,7 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
                 ? String(Number(initial.depositValue))
                 : '',
           contractDescription: initial.contractDescription ?? '',
+          includesBridalAssistant: initial.includesBridalAssistant ?? false,
           costItems: (initial.costItems ?? []).map((c) => ({
             name: c.name,
             cost: formatCurrencyDisplay(c.cost),
@@ -160,6 +177,7 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
           depositKind: 'none',
           depositValue: '',
           contractDescription: '',
+          includesBridalAssistant: false,
           costItems: [],
         },
   });
@@ -192,7 +210,8 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
       const n = Number(unmaskCurrency(c.cost || ''));
       return sum + (Number.isNaN(n) ? 0 : n);
     }, 0);
-    return (svcCost + extra).toFixed(2);
+    const assistant = watched.includesBridalAssistant && canSeeCosts ? assistantRate : 0;
+    return (svcCost + extra + assistant).toFixed(2);
   })();
   const professionalTotal = serviceCosts.reduce((sum, c) => sum + c.cost, 0);
 
@@ -213,6 +232,7 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
               ? unmaskCurrency(values.depositValue)
               : values.depositValue.replace(',', '.'),
         contractDescription: values.contractDescription.trim() || null,
+        includesBridalAssistant: values.includesBridalAssistant,
         costItems: values.costItems.map((c) => ({
           name: c.name.trim(),
           cost: unmaskCurrency(c.cost),
@@ -307,6 +327,31 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
           packagePrice={unmaskCurrency(form.watch('price') || '') || '0'}
         />
 
+        {/* Assistente da noiva no estúdio (09.1 D-04) */}
+        <FormField
+          control={form.control}
+          name="includesBridalAssistant"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="pkg-bridal-assistant"
+                  data-testid="pkg-bridal-assistant"
+                  checked={field.value}
+                  onChange={(e) => field.onChange(e.target.checked)}
+                />
+                <label htmlFor="pkg-bridal-assistant" className="text-sm font-medium">
+                  {t('catalog.pacote.includesBridalAssistantLabel')}
+                </label>
+              </div>
+              <p className="text-xs text-neutral-600">
+                {t('catalog.pacote.includesBridalAssistantHint')}
+              </p>
+            </FormItem>
+          )}
+        />
+
         {/* Custos do pacote (só o salão vê) */}
         <div className="space-y-sm" data-testid="package-cost-items">
           <div className="flex items-center justify-between">
@@ -378,6 +423,16 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
               )}
             </span>
           </p>
+          {watched.includesBridalAssistant && canSeeCosts && (
+            <p className="text-sm text-neutral-700" data-testid="pkg-bridal-assistant-cost">
+              {t('catalog.pacote.bridalAssistantDailyCostLabel')}:{' '}
+              <span className="font-semibold">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                  assistantRate,
+                )}
+              </span>
+            </p>
+          )}
           {missingCommission.length > 0 && (
             <p className="text-xs text-warning-700" role="status">
               Sem comissão cadastrada (conta R$ 0): {missingCommission.join(', ')}. Defina em

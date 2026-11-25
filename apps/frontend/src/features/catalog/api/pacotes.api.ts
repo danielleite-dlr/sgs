@@ -11,6 +11,8 @@ export const PackagesQuery = gql`
       depositKind
       depositValue
       contractDescription
+      includesBridalAssistant
+      bridalAssistantDailyCost
       coverImageUrl
       services {
         serviceId
@@ -51,6 +53,8 @@ export const CreatePackageMutation = gql`
         depositKind
         depositValue
         contractDescription
+        includesBridalAssistant
+        bridalAssistantDailyCost
         services {
           serviceId
           quantity
@@ -94,6 +98,8 @@ export const UpdatePackageMutation = gql`
         depositKind
         depositValue
         contractDescription
+        includesBridalAssistant
+        bridalAssistantDailyCost
         services {
           serviceId
           quantity
@@ -116,6 +122,29 @@ export const UpdatePackageMutation = gql`
         totalCost
         profit
         profitPercent
+      }
+      errors {
+        code
+        message
+        field
+      }
+    }
+  }
+`;
+
+export const BridalAssistantSettingsQuery = gql`
+  query BridalAssistantSettings {
+    bridalAssistantSettings {
+      dailyRate
+    }
+  }
+`;
+
+export const UpdateBridalAssistantSettingsMutation = gql`
+  mutation UpdateBridalAssistantSettings($dailyRate: String!) {
+    updateBridalAssistantSettings(dailyRate: $dailyRate) {
+      settings {
+        dailyRate
       }
       errors {
         code
@@ -181,6 +210,10 @@ export interface PackageData {
   depositKind?: 'fixed' | 'percent' | null;
   depositValue?: string | null;
   contractDescription?: string | null;
+  /** Pacote leva a assistente da noiva no estúdio (09.1). */
+  includesBridalAssistant: boolean;
+  /** Diária vigente somada ao custo. null para quem não vê custos. */
+  bridalAssistantDailyCost?: string | null;
   coverImageUrl?: string | null;
   services: PackageServiceItem[];
   /** Custos/lucro: null para quem não pode editar o catálogo. */
