@@ -1,11 +1,10 @@
 import { useQuery } from '@apollo/client';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
-import { useBridalPermission } from '@/features/bridal/bridal-permissions';
+import { useHasAccess } from '@/features/access/access-hooks';
 import { DashboardContractsQuery, type DashboardContractsResult } from '../../api/dashboard.api';
 import { upcomingContracts } from '../../lib/operational-dashboard';
 import { ORG_TIMEZONE_DEFAULT, todayInTimeZone } from '../../lib/period';
-import { useHasPermission } from '../../operations-permissions';
 import { BlockError, BlockLoading, LINK_CLASS, SECTION_TITLE_CLASS } from './BlockState';
 
 function ddMmYyyy(iso: string): string {
@@ -14,8 +13,8 @@ function ddMmYyyy(iso: string): string {
 }
 
 export function UpcomingContractsCard() {
-  const canContract = useBridalPermission('contract.read');
-  const canFinance = useHasPermission('financial.read');
+  const canContract = useHasAccess('contratos');
+  const canFinance = useHasAccess('fin-controle');
   const { data, error, refetch } = useQuery<DashboardContractsResult>(DashboardContractsQuery, {
     fetchPolicy: 'cache-and-network',
     skip: !canContract,

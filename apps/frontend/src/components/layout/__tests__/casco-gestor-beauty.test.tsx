@@ -14,6 +14,7 @@ import { TopHeader } from '../TopHeader';
 import { BottomNav } from '../BottomNav';
 import { AppDrawer } from '../AppDrawer';
 import { PageHeader } from '../PageHeader';
+import { PADRAO_PROFISSIONAL, accessWith } from './access-fixture';
 
 function sessao(extra: Partial<ReturnType<typeof useAuthStore.getState>> = {}) {
   useAuthStore.setState({
@@ -21,6 +22,7 @@ function sessao(extra: Partial<ReturnType<typeof useAuthStore.getState>> = {}) {
     organizationName: 'Studio JS',
     fullName: null,
     permissions: [],
+    access: null,
     ...extra,
   });
 }
@@ -177,7 +179,7 @@ describe('casco Gestor Beauty: barra inferior do celular (D-17)', () => {
   });
 
   it('profissional não vê Noivas', () => {
-    sessao({ roleName: 'PROFESSIONAL' });
+    sessao({ roleName: 'PROFESSIONAL', access: accessWith(PADRAO_PROFISSIONAL) });
     renderBottom();
     const nav = screen.getByTestId('bottom-nav');
     expect(within(nav).queryByRole('link', { name: 'Noivas' })).toBeNull();

@@ -4,10 +4,11 @@ import { AppointmentsQuery, type AppointmentsQueryResult } from '../../api/appoi
 import { todayAppointmentsWindow } from '../../lib/operational-dashboard';
 
 // Mesmas variáveis nos dois blocos: o Apollo deduplica a requisição.
-export function useTodayAppointments() {
+export function useTodayAppointments(skip = false) {
   const variables = useMemo(() => ({ ...todayAppointmentsWindow(), professionalId: null }), []);
   return useQuery<AppointmentsQueryResult>(AppointmentsQuery, {
     variables,
     fetchPolicy: 'cache-and-network',
+    skip,
   });
 }

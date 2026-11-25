@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useHasAccess } from '@/features/access/access-hooks';
 import { Card } from '@/components/ui/card';
 import { pendingAppointments, type PendingAppointmentRow } from '../../lib/operational-dashboard';
 import { BlockError, BlockLoading, LINK_CLASS, SECTION_TITLE_CLASS } from './BlockState';
@@ -14,7 +15,9 @@ function StatusBadge({ row }: { row: PendingAppointmentRow }) {
 }
 
 export function UpcomingAppointmentsCard() {
-  const { data, error, refetch } = useTodayAppointments();
+  const canRead = useHasAccess('agenda');
+  const { data, error, refetch } = useTodayAppointments(!canRead);
+  if (!canRead) return null;
   const rows = data ? pendingAppointments(data.appointments) : null;
 
   return (

@@ -1,19 +1,19 @@
 import { useQuery } from '@apollo/client';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
+import { useHasAccess } from '@/features/access/access-hooks';
 import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
 import { ComandasQuery, type ComandasQueryResult } from '../../api/comandas.api';
 import { openComandaRows } from '../../lib/operational-dashboard';
 import { ORG_TIMEZONE_DEFAULT, addDays, todayInTimeZone } from '../../lib/period';
-import { useHasPermission } from '../../operations-permissions';
 import { BlockError, BlockLoading, SECTION_TITLE_CLASS } from './BlockState';
 
 const MAX_ROWS = 5;
 const ROW_LINK = 'inline-flex min-h-[44px] items-center hover:underline';
 
 export function OpenComandasCard() {
-  const canRead = useHasPermission('comanda.read');
-  const canFinance = useHasPermission('financial.read');
+  const canRead = useHasAccess('fin-comandas');
+  const canFinance = useHasAccess('fin-controle');
   const today = todayInTimeZone(ORG_TIMEZONE_DEFAULT);
   const { data, error, refetch } = useQuery<ComandasQueryResult>(ComandasQuery, {
     variables: { from: '2000-01-01', to: addDays(today, 1), status: 'open', clientId: null },
