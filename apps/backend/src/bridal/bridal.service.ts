@@ -6,6 +6,7 @@ import type { PushJob } from "../push/push.types";
 import type { TenantPrismaClient } from "../database/types";
 import {
   assistantCandidatesTx,
+  syncAssistantAfterUpdateTx,
   clearAssistantTx,
   setAssistantTx,
   type AssistantCandidate,
@@ -718,6 +719,7 @@ export class BridalService {
           travelMinutesBefore: true,
           travelMinutesAfter: true,
           packageId: true,
+          eventDate: true,
         },
       });
       // packageId tratado à parte para preservar a semântica omitido (mantém) x null (limpa)
@@ -746,8 +748,16 @@ export class BridalService {
       if (packageId && packageId !== before.packageId) {
         await applyPackageToBrideTx(tx, orgId, id, packageId);
       }
+      // 09.1: remove a assistente se o grupo deixou de ser elegível (D-05) ou move o bloqueio
+      const warning = await syncAssistantAfterUpdateTx(
+        tx,
+        orgId,
+        memberId,
+        id,
+        before.eventDate.toISOString().slice(0, 10),
+      );
       await syncContractCoverageTx(tx, orgId, id);
-      return id;
+      return { groupId: id, warning };
     });
   }
 
@@ -940,6 +950,8 @@ export class BridalService {
       const result = await this.tenant.runWithTenant(
         orgId,
         async (tx) => {
+          // 09.1 D-12: colunas da assistente ficam (histórico); o bloqueio some em
+          // cancelGroupAppointmentsTx e o repasse exige grupo 'active'.
           await requireActiveGroup(tx, input.id);
           const live = await tx.contract.findFirst({
             where: { bridalGroupId: input.id, status: { not: "cancelled" } },
