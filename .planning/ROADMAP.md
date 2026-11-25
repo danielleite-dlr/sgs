@@ -402,7 +402,7 @@ Plans:
 **Goal:** Pedido da usuária em 2026-11-24. Noivas atendidas **no estúdio** com pacote marcado "inclui assistente da noiva" têm uma **assistente** (profissional com a função "Assistente da Noiva", sem uso do sistema) que acompanha a noiva o dia todo. Diária da configuração do salão (padrão **R$ 220**, snapshot ao vincular), só **custo interno** (não muda preço nem contrato); vínculo/troca no grupo da noiva (ADMIN/MANAGER/ATTENDANT); agenda dela **bloqueada o dia todo** ("Acompanhando noiva X"); repasse da diária **ao fechar a comanda** (cancelou, não paga); noivas já cadastradas ficam pendentes, com aviso no grupo e filtro "Sem assistente" na lista. Noiva externa e debutantes ficam fora. Decisões D-01..D-18 em `.planning/phases/09.1-assistente-de-noiva/09.1-CONTEXT.md`.
 **Requirements**: AN-01, AN-02, AN-03, AN-04, AN-05, AN-06, AN-07, AN-08, AN-09
 **Depends on:** Phase 9
-**Plans:** 9/12 plans executed
+**Plans:** 10/12 plans executed
 
 Plans:
 - [x] 09.1-01-PLAN.md — migrações (colunas, bloqueio acompanhamento, purge_member, backfill guardado da Studio JS), Prisma, diária vigente e fixtures (onda 1)
@@ -414,7 +414,7 @@ Plans:
 - [x] 09.1-07-PLAN.md — frontend de Profissionais, bloqueio na agenda e textos i18n (onda 3)
 - [x] 09.1-09-PLAN.md — frontend do card da assistente no grupo, filtro e selo "Sem assistente" (onda 3)
 - [x] 09.1-08-PLAN.md — frontend do pacote com assistente e card da diária em Pacotes (onda 4)
-- [ ] 09.1-10-PLAN.md — E2E Playwright do fluxo completo (onda 5)
+- [x] 09.1-10-PLAN.md — E2E Playwright do fluxo completo (onda 5)
 - [ ] 09.1-11-PLAN.md — gate, confirmação da remoção do custo manual, backup, deploy no staging e CI (onda 6)
 - [ ] 09.1-12-PLAN.md — verificação humana no staging (onda 7)
 
