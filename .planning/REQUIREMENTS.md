@@ -109,7 +109,7 @@
 - [ ] **PERM-09**: "Perfis de acesso" não pode ser ligado para Atendente nem Profissional _(10 D-09)_
 - [ ] **PERM-10**: Cada mudança de acesso (e cada "voltar ao padrão") grava no registro de auditoria quem mudou, em quem, quais itens e de qual valor para qual _(10, critério do Claude)_
 - [ ] **PERM-11**: Quando a pessoa muda de papel, os ajustes dela voltam ao padrão do novo papel, com aviso na tela de edição, e a mudança é auditada _(10, critério do Claude)_
-- [ ] **PERM-12**: Lembretes do Comercial, avisos de agenda (push), alertas de contrato (notificação e e-mail), estoque baixo e o contador do sino respeitam o item desligado: quem perdeu o item não recebe nem vê o aviso _(10 critério do Claude)_
+- [x] **PERM-12**: Lembretes do Comercial, avisos de agenda (push), alertas de contrato (notificação e e-mail), estoque baixo e o contador do sino respeitam o item desligado: quem perdeu o item não recebe nem vê o aviso _(10 critério do Claude)_
 - [ ] **PERM-13**: O menu (barra lateral, gaveta do celular, barra inferior e busca global) mostra só os itens ligados para a pessoa; grupo sem itens some; cartões do painel inicial não aparecem nem consultam o que está desligado _(10 D-02, D-06)_
 - [ ] **PERM-14**: A rota (inclusive telas de detalhe) de um item desligado bloqueia e leva a pessoa para uma tela inicial válida, sem laço e sem logout _(10 D-02)_
 - [ ] **PERM-15**: O app consulta os acessos da pessoa e atualiza o menu em até 1 minuto, ao trocar de tela, ao voltar do segundo plano (iPhone instalado e Android) e quando a API recusa, sem sair e entrar _(10 D-13)_
@@ -234,7 +234,7 @@
 | PERM-09 | Phase 10 | Pending |
 | PERM-10 | Phase 10 | Pending |
 | PERM-11 | Phase 10 | Pending |
-| PERM-12 | Phase 10 | Pending |
+| PERM-12 | Phase 10 | Complete |
 | PERM-13 | Phase 10 | Pending |
 | PERM-14 | Phase 10 | Pending |
 | PERM-15 | Phase 10 | Pending |
