@@ -4,12 +4,19 @@ import { TenantContextService } from "../database/tenant-context.service";
 import { PushEventsService } from "../push/push-events.service";
 import type { PushJob } from "../push/push.types";
 import type { TenantPrismaClient } from "../database/types";
+import {
+  assistantCandidatesTx,
+  clearAssistantTx,
+  setAssistantTx,
+  type AssistantCandidate,
+} from "./bridal-assistant";
 import { syncContractCoverageTx } from "./bridal-coverage";
 import { applyPackageToBrideTx } from "./bridal-package";
 import {
   BRIDAL_SCHEDULE_TX_OPTIONS,
   cancelGroupAppointmentsTx,
   createBridalScheduleTx,
+  orgTimezone,
   rebuildTravelBlocksTx,
   type BridalScheduleInput,
 } from "./bridal-schedule";
@@ -75,6 +82,8 @@ export type BridalGroupView = ReturnType<typeof serializeBridalGroup>;
 
 export interface BridalGroupPayload {
   group: BridalGroupView | null;
+  /** Aviso ao usuário (ex.: assistente removida) */
+  warning?: string | null;
   errors: BridalUserError[];
 }
 
@@ -95,7 +104,7 @@ const LIST_LIMIT = 200;
 
 const fail = (e: unknown): BridalGroupPayload => {
   const m = mapBridalError(e);
-  if (m) return { group: null, errors: [m] };
+  if (m) return { group: null, warning: null, errors: [m] };
   throw e;
 };
 
@@ -384,8 +393,9 @@ async function buildViews(
   });
   const closed = await tx.appointment.findMany({
     where: { bridalGroupId: { in: ids }, comanda: { status: "closed" } },
-    select: { bridalGroupId: true, clientId: true },
+    select: { bridalGroupId: true, clientId: true, purpose: true },
   });
+  const todayYmd = localDate(new Date(), await orgTimezone(tx));
   const details = await tx.appointment.findMany({
     where: { bridalGroupId: { in: ids } },
     include: BRIDAL_APPOINTMENT_INCLUDE,
@@ -406,8 +416,20 @@ async function buildViews(
       closedComandaClientIds: new Set(
         closed.filter((c) => c.bridalGroupId === row.id).map((c) => c.clientId),
       ),
+      todayYmd,
+      // 09.1 D-17: comanda do dia da noiva (evento) fechada encerra a pendência
+      eventComandaClosed: closed.some(
+        (c) =>
+          c.bridalGroupId === row.id &&
+          c.clientId === brideClientId(row) &&
+          (c.purpose === "event" || c.purpose === null),
+      ),
     });
   });
+}
+
+function brideClientId(row: BridalGroupRow): string | null {
+  return row.members.find((m) => m.role === "bride")?.clientId ?? null;
 }
 
 async function viewOf(
@@ -615,16 +637,38 @@ export class BridalService {
 
   private async write(
     orgId: string,
-    fn: (tx: TenantPrismaClient) => Promise<string>,
+    fn: (
+      tx: TenantPrismaClient,
+    ) => Promise<string | { groupId: string; warning?: string | null }>,
   ): Promise<BridalGroupPayload> {
     try {
       return await this.tenant.runWithTenant(orgId, async (tx) => {
-        const groupId = await fn(tx);
-        return { group: await viewOf(tx, groupId), errors: [] };
+        const r = await fn(tx);
+        const groupId = typeof r === "string" ? r : r.groupId;
+        const warning = typeof r === "string" ? null : (r.warning ?? null);
+        return { group: await viewOf(tx, groupId), warning, errors: [] };
       });
     } catch (e) {
       return fail(e);
     }
+  }
+
+  /** Vincula/troca (memberId) ou remove (null) a assistente da noiva (09.1 D-13). */
+  setAssistant(
+    orgId: string,
+    actorId: string,
+    groupId: string,
+    memberId: string | null,
+  ): Promise<BridalGroupPayload> {
+    return this.write(orgId, async (tx) => {
+      if (memberId) await setAssistantTx(tx, orgId, actorId, groupId, memberId);
+      else await clearAssistantTx(tx, orgId, actorId, groupId, "manual");
+      return groupId;
+    });
+  }
+
+  async assistantCandidates(orgId: string, groupId: string): Promise<AssistantCandidate[]> {
+    return this.tenant.runWithTenant(orgId, (tx) => assistantCandidatesTx(tx, groupId));
   }
 
   create(

@@ -26,6 +26,14 @@ type BridalGroup {
   packageId: UUID
   packageName: String
   appointmentCount: Int!
+  "Grupo tem direito a assistente da noiva (noiva no estúdio com pacote marcado) — 09.1 D-03"
+  assistantRequired: Boolean!
+  "Sem assistente vinculada, evento hoje ou futuro e comanda do dia não fechada (D-17)"
+  assistantPending: Boolean!
+  assistantMemberId: UUID
+  assistantName: String
+  "Diária guardada no vínculo (D-08); só ADMIN/MANAGER"
+  assistantDailyRate: String
   "Serviços do evento sem agendamento ativo; 0 enquanto a agenda do evento não foi montada (261124-n98)"
   unscheduledServiceCount: Int!
   appointments: [BridalAppointment!]!
@@ -103,7 +111,17 @@ input CreateBridalGroupInput {
 
 type BridalGroupPayload {
   group: BridalGroup
+  "Aviso ao usuário (ex.: assistente removida, 09.1 D-05)"
+  warning: String
   errors: [UserError!]!
+}
+
+type BridalAssistantCandidate {
+  memberId: UUID!
+  displayName: String!
+  available: Boolean!
+  reason: String
+  current: Boolean!
 }
 
 type DeleteBridalGroupPermanentlyPayload {
@@ -166,6 +184,8 @@ extend type Query {
   "from/to = datas YYYY-MM-DD do evento (inclusivas)"
   bridalGroups(status: String, from: String, to: String): [BridalGroup!]!
   bridalGroup(id: UUID!): BridalGroup
+  "Assistentes da noiva para o dia do grupo; ocupadas vêm com available=false (D-15)"
+  bridalAssistantCandidates(groupId: UUID!): [BridalAssistantCandidate!]!
 }
 
 extend type Mutation {
@@ -174,6 +194,8 @@ extend type Mutation {
   addBridalGroupMember(groupId: UUID!, person: BridalPersonInput!): BridalGroupPayload!
   removeBridalGroupMember(memberId: UUID!): BridalGroupPayload!
   setBridalMemberCoverage(memberId: UUID!, covered: Boolean!): BridalGroupPayload!
+  "Vincula/troca (memberId) ou remove (memberId null) a assistente da noiva (D-13, D-16)"
+  setBridalGroupAssistant(groupId: UUID!, memberId: UUID): BridalGroupPayload!
   setBridalMemberServices(
     memberId: UUID!
     services: [BridalMemberServiceInput!]!

@@ -409,7 +409,7 @@ Plans:
 - [x] 09.1-02-PLAN.md — TDD das regras puras (elegibilidade, pendência) e diária no custo do pacote (onda 1)
 - [x] 09.1-03-PLAN.md — backend da função Assistente da Noiva na profissional (onda 2)
 - [x] 09.1-04-PLAN.md — backend do pacote com assistente, custo/lucro e configuração da diária (onda 2)
-- [ ] 09.1-05-PLAN.md — backend do vínculo/troca, candidatas livres, bloqueio all-day e recusa de conflitos (onda 2)
+- [x] 09.1-05-PLAN.md — backend do vínculo/troca, candidatas livres, bloqueio all-day e recusa de conflitos (onda 2)
 - [ ] 09.1-06-PLAN.md — repasse da diária no fechamento da comanda e ciclo do grupo (local, pacote, data, cancelamento) (onda 3)
 - [ ] 09.1-07-PLAN.md — frontend de Profissionais, bloqueio na agenda e textos i18n (onda 3)
 - [ ] 09.1-09-PLAN.md — frontend do card da assistente no grupo, filtro e selo "Sem assistente" (onda 3)

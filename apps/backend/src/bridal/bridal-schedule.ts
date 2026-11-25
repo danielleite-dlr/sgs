@@ -265,7 +265,9 @@ export async function rebuildTravelBlocksTx(
   const profIds = [...new Set(appts.map((a) => a.professionalId))];
   if (profIds.length > 0) await acquireScheduleLocks(tx, orgId, profIds);
 
-  await tx.timeBlock.deleteMany({ where: { bridalGroupId: groupId } });
+  await tx.timeBlock.deleteMany({
+    where: { bridalGroupId: groupId, kind: 'deslocamento' },
+  });
 
   const before = group.travelMinutesBefore;
   const after = group.travelMinutesAfter;
@@ -330,6 +332,8 @@ export async function cancelGroupAppointmentsTx(
       reason: a.reason,
     });
   }
-  await tx.timeBlock.deleteMany({ where: { bridalGroupId: a.groupId } });
+  await tx.timeBlock.deleteMany({
+    where: { bridalGroupId: a.groupId, kind: 'deslocamento' },
+  });
   return appts.length;
 }

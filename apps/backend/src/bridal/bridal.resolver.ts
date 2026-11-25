@@ -1,4 +1,5 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { canSeeCatalogCosts } from '../catalog/catalog-costs';
 import {
   CurrentTenant,
   TenantContext,
@@ -33,6 +34,30 @@ export class BridalResolver {
   @RequirePermission(PERMISSIONS.BRIDAL_READ)
   get(@CurrentTenant() tenant: TenantContext, @Args('id') id: string) {
     return this.bridal.get(tenant.organizationId, id);
+  }
+
+  @Query('bridalAssistantCandidates')
+  @RequirePermission(PERMISSIONS.BRIDAL_WRITE)
+  assistantCandidates(
+    @CurrentTenant() tenant: TenantContext,
+    @Args('groupId') groupId: string,
+  ) {
+    return this.bridal.assistantCandidates(tenant.organizationId, groupId);
+  }
+
+  @Mutation('setBridalGroupAssistant')
+  @RequirePermission(PERMISSIONS.BRIDAL_WRITE)
+  setAssistant(
+    @CurrentTenant() tenant: TenantContext,
+    @Args('groupId') groupId: string,
+    @Args('memberId') memberId?: string | null,
+  ) {
+    return this.bridal.setAssistant(
+      tenant.organizationId,
+      tenant.memberId,
+      groupId,
+      memberId ?? null,
+    );
   }
 
   @Mutation('createBridalGroup')
@@ -118,5 +143,17 @@ export class BridalResolver {
     @Args('services') services: BridalMemberServiceInput[],
   ) {
     return this.bridal.setServices(tenant.organizationId, memberId, services);
+  }
+}
+
+/** Campos do BridalGroup que dependem de quem pergunta (diária só para ADMIN/MANAGER). */
+@Resolver('BridalGroup')
+export class BridalGroupFieldsResolver {
+  @ResolveField('assistantDailyRate')
+  assistantDailyRate(
+    @CurrentTenant() t: TenantContext | undefined,
+    @Parent() g: { assistantDailyRate?: string | null },
+  ) {
+    return canSeeCatalogCosts(t?.roleName) ? (g.assistantDailyRate ?? null) : null;
   }
 }
