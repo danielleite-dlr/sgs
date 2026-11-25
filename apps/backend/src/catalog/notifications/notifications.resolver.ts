@@ -1,4 +1,5 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { AccessService, type AccessGqlContext } from '../../authz/access/access.service';
 import { NotificationsService } from './notifications.service';
 import {
   CurrentTenant,
@@ -6,18 +7,24 @@ import {
 } from '../../authz/decorators/current-tenant.decorator';
 import { RequirePermission } from '../../authz/decorators/require-permission.decorator';
 import { PERMISSIONS } from '../../authz/permissions.catalog';
+import { hiddenNotificationKinds } from './notification-visibility';
 
 @Resolver()
 export class NotificationsResolver {
-  constructor(private readonly svc: NotificationsService) {}
+  constructor(
+    private readonly svc: NotificationsService,
+    private readonly access: AccessService,
+  ) {}
 
   @Query('notifications')
   @RequirePermission(PERMISSIONS.NOTIFICATION_READ)
-  list(
+  async list(
     @CurrentTenant() t: TenantContext,
+    @Context() ctx: AccessGqlContext,
     @Args('unreadOnly') unreadOnly?: boolean,
   ) {
-    return this.svc.list(t.organizationId, t.memberId, unreadOnly ?? true);
+    const hidden = hiddenNotificationKinds(await this.access.forContext(ctx));
+    return this.svc.list(t.organizationId, t.memberId, unreadOnly ?? true, hidden);
   }
 
   @Mutation('markNotificationRead')
@@ -31,13 +38,15 @@ export class NotificationsResolver {
 
   @Query('unreadNotificationCount')
   @RequirePermission(PERMISSIONS.NOTIFICATION_READ)
-  unreadCount(@CurrentTenant() t: TenantContext) {
-    return this.svc.unreadCount(t.organizationId, t.memberId);
+  async unreadCount(@CurrentTenant() t: TenantContext, @Context() ctx: AccessGqlContext) {
+    const hidden = hiddenNotificationKinds(await this.access.forContext(ctx));
+    return this.svc.unreadCount(t.organizationId, t.memberId, hidden);
   }
 
   @Mutation('markAllNotificationsRead')
   @RequirePermission(PERMISSIONS.NOTIFICATION_READ)
-  markAllRead(@CurrentTenant() t: TenantContext) {
-    return this.svc.markAllRead(t.organizationId, t.memberId);
+  async markAllRead(@CurrentTenant() t: TenantContext, @Context() ctx: AccessGqlContext) {
+    const hidden = hiddenNotificationKinds(await this.access.forContext(ctx));
+    return this.svc.markAllRead(t.organizationId, t.memberId, hidden);
   }
 }
