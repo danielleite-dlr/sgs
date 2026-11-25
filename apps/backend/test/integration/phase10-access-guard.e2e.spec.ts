@@ -73,15 +73,15 @@ describe('10 — guard de acesso por pessoa', () => {
     expect(ok.errors).toBeUndefined();
   });
 
-  it('Atendente com fin-previsao ganho segue sem financial.read em operação sem @RequireAccess', async () => {
+  it('Atendente com fin-previsao ganho segue sem acesso a financialSummary (item fin-controle desligado, 10-04)', async () => {
     await setOverrideRow(w, w.members.attendant, 'fin-previsao', true);
     const res = await gqlAs(w, w.tokens.attendant)(SUMMARY);
     const e = firstError(res);
     expect(e?.extensions?.code).toBe('ACCESS_DENIED');
-    expect(e?.message).toMatch(/^FORBIDDEN: missing permissions \[financial\.read\]/);
+    expect(e?.message).toMatch(/^FORBIDDEN: área desativada/);
   });
 
-  it('Profissional chamando comandas (sem @RequireAccess) continua ok', async () => {
+  it('Profissional chamando comandas (fin-comandas ligado por padrão) continua ok', async () => {
     const res = await gqlAs(w, w.tokens.proA)(COMANDAS);
     expect(res.errors).toBeUndefined();
   });
