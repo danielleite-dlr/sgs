@@ -93,8 +93,13 @@ export function computePackageCosts(input: {
   price: DecimalLike;
   serviceCostCents: number[];
   costItems: Array<{ cost: DecimalLike }>;
+  /**
+   * Diária da assistente da noiva vigente, só para pacotes marcados (09.1 D-10);
+   * custo interno, não muda o preço.
+   */
+  assistantDailyCents?: number;
 }): PackageCostSummary {
-  let costCents = 0;
+  let costCents = input.assistantDailyCents ?? 0;
   for (const c of input.serviceCostCents) costCents += c;
   for (const ci of input.costItems) costCents += toCents(ci.cost);
   const priceCents = toCents(input.price);

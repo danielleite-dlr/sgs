@@ -25,6 +25,26 @@ describe('catalog-costs', () => {
     });
   });
 
+  describe('computePackageCosts — diária da assistente (09.1)', () => {
+    const base = { price: '1000.00', serviceCostCents: [30000], costItems: [{ cost: '50.00' }] };
+
+    it('soma a diária ao custo total', () => {
+      expect(computePackageCosts({ ...base, assistantDailyCents: 22000 })).toEqual({
+        totalCost: '570.00',
+        profit: '430.00',
+        profitPercent: '43.00',
+      });
+    });
+
+    it('sem assistantDailyCents mantém o comportamento atual', () => {
+      expect(computePackageCosts(base).totalCost).toBe('350.00');
+    });
+
+    it('diária 0 equivale a omitida', () => {
+      expect(computePackageCosts({ ...base, assistantDailyCents: 0 })).toEqual(computePackageCosts(base));
+    });
+  });
+
   describe('professionalCostCents (repasse = comissão do serviço)', () => {
     const rule = (r: Partial<RuleLite>): RuleLite => ({
       id: Math.random().toString(),
