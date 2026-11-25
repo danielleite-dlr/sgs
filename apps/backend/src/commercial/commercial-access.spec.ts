@@ -3,7 +3,6 @@ import {
   WIN_DEAL_ROLES,
   canWinAs,
   commercialViewerFrom,
-  canUseCommercial,
   canWinDeal,
   isManagerRole,
   visibilityWhere,
@@ -17,14 +16,6 @@ describe('papéis do Comercial', () => {
     expect(isManagerRole('PROFESSIONAL')).toBe(false);
     expect(isManagerRole('')).toBe(false);
     expect(isManagerRole(null)).toBe(false);
-  });
-
-  it('canUseCommercial', () => {
-    expect(canUseCommercial('ADMIN')).toBe(true);
-    expect(canUseCommercial('MANAGER')).toBe(true);
-    expect(canUseCommercial('ATTENDANT')).toBe(true);
-    expect(canUseCommercial('PROFESSIONAL')).toBe(false);
-    expect(canUseCommercial(undefined)).toBe(false);
   });
 
   it('canWinDeal (D-21): atendente pode, profissional não', () => {

@@ -6,13 +6,8 @@
  */
 import { expandGates, isGranted, type ResolvedAccess } from '../authz/access/access-resolve';
 
-export const COMMERCIAL_ROLES = ['ADMIN', 'MANAGER', 'ATTENDANT'] as const;
-
 export const isManagerRole = (r: string | null | undefined): boolean =>
   r === 'ADMIN' || r === 'MANAGER';
-
-export const canUseCommercial = (r: string | null | undefined): boolean =>
-  !!r && (COMMERCIAL_ROLES as readonly string[]).includes(r);
 
 /**
  * D-21 (confirmada pela usuária em 2026-11-18): quem marca ganho: todos os papéis do

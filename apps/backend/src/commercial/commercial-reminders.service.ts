@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { TenantContextService } from '../database/tenant-context.service';
 import type { TenantPrismaClient } from '../database/types';
 import { PushEventsService } from '../push/push-events.service';
-import { isManagerRole, visibilityWhere, type CommercialViewer } from './commercial-access';
+import { visibilityWhere, type CommercialViewer } from './commercial-access';
 import { CommercialError, mapCommercialError, type CommercialUserError } from './commercial-errors';
 
 export interface CreateCommercialReminderDto {
@@ -303,7 +303,7 @@ export class CommercialRemindersService {
           where: { id, AND: [this.vis(viewer)] },
         });
         if (!cur) throw notFound();
-        if (!isManagerRole(viewer.roleName) && cur.createdBy !== viewer.memberId) {
+        if (!viewer.scopeAll && cur.createdBy !== viewer.memberId) {
           throw new CommercialError(
             'FORBIDDEN_ROLE',
             'Só quem criou o lembrete ou a gestão pode excluir.',

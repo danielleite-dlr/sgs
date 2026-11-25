@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { TenantContextService } from '../database/tenant-context.service';
 import type { TenantPrismaClient } from '../database/types';
-import { isManagerRole, visibilityWhere, type CommercialViewer } from './commercial-access';
+import { eligibleAssigneeIds } from './commercial-assignees';
+import { visibilityWhere, type CommercialViewer } from './commercial-access';
 import { CommercialError, mapCommercialError, type CommercialUserError } from './commercial-errors';
 import { findDuplicatesTx } from './commercial-leads.service';
 import { phoneDigits } from './commercial-phone';
@@ -42,14 +43,15 @@ function decode(base64: string): Buffer {
 export class CommercialImportService {
   constructor(private readonly tenant: TenantContextService) {}
 
-  /** Candidatos a responsável (D-22): PROFESSIONAL e inativos ficam de fora, logo nunca casam. */
+  /** Candidatos a responsável (D-22): quem não tem Leads/Pipeline ligado e inativos ficam de fora, logo nunca casam. */
   private async candidates(tx: TenantPrismaClient, orgId: string) {
+    const ids = await eligibleAssigneeIds(tx, orgId);
     const rows = await tx.member.findMany({
       where: {
         organizationId: orgId,
         status: 'active',
         deletedAt: null,
-        role: { name: { in: ['ADMIN', 'MANAGER', 'ATTENDANT'] } },
+        id: { in: [...ids] },
       },
       include: { user: { select: { email: true, fullName: true } }, role: true },
     });
@@ -74,7 +76,7 @@ export class CommercialImportService {
   ): Promise<Resolved[]> {
     const { list, refs } = await this.candidates(tx, orgId);
     const leadVis = visibilityWhere(viewer).lead as Prisma.CommercialLeadWhereInput;
-    const manager = isManagerRole(viewer.roleName);
+    const manager = viewer.scopeAll;
     const out: Resolved[] = [];
     for (const row of rows) {
       const found = await findDuplicatesTx(tx, { phone: row.phone, email: row.email });

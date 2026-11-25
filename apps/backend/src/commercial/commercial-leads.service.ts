@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { TenantContextService } from '../database/tenant-context.service';
 import type { TenantPrismaClient } from '../database/types';
-import { isManagerRole, visibilityWhere, type CommercialViewer } from './commercial-access';
+import { eligibleAssigneeIds } from './commercial-assignees';
+import { visibilityWhere, type CommercialViewer } from './commercial-access';
 import { COMMERCIAL_SOURCES } from './commercial-constants';
 import { CommercialError, mapCommercialError, type CommercialUserError } from './commercial-errors';
 import { phoneDigits, phoneKey } from './commercial-phone';
@@ -223,7 +224,7 @@ export class CommercialLeadsService {
       });
     }
     if (f.source) and.push({ source: f.source });
-    if (isManagerRole(viewer.roleName)) {
+    if (viewer.scopeAll) {
       if (f.assigneeMemberId) {
         and.push({
           deals: { some: { assigneeMemberId: f.assigneeMemberId, deletedAt: null } },
@@ -259,7 +260,7 @@ export class CommercialLeadsService {
   duplicates(orgId: string, viewer: CommercialViewer, input: DuplicateInput) {
     return this.tenant.runWithTenant(orgId, async (tx) => {
       const found = await findDuplicatesTx(tx, input);
-      if (!isManagerRole(viewer.roleName) && found.leads.length > 0) {
+      if (!viewer.scopeAll && found.leads.length > 0) {
         // a atendente só é avisada de leads que ela própria enxerga
         const visible = await tx.commercialLead.findMany({
           where: { id: { in: found.leads.map((l) => l.id) }, ...this.leadVis(viewer) },
@@ -401,12 +402,13 @@ export class CommercialLeadsService {
   /** Membros que podem ser responsáveis por negócios (D-14). */
   assignees(orgId: string) {
     return this.tenant.runWithTenant(orgId, async (tx) => {
+      const ids = await eligibleAssigneeIds(tx, orgId);
       const rows = await tx.member.findMany({
         where: {
           organizationId: orgId,
           status: 'active',
           deletedAt: null,
-          role: { name: { in: ['ADMIN', 'MANAGER', 'ATTENDANT'] } },
+          id: { in: [...ids] },
         },
         include: { role: { select: { name: true } } },
         orderBy: { displayName: 'asc' },
