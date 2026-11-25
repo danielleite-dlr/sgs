@@ -423,12 +423,12 @@ Plans:
 **Goal:** Cada papel (Admin, Gerente, Atendente, Profissional) continua vindo com permissões padrão, mas o Admin/Gerente consegue **ligar e desligar funcionalidades por pessoa**, no nível de **item do menu/área** (Agenda, Clientes, Comandas, Financeiro, Previsão de caixa, Contratos, Noivas, Comercial, Relatórios, Catálogo, Profissionais…). Desligado ⇒ some do menu, a rota bloqueia e a **API recusa**. Ex.: um gerente que não vê Financeiro; uma profissional que não vê X. Pedido da usuária em 2026-11-18; decisões: granularidade por item do menu (não por ação), fazer logo depois da fase 9 e antes do app nativo iOS.
 **Requirements**: PERM-01, PERM-02, PERM-03, PERM-04, PERM-05, PERM-06, PERM-07, PERM-08, PERM-09, PERM-10, PERM-11, PERM-12, PERM-13, PERM-14, PERM-15, PERM-16
 **Depends on:** Phase 9
-**Plans:** 1/16 plans executed
+**Plans:** 3/16 plans executed
 
 Plans:
 - [x] 10-01-PLAN.md — TDD do catálogo de itens de acesso, matriz padrão por papel e resolveAccess (onda 1)
 - [x] 10-02-PLAN.md — migração member_access_overrides (RLS forçada), Prisma e mundo de teste da fase 10 (onda 1)
-- [ ] 10-03-PLAN.md — AccessService, @RequireAccess, ACCESS_DENIED, guard lendo papel/ajustes do banco e query myAccess (onda 2)
+- [x] 10-03-PLAN.md — AccessService, @RequireAccess, ACCESS_DENIED, guard lendo papel/ajustes do banco e query myAccess (onda 2)
 - [ ] 10-04-PLAN.md — acesso por item em financeiro, comandas, clientes, agenda e catálogo; custos para quem ganhou Financeiro (onda 3)
 - [ ] 10-05-PLAN.md — acesso por item em noivas e contratos; diária e cronograma pelo acesso efetivo (onda 3)
 - [ ] 10-06-PLAN.md — acesso por item no Comercial e viewer com escopo do Gerente para quem ganhou (onda 3)
