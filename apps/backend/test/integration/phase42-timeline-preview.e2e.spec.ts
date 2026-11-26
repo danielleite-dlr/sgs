@@ -10,6 +10,7 @@ import {
   type Phase4World,
 } from './helpers/phase4-fixtures';
 import { deletePhase4Rows } from './helpers/phase4-cleanup';
+import { markFixed, markServesBridal } from './helpers/phase11-fixtures';
 
 const PREVIEW = `query($input: BridalTimelineInput!) {
   bridalTimelinePreview(input: $input) {
@@ -17,7 +18,7 @@ const PREVIEW = `query($input: BridalTimelineInput!) {
       groupId packageName departureTime brideLabel text registryStartsAt missing canConfirm
       warnings { code message }
       rows { time name label kind professionalName isExtra isRegistry }
-      brideSlots { kind stepName professionalId startsAt endsAt }
+      brideSlots { kind stepName professionalId professionalName suggested isFixed startsAt endsAt }
       conflicts { stepName professionalName startsAt endsAt blockedBy }
     }
     errors { code message field }
@@ -95,6 +96,17 @@ describe('Fase 04.2 - simulação do cronograma da noiva', () => {
     await adminPrisma.appointment.deleteMany({ where: { organizationId: w.orgId } });
     await adminPrisma.timeBlock.deleteMany({ where: { organizationId: w.orgId } });
     await adminPrisma.bridalTimeline.deleteMany({ where: { organizationId: w.orgId } });
+    await markFixed([w.members.proA, w.members.proB], false);
+    await markServesBridal([w.members.proA, w.members.proB], true);
+    await adminPrisma.bridalGroup.update({
+      where: { id: groupId },
+      data: {
+        assistantMemberId: null,
+        assistantDailyRate: null,
+        assistantLinkedAt: null,
+        eventKind: 'noiva',
+      },
+    });
   });
 
   const appt = (
@@ -141,16 +153,93 @@ describe('Fase 04.2 - simulação do cronograma da noiva', () => {
     expect(r.preview.text.startsWith('CRONOGRAMA NOIVA VITORIA - 08/11 - Pacote Glam')).toBe(true);
   });
 
-  it('3. sem profissionais: [a definir], avisos e missing', async () => {
+  // 04.2 D-03 revogada por 11 D-06: sem profissional escolhida a simulação já sugere.
+  it('3. sem profissionais escolhidas: make e penteado já vêm sugeridos (D-06)', async () => {
     const r = await preview({ makeProfessionalId: null, hairProfessionalId: null });
     const p = r.preview;
-    expect(p.text.split('[a definir]').length - 1).toBe(2);
+    expect(r.errors).toEqual([]);
+    for (const kind of ['make', 'hair']) {
+      const slot = p.brideSlots.find((x: { kind: string }) => x.kind === kind);
+      expect(slot.professionalId).toBeTruthy();
+      expect(slot.suggested).toBe(true);
+      expect(p.text).toContain(slot.professionalName);
+    }
+    expect(p.text).not.toContain('[a definir]');
     expect(
       p.warnings.filter((x: { code: string }) => x.code === 'PROFESSIONAL_UNDEFINED'),
-    ).toHaveLength(2);
-    expect(p.missing).toContain('Escolha a profissional de make.');
-    expect(p.missing).toContain('Escolha a profissional de penteado.');
-    expect(p.canConfirm).toBe(false);
+    ).toHaveLength(0);
+    expect(p.missing).toEqual([]);
+  });
+
+  it('3b. fixa é sugerida antes da não fixa (D-18)', async () => {
+    await markFixed([w.members.proB]);
+    const r = await preview({ makeProfessionalId: null, hairProfessionalId: null });
+    const make = r.preview.brideSlots.find((x: { kind: string }) => x.kind === 'make');
+    expect(make.professionalId).toBe(w.members.proB);
+    expect(make.suggested).toBe(true);
+    expect(make.isFixed).toBe(true);
+  });
+
+  it('3c. entre duas fixas, a com menos minutos no dia (D-10)', async () => {
+    await markFixed([w.members.proA, w.members.proB]);
+    const other = await adminPrisma.client.create({
+      data: { organizationId: w.orgId, fullName: 'Cliente Minutos' },
+    });
+    await appt(other.id, w.members.proB, at(9), at(11));
+    const r = await preview({ makeProfessionalId: null, hairProfessionalId: null });
+    const make = r.preview.brideSlots.find((x: { kind: string }) => x.kind === 'make');
+    expect(make.professionalId).toBe(w.members.proA);
+  });
+
+  it('3d. escolhida explícita nunca é trocada e vem suggested false', async () => {
+    await markFixed([w.members.proB]);
+    const r = await preview({ makeProfessionalId: w.members.proA, hairProfessionalId: null });
+    const make = r.preview.brideSlots.find((x: { kind: string }) => x.kind === 'make');
+    expect(make.professionalId).toBe(w.members.proA);
+    expect(make.suggested).toBe(false);
+  });
+
+  it('3e. todas ocupadas no horário do make: sem profissional e aviso NO_FREE_PROFESSIONAL', async () => {
+    const other = await adminPrisma.client.create({
+      data: { organizationId: w.orgId, fullName: 'Cliente Ocupada 2' },
+    });
+    await appt(other.id, w.members.proA, at(12, 30), at(14));
+    await appt(other.id, w.members.proB, at(12, 30), at(14));
+    const r = await preview({ makeProfessionalId: null, hairProfessionalId: null });
+    const make = r.preview.brideSlots.find((x: { kind: string }) => x.kind === 'make');
+    expect(make.professionalId).toBeNull();
+    expect(
+      r.preview.warnings.some((x: { code: string }) => x.code === 'NO_FREE_PROFESSIONAL'),
+    ).toBe(true);
+    expect(r.preview.canConfirm).toBe(false);
+  });
+
+  it('3f. a assistente do grupo nunca é sugerida', async () => {
+    await adminPrisma.bridalGroup.update({
+      where: { id: groupId },
+      data: {
+        assistantMemberId: w.members.proA,
+        assistantDailyRate: '220.00',
+        assistantLinkedAt: new Date(),
+      },
+    });
+    const r = await preview({ makeProfessionalId: null, hairProfessionalId: null });
+    for (const s of r.preview.brideSlots) {
+      expect(s.professionalId).not.toBe(w.members.proA);
+    }
+  });
+
+  it('3g. debutante: mesma sugestão e título no formato da 04.2 (D-17, D-21)', async () => {
+    await adminPrisma.bridalGroup.update({
+      where: { id: groupId },
+      data: { eventKind: 'debutante' },
+    });
+    const r = await preview({ makeProfessionalId: null, hairProfessionalId: null });
+    expect(r.preview.text.startsWith('CRONOGRAMA NOIVA VITÓRIA - 08/11 - Pacote Glam')).toBe(true);
+    for (const s of r.preview.brideSlots) {
+      expect(s.suggested).toBe(true);
+      expect(s.professionalId).toBeTruthy();
+    }
   });
 
   it('4. conflito com outra cliente aparece com quem ocupa e horário', async () => {
@@ -227,9 +316,9 @@ describe('Fase 04.2 - simulação do cronograma da noiva', () => {
     expect(bad.errors[0].code).toBe('INVALID_DEPARTURE');
     const ok = await preview({ departureTime: '13:00' });
     expect(ok.preview).not.toBeNull();
-    expect(
-      ok.preview.warnings.some((x: { code: string }) => x.code === 'ARRIVAL_BEFORE_06'),
-    ).toBe(true);
+    expect(ok.preview.warnings.some((x: { code: string }) => x.code === 'ARRIVAL_BEFORE_06')).toBe(
+      true,
+    );
   });
 
   it('7. simulação não grava nada', async () => {
