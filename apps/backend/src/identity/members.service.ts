@@ -20,6 +20,7 @@ import { recordAudit } from '../common/audit-log';
 import { orgTimezone } from '../bridal/bridal-schedule';
 import { localDateYmd } from '../push/push-messages';
 import { loadCategoryParents, memberServesCategory } from './member-categories';
+import { suggestProfessionalsTx } from '../scheduling/professional-suggestion';
 
 export interface UserError {
   code: string;
@@ -956,41 +957,74 @@ export class MembersService {
     serviceId: string,
     opts: { bridal?: boolean } = {},
   ) {
+    return this.tenant.runWithTenant(orgId, (tx) =>
+      this.professionalsForServiceTx(tx, orgId, serviceId, opts),
+    );
+  }
+
+  /**
+   * Fase 11 D-08/D-09: ordem do ranking para serviço + horário. Livres antes de ocupadas;
+   * só a primeira livre vem `suggested`. Somente leitura.
+   */
+  async suggestProfessionals(
+    orgId: string,
+    a: {
+      serviceId: string;
+      startsAt: Date;
+      endsAt: Date;
+      bridal?: boolean;
+      ignoreAppointmentIds?: string[];
+    },
+  ) {
     return this.tenant.runWithTenant(orgId, async (tx) => {
-      const service = await tx.service.findFirst({
-        where: { id: serviceId, deletedAt: null },
-        select: { categoryId: true },
+      const bridal = a.bridal === true;
+      const rows = await this.professionalsForServiceTx(tx, orgId, a.serviceId, { bridal });
+      return suggestProfessionalsTx(tx, rows, {
+        startsAt: a.startsAt,
+        endsAt: a.endsAt,
+        bridal,
+        ignoreAppointmentIds: a.ignoreAppointmentIds,
       });
-      if (!service) return [];
-
-      const [rows, parents] = await Promise.all([
-        tx.member.findMany({
-          where: {
-            organizationId: orgId,
-            deletedAt: null,
-            status: MEMBER_STATUS_ACTIVE,
-            isProfessional: true,
-            ...(opts.bridal ? { servesBridal: true } : {}),
-          },
-          select: MEMBER_SELECT,
-          // Fase 11 D-09: fixas primeiro; a grade da Agenda (listActive/listAll) não muda (D-20).
-          orderBy: [{ isFixed: 'desc' }, { displayName: 'asc' }, { id: 'asc' }],
-        }),
-        loadCategoryParents(tx),
-      ]);
-
-      return rows
-        .filter((r) =>
-          memberServesCategory(
-            r.categories
-              .filter((c) => c.category.deletedAt === null)
-              .map((c) => c.category.id),
-            service.categoryId,
-            parents,
-          ),
-        )
-        .map(toMemberDto);
     });
+  }
+
+  private async professionalsForServiceTx(
+    tx: TenantPrismaClient,
+    orgId: string,
+    serviceId: string,
+    opts: { bridal?: boolean },
+  ) {
+    const service = await tx.service.findFirst({
+      where: { id: serviceId, deletedAt: null },
+      select: { categoryId: true },
+    });
+    if (!service) return [];
+
+    const [rows, parents] = await Promise.all([
+      tx.member.findMany({
+        where: {
+          organizationId: orgId,
+          deletedAt: null,
+          status: MEMBER_STATUS_ACTIVE,
+          isProfessional: true,
+          ...(opts.bridal ? { servesBridal: true } : {}),
+        },
+        select: MEMBER_SELECT,
+        // Fase 11 D-09: fixas primeiro; a grade da Agenda (listActive/listAll) não muda (D-20).
+        orderBy: [{ isFixed: 'desc' }, { displayName: 'asc' }, { id: 'asc' }],
+      }),
+      loadCategoryParents(tx),
+    ]);
+
+    return rows
+      .filter((r) =>
+        memberServesCategory(
+          r.categories.filter((c) => c.category.deletedAt === null).map((c) => c.category.id),
+          service.categoryId,
+          parents,
+        ),
+      )
+      .map(toMemberDto);
   }
 
   /**

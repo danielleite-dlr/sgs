@@ -59,6 +59,26 @@ export class MembersResolver {
     return rows.map((r) => redactPersonal(r, tenantCtx.roleName));
   }
 
+  // fase 11: referência do agendamento (ACCESS_EXEMPT)
+  @RequirePermission(PERMISSIONS.MEMBER_READ)
+  @Query('suggestProfessionals')
+  async suggestProfessionals(
+    @Args('serviceId') serviceId: string,
+    @Args('startsAt') startsAt: Date | string,
+    @Args('endsAt') endsAt: Date | string,
+    @Args('bridal', { nullable: true }) bridal: boolean | null,
+    @Args('ignoreAppointmentIds', { nullable: true }) ignoreAppointmentIds: string[] | null,
+    @CurrentTenant() tenantCtx: TenantContext,
+  ) {
+    return this.members.suggestProfessionals(tenantCtx.organizationId, {
+      serviceId,
+      startsAt: new Date(startsAt),
+      endsAt: new Date(endsAt),
+      bridal: bridal === true,
+      ignoreAppointmentIds: ignoreAppointmentIds ?? undefined,
+    });
+  }
+
   @RequirePermission(PERMISSIONS.MEMBER_INVITE)
   @RequireAccess('profissionais-todos')
   @Mutation('createMember')

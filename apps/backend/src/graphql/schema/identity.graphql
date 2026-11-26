@@ -7,7 +7,28 @@ extend type Query {
     "true = só quem atende noiva/debutante (11 D-02)"
     bridal: Boolean
   ): [Member!]!
+  "Ordem sugerida de profissionais para serviço + horário: livres primeiro, depois o ranking (11 D-08/D-09)."
+  suggestProfessionals(
+    serviceId: UUID!
+    startsAt: DateTime!
+    endsAt: DateTime!
+    "true = só quem atende noiva/debutante"
+    bridal: Boolean
+    "agendamentos a ignorar (ex.: o que está sendo remarcado)"
+    ignoreAppointmentIds: [UUID!]
+  ): [ProfessionalSuggestion!]!
   pendingInvitations: [PendingInvitation!]!
+}
+
+"Sugestão de profissional para serviço + horário (11 D-08/D-09)."
+type ProfessionalSuggestion {
+  professionalId: UUID!
+  displayName: String!
+  isFixed: Boolean!
+  free: Boolean!
+  dayMinutes: Int!
+  "true só para a primeira livre (a escolhida pelo ranking)"
+  suggested: Boolean!
 }
 
 extend type Mutation {
