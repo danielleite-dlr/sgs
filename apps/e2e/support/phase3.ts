@@ -84,6 +84,8 @@ export async function createProfessional(
         pixKey: email,
         roleName: 'PROFESSIONAL',
         isProfessional: true,
+        // fase 11 D-02: profissional de teste atende noiva (fluxos de noiva/debutante)
+        servesBridal: true,
         categoryIds: [seed.phase3.categoryId],
         temporaryPassword: 'Prov#Temp2026',
       },

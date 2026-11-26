@@ -149,6 +149,8 @@ setup('seed', async () => {
           pixKey,
           roleName,
           isProfessional: roleName === 'PROFESSIONAL',
+          // fase 11 D-02: fluxos de noiva precisam de quem atende noiva; dado de TESTE, não migração
+          servesBridal: roleName === 'PROFESSIONAL',
           categoryIds: roleName === 'PROFESSIONAL' ? [categoryId] : [],
           temporaryPassword: 'Prov#Temp2026',
         },

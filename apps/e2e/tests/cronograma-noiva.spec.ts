@@ -98,7 +98,12 @@ test.describe('Cronograma do dia da noiva e guarda das acompanhantes', () => {
     await generate.click();
     const firstText = page.getByTestId('timeline-sim-0').getByTestId('timeline-text');
     await expect(firstText).toContainText(`Pacote ${pkg.name}`);
-    await expect(firstText).toContainText('[a definir]');
+    // 04.2 D-03 revogada por 11 D-06: a simulação já vem preenchida com a profissional sugerida
+    await expect(firstText).not.toContainText('[a definir]');
+    await expect(page.getByTestId('timeline-sim-0').getByTestId('slot-suggested-make')).toBeVisible();
+    await expect(page.getByTestId('timeline-sim-0').getByTestId('slot-suggested-hair')).toBeVisible();
+
+    // trocar a profissional manualmente continua possível (a escolha manual prevalece)
 
     await page.getByTestId('timeline-make').selectOption(makePro.id);
     await page.getByTestId('timeline-hair').selectOption(hairPro.id);
