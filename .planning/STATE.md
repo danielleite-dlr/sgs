@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 11 context gathered
-last_updated: "2026-11-26T04:11:39.399Z"
-last_activity: 2026-11-26 -- Phase 11 execution started
+stopped_at: Completed 11-02-PLAN.md
+last_updated: "2026-11-26T04:43:24.360Z"
+last_activity: 2026-11-26
 progress:
   total_phases: 16
   completed_phases: 12
   total_plans: 186
-  completed_plans: 169
+  completed_plans: 170
   percent: 100
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 11 (prioridade-de-profissionais-e-cronograma-da-noiva) — EXECUTING
-Plan: 1 of 16
-Status: Executing Phase 11
-Last activity: 2026-11-26 -- Phase 11 execution started
+Plan: 2 of 16
+Status: Ready to execute
+Last activity: 2026-11-26
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -123,6 +123,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 10 P10 | 45min | 2 tasks | 12 files |
 | Phase 10 P13 | 40min | 2 tasks | 13 files |
 | Phase 10 P14 | 60min | 2 tasks | 5 files |
+| Phase 11 P02 | 45min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -226,6 +227,7 @@ Recent decisions affecting current work:
 - [Phase 9]: 09-15: E2E arrasta o card pelo texto do tipo (link do nome barra o drag) com mouse em passos
 - [Phase 09.1]: Vínculo da assistente em colunas de bridal_groups com snapshot da diária; função como boolean em members
 - [Phase 10]: AccessItem sem normalização no cache Apollo para não misturar acessos de pessoas
+- [Phase 11]: 11-02: migração só ADD COLUMN (is_fixed, serves_bridal, companions_ready_by); fixas primeiro só em professionalsForService, grade da Agenda inalterada
 
 ### Pending Todos
 
@@ -306,9 +308,9 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-26T03:39:26.351Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-prioridade-de-profissionais-e-cronograma-da-noiva/11-CONTEXT.md
+Last session: 2026-11-26T04:43:24.350Z
+Stopped at: Completed 11-02-PLAN.md
+Resume file: None
 | 2026-11-12 | fast | Montar manualmente (noivas) sem duplicar serviços do teste | ✅ |
 | 2026-11-13 | fast | Comanda: crédito do cliente em destaque no pagamento e no card da cliente | ✅ |
 | 2026-11-19 | fast | Comercial como último grupo do menu | ✅ |
