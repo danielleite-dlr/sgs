@@ -127,7 +127,7 @@
 - [ ] **PRIO-08**: A simulação do cronograma já sugere make e penteado da noiva/debutante (fixa livre que atende noiva, pelo critério justo), o studio pode trocar e a confirmação continua explícita; sem elegível livre fica "[a definir]" com aviso (revoga 04.2 D-03) _(11 D-06)_
 - [x] **PRIO-09**: O filtro "Atende noiva/debutante" vale em todo serviço da noiva/debutante (cronograma, sugestão de agenda, prova e editor manual) e o servidor recusa quem não atende; sem ninguém marcado, a lista fica vazia com aviso e link para Profissionais, sem fallback para "todas"; acompanhantes sem filtro _(11 D-02, D-04, D-19)_
 - [x] **PRIO-10**: Uma consulta devolve, para serviço + horário, as profissionais que fazem o serviço ordenadas (livres antes de ocupadas, depois o ranking), com a sugerida marcada, isolada por salão _(11 D-08, D-09)_
-- [ ] **PRIO-11**: No agendamento comum, com serviço e horário preenchidos, o formulário pré-seleciona a fixa livre mais justa; profissional já escolhida nunca é trocada (só aparece "Sugestão: Fulana (fixa livre)") _(11 D-08)_
+- [x] **PRIO-11**: No agendamento comum, com serviço e horário preenchidos, o formulário pré-seleciona a fixa livre mais justa; profissional já escolhida nunca é trocada (só aparece "Sugestão: Fulana (fixa livre)") _(11 D-08)_
 - [x] **PRIO-12**: O limite de cada acompanhante é o mais cedo entre o make-off (início do registro do cronograma confirmado) e "Acompanhantes prontas até"; as mensagens usam o nome "make-off"; o guarda do agendamento manual só atua com cronograma confirmado _(11 D-13, D-14, D-21)_
 - [x] **PRIO-13**: O grupo tem o campo "Acompanhantes prontas até" (vazio = igual ao make-off), editável no formulário do grupo e na aba Cronograma, no mesmo dia do evento _(11 D-14)_
 - [ ] **PRIO-14**: A sugestão de agenda usa limite por papel (noiva: pronta até/make-off; acompanhante: limite efetivo), encaixa a acompanhante o mais perto possível do limite e lista "não coube" com o motivo, sem remarcar clientes comuns _(11 D-15, D-16)_
@@ -268,7 +268,7 @@
 | PRIO-08 | Phase 11 | Pending |
 | PRIO-09 | Phase 11 | Complete |
 | PRIO-10 | Phase 11 | Complete |
-| PRIO-11 | Phase 11 | Pending |
+| PRIO-11 | Phase 11 | Complete |
 | PRIO-12 | Phase 11 | Complete |
 | PRIO-13 | Phase 11 | Complete |
 | PRIO-14 | Phase 11 | Pending |
