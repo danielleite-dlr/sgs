@@ -40,6 +40,8 @@ const professionalMember: AdminMemberData = {
   seniorityTier: 'senior',
   isProfessional: true,
   isBridalAssistant: false,
+  isFixed: false,
+  servesBridal: false,
   status: 'active',
   phone: '+5511987654321',
   pixKey: '12345678909',
@@ -55,6 +57,8 @@ const attendantMember: AdminMemberData = {
   seniorityTier: null,
   isProfessional: false,
   isBridalAssistant: false,
+  isFixed: false,
+  servesBridal: false,
   status: 'active',
   phone: null,
   pixKey: null,
@@ -157,6 +161,8 @@ describe('MemberEditDialog', () => {
             roleName: 'PROFESSIONAL',
             isProfessional: true,
             isBridalAssistant: false,
+            isFixed: false,
+            servesBridal: false,
             seniorityTier: 'senior',
             categoryIds: ['cat-1'],
           },
@@ -172,6 +178,8 @@ describe('MemberEditDialog', () => {
               seniorityTier: 'senior',
               isProfessional: true,
               isBridalAssistant: false,
+              isFixed: false,
+              servesBridal: false,
               status: 'active',
               phone: '+5511987654321',
               pixKey: '12345678909',
@@ -208,6 +216,8 @@ describe('MemberEditDialog', () => {
             roleName: 'PROFESSIONAL',
             isProfessional: true,
             isBridalAssistant: false,
+            isFixed: false,
+            servesBridal: false,
             seniorityTier: 'senior',
             categoryIds: ['cat-1'],
           },
@@ -254,6 +264,8 @@ describe('MemberEditDialog', () => {
             roleName: 'PROFESSIONAL',
             isProfessional: true,
             isBridalAssistant: false,
+            isFixed: false,
+            servesBridal: false,
             seniorityTier: 'senior',
             categoryIds: ['cat-1'],
           },
@@ -588,6 +600,8 @@ describe('MemberEditDialog (contato e categorias)', () => {
             roleName: 'ATTENDANT',
             isProfessional: false,
             isBridalAssistant: false,
+            isFixed: false,
+            servesBridal: false,
             seniorityTier: null,
           },
         },
@@ -654,6 +668,8 @@ describe('MemberEditDialog (contato e categorias)', () => {
             roleName: 'PROFESSIONAL',
             isProfessional: true,
             isBridalAssistant: false,
+            isFixed: false,
+            servesBridal: false,
             seniorityTier: 'senior',
             phone: '+551133334444',
             pixKey: 'ana@pix.com',
@@ -702,6 +718,8 @@ describe('MemberEditDialog - Assistente da Noiva', () => {
     ...attendantMember,
     isProfessional: true,
     isBridalAssistant: true,
+    isFixed: false,
+    servesBridal: false,
   };
 
   function updateMock(input: Record<string, unknown>, member: AdminMemberData) {
@@ -732,6 +750,8 @@ describe('MemberEditDialog - Assistente da Noiva', () => {
         roleName: 'PROFESSIONAL',
         isProfessional: true,
         isBridalAssistant: true,
+        isFixed: false,
+        servesBridal: false,
         seniorityTier: 'senior',
         categoryIds: ['cat-1'],
       },
@@ -759,6 +779,8 @@ describe('MemberEditDialog - Assistente da Noiva', () => {
         roleName: 'ATTENDANT',
         isProfessional: false,
         isBridalAssistant: false,
+        isFixed: false,
+        servesBridal: false,
         seniorityTier: null,
       },
       attendantMember,
@@ -779,6 +801,63 @@ describe('MemberEditDialog - Assistente da Noiva', () => {
   });
 });
 
+describe('MemberEditDialog - Fixa e Atende noiva/debutante', () => {
+  it('só mostra as caixas quando é profissional', () => {
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <MemberEditDialog member={attendantMember} open onClose={vi.fn()} />
+      </MockedProvider>,
+    );
+
+    expect(screen.queryByTestId('member-fixed')).toBeNull();
+    expect(screen.queryByTestId('member-serves-bridal')).toBeNull();
+    fireEvent.click(screen.getByLabelText('É profissional'));
+    expect(screen.getByTestId('member-fixed')).toBeInTheDocument();
+    expect(screen.getByTestId('member-serves-bridal')).toBeInTheDocument();
+  });
+
+  it('pré-marca a partir do membro e envia as marcações', async () => {
+    const onClose = vi.fn();
+    const member: AdminMemberData = {
+      ...professionalMember,
+      isFixed: true,
+      servesBridal: true,
+    };
+    const mock = {
+      request: {
+        query: UpdateMemberMutation,
+        variables: {
+          input: {
+            id: 'mem-1',
+            roleName: 'PROFESSIONAL',
+            isProfessional: true,
+            isBridalAssistant: false,
+            isFixed: true,
+            servesBridal: false,
+            seniorityTier: 'senior',
+            categoryIds: ['cat-1'],
+          },
+        },
+      },
+      result: { data: { updateMember: { member, errors: [] } } },
+    };
+    render(
+      <MockedProvider mocks={[mock, categoriesMock]} addTypename={false}>
+        <MemberEditDialog member={member} open onClose={onClose} />
+      </MockedProvider>,
+    );
+
+    expect(screen.getByTestId('member-fixed')).toBeChecked();
+    expect(screen.getByTestId('member-serves-bridal')).toBeChecked();
+    fireEvent.click(screen.getByTestId('member-serves-bridal'));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+});
+
 // ---------------------------------------------------------------------------
 // CreateMemberDialog
 // ---------------------------------------------------------------------------
@@ -791,6 +870,8 @@ const createdMember = {
   seniorityTier: null,
   isProfessional: true,
   isBridalAssistant: false,
+  isFixed: false,
+  servesBridal: false,
   status: 'active',
   phone: '+5511987654321',
   pixKey: '12345678909',
@@ -916,6 +997,8 @@ describe('CreateMemberDialog', () => {
           roleName: 'PROFESSIONAL',
           isProfessional: true,
           isBridalAssistant: false,
+          isFixed: false,
+          servesBridal: false,
           categoryIds: ['cat-1'],
         });
         return true;
@@ -953,6 +1036,51 @@ describe('CreateMemberDialog', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Concluir' }));
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('envia isFixed e servesBridal true quando as caixas estão marcadas', async () => {
+    const mock = {
+      request: { query: CreateMemberMutation },
+      variableMatcher: (vars: { input: Record<string, unknown> }) =>
+        vars.input.isFixed === true && vars.input.servesBridal === true,
+      result: {
+        data: {
+          createMember: {
+            member: { ...createdMember, isFixed: true, servesBridal: true },
+            existingAccount: false,
+            warning: null,
+            errors: [],
+          },
+        },
+      },
+    };
+    render(
+      <MockedProvider mocks={[mock, categoriesMock]} addTypename={false}>
+        <CreateMemberDialog open onClose={vi.fn()} callerRoleName="ADMIN" />
+      </MockedProvider>,
+    );
+
+    await fillCreateForm();
+    fireEvent.click(await screen.findByLabelText('Cabelo'));
+    fireEvent.click(screen.getByTestId('member-fixed'));
+    fireEvent.click(screen.getByTestId('member-serves-bridal'));
+    fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    expect(await screen.findByTestId('temporary-password')).toBeInTheDocument();
+  });
+
+  it('papel não profissional não mostra as caixas das marcações', async () => {
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <CreateMemberDialog open onClose={vi.fn()} callerRoleName="ADMIN" />
+      </MockedProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'Papel' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Atendente' }));
+    await screen.findByLabelText('Também atende clientes');
+    expect(screen.queryByTestId('member-fixed')).toBeNull();
+    expect(screen.queryByTestId('member-serves-bridal')).toBeNull();
   });
 
   it('existing account shows the warning and never a password', async () => {

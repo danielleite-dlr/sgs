@@ -23,6 +23,8 @@ function member(
     seniorityTier: null,
     isProfessional: false,
     isBridalAssistant: false,
+    isFixed: false,
+    servesBridal: false,
     status,
     phone: null,
     pixKey: null,

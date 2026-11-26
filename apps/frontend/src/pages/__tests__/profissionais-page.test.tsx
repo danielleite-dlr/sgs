@@ -25,6 +25,8 @@ const members: AdminMemberData[] = [
     seniorityTier: 'senior',
     isProfessional: true,
     isBridalAssistant: false,
+    isFixed: false,
+    servesBridal: false,
     status: 'active',
     phone: '+5511987654321',
     pixKey: '12345678909',
@@ -42,6 +44,8 @@ const members: AdminMemberData[] = [
     seniorityTier: null,
     isProfessional: false,
     isBridalAssistant: false,
+    isFixed: false,
+    servesBridal: false,
     status: 'inactive',
     phone: null,
     pixKey: null,
@@ -171,6 +175,22 @@ describe('ProfissionaisPage', () => {
     expect(within(brunoRow).getByText('bruno@studio.com')).toBeInTheDocument();
     expect(within(brunoRow).getByText('Atendente')).toBeInTheDocument();
     expect(within(brunoRow).getByText('Inativo')).toBeInTheDocument();
+  });
+
+  it('mostra os selos Fixa e Atende noiva/debutante só para quem tem as marcações', async () => {
+    const marcadas: AdminMemberData[] = [
+      { ...members[0], isFixed: true, servesBridal: true },
+      members[1],
+    ];
+    renderPage([membersMock(marcadas), categoriesMock]);
+    await screen.findByText('Ana Silva');
+
+    expect(screen.getByTestId('member-fixed-badge-mem-1')).toHaveTextContent('Fixa');
+    expect(screen.getByTestId('member-serves-bridal-badge-mem-1')).toHaveTextContent(
+      'Atende noiva/debutante',
+    );
+    expect(screen.queryByTestId('member-fixed-badge-mem-2')).toBeNull();
+    expect(screen.queryByTestId('member-serves-bridal-badge-mem-2')).toBeNull();
   });
 
   it('shows "—" for a member without phone or categories, not undefined or empty', async () => {

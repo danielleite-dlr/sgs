@@ -14,6 +14,8 @@ export const MembersQuery = gql`
       roleName
       seniorityTier
       isProfessional
+      isFixed
+      servesBridal
     }
   }
 `;
@@ -27,6 +29,10 @@ export interface MemberData {
   roleName: string;
   seniorityTier?: string | null;
   isProfessional: boolean;
+  /** Fase 11: fixa (equipe do studio) só muda a ordem de sugestão. */
+  isFixed: boolean;
+  /** Fase 11: atende noiva/debutante (filtro rígido nos serviços da noiva). */
+  servesBridal: boolean;
 }
 
 export interface MembersQueryResult {
@@ -77,6 +83,8 @@ export const AllMembersQuery = gql`
       seniorityTier
       isProfessional
       isBridalAssistant
+      isFixed
+      servesBridal
       status
       phone
       pixKey
@@ -103,6 +111,8 @@ export const UpdateMemberMutation = gql`
         seniorityTier
         isProfessional
         isBridalAssistant
+        isFixed
+        servesBridal
         status
         phone
         pixKey
@@ -139,6 +149,8 @@ export const CreateMemberMutation = gql`
         seniorityTier
         isProfessional
         isBridalAssistant
+        isFixed
+        servesBridal
         status
         phone
         pixKey
@@ -168,6 +180,8 @@ export interface CreateMemberInputData {
   roleName: string;
   isProfessional: boolean;
   isBridalAssistant: boolean;
+  isFixed?: boolean;
+  servesBridal?: boolean;
   categoryIds?: string[];
   temporaryPassword: string;
 }
