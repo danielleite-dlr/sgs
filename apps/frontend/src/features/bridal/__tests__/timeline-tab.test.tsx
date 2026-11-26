@@ -364,7 +364,7 @@ describe('BridalTimelineTab', () => {
       await screen.findByText('Acompanhantes que não cabem mais no cronograma'),
     ).toBeInTheDocument();
     expect(screen.getByText('Bia Acompanhante')).toBeInTheDocument();
-    expect(screen.getByText('Termina depois do início do registro')).toBeInTheDocument();
+    expect(screen.getByText('Termina depois do make-off ou da saída das acompanhantes')).toBeInTheDocument();
   });
 
   it('erro TIMELINE_RULES_MISSING mostra a mensagem de configurar o pacote', async () => {

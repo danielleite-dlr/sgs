@@ -7,6 +7,7 @@ export const BRIDAL_GROUP_LIST_FIELDS = gql`
     name
     eventDate
     readyBy
+    companionsReadyBy
     locationKind
     locationAddress
     locationName
@@ -330,6 +331,7 @@ export interface BridalGroupData {
   name: string;
   eventDate: string;
   readyBy: string | null;
+  companionsReadyBy: string | null;
   locationKind: string;
   locationAddress: string | null;
   locationName: string | null;
@@ -395,6 +397,7 @@ export interface BridalGroupFieldsInput {
   name: string;
   eventDate: string;
   readyBy?: string | null;
+  companionsReadyBy?: string | null;
   locationKind?: string;
   locationAddress?: string | null;
   locationName?: string | null;

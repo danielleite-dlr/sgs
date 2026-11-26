@@ -11,6 +11,9 @@ export const TIMELINE_ERROR_MESSAGES: Record<string, string> = {
     'Não foi possível reorganizar os horários da noiva sem conflito. Revise a agenda.',
   GROUP_NOT_ACTIVE: 'O grupo não está ativo.',
   NO_BRIDE: 'O grupo não tem noiva cadastrada.',
+  INVALID_COMPANIONS_READY_TIME: 'Horário "acompanhantes prontas até" inválido.',
+  COMPANIONS_READY_BY_OUTSIDE_EVENT_DAY:
+    'O horário "acompanhantes prontas até" deve ser no dia do evento.',
 };
 
 /** Mensagem em linguagem clara; usa a do servidor quando o código é desconhecido. */
@@ -19,7 +22,7 @@ export function timelineErrorMessage(e: { code: string; message: string }): stri
 }
 
 export const RULE_LABEL: Record<string, string> = {
-  TIMELINE_AFTER_REGISTRY: 'Termina depois do início do registro',
+  TIMELINE_AFTER_REGISTRY: 'Termina depois do make-off ou da saída das acompanhantes',
   TIMELINE_PROFESSIONAL_WITH_BRIDE: 'Usa a profissional da noiva',
 };
 
@@ -27,4 +30,6 @@ export const RULE_LABEL: Record<string, string> = {
 export const WARNING_LABEL: Record<string, string> = {
   ARRIVAL_BEFORE_06: 'Chegada antes das 06h',
   PROFESSIONAL_UNDEFINED: 'Profissional a definir',
+  NO_BRIDAL_PROFESSIONAL: 'Ninguém marcado para noiva/debutante',
+  NO_FREE_PROFESSIONAL: 'Sem profissional livre',
 };

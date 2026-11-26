@@ -26,6 +26,7 @@ export function group(p: Partial<BridalGroupData> & { id: string }): BridalGroup
     name: `Grupo ${p.id}`,
     eventDate: '2026-12-05',
     readyBy: null,
+    companionsReadyBy: null,
     locationKind: 'studio',
     locationAddress: null,
     locationName: null,

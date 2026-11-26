@@ -13,6 +13,7 @@ import { ContractPackagesQuery } from '../api/contracts.api';
 import { BridalGroupFormDialog } from '../components/BridalGroupFormDialog';
 import { BridalGroupDetailPage } from '../pages/BridalGroupDetailPage';
 import { debutanteGroup, group } from './bridal-fixtures';
+import { toZoned } from '../lib/schedule-rows';
 
 const servicesMock: MockedResponse = {
   request: { query: ServicesQuery },
@@ -124,6 +125,39 @@ describe('BridalGroupFormDialog (tipo, responsável, horário e local)', () => {
     expect(g.eventTime).toBe('16:00');
     expect(g.locationName).toBe('Salão Aurora');
     expect(g.locationAddress).toBe('Rua A, 10');
+  });
+
+  it('envia o horário das acompanhantes como ISO do dia do evento e null quando vazio', async () => {
+    const { state, onSaved } = renderDialog();
+    fillBase('Carol Souza');
+    fireEvent.change(screen.getByTestId('group-companions-ready'), {
+      target: { value: '09:30' },
+    });
+    fireEvent.click(screen.getByTestId('bg-submit'));
+    await vi.waitFor(() => expect(onSaved).toHaveBeenCalled());
+    const iso = state.sent!.input.group.companionsReadyBy!;
+    expect(iso).toMatch(/^2026-12-20T/);
+    expect(toZoned(iso).time).toBe('09:30');
+  });
+
+  it('sem horário das acompanhantes envia null', async () => {
+    const { state, onSaved } = renderDialog();
+    fillBase('Carol Souza');
+    fireEvent.click(screen.getByTestId('bg-submit'));
+    await vi.waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(state.sent!.input.group.companionsReadyBy).toBeNull();
+  });
+
+  it('edição mostra o valor existente preenchido', () => {
+    const g = group({ id: 'g5', companionsReadyBy: '2026-12-05T12:30:00.000Z' });
+    render(
+      <MockedProvider mocks={[servicesMock, packagesMock]}>
+        <BridalGroupFormDialog open onOpenChange={() => {}} group={g} onSaved={() => {}} />
+      </MockedProvider>,
+    );
+    const input = screen.getByTestId('group-companions-ready') as HTMLInputElement;
+    expect(input.value).toBe(toZoned('2026-12-05T12:30:00.000Z').time);
+    expect(input.value).not.toBe('');
   });
 
   it('exibe o erro RESPONSIBLE_IS_DEBUTANTE do backend', async () => {

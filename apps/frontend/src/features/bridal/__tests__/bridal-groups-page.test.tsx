@@ -180,6 +180,7 @@ describe('BridalGroupsPage', () => {
       name: 'Casamento Carol',
       eventDate: '2026-12-20',
       readyBy: null,
+      companionsReadyBy: null,
       locationKind: 'studio',
       locationAddress: null,
       locationName: null,

@@ -34,6 +34,7 @@ export const BridalTimelinePreviewQuery = gql`
           message
         }
         registryStartsAt
+        companionsReadyBy
         brideSlots {
           kind
           stepName
@@ -43,6 +44,8 @@ export const BridalTimelinePreviewQuery = gql`
           professionalName
           startsAt
           endsAt
+          suggested
+          isFixed
         }
         conflicts {
           stepName
@@ -84,6 +87,7 @@ export const BridalTimelineQuery = gql`
         message
       }
       registryStartsAt
+      companionsReadyBy
       registryLabel
       confirmedAt
       confirmedByName
@@ -124,6 +128,7 @@ export const ConfirmBridalTimelineMutation = gql`
           message
         }
         registryStartsAt
+        companionsReadyBy
         registryLabel
         confirmedAt
         confirmedByName
@@ -189,6 +194,8 @@ export interface TimelineBrideSlotData {
   professionalName: string | null;
   startsAt: string;
   endsAt: string;
+  suggested: boolean;
+  isFixed: boolean | null;
 }
 
 export interface TimelineCompanionIssueData {
@@ -214,6 +221,7 @@ export interface BridalTimelinePreviewData {
   text: string;
   warnings: TimelineWarningData[];
   registryStartsAt: string | null;
+  companionsReadyBy: string | null;
   brideSlots: TimelineBrideSlotData[];
   conflicts: TimelineConflictData[];
   missing: string[];
@@ -233,6 +241,7 @@ export interface BridalTimelineData {
   text: string;
   warnings: TimelineWarningData[];
   registryStartsAt: string | null;
+  companionsReadyBy: string | null;
   registryLabel: string | null;
   confirmedAt: string;
   confirmedByName: string | null;
@@ -247,6 +256,8 @@ export interface BridalTimelineInput {
   brideLabel?: string | null;
   makeProfessionalId?: string | null;
   hairProfessionalId?: string | null;
+  /** 'HH:MM'; '' = igual ao make-off; omitido = mantém. */
+  companionsReadyTime?: string | null;
 }
 
 export interface BridalTimelinePreviewResult {

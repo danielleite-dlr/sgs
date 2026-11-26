@@ -49,11 +49,16 @@ function readyByToTime(g?: BridalGroupData): string {
   return g?.readyBy ? toZoned(g.readyBy).time : '';
 }
 
+function companionsToTime(g?: BridalGroupData): string {
+  return g?.companionsReadyBy ? toZoned(g.companionsReadyBy).time : '';
+}
+
 export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Props) {
   const editing = group !== undefined;
   const [name, setName] = useState(group?.name ?? '');
   const [eventDate, setEventDate] = useState(group?.eventDate.slice(0, 10) ?? '');
   const [readyTime, setReadyTime] = useState(readyByToTime(group));
+  const [companionsTime, setCompanionsTime] = useState(companionsToTime(group));
   const [locationKind, setLocationKind] = useState(group?.locationKind ?? 'studio');
   const [eventKind, setEventKind] = useState<'noiva' | 'debutante'>(group?.eventKind ?? 'noiva');
   const [eventTime, setEventTime] = useState(group?.eventTime ?? '');
@@ -94,6 +99,9 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
     if (name.trim().length < 2) errs.push('Informe o nome do grupo.');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) errs.push('Informe a data do evento.');
     if (readyTime && !/^\d{2}:\d{2}$/.test(readyTime)) errs.push('Horário "pronta até" inválido.');
+    if (companionsTime && !/^\d{2}:\d{2}$/.test(companionsTime)) {
+      errs.push('Horário "acompanhantes prontas até" inválido.');
+    }
     if (eventTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(eventTime)) {
       errs.push('Horário do evento inválido.');
     }
@@ -130,6 +138,9 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
         name: name.trim(),
         eventDate,
         readyBy: readyTime ? fromZoned(eventDate, readyTime).toISOString() : null,
+        companionsReadyBy: companionsTime
+          ? fromZoned(eventDate, companionsTime).toISOString()
+          : null,
         locationKind,
         locationAddress: address.trim() || null,
         locationName: locationName.trim() || null,
@@ -293,6 +304,23 @@ export function BridalGroupFormDialog({ open, onOpenChange, group, onSaved }: Pr
               value={readyTime}
               onChange={(e) => setReadyTime(e.target.value)}
             />
+          </div>
+          <div>
+            <Label className={LABEL_CLASS} htmlFor="group-companions-ready">
+              Acompanhantes prontas até (opcional)
+            </Label>
+            <Input
+              id="group-companions-ready"
+              data-testid="group-companions-ready"
+              type="time"
+              aria-describedby="group-companions-ready-help"
+              className="mt-xs"
+              value={companionsTime}
+              onChange={(e) => setCompanionsTime(e.target.value)}
+            />
+            <p id="group-companions-ready-help" className="mt-xs text-xs text-neutral-600">
+              Vazio = igual ao make-off do cronograma.
+            </p>
           </div>
           <div>
             <Label className={LABEL_CLASS} htmlFor="bg-location">
