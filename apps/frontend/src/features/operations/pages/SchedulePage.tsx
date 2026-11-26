@@ -1016,6 +1016,22 @@ export function SchedulePage() {
     });
   }
   const slotHeight = ROW_HEIGHTS[rowSize];
+  // Filtros que escondem algo da grade: vira o selo do botão "Filtros" (quick 261126-qyt).
+  const activeFilterCount =
+    (professionals.length > 0 && visibleProfIds.size < professionals.length ? 1 : 0) +
+    (activeStatuses.size < APPT_STATUSES.length ? 1 : 0) +
+    (closingFilter !== "all" ? 1 : 0) +
+    (showFolga ? 0 : 1);
+  const filterBadge =
+    activeFilterCount > 0 ? (
+      <span
+        data-testid="filters-active-count"
+        aria-hidden="true"
+        className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-semibold leading-none text-white tabular-nums"
+      >
+        {activeFilterCount}
+      </span>
+    ) : null;
   const filterPanel = (
     <FilterPanel
       professionals={professionals}
@@ -1050,24 +1066,43 @@ export function SchedulePage() {
         </aside>
       )}
 
-      {/* Toggle botão entre sidebar e grid */}
-      <button
-        type="button"
-        onClick={() => setSidebarCollapsed((v) => !v)}
-        aria-label={sidebarCollapsed ? "Mostrar filtros" : "Ocultar filtros"}
-        className={cn(
-          "hidden lg:flex h-8 w-6 self-start mt-md z-20 items-center",
-          // Recolhido, encostaria no menu principal: sem a margem negativa (quick 261112-cko).
-          !sidebarCollapsed && "-ml-3",
-          "justify-center rounded-r-md border border-l-0 border-neutral-200 bg-white text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800",
-        )}
-      >
-        {sidebarCollapsed ? (
-          <ChevronsRight className="h-4 w-4" />
-        ) : (
+      {/* Toggle entre sidebar e grid. Recolhido vira a faixa "Filtros" (quick 261126-qyt). */}
+      {sidebarCollapsed ? (
+        <button
+          type="button"
+          onClick={() => setSidebarCollapsed(false)}
+          aria-label="Mostrar filtros"
+          title={
+            activeFilterCount > 0
+              ? `Mostrar filtros (${activeFilterCount} ${activeFilterCount === 1 ? "ativo" : "ativos"})`
+              : "Mostrar filtros"
+          }
+          className={cn(
+            "hidden lg:flex w-10 shrink-0 flex-col items-center gap-sm py-md z-20",
+            "border-r border-primary-200 bg-primary-50 text-primary",
+            "hover:bg-primary-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
+          )}
+        >
+          <SlidersHorizontal className="h-5 w-5" aria-hidden="true" />
+          <span className="text-[12px] font-semibold uppercase tracking-wider [writing-mode:vertical-rl] rotate-180">
+            Filtros
+          </span>
+          {filterBadge}
+          <ChevronsRight className="h-4 w-4 opacity-70" aria-hidden="true" />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setSidebarCollapsed(true)}
+          aria-label="Ocultar filtros"
+          className={cn(
+            "hidden lg:flex h-8 w-6 self-start mt-md z-20 items-center -ml-3",
+            "justify-center rounded-r-md border border-l-0 border-neutral-200 bg-white text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800",
+          )}
+        >
           <ChevronsLeft className="h-4 w-4" />
-        )}
-      </button>
+        </button>
+      )}
 
       {/* Mobile filtros drawer */}
       <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
@@ -1195,6 +1230,7 @@ export function SchedulePage() {
           >
             <SlidersHorizontal className="h-4 w-4" />
             <span className="text-label">Filtros</span>
+            {filterBadge}
           </Button>
         </div>
 

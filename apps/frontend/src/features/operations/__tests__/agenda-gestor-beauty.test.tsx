@@ -331,6 +331,23 @@ describe('barra da agenda (D-06, D-19, D-25)', () => {
     expect(screen.getByRole('button', { name: 'Ocultar filtros' })).toBeInTheDocument();
   });
 
+  it('recolhido mostra a faixa "Filtros" roxa e o selo conta os filtros ativos (quick 261126-qyt)', async () => {
+    renderSchedule();
+    await waitFor(() => expect(screen.getByTestId('view-day')).toBeInTheDocument());
+    // Sem filtro aplicado não há selo.
+    expect(screen.queryAllByTestId('filters-active-count')).toHaveLength(0);
+    // Desmarca um status e recolhe o painel.
+    fireEvent.click(screen.getAllByRole('button', { name: 'Confirmado' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Ocultar filtros' }));
+    const faixa = screen.getByRole('button', { name: 'Mostrar filtros' });
+    expect(faixa).toHaveTextContent('Filtros');
+    expect(faixa.className).toMatch(/\bbg-primary-50\b/);
+    expect(faixa).toHaveAttribute('title', 'Mostrar filtros (1 ativo)');
+    expect(within(faixa).getByTestId('filters-active-count')).toHaveTextContent('1');
+    // O botão do mobile mostra o mesmo selo.
+    expect(within(screen.getByTestId('filters-open')).getByTestId('filters-active-count')).toHaveTextContent('1');
+  });
+
   it('"Agendar" é a ação principal roxa com texto branco', async () => {
     renderSchedule();
     const agendar = await screen.findByRole('button', { name: 'Agendar' });
