@@ -3,6 +3,8 @@ import { BLOCKING_STATUSES } from '../../appointments/appointment-status';
 import { ContractSettingsService } from '../../contracts/contract-settings.service';
 import type { TenantPrismaClient } from '../../database/types';
 import { professionalServesCategory } from '../../identity/member-categories';
+import { compareCandidates, rotationRanks } from '../../scheduling/professional-ranking';
+import { loadRankingDataTx } from '../../scheduling/professional-ranking-data';
 import { BridalError } from '../bridal-errors';
 import type { ScheduleContext } from './ai-schedule.schema';
 
@@ -63,7 +65,10 @@ export class AiScheduleContextBuilder {
       where: { groupId },
       include: {
         client: { select: { fullName: true } },
-        services: { where: { purpose: 'event' }, orderBy: { sortOrder: 'asc' } },
+        services: {
+          where: { purpose: 'event' },
+          orderBy: { sortOrder: 'asc' },
+        },
       },
     });
     if (timeline) {
@@ -100,16 +105,22 @@ export class AiScheduleContextBuilder {
     const serviceIds = [
       ...new Set(withServices.flatMap((m) => m.services.map((s) => s.serviceId))),
     ];
-    const services = await tx.service.findMany({ where: { id: { in: serviceIds } } });
+    const services = await tx.service.findMany({
+      where: { id: { in: serviceIds } },
+    });
     const serviceById = new Map(services.map((s) => [s.id, s]));
 
     const proRows = await tx.member.findMany({
       where: { isProfessional: true, status: 'active', deletedAt: null },
       orderBy: [{ displayName: 'asc' }, { id: 'asc' }],
-      select: { id: true, displayName: true },
+      select: {
+        id: true,
+        displayName: true,
+        isFixed: true,
+        servesBridal: true,
+      },
     });
     const eligibleByService = new Map<string, string[]>();
-    const usedPros = new Set<string>();
     for (const sid of serviceIds) {
       const cat = serviceById.get(sid)?.categoryId;
       const ok: string[] = [];
@@ -119,9 +130,20 @@ export class AiScheduleContextBuilder {
         }
       }
       eligibleByService.set(sid, ok);
-      ok.forEach((id) => usedPros.add(id));
     }
-    const pros = proRows.filter((p) => usedPros.has(p.id));
+    // Elegíveis por pessoa: a assistente do grupo não atende (D-19, Pitfall 9) e serviço
+    // da noiva/debutante só com quem atende noiva (D-02/D-17).
+    const servesBridalById = new Map(proRows.map((p) => [p.id, p.servesBridal]));
+    const eligibleFor = (sid: string, role: 'bride' | 'companion'): string[] =>
+      (eligibleByService.get(sid) ?? []).filter(
+        (id) => id !== group.assistantMemberId && (role !== 'bride' || servesBridalById.get(id)),
+      );
+    const usedPros = new Set<string>();
+    for (const m of withServices) {
+      const role = m.role === 'bride' ? 'bride' : 'companion';
+      for (const s of m.services) eligibleFor(s.serviceId, role).forEach((id) => usedPros.add(id));
+    }
+    const prosUnordered = proRows.filter((p) => usedPros.has(p.id));
 
     const eff = await this.settings.getEffective(tx, orgId);
     const eventDate = group.eventDate.toISOString().slice(0, 10);
@@ -131,6 +153,38 @@ export class AiScheduleContextBuilder {
       FROM organizations o LIMIT 1`;
     const dayStart = win[0].s;
     const dayEnd = win[0].e;
+
+    // Ranking do dia do evento (D-10/D-11), ignorando os agendamentos do próprio grupo.
+    const groupAppts = await tx.appointment.findMany({
+      where: {
+        bridalGroupId: groupId,
+        startsAt: { lt: dayEnd },
+        endsAt: { gt: dayStart },
+      },
+      select: { id: true },
+    });
+    const rank = await loadRankingDataTx(tx, {
+      professionalIds: prosUnordered.map((p) => p.id),
+      dayStart,
+      dayEnd,
+      excludeAppointmentIds: groupAppts.map((a) => a.id),
+    });
+    const rot = rotationRanks(
+      prosUnordered.map((p) => ({
+        id: p.id,
+        lastAssignedAt: rank.lastAssignedAt.get(p.id) ?? null,
+      })),
+    );
+    // A lista vai ao modelo já na ordem de preferência, antes de gerar os rótulos prof_N.
+    const rankOf = (p: (typeof prosUnordered)[number]) => ({
+      id: p.id,
+      isFixed: p.isFixed,
+      servesBridal: p.servesBridal,
+      free: true,
+      dayMinutes: rank.dayMinutes.get(p.id) ?? 0,
+      lastAssignedAt: rot.get(p.id) ?? 0,
+    });
+    const pros = [...prosUnordered].sort((a, b) => compareCandidates(rankOf(a), rankOf(b)));
 
     const proIds = pros.map((p) => p.id);
     const busy: ScheduleContext['busy'] = [];
@@ -177,7 +231,11 @@ export class AiScheduleContextBuilder {
     const persons: ScheduleContext['persons'] = withServices.map((m, i) => {
       const ref = `p${i + 1}`;
       const role = m.role === 'bride' ? 'bride' : 'companion';
-      refs.set(ref, { groupMemberId: m.id, clientName: m.client.fullName, role });
+      refs.set(ref, {
+        groupMemberId: m.id,
+        clientName: m.client.fullName,
+        role,
+      });
       return {
         ref,
         role,
@@ -185,7 +243,7 @@ export class AiScheduleContextBuilder {
           serviceId: s.serviceId,
           label: serviceById.get(s.serviceId)?.name ?? 'Serviço',
           durationMinutes: serviceById.get(s.serviceId)?.defaultDurationMinutes ?? 0,
-          eligibleProfessionalIds: eligibleByService.get(s.serviceId) ?? [],
+          eligibleProfessionalIds: eligibleFor(s.serviceId, role),
         })),
       };
     });
@@ -193,15 +251,27 @@ export class AiScheduleContextBuilder {
     const readyLimit = group.readyBy ?? dayEnd;
     const readyBy =
       timeline && timeline.registryStartsAt < readyLimit ? timeline.registryStartsAt : readyLimit;
+    // Limite das acompanhantes (D-14/D-21): usado sempre, com ou sem cronograma.
+    let companionReadyBy = readyBy;
+    if (group.companionsReadyBy && group.companionsReadyBy < companionReadyBy) {
+      companionReadyBy = group.companionsReadyBy;
+    }
     const ctx: ScheduleContext = {
       eventDate,
       readyBy: readyBy.toISOString(),
+      companionReadyBy: companionReadyBy.toISOString(),
       dayStart: dayStart.toISOString(),
       dayEnd: dayEnd.toISOString(),
       travelBeforeMinutes: external ? group.travelMinutesBefore : 0,
       travelAfterMinutes: external ? group.travelMinutesAfter : 0,
       persons,
-      professionals: pros.map((p, i) => ({ id: p.id, label: `prof_${i + 1}` })),
+      professionals: pros.map((p, i) => ({
+        id: p.id,
+        label: `prof_${i + 1}`,
+        isFixed: p.isFixed,
+        dayMinutes: rank.dayMinutes.get(p.id) ?? 0,
+        rotationRank: rot.get(p.id) ?? 0,
+      })),
       busy,
     };
     return {

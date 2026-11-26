@@ -4,6 +4,7 @@ import type { ScheduleContext } from './ai-schedule.schema';
 const ctx = (): ScheduleContext => ({
   eventDate: '2030-06-15',
   readyBy: '2030-06-15T18:00:00.000Z',
+  companionReadyBy: '2030-06-15T18:00:00.000Z',
   dayStart: '2030-06-15T10:00:00.000Z',
   dayEnd: '2030-06-15T22:00:00.000Z',
   travelBeforeMinutes: 0,
@@ -27,8 +28,8 @@ const ctx = (): ScheduleContext => ({
     },
   ],
   professionals: [
-    { id: 'a', label: 'prof_1' },
-    { id: 'b', label: 'prof_2' },
+    { id: 'a', label: 'prof_1', isFixed: false, dayMinutes: 0, rotationRank: 0 },
+    { id: 'b', label: 'prof_2', isFixed: false, dayMinutes: 0, rotationRank: 1 },
   ],
   busy: [
     { professionalId: 'a', startsAt: '2030-06-15T12:00:00.000Z', endsAt: '2030-06-15T13:00:00.000Z' },

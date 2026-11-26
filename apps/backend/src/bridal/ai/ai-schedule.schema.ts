@@ -6,7 +6,8 @@ import { z } from 'zod/v4';
  */
 export interface ScheduleContext {
   eventDate: string; // 'YYYY-MM-DD' (data local)
-  readyBy: string; // ISO instant: todos terminam até aqui; noiva por último
+  readyBy: string; // ISO instant: a noiva termina até aqui
+  companionReadyBy: string; // ISO: limite das acompanhantes = min(make-off, acompanhantes prontas até, pronta até/dayEnd) (11 D-14)
   dayStart: string; // ISO instant (janela do dia — D-25)
   dayEnd: string; // ISO instant
   travelBeforeMinutes: number; // 0 se estúdio
@@ -21,7 +22,13 @@ export interface ScheduleContext {
       eligibleProfessionalIds: string[];
     }[];
   }[];
-  professionals: { id: string; label: string }[];
+  professionals: {
+    id: string;
+    label: string;
+    isFixed: boolean;
+    dayMinutes: number; // minutos já agendados no dia do evento
+    rotationRank: number; // 0 = recebeu há mais tempo (revezamento)
+  }[];
   busy: { professionalId: string; startsAt: string; endsAt: string }[]; // agendamentos + time_blocks do dia
 }
 
