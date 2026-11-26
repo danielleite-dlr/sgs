@@ -20,6 +20,7 @@ export const SuggestBridalScheduleMutation = gql`
           serviceName
           professionalId
           professionalName
+          professionalIsFixed
           startsAt
           endsAt
         }
@@ -28,11 +29,13 @@ export const SuggestBridalScheduleMutation = gql`
           personLabel
           serviceId
           serviceName
+          reason
         }
         warnings
         dayStart
         dayEnd
         readyBy
+        companionReadyBy
       }
       errors {
         code
@@ -69,6 +72,7 @@ export interface AiScheduleItem {
   serviceName: string;
   professionalId: string;
   professionalName: string;
+  professionalIsFixed: boolean;
   startsAt: string;
   endsAt: string;
 }
@@ -78,6 +82,8 @@ export interface AiScheduleUnscheduled {
   personLabel: string;
   serviceId: string;
   serviceName: string;
+  /** NO_ELIGIBLE_PROFESSIONAL | NO_FREE_PROFESSIONAL_BEFORE_LIMIT | null */
+  reason: string | null;
 }
 
 export interface AiScheduleSuggestion {
@@ -92,6 +98,7 @@ export interface AiScheduleSuggestion {
   dayStart: string;
   dayEnd: string;
   readyBy: string;
+  companionReadyBy: string;
 }
 
 export interface SuggestBridalScheduleResult {

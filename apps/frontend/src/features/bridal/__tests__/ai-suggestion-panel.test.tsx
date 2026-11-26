@@ -39,7 +39,9 @@ function item(i: number, prof: string) {
 }
 const items = Array.from({ length: 7 }, (_, i) => item(i, i % 2 === 0 ? 'p1' : 'p2'));
 
-function suggestMock(): MockedResponse {
+function suggestMock(
+  over: { items?: unknown[]; unscheduled?: unknown[]; warnings?: string[] } = {},
+): MockedResponse {
   return {
     request: { query: SuggestBridalScheduleMutation },
     variableMatcher: () => true,
@@ -55,9 +57,9 @@ function suggestMock(): MockedResponse {
             model: null,
             cached: false,
             fallbackReason: 'NO_API_KEY',
-            items,
-            unscheduled: [],
-            warnings: [],
+            items: over.items ?? items,
+            unscheduled: over.unscheduled ?? [],
+            warnings: over.warnings ?? [],
             dayStart: '2026-12-05T10:00:00.000Z',
             dayEnd: '2026-12-05T22:00:00.000Z',
             readyBy: '2026-12-05T17:00:00.000Z',
@@ -83,9 +85,9 @@ const profsMock: MockedResponse = {
   },
 };
 
-function renderPanel(extra: MockedResponse[] = []) {
+function renderPanel(extra: MockedResponse[] = [], suggest: MockedResponse = suggestMock()) {
   return render(
-    <MockedProvider mocks={[suggestMock(), profsMock, ...extra]}>
+    <MockedProvider mocks={[suggest, profsMock, ...extra]}>
       <MemoryRouter>
         <AiSuggestionPanel group={g} onScheduled={() => undefined} />
       </MemoryRouter>
@@ -160,6 +162,50 @@ describe('AiSuggestionPanel', () => {
     expect(sentItems).toHaveLength(7);
     // a edição continua na tela
     expect(screen.getAllByTestId(/^schedule-row-\d+$/)).toHaveLength(7);
+  });
+
+  it('D-12: item com profissional não fixa mostra o selo "Não fixa"', async () => {
+    useAuthStore.setState({ roleName: 'MANAGER' });
+    renderPanel(
+      [],
+      suggestMock({ items: [{ ...item(0, 'p1') }, { ...item(1, 'p2'), professionalIsFixed: false }] }),
+    );
+    fireEvent.click(screen.getByTestId('ai-suggest'));
+    expect(await screen.findAllByTestId('ai-item-not-fixed')).toHaveLength(1);
+    expect(screen.getByTestId('ai-not-fixed-list')).toHaveTextContent('Paulo');
+  });
+
+  it('D-16: "Não coube" mostra cada motivo em português e o limite das acompanhantes', async () => {
+    useAuthStore.setState({ roleName: 'MANAGER' });
+    const u = (id: string, label: string, reason: string | null) => ({
+      __typename: 'AiScheduleUnscheduled',
+      groupMemberId: id,
+      personLabel: label,
+      serviceId: 'sv1',
+      serviceName: 'Maquiagem',
+      reason,
+    });
+    renderPanel(
+      [],
+      suggestMock({
+        unscheduled: [
+          u('m1', 'Ana', 'NO_ELIGIBLE_PROFESSIONAL'),
+          u('m2', 'Bia', 'NO_FREE_PROFESSIONAL_BEFORE_LIMIT'),
+          u('m3', 'Cris', null),
+        ],
+        warnings: ['Bia atendida 30 min antes do make-off'],
+      }),
+    );
+    fireEvent.click(screen.getByTestId('ai-suggest'));
+    const box = await screen.findByTestId('ai-unscheduled');
+    expect(box).toHaveTextContent('Não coube');
+    expect(box).toHaveTextContent('Ana — Maquiagem: nenhuma profissional elegível');
+    expect(box).toHaveTextContent('Bia — Maquiagem: sem profissional livre a tempo do make-off');
+    expect(box).toHaveTextContent('Cris — Maquiagem: não coube no horário');
+    expect(box).toHaveTextContent('Clientes comuns não são remarcadas');
+    // 16:00Z = 13:00 em São Paulo
+    expect(screen.getByTestId('ai-companion-ready')).toHaveTextContent('Acompanhantes prontas até 13:00');
+    expect(screen.getByText('Bia atendida 30 min antes do make-off')).toBeInTheDocument();
   });
 
   it('"Montar manualmente" lista só os serviços do evento (sem duplicar o teste)', () => {

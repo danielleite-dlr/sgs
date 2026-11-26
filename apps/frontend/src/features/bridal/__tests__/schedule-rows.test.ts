@@ -18,6 +18,7 @@ const suggestion: AiScheduleSuggestion = {
   dayStart: '2026-12-05T10:00:00.000Z',
   dayEnd: '2026-12-05T22:00:00.000Z',
   readyBy: '2026-12-05T17:00:00.000Z',
+  companionReadyBy: '2026-12-05T16:00:00.000Z',
   items: [
     {
       personRef: 'p1',
@@ -30,6 +31,7 @@ const suggestion: AiScheduleSuggestion = {
       professionalName: 'Ana',
       startsAt: '2026-12-05T11:00:00.000Z', // 08:00 em São Paulo
       endsAt: '2026-12-05T12:30:00.000Z',
+      professionalIsFixed: true,
     },
   ],
 };

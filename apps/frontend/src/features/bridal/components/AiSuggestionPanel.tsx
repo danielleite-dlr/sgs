@@ -48,6 +48,14 @@ interface Props {
 
 type Mode = 'idle' | 'ai' | 'manual';
 
+// 11 D-12/D-16: motivo em português de quem não coube na sugestão.
+const UNSCHEDULED_REASON: Record<string, string> = {
+  NO_ELIGIBLE_PROFESSIONAL:
+    'nenhuma profissional elegível (para a noiva/debutante, marque quem atende em Profissionais)',
+  NO_FREE_PROFESSIONAL_BEFORE_LIMIT:
+    'sem profissional livre a tempo do make-off/saída das acompanhantes',
+};
+
 export function AiSuggestionPanel({ group, onScheduled }: Props) {
   const client = useApolloClient();
   const canSuggest = useBridalPermission('bridal.aiSuggest');
@@ -291,11 +299,47 @@ export function AiSuggestionPanel({ group, onScheduled }: Props) {
               {suggestion.cached && <span className="text-xs text-neutral-600">(do cache)</span>}
             </div>
           )}
-          {mode === 'ai' && suggestion && suggestion.unscheduled.length > 0 && (
-            <p role="status" className="text-sm text-warning" data-testid="ai-unscheduled">
-              Sem horário livre para:{' '}
-              {suggestion.unscheduled.map((u) => `${u.personLabel} — ${u.serviceName}`).join('; ')}
+          {mode === 'ai' && suggestion && suggestion.items.some((it) => !it.professionalIsFixed) && (
+            <ul className="space-y-xs text-sm" data-testid="ai-not-fixed-list">
+              {suggestion.items
+                .filter((it) => !it.professionalIsFixed)
+                .map((it) => (
+                  <li key={it.personRef} className="flex flex-wrap items-center gap-xs">
+                    <span>
+                      {it.personLabel} — {it.serviceName}: {it.professionalName}
+                    </span>
+                    <Badge variant="outline" data-testid="ai-item-not-fixed">
+                      Não fixa
+                    </Badge>
+                  </li>
+                ))}
+            </ul>
+          )}
+          {mode === 'ai' && suggestion && (
+            <p className="text-sm text-neutral-700" data-testid="ai-companion-ready">
+              Acompanhantes prontas até {toZoned(suggestion.companionReadyBy).time}
             </p>
+          )}
+          {mode === 'ai' && suggestion && suggestion.unscheduled.length > 0 && (
+            <section
+              role="status"
+              className="space-y-xs rounded-md border border-warning p-sm text-sm"
+              data-testid="ai-unscheduled"
+            >
+              <h3 className="font-semibold text-warning">Não coube</h3>
+              <ul className="list-disc pl-md">
+                {suggestion.unscheduled.map((u) => (
+                  <li key={`${u.groupMemberId}-${u.serviceId}`}>
+                    {u.personLabel} — {u.serviceName}:{' '}
+                    {(u.reason && UNSCHEDULED_REASON[u.reason]) ?? 'não coube no horário'}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-neutral-600">
+                Resolva chamando uma profissional não fixa, ajustando horários ou com o ajuste de
+                Gerente/Admin. Clientes comuns não são remarcadas.
+              </p>
+            </section>
           )}
           {mode === 'ai' &&
             suggestion?.warnings.map((w) => (
