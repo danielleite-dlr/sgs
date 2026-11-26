@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 11-02-PLAN.md
-last_updated: "2026-11-26T04:43:24.360Z"
+stopped_at: Completed 11-04-PLAN.md
+last_updated: "2026-11-26T04:51:49.151Z"
 last_activity: 2026-11-26
 progress:
   total_phases: 16
   completed_phases: 12
   total_plans: 186
-  completed_plans: 171
+  completed_plans: 172
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 11 (prioridade-de-profissionais-e-cronograma-da-noiva) — EXECUTING
-Plan: 2 of 16
+Plan: 3 of 16
 Status: Ready to execute
 Last activity: 2026-11-26
 
@@ -125,6 +125,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 10 P14 | 60min | 2 tasks | 5 files |
 | Phase 11 P01 | 20min | 2 tasks | 2 files |
 | Phase 11 P02 | 45min | 2 tasks | 9 files |
+| Phase 11 P04 | 35min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -230,6 +231,7 @@ Recent decisions affecting current work:
 - [Phase 10]: AccessItem sem normalização no cache Apollo para não misturar acessos de pessoas
 - [Phase 11]: 11-01: ranking puro de profissionais (fixa estrita > minutos no dia > revezamento > id); filtro de noiva sem fallback
 - [Phase 11]: 11-02: migração só ADD COLUMN (is_fixed, serves_bridal, companions_ready_by); fixas primeiro só em professionalsForService, grade da Agenda inalterada
+- [Phase 11]: 11-04: mudar o dia do evento sem companionsReadyBy zera o campo
 
 ### Pending Todos
 
@@ -310,8 +312,8 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-26T04:43:24.350Z
-Stopped at: Completed 11-02-PLAN.md
+Last session: 2026-11-26T04:51:49.135Z
+Stopped at: Completed 11-04-PLAN.md
 Resume file: None
 | 2026-11-12 | fast | Montar manualmente (noivas) sem duplicar serviços do teste | ✅ |
 | 2026-11-13 | fast | Comanda: crédito do cliente em destaque no pagamento e no card da cliente | ✅ |

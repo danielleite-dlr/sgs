@@ -128,10 +128,10 @@
 - [ ] **PRIO-09**: O filtro "Atende noiva/debutante" vale em todo serviço da noiva/debutante (cronograma, sugestão de agenda, prova e editor manual) e o servidor recusa quem não atende; sem ninguém marcado, a lista fica vazia com aviso e link para Profissionais, sem fallback para "todas"; acompanhantes sem filtro _(11 D-02, D-04, D-19)_
 - [ ] **PRIO-10**: Uma consulta devolve, para serviço + horário, as profissionais que fazem o serviço ordenadas (livres antes de ocupadas, depois o ranking), com a sugerida marcada, isolada por salão _(11 D-08, D-09)_
 - [ ] **PRIO-11**: No agendamento comum, com serviço e horário preenchidos, o formulário pré-seleciona a fixa livre mais justa; profissional já escolhida nunca é trocada (só aparece "Sugestão: Fulana (fixa livre)") _(11 D-08)_
-- [ ] **PRIO-12**: O limite de cada acompanhante é o mais cedo entre o make-off (início do registro do cronograma confirmado) e "Acompanhantes prontas até"; as mensagens usam o nome "make-off"; o guarda do agendamento manual só atua com cronograma confirmado _(11 D-13, D-14, D-21)_
-- [ ] **PRIO-13**: O grupo tem o campo "Acompanhantes prontas até" (vazio = igual ao make-off), editável no formulário do grupo e na aba Cronograma, no mesmo dia do evento _(11 D-14)_
+- [x] **PRIO-12**: O limite de cada acompanhante é o mais cedo entre o make-off (início do registro do cronograma confirmado) e "Acompanhantes prontas até"; as mensagens usam o nome "make-off"; o guarda do agendamento manual só atua com cronograma confirmado _(11 D-13, D-14, D-21)_
+- [x] **PRIO-13**: O grupo tem o campo "Acompanhantes prontas até" (vazio = igual ao make-off), editável no formulário do grupo e na aba Cronograma, no mesmo dia do evento _(11 D-14)_
 - [ ] **PRIO-14**: A sugestão de agenda usa limite por papel (noiva: pronta até/make-off; acompanhante: limite efetivo), encaixa a acompanhante o mais perto possível do limite e lista "não coube" com o motivo, sem remarcar clientes comuns _(11 D-15, D-16)_
-- [ ] **PRIO-15**: Tudo da fase vale igual para noiva e debutante (`eventKind`); o título do texto do cronograma mantém o formato da 04.2 _(11 D-17, D-21)_
+- [x] **PRIO-15**: Tudo da fase vale igual para noiva e debutante (`eventKind`); o título do texto do cronograma mantém o formato da 04.2 _(11 D-17, D-21)_
 - [x] **PRIO-16**: Todos os seletores de profissional mostram as fixas primeiro (depois as não fixas); a ordem das colunas da grade da Agenda não muda _(11 D-09, D-20)_
 
 ### Qualidade / Observabilidade
@@ -269,10 +269,10 @@
 | PRIO-09 | Phase 11 | Pending |
 | PRIO-10 | Phase 11 | Pending |
 | PRIO-11 | Phase 11 | Pending |
-| PRIO-12 | Phase 11 | Pending |
-| PRIO-13 | Phase 11 | Pending |
+| PRIO-12 | Phase 11 | Complete |
+| PRIO-13 | Phase 11 | Complete |
 | PRIO-14 | Phase 11 | Pending |
-| PRIO-15 | Phase 11 | Pending |
+| PRIO-15 | Phase 11 | Complete |
 | PRIO-16 | Phase 11 | Complete |
 | QA-01 | Backlog | Deferred |
 | QA-02 | Backlog | Deferred |
