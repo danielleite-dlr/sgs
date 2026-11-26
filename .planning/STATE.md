@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 
 Phase: 11 (prioridade-de-profissionais-e-cronograma-da-noiva) — EXECUTING
 Plan: 7 of 16
-Plan: 6 of 16
-Plan: 6 of 16
+Plan: 7 of 16
+Plan: 7 of 16
 Status: Ready to execute
 Last activity: 2026-11-26
 
