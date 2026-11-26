@@ -12,7 +12,7 @@ import { deletePhase3Rows } from './helpers/phase3-cleanup';
 
 const PAYLOAD = `
   group {
-    id name eventDate readyBy locationKind locationAddress travelMinutesBefore travelMinutesAfter
+    id name eventDate readyBy companionsReadyBy locationKind locationAddress travelMinutesBefore travelMinutesAfter
     status contractId contractCode contractStatus appointmentCount packageId packageName
     locationName eventKind eventTime responsibleClientId responsibleName
     members {
@@ -143,6 +143,35 @@ describe('Phase 4 - grupos de noivas (CLI-03)', () => {
     expect(await run({ readyBy: '2030-06-20T12:00:00Z' })).toBe('READY_BY_OUTSIDE_EVENT_DAY');
     expect(await run({ eventDate: '2030-13-45' })).toBe('INVALID_EVENT_DATE');
     expect(await run({ readyBy: '2030-06-15T15:00:00Z' })).toBeUndefined();
+  });
+
+  it('grava, mantém e limpa "acompanhantes prontas até" (11 D-14)', async () => {
+    const run = async (extra: Record<string, unknown>) =>
+      (
+        await admin()(CREATE, {
+          i: { group: fields(extra), bride: { clientId: w.clientId } },
+        })
+      ).data.createBridalGroup;
+    const outside = await run({ companionsReadyBy: '2030-06-20T12:00:00Z' });
+    expect(outside.errors[0].code).toBe('COMPANIONS_READY_BY_OUTSIDE_EVENT_DAY');
+    expect(outside.errors[0].field).toBe('companionsReadyBy');
+
+    const ok = await run({ companionsReadyBy: '2030-06-15T15:00:00Z' });
+    expect(ok.errors).toEqual([]);
+    expect(new Date(ok.group.companionsReadyBy).toISOString()).toBe('2030-06-15T15:00:00.000Z');
+
+    const base = fields();
+    const keep = (
+      await admin()(UPDATE, { id: ok.group.id, i: { ...base, name: 'p4bg-renomeado' } })
+    ).data.updateBridalGroup;
+    expect(keep.errors).toEqual([]);
+    expect(new Date(keep.group.companionsReadyBy).toISOString()).toBe('2030-06-15T15:00:00.000Z');
+
+    const cleared = (
+      await admin()(UPDATE, { id: ok.group.id, i: { ...base, companionsReadyBy: null } })
+    ).data.updateBridalGroup;
+    expect(cleared.errors).toEqual([]);
+    expect(cleared.group.companionsReadyBy).toBeNull();
   });
 
   it('troca cobertura e trava com comanda fechada (D-25)', async () => {

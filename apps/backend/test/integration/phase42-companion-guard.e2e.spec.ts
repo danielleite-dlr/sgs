@@ -401,4 +401,97 @@ describe('Fase 04.2 - guarda das acompanhantes no cronograma confirmado', () => 
     const after = await adminPrisma.appointment.findUniqueOrThrow({ where: { id: bad.id } });
     expect(after.startsAt.toISOString()).toBe(at(eventDay, 15));
   });
+
+  describe('11 D-13/D-14: make-off e acompanhantes prontas até', () => {
+    const UPDATE_GROUP = `mutation($id: UUID!, $i: BridalGroupFieldsInput!) {
+      updateBridalGroup(id: $id, input: $i) { errors { code message field } }
+    }`;
+
+    it('11. companionsReadyBy 30 min antes do make-off recusa com a saída das acompanhantes', async () => {
+      const g = await groupWithTimeline();
+      await adminPrisma.bridalGroup.update({
+        where: { id: g.groupId },
+        data: { companionsReadyBy: new Date(at(eventDay, 15)) },
+      });
+      const c = g.companionClientIds[0];
+      const ok = await create(att(), c, w.serviceBId, w.members.proA, at(eventDay, 14, 30), at(eventDay, 15));
+      expect(ok.errors).toEqual([]);
+      const bad = await create(att(), g.companionClientIds[1], w.serviceBId, w.members.proB, at(eventDay, 14, 45), at(eventDay, 15, 15));
+      expect(bad.appointment).toBeNull();
+      expect(bad.errors[0].code).toBe('TIMELINE_AFTER_REGISTRY');
+      expect(bad.errors[0].message).toContain('saída das acompanhantes');
+      expect(bad.errors[0].message).toContain('15h');
+    });
+
+    it('12. sem companionsReadyBy o limite é o make-off', async () => {
+      const g = await groupWithTimeline();
+      const bad = await create(att(), g.companionClientIds[0], w.serviceBId, w.members.proA, at(eventDay, 15), at(eventDay, 16));
+      expect(bad.errors[0].code).toBe('TIMELINE_AFTER_REGISTRY');
+      expect(bad.errors[0].message).toContain('make-off');
+      expect(bad.errors[0].message).toContain('15:30');
+    });
+
+    it('13. companionIssues muda ao atualizar companionsReadyBy no grupo', async () => {
+      const g = await groupWithTimeline();
+      await insertAppt(g.companionClientIds[0], w.members.proA, at(eventDay, 14, 30), at(eventDay, 15, 15));
+      const issues = () =>
+        appPrisma.$transaction(async (tx) => {
+          await tx.$executeRaw`SELECT set_config('app.current_organization', ${w.orgId}, true)`;
+          return findCompanionIssuesTx(tx as unknown as TenantPrismaClient, g.groupId);
+        });
+      expect(await issues()).toHaveLength(0);
+      const grp = await adminPrisma.bridalGroup.findUniqueOrThrow({ where: { id: g.groupId } });
+      const r = (
+        await adm()(UPDATE_GROUP, {
+          id: g.groupId,
+          i: {
+            name: grp.name,
+            eventDate: eventDay,
+            locationKind: 'studio',
+            companionsReadyBy: at(eventDay, 15),
+          },
+        })
+      ).data.updateBridalGroup as { errors: Err[] };
+      expect(r.errors).toEqual([]);
+      const after = await issues();
+      expect(after).toHaveLength(1);
+      expect(after[0].rule).toBe('TIMELINE_AFTER_REGISTRY');
+      expect(after[0].message).toContain('saída das acompanhantes');
+    });
+
+    it('14. debutante segue a mesma regra', async () => {
+      const g = await insertBridalGroupRow(w, { companions: 1, eventDate: eventDay, eventKind: 'debutante' });
+      await insertConfirmedTimelineRow(w, {
+        groupId: g.groupId,
+        departureTime: '17:00',
+        departureAt: at(eventDay, 17),
+        registryStartsAt: at(eventDay, 15, 30),
+        registryLabel: 'fotos',
+        brideLabel: 'DEBUTANTE',
+        make: {
+          professionalId: w.members.proA,
+          serviceId: w.serviceId,
+          startsAt: at(eventDay, 12, 30),
+          endsAt: at(eventDay, 14),
+        },
+      });
+      await adminPrisma.bridalGroup.update({
+        where: { id: g.groupId },
+        data: { companionsReadyBy: new Date(at(eventDay, 15)) },
+      });
+      const bad = await create(att(), g.companionClientIds[0], w.serviceBId, w.members.proB, at(eventDay, 14, 30), at(eventDay, 15, 15));
+      expect(bad.errors[0].code).toBe('TIMELINE_AFTER_REGISTRY');
+      expect(bad.errors[0].message).toContain('saída das acompanhantes');
+    });
+
+    it('15. sem cronograma confirmado nada é recusado, mesmo com companionsReadyBy', async () => {
+      const g = await insertBridalGroupRow(w, { companions: 1, eventDate: eventDay });
+      await adminPrisma.bridalGroup.update({
+        where: { id: g.groupId },
+        data: { companionsReadyBy: new Date(at(eventDay, 9)) },
+      });
+      const r = await create(att(), g.companionClientIds[0], w.serviceBId, w.members.proB, at(eventDay, 14), at(eventDay, 15));
+      expect(r.errors).toEqual([]);
+    });
+  });
 });

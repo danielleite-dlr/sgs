@@ -97,6 +97,7 @@ export function serializeBridalGroup(row: BridalGroupRow, extras: BridalGroupExt
     name: row.name,
     eventDate: eventDateYmd,
     readyBy: row.readyBy,
+    companionsReadyBy: row.companionsReadyBy ?? null,
     locationKind: row.locationKind,
     locationAddress: row.locationAddress,
     locationName: row.locationName,

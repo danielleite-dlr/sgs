@@ -38,6 +38,8 @@ export interface BridalGroupFieldsInput {
   name: string;
   eventDate: string;
   readyBy?: Date | string | null;
+  /** Acompanhantes prontas até (11 D-14): omitido = mantém; null = igual ao make-off */
+  companionsReadyBy?: Date | string | null;
   locationKind?: string | null;
   locationAddress?: string | null;
   travelMinutesBefore?: number | null;
@@ -128,6 +130,8 @@ interface ValidatedFields {
   name: string;
   eventDate: Date;
   readyBy: Date | null;
+  /** undefined = não informado (update mantém) */
+  companionsReadyBy: Date | null | undefined;
   locationKind: string;
   locationAddress: string | null;
   travelMinutesBefore: number;
@@ -226,6 +230,16 @@ async function validateGroupFields(
     before = 0;
     after = 0;
   }
+  let tzCache: string | null = null;
+  const orgTz = async (): Promise<string> => {
+    if (tzCache === null) {
+      const rows = await tx.$queryRaw<
+        { timezone: string }[]
+      >`SELECT timezone FROM organizations LIMIT 1`;
+      tzCache = rows[0]?.timezone ?? "America/Sao_Paulo";
+    }
+    return tzCache;
+  };
   let readyBy: Date | null = null;
   if (input.readyBy) {
     readyBy = new Date(input.readyBy);
@@ -236,11 +250,7 @@ async function validateGroupFields(
         "readyBy",
       );
     }
-    const rows = await tx.$queryRaw<
-      { timezone: string }[]
-    >`SELECT timezone FROM organizations LIMIT 1`;
-    const tz = rows[0]?.timezone ?? "America/Sao_Paulo";
-    if (localDate(readyBy, tz) !== input.eventDate) {
+    if (localDate(readyBy, await orgTz()) !== input.eventDate) {
       throw new BridalError(
         "READY_BY_OUTSIDE_EVENT_DAY",
         'O horário "pronta até" deve ser no dia do evento.',
@@ -248,10 +258,27 @@ async function validateGroupFields(
       );
     }
   }
+  let companionsReadyBy: Date | null | undefined = undefined;
+  if (input.companionsReadyBy === null) {
+    companionsReadyBy = null;
+  } else if (input.companionsReadyBy) {
+    companionsReadyBy = new Date(input.companionsReadyBy);
+    if (
+      Number.isNaN(companionsReadyBy.getTime()) ||
+      localDate(companionsReadyBy, await orgTz()) !== input.eventDate
+    ) {
+      throw new BridalError(
+        "COMPANIONS_READY_BY_OUTSIDE_EVENT_DAY",
+        'O horário "acompanhantes prontas até" deve ser no dia do evento.',
+        "companionsReadyBy",
+      );
+    }
+  }
   return {
     name,
     eventDate: new Date(`${input.eventDate}T00:00:00.000Z`),
     readyBy,
+    companionsReadyBy,
     locationKind,
     locationAddress: address,
     travelMinutesBefore: before,
@@ -732,6 +759,11 @@ export class BridalService {
         where: { id },
         data: {
           ...fields,
+          // mudou o dia do evento sem informar o campo: zera para não ficar em outro dia
+          ...(fields.companionsReadyBy === undefined &&
+          before.eventDate.getTime() !== fields.eventDate.getTime()
+            ? { companionsReadyBy: null }
+            : {}),
           packageId,
           ...(responsibleId !== undefined
             ? { responsibleClientId: responsibleId }
