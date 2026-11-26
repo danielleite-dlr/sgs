@@ -115,6 +115,25 @@
 - [x] **PERM-15**: O app consulta os acessos da pessoa e atualiza o menu em até 1 minuto, ao trocar de tela, ao voltar do segundo plano (iPhone instalado e Android) e quando a API recusa, sem sair e entrar _(10 D-13)_
 - [x] **PERM-16**: A tela Profissionais › Perfis de acesso lista as pessoas ativas e, para cada uma, as áreas e itens com liga/desliga acessível, controle de grupo, indicação do que é padrão do papel e do que foi ajustado e "voltar ao padrão"; o atalho "Acessos" no editar profissional abre o mesmo ajuste _(10 D-06, D-10, D-11)_
 
+### Prioridade de profissionais (Fase 11)
+
+- [ ] **PRIO-01**: A profissional tem as marcações "Fixa (equipe do studio)" (`isFixed`) e "Atende noiva/debutante" (`servesBridal`), falsas por padrão e sem migração de dados que marque alguém; só profissionais podem tê-las; a API cria, edita e devolve as duas; a marcação muda só a ordem/sugestão (comissão, repasse e diária não mudam) _(11 D-01, D-03, D-05)_
+- [ ] **PRIO-02**: Os diálogos criar/editar profissional mostram e editam as duas marcações (só para profissional) e a tela Profissionais mostra os selos "Fixa" e "Atende noiva/debutante" _(11 D-05)_
+- [ ] **PRIO-03**: Um módulo de domínio puro e determinístico ordena candidatas: só livres → (noiva/debutante: só quem atende noiva) → fixas antes de não fixas com prioridade estrita → menos minutos agendados no dia → revezamento (quem recebeu há mais tempo; nunca = primeiro) → id _(11 D-07, D-10, D-11, D-12, D-18)_
+- [ ] **PRIO-04**: Existe uma ordenação "fixas primeiro, depois por nome" reutilizável no backend e no frontend para as listas de escolha _(11 D-09)_
+- [ ] **PRIO-05**: Os dados do ranking vêm do banco: minutos agendados no dia local do salão (só status que ocupam agenda) e o último agendamento criado por profissional (revezamento derivado, sem gravar nada ao só ver uma sugestão) _(11 D-10, D-11)_
+- [ ] **PRIO-06**: A heurística da sugestão de agenda do grupo escolhe pela ordem do ranking (inclui a divisão entre fixas dentro da mesma sugestão), com prioridade estrita da fixa e aviso "atendida X min antes do make-off" quando a prioridade antecipa o horário _(11 D-07, D-18)_
+- [ ] **PRIO-07**: A sugestão por IA recebe fixa, minutos do dia e ordem de revezamento (sem dados pessoais), o cache de 24h muda quando as marcações mudam, a prioridade é conferida na resposta da Claude (violação → nova tentativa/heurística) sem bloquear a troca manual para não fixa na confirmação, e o cartão mostra o selo "não fixa" _(11 D-07, D-12)_
+- [ ] **PRIO-08**: A simulação do cronograma já sugere make e penteado da noiva/debutante (fixa livre que atende noiva, pelo critério justo), o studio pode trocar e a confirmação continua explícita; sem elegível livre fica "[a definir]" com aviso (revoga 04.2 D-03) _(11 D-06)_
+- [ ] **PRIO-09**: O filtro "Atende noiva/debutante" vale em todo serviço da noiva/debutante (cronograma, sugestão de agenda, prova e editor manual) e o servidor recusa quem não atende; sem ninguém marcado, a lista fica vazia com aviso e link para Profissionais, sem fallback para "todas"; acompanhantes sem filtro _(11 D-02, D-04, D-19)_
+- [ ] **PRIO-10**: Uma consulta devolve, para serviço + horário, as profissionais que fazem o serviço ordenadas (livres antes de ocupadas, depois o ranking), com a sugerida marcada, isolada por salão _(11 D-08, D-09)_
+- [ ] **PRIO-11**: No agendamento comum, com serviço e horário preenchidos, o formulário pré-seleciona a fixa livre mais justa; profissional já escolhida nunca é trocada (só aparece "Sugestão: Fulana (fixa livre)") _(11 D-08)_
+- [ ] **PRIO-12**: O limite de cada acompanhante é o mais cedo entre o make-off (início do registro do cronograma confirmado) e "Acompanhantes prontas até"; as mensagens usam o nome "make-off"; o guarda do agendamento manual só atua com cronograma confirmado _(11 D-13, D-14, D-21)_
+- [ ] **PRIO-13**: O grupo tem o campo "Acompanhantes prontas até" (vazio = igual ao make-off), editável no formulário do grupo e na aba Cronograma, no mesmo dia do evento _(11 D-14)_
+- [ ] **PRIO-14**: A sugestão de agenda usa limite por papel (noiva: pronta até/make-off; acompanhante: limite efetivo), encaixa a acompanhante o mais perto possível do limite e lista "não coube" com o motivo, sem remarcar clientes comuns _(11 D-15, D-16)_
+- [ ] **PRIO-15**: Tudo da fase vale igual para noiva e debutante (`eventKind`); o título do texto do cronograma mantém o formato da 04.2 _(11 D-17, D-21)_
+- [ ] **PRIO-16**: Todos os seletores de profissional mostram as fixas primeiro (depois as não fixas); a ordem das colunas da grade da Agenda não muda _(11 D-09, D-20)_
+
 ### Qualidade / Observabilidade
 
 - [ ] **QA-01**: Cobertura de testes unitários ≥80% do código de domínio no backend (regras de negócio, entidades, value objects)
@@ -239,16 +258,32 @@
 | PERM-14 | Phase 10 | Complete |
 | PERM-15 | Phase 10 | Complete |
 | PERM-16 | Phase 10 | Complete |
+| PRIO-01 | Phase 11 | Pending |
+| PRIO-02 | Phase 11 | Pending |
+| PRIO-03 | Phase 11 | Pending |
+| PRIO-04 | Phase 11 | Pending |
+| PRIO-05 | Phase 11 | Pending |
+| PRIO-06 | Phase 11 | Pending |
+| PRIO-07 | Phase 11 | Pending |
+| PRIO-08 | Phase 11 | Pending |
+| PRIO-09 | Phase 11 | Pending |
+| PRIO-10 | Phase 11 | Pending |
+| PRIO-11 | Phase 11 | Pending |
+| PRIO-12 | Phase 11 | Pending |
+| PRIO-13 | Phase 11 | Pending |
+| PRIO-14 | Phase 11 | Pending |
+| PRIO-15 | Phase 11 | Pending |
+| PRIO-16 | Phase 11 | Pending |
 | QA-01 | Backlog | Deferred |
 | QA-02 | Backlog | Deferred |
 | QA-03 | Backlog | Deferred |
 | QA-04 | Backlog | Deferred |
 
 **Coverage:**
-- v1 requirements: 72 total
-- Mapped to phases: 72/72 ✓
+- v1 requirements: 88 total
+- Mapped to phases: 88/88 ✓
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-02*
-*Last updated: 2026-11-24 — PERM-01..PERM-16 (fase 10, Permissões por usuário) acrescentados no plan-phase*
+*Last updated: 2026-11-26 — PRIO-01..PRIO-16 (fase 11, Prioridade de profissionais e cronograma da noiva) acrescentados no plan-phase*
