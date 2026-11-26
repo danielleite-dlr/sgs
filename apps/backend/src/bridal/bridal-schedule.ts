@@ -94,7 +94,7 @@ export async function createBridalScheduleTx(
 
   const members = await tx.bridalGroupMember.findMany({
     where: { groupId: group.id },
-    select: { id: true, clientId: true, coveredByContract: true },
+    select: { id: true, clientId: true, coveredByContract: true, role: true },
   });
   const memberById = new Map(members.map((m) => [m.id, m]));
 
@@ -146,6 +146,33 @@ export async function createBridalScheduleTx(
     };
     bucket.items.push(item);
     buckets.set(key, bucket);
+  }
+
+  // Fase 11 D-19: filtro rígido no servidor para todo serviço da noiva/debutante (evento e prova).
+  // Acompanhantes sem filtro (D-02).
+  const brideProIds = [
+    ...new Set(
+      items
+        .filter((i) => memberById.get(i.groupMemberId)!.role === 'bride')
+        .map((i) => i.professionalId),
+    ),
+  ];
+  if (brideProIds.length > 0) {
+    const pros = await tx.member.findMany({
+      where: { id: { in: brideProIds } },
+      select: { id: true, displayName: true, servesBridal: true },
+    });
+    const proById = new Map(pros.map((p) => [p.id, p]));
+    for (const id of brideProIds) {
+      const pro = proById.get(id);
+      if (pro && !pro.servesBridal) {
+        throw new BridalError(
+          'PROFESSIONAL_NOT_BRIDAL',
+          `${pro.displayName} não atende noiva/debutante. Marque em Profissionais › editar ("Atende noiva/debutante") ou escolha outra profissional.`,
+          'professionalId',
+        );
+      }
+    }
   }
 
   // Sinal: só acompanhante NÃO coberta, só no agendamento do evento (D-07).
