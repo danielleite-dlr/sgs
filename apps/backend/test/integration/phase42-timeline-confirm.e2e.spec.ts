@@ -9,11 +9,12 @@ import {
   type Phase4World,
 } from './helpers/phase4-fixtures';
 import { deletePhase4Rows } from './helpers/phase4-cleanup';
+import { markServesBridal } from './helpers/phase11-fixtures';
 
 const CONFIRM = `mutation($input: BridalTimelineInput!) {
   confirmBridalTimeline(input: $input) {
     timeline {
-      id version text registryLabel confirmedByName
+      id version text registryLabel confirmedByName companionsReadyBy
       companionIssues { appointmentId rule message }
     }
     conflicts { stepName professionalName startsAt endsAt blockedBy }
@@ -42,6 +43,7 @@ interface ConfirmPayload {
     id: string;
     version: number;
     text: string;
+    companionsReadyBy: string | null;
     companionIssues: { appointmentId: string; rule: string; message: string }[];
   } | null;
   conflicts: { stepName: string; professionalName: string; blockedBy: string }[];
@@ -79,7 +81,7 @@ describe('Fase 04.2 - ok do studio (confirmBridalTimeline)', () => {
     timelines: await adminPrisma.bridalTimeline.count({ where: { organizationId: w.orgId } }),
   });
   const audits = (action: string) =>
-    adminPrisma.auditLog.findMany({ where: { organizationId: w.orgId, action } });
+    adminPrisma.auditLog.findMany({ where: { organizationId: w.orgId, action, entityId: groupId } });
 
   const appt = (
     clientId: string,
@@ -165,6 +167,45 @@ describe('Fase 04.2 - ok do studio (confirmBridalTimeline)', () => {
     expect(r.errors[0].code).toBe('TIMELINE_INCOMPLETE');
     expect(r.errors[0].message).toContain('Escolha a profissional de penteado.');
     expect(await counts()).toEqual(before);
+  });
+
+  it('2b. profissional que não atende noiva/debutante é recusada na confirmação (D-19)', async () => {
+    await markServesBridal([w.members.proA], false);
+    try {
+      const before = await counts();
+      const r = await confirm();
+      expect(r.timeline).toBeNull();
+      expect(r.errors[0].code).toBe('TIMELINE_INCOMPLETE');
+      expect(r.errors[0].message).toContain('não atende noiva/debutante');
+      expect(await counts()).toEqual(before);
+    } finally {
+      await markServesBridal([w.members.proA], true);
+    }
+  });
+
+  it('2c. a confirmação não sugere: sem ids continua TIMELINE_INCOMPLETE', async () => {
+    const r = await confirm({ makeProfessionalId: null, hairProfessionalId: null });
+    expect(r.errors[0].code).toBe('TIMELINE_INCOMPLETE');
+    expect(await brideAppts()).toHaveLength(0);
+  });
+
+  it('2d. companionsReadyTime grava, limpa e omitido mantém (D-14)', async () => {
+    let r = await confirm({ companionsReadyTime: '09:30' });
+    expect(r.errors).toEqual([]);
+    expect(r.timeline?.companionsReadyBy).toBe(at(9, 30));
+    let g = await adminPrisma.bridalGroup.findUniqueOrThrow({ where: { id: groupId } });
+    expect(g.companionsReadyBy?.toISOString()).toBe(at(9, 30));
+
+    r = await confirm();
+    expect(r.timeline?.companionsReadyBy).toBe(at(9, 30));
+
+    r = await confirm({ companionsReadyTime: '' });
+    expect(r.timeline?.companionsReadyBy).toBeNull();
+    g = await adminPrisma.bridalGroup.findUniqueOrThrow({ where: { id: groupId } });
+    expect(g.companionsReadyBy).toBeNull();
+
+    const bad = await confirm({ companionsReadyTime: '25:99' });
+    expect(bad.errors[0].code).toBe('INVALID_COMPANIONS_READY_TIME');
   });
 
   it('3. conflito na agenda devolve quem ocupa e não grava nada', async () => {

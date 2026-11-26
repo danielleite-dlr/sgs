@@ -34,6 +34,9 @@ type TimelineBrideSlot {
   professionalName: String
   startsAt: DateTime!
   endsAt: DateTime!
+  "true = sugerida pelo sistema (11 D-06)"
+  suggested: Boolean!
+  isFixed: Boolean
 }
 
 type TimelineCompanionIssue {
@@ -64,6 +67,8 @@ type BridalTimelinePreview {
   "O que falta para confirmar (vazio + conflicts vazio = pode confirmar)"
   missing: [String!]!
   canConfirm: Boolean!
+  "Acompanhantes prontas até (null = igual ao make-off)"
+  companionsReadyBy: DateTime
 }
 
 type BridalTimelinePreviewPayload {
@@ -89,6 +94,8 @@ type BridalTimeline {
   confirmedByName: String
   version: Int!
   companionIssues: [TimelineCompanionIssue!]!
+  "Acompanhantes prontas até (null = igual ao make-off)"
+  companionsReadyBy: DateTime
 }
 
 type BridalTimelinePayload {
@@ -106,6 +113,8 @@ input BridalTimelineInput {
   brideLabel: String
   makeProfessionalId: UUID
   hairProfessionalId: UUID
+  "HH:MM; vazio = igual ao make-off; omitido = mantém"
+  companionsReadyTime: String
 }
 
 extend type Query {

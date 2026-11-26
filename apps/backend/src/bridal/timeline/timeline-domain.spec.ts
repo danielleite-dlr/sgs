@@ -272,4 +272,15 @@ describe('timeline-domain', () => {
     );
     expect(tied.rows.map((x) => x.name)).toEqual(['a', 'b', 'saída']);
   });
+
+  it('debutante usa o mesmo formato de título da 04.2 (11 D-21)', () => {
+    const r = computeTimeline(base({ brideLabel: 'Maria Clara' }));
+    expect(r.text.split('\n')[0]).toBe('CRONOGRAMA NOIVA MARIA CLARA - 08/11 - Pacote Glam');
+  });
+
+  it('sem profissional informada sai [a definir] com aviso PROFESSIONAL_UNDEFINED', () => {
+    const r = computeTimeline(base({ makeProfessionalName: null }));
+    expect(r.text).toContain('[a definir]');
+    expect(r.warnings.map((w) => w.code)).toContain('PROFESSIONAL_UNDEFINED');
+  });
 });
