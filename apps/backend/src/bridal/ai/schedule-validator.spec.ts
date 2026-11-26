@@ -1,5 +1,5 @@
 import type { Proposal, ProposalItem, ScheduleContext } from './ai-schedule.schema';
-import { validateProposal } from './schedule-validator';
+import { checkPriority, validateProposal } from './schedule-validator';
 
 /** Horário local (-03) de 2026-12-20 -> ISO UTC. */
 const at = (hhmm: string): string => {
@@ -23,6 +23,7 @@ function buildFixtureContext(): ScheduleContext {
   return {
     eventDate: '2026-12-20',
     readyBy: at('15:00'),
+    companionReadyBy: at('15:00'),
     dayStart: at('06:00'),
     dayEnd: at('20:00'),
     travelBeforeMinutes: 0,
@@ -52,8 +53,20 @@ function buildFixtureContext(): ScheduleContext {
       companion('p5'),
     ],
     professionals: [
-      { id: 'm1', label: 'Maquiadora' },
-      { id: 'h1', label: 'Cabeleireira' },
+      {
+        id: 'm1',
+        label: 'Maquiadora',
+        isFixed: false,
+        dayMinutes: 0,
+        rotationRank: 0,
+      },
+      {
+        id: 'h1',
+        label: 'Cabeleireira',
+        isFixed: false,
+        dayMinutes: 0,
+        rotationRank: 1,
+      },
     ],
     busy: [],
   };
@@ -286,5 +299,75 @@ describe('validateProposal', () => {
     const r = validateProposal({ items }, ctx);
     expect(r.ok).toBe(true);
     expect(r.warnings.map((w) => w.code)).toEqual(['BRIDE_NOT_LAST']);
+  });
+});
+
+describe('limite das acompanhantes e checkPriority (fase 11)', () => {
+  const base = (): ScheduleContext => {
+    const ctx = buildFixtureContext();
+    ctx.companionReadyBy = at('12:00');
+    return ctx;
+  };
+
+  it('acompanhante depois de companionReadyBy: AFTER_READY_BY citando o make-off', () => {
+    const ctx = base();
+    const r = validateProposal({ items: validItems() }, ctx);
+    const v = r.violations.filter((x) => x.code === 'AFTER_READY_BY');
+    expect(v.length).toBeGreaterThan(0);
+    expect(v[0].message).toMatch(/make-off/);
+    expect(v.every((x) => x.personRef !== 'p1')).toBe(true);
+  });
+
+  it('noiva até readyBy continua ok', () => {
+    const ctx = base();
+    ctx.companionReadyBy = at('15:00');
+    expect(validateProposal({ items: validItems() }, ctx).ok).toBe(true);
+  });
+
+  describe('prioridade', () => {
+    const pctx = (): ScheduleContext => {
+      const ctx = buildFixtureContext();
+      ctx.persons = [ctx.persons[1]];
+      ctx.persons[0].services[0].eligibleProfessionalIds = ['m1', 'f1'];
+      ctx.professionals.push({
+        id: 'f1',
+        label: 'Fixa',
+        isFixed: true,
+        dayMinutes: 0,
+        rotationRank: 0,
+      });
+      return ctx;
+    };
+    const prop = (pro: string): Proposal => ({
+      items: [item('p2', 'makeup', pro, '10:00', '10:45')],
+    });
+
+    it('não fixa com fixa livre: validateProposal não reclama, checkPriority acusa', () => {
+      const ctx = pctx();
+      expect(validateProposal(prop('m1'), ctx).violations).toEqual([]);
+      expect(checkPriority(prop('m1'), ctx).map((v) => v.code)).toEqual(['PRIORITY_NOT_FOLLOWED']);
+    });
+
+    it('fixa ocupada (com deslocamento): sem violação', () => {
+      const ctx = pctx();
+      ctx.travelBeforeMinutes = 30;
+      ctx.busy.push({
+        professionalId: 'f1',
+        startsAt: at('09:00'),
+        endsAt: at('09:45'),
+      });
+      expect(checkPriority(prop('m1'), ctx)).toEqual([]);
+    });
+
+    it('fixa ocupada por outro item da proposta: sem violação', () => {
+      const ctx = pctx();
+      const p = prop('m1');
+      p.items.push(item('p9', 'makeup', 'f1', '10:15', '11:00'));
+      expect(checkPriority(p, ctx)).toEqual([]);
+    });
+
+    it('item já em fixa: sem violação', () => {
+      expect(checkPriority(prop('f1'), pctx())).toEqual([]);
+    });
   });
 });

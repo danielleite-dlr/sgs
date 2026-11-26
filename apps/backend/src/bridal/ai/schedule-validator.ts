@@ -14,7 +14,8 @@ export type ViolationCode =
   | 'PROFESSIONAL_OVERLAP'
   | 'BUSY_CONFLICT'
   | 'PERSON_OVERLAP'
-  | 'TRAVEL_CONFLICT';
+  | 'TRAVEL_CONFLICT'
+  | 'PRIORITY_NOT_FOLLOWED';
 
 export interface Violation {
   code: ViolationCode;
@@ -59,6 +60,7 @@ export function validateProposal(p: Proposal, ctx: ScheduleContext): ValidationR
   const dayStart = Date.parse(ctx.dayStart);
   const dayEnd = Date.parse(ctx.dayEnd);
   const readyBy = Date.parse(ctx.readyBy);
+  const companionReadyBy = Date.parse(ctx.companionReadyBy);
   const professionalIds = new Set(ctx.professionals.map((x) => x.id));
 
   // --- Estrutura: cada (pessoa, serviço) do ctx aparece exatamente uma vez ---
@@ -128,11 +130,14 @@ export function validateProposal(p: Proposal, ctx: ScheduleContext): ValidationR
     if (start < dayStart || end > dayEnd) {
       add('OUTSIDE_DAY_WINDOW', it, `${it.personRef} / ${svc.label} fica fora da janela do dia.`);
     }
-    if (end > readyBy) {
+    const isCompanion = person.role === 'companion';
+    if (end > (isCompanion ? companionReadyBy : readyBy)) {
       add(
         'AFTER_READY_BY',
         it,
-        `${it.personRef} / ${svc.label} termina depois do horário "pronta até".`,
+        isCompanion
+          ? `${it.personRef} / ${svc.label} termina depois do limite das acompanhantes (make-off ou saída das acompanhantes).`
+          : `${it.personRef} / ${svc.label} termina depois do horário "pronta até".`,
       );
     }
     timed.push({ item: it, start, end });
@@ -229,4 +234,54 @@ export function validateProposal(p: Proposal, ctx: ScheduleContext): ValidationR
   }
 
   return { ok: violations.length === 0, violations, warnings };
+}
+
+/**
+ * Regra de prioridade (D-18): uma não fixa só pode ser usada se nenhuma fixa elegível
+ * estiver livre no intervalo (com deslocamento). Só para a saída da Claude (decide);
+ * nunca no confirm, onde a edição manual é permitida.
+ */
+export function checkPriority(p: Proposal, ctx: ScheduleContext): Violation[] {
+  const out: Violation[] = [];
+  const meta = new Map(ctx.professionals.map((x) => [x.id, x]));
+  const padB = ctx.travelBeforeMinutes * MIN_MS;
+  const padA = ctx.travelAfterMinutes * MIN_MS;
+  for (const it of p.items) {
+    const used = meta.get(it.professionalId);
+    if (!used || used.isFixed) continue;
+    const svc = ctx.persons
+      .find((x) => x.ref === it.personRef)
+      ?.services.find((s) => s.serviceId === it.serviceId);
+    if (!svc) continue;
+    const start = Date.parse(it.startsAt);
+    const end = Date.parse(it.endsAt);
+    if (Number.isNaN(start) || Number.isNaN(end)) continue;
+    const from = start - padB;
+    const to = end + padA;
+    const free = ctx.professionals.find((f) => {
+      if (!f.isFixed || !svc.eligibleProfessionalIds.includes(f.id)) return false;
+      const busy = ctx.busy.some(
+        (b) =>
+          b.professionalId === f.id &&
+          overlaps(from, to, Date.parse(b.startsAt), Date.parse(b.endsAt)),
+      );
+      if (busy) return false;
+      return !p.items.some(
+        (o) =>
+          o !== it &&
+          o.professionalId === f.id &&
+          overlaps(from, to, Date.parse(o.startsAt), Date.parse(o.endsAt)),
+      );
+    });
+    if (free) {
+      out.push({
+        code: 'PRIORITY_NOT_FOLLOWED',
+        personRef: it.personRef,
+        serviceId: it.serviceId,
+        professionalId: it.professionalId,
+        message: `${it.personRef} / ${svc.label}: use a profissional fixa ${free.label} (livre) antes de uma não fixa.`,
+      });
+    }
+  }
+  return out;
 }
