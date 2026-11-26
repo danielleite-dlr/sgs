@@ -104,3 +104,24 @@ created: 2026-11-26
 3. Voltar à Noiva Cecilia Jurado → Cronograma → informar a saída → Gerar simulação: make e penteado vêm com uma fixa que atende noiva (selo "Sugerida"; "Não fixa" se for o caso). Trocar uma delas e gerar de novo: a escolha é mantida. Preencher "Acompanhantes prontas até" se quiser. Confirmar só se o cronograma estiver certo de verdade.
 4. Agenda → Novo agendamento comum (cliente qualquer, serviço e horário): a fixa livre vem marcada com "Sugestão do sistema"; clicando na coluna de outra profissional ela é mantida e só aparece "Sugestão: ...". Cancelar sem salvar.
 5. Celular: repetir a olhada dos passos 2 e 3 (selos na lista, campo "Acompanhantes prontas até", selos da simulação) e dizer se está legível.
+
+## Resultado da verificação humana (11-16) — em andamento
+
+### Gap G-01 (26/11, usuária): papel "Assistente"
+Na marcação das profissionais (passo 2) a usuária encontrou pessoas que **só são assistentes** de
+noiva/debutante, não maquiadoras nem penteadistas. Hoje "Assistente da Noiva" (09.1) é só uma
+função extra de uma profissional comum. Pedido: **"precisa ter o papel só de assistente"**.
+
+Decisões da usuária:
+- Novo **papel "Assistente"** no cadastro da equipe, ao lado de Admin, Gerente, Atendente e Profissional.
+- Quem tem esse papel **não aparece no agendamento comum** (nem sugerida nem para escolher no
+  Novo agendamento) e **não recebe comissão de serviço**: ganha só a diária de assistente.
+- Continua com coluna na agenda e pode aparecer no cronograma/grupo da noiva (não pediu para tirar).
+- Assistente passa a valer para **noiva e debutante** (revoga em parte o 09.1 D-03, que deixava
+  debutante de fora): pacote de debutante também pode marcar "inclui assistente".
+
+Em aberto para o plano de gaps: assistente de debutante segue a regra "só no estúdio"?; papel
+"Assistente" tem login? (09.1 D-02: assistente não usa o sistema); o que acontece com quem já
+está marcada "Assistente da Noiva" sendo Profissional.
+
+Próximo: `/gsd:plan-phase 11 --gaps`.
