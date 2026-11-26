@@ -1,0 +1,92 @@
+---
+phase: 11
+slug: prioridade-de-profissionais-e-cronograma-da-noiva
+status: draft
+nyquist_compliant: false
+wave_0_complete: false
+created: 2026-11-26
+---
+
+# Phase 11 — Validation Strategy
+
+> Per-phase validation contract for feedback sampling during execution.
+> IDs de requisito: PRIO-01..PRIO-16 (ver `11-RESEARCH.md` › Proposed Requirements e `REQUIREMENTS.md`).
+
+---
+
+## Test Infrastructure
+
+| Property | Value |
+|----------|-------|
+| **Framework** | jest 29 + ts-jest (backend unit e integração), vitest (frontend), Playwright (`@sgs/e2e`) |
+| **Config file** | `apps/backend/jest.config.ts`, `apps/backend/jest-integration.config.ts`, `apps/frontend/vitest.config.ts`, `apps/e2e/playwright.config.ts` |
+| **Quick run command** | `cd apps/backend && npx jest --config jest.config.ts src/scheduling src/bridal/ai src/bridal/timeline` / `cd apps/frontend && npx vitest run src/features/identity src/features/bridal src/features/operations src/pages/__tests__/profissionais-page.test.tsx` |
+| **Full suite command** | lint + typecheck + `pnpm --filter @sgs/backend test` + `pnpm --filter @sgs/backend test:integration` + `pnpm --filter @sgs/frontend test` + `pnpm --filter @sgs/e2e test:e2e` |
+| **Estimated runtime** | unit < 30 s por módulo; suíte completa ~15–25 min |
+
+---
+
+## Sampling Rate
+
+- **After every task commit:** comando rápido da camada tocada
+- **After every plan wave:** unit backend + vitest completos + integração `phase11-*`, `phase42-*`, `phase4-ai-schedule`
+- **Before `/gsd:verify-work`:** gate completo + Playwright verdes
+- **Max feedback latency:** 60 seconds (comando rápido)
+
+---
+
+## Per-Task Verification Map
+
+| Req | Comportamento | Tipo | Comando / arquivo | File Exists | Status |
+|-----|---------------|------|-------------------|-------------|--------|
+| PRIO-01 | `isFixed`/`servesBridal` no Member, default false, API | integração | `test/integration/phase11-members-flags.e2e.spec.ts` | ❌ W0 | ⬜ pending |
+| PRIO-02 | diálogos e tela Profissionais | vitest | `member-dialogs.test.tsx`, `profissionais-page.test.tsx` | estender | ⬜ pending |
+| PRIO-03 | ranking puro e determinístico | unit | `src/scheduling/professional-ranking.spec.ts` | ❌ W0 | ⬜ pending |
+| PRIO-04 | ordenação fixas primeiro (back/front) | unit | mesmo spec + `professional-order.test.ts` | ❌ W0 | ⬜ pending |
+| PRIO-05 | minutos do dia e revezamento derivado | integração | `phase11-ranking-data.e2e.spec.ts` | ❌ W0 | ⬜ pending |
+| PRIO-06 | heurística usa ranking (prioridade estrita D-18) | unit | `heuristic-scheduler.spec.ts` | estender | ⬜ pending |
+| PRIO-07 | IA: contexto, hash, checkPriority, selo não fixa | unit + integração | `ai-schedule.*.spec.ts`, `schedule-validator.spec.ts`, `phase4-ai-schedule.e2e.spec.ts` | estender | ⬜ pending |
+| PRIO-08 | simulação pré-sugere make/penteado | integração | `phase42-timeline-preview/confirm.e2e.spec.ts`, `timeline-domain.spec.ts` | estender | ⬜ pending |
+| PRIO-09 | lista vazia com aviso (D-04), filtro em todo serviço da noiva (D-19) | integração + vitest | `phase11-bridal-empty.e2e.spec.ts`, `timeline-tab.test.tsx` | ❌ W0 | ⬜ pending |
+| PRIO-10 | query `suggestProfessionals` + RLS | integração | `phase11-suggest-professionals.e2e.spec.ts` | ❌ W0 | ⬜ pending |
+| PRIO-11 | VisitFormDialog pré-seleciona / só sugere | vitest | `novo-agendamento-gestor-beauty.test.tsx` | estender | ⬜ pending |
+| PRIO-12 | limite efetivo = min(make-off, prontas até) | unit + integração | `timeline-guard.spec.ts`, `phase42-companion-guard.e2e.spec.ts` | estender | ⬜ pending |
+| PRIO-13 | campo `companions_ready_by` | integração + vitest | `phase4-bridal-group.e2e.spec.ts`, `timeline-tab.test.tsx` | estender | ⬜ pending |
+| PRIO-14 | limite por papel e "não coube" com motivo | unit + vitest | `schedule-validator.spec.ts`, `heuristic-scheduler.spec.ts`, `AiSuggestionPanel` | estender | ⬜ pending |
+| PRIO-15 | debutante igual à noiva | integração + E2E | specs acima com `eventKind='debutante'`, `debutante-contrato.spec.ts` | estender | ⬜ pending |
+| PRIO-16 | seletores com fixas primeiro (grade da Agenda inalterada, D-20) | vitest | testes dos componentes do inventário | estender | ⬜ pending |
+| E2E | marcar → simulação preenchida → confirmar → acompanhante após limite recusada | Playwright | `apps/e2e/tests/prioridade-profissionais.spec.ts` | ❌ W0 | ⬜ pending |
+
+*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+
+---
+
+## Wave 0 Requirements
+
+- [ ] `apps/backend/src/scheduling/professional-ranking.spec.ts` (TDD, antes da implementação)
+- [ ] `apps/backend/test/integration/phase11-*.e2e.spec.ts` (members-flags, ranking-data, suggest-professionals, bridal-empty)
+- [ ] Helpers `markServesBridal`/`markFixed` em `apps/backend/test/integration/helpers/` e `apps/e2e/support/`
+- [ ] `apps/frontend/src/features/operations/professional-order.ts` + teste
+- [ ] `apps/e2e/tests/prioridade-profissionais.spec.ts`
+
+---
+
+## Manual-Only Verifications
+
+| Behavior | Requirement | Why Manual | Test Instructions |
+|----------|-------------|------------|-------------------|
+| Conferência no staging com dados reais do Studio JS (marcar fixas/atende noiva e gerar cronograma de uma noiva de dezembro) | PRIO-02, PRIO-08 | depende das marcações reais da usuária | marcar profissionais em Profissionais, abrir uma noiva, gerar simulação e conferir sugestão |
+| Uso no celular (selos e campo "Acompanhantes prontas até") | PRIO-02, PRIO-13 | layout responsivo | abrir no celular as telas citadas |
+
+---
+
+## Validation Sign-Off
+
+- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
+- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
+- [ ] Wave 0 covers all MISSING references
+- [ ] No watch-mode flags
+- [ ] Feedback latency < 60s
+- [ ] `nyquist_compliant: true` set in frontmatter
+
+**Approval:** pending

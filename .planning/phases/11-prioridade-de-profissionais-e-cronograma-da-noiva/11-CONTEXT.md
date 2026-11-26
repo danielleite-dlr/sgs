@@ -44,6 +44,12 @@ Fora: mudanças de pagamento/comissão por fixa ou não fixa, remarcar automatic
 - **D-16:** Se não couber todo mundo antes do limite com as profissionais livres: agenda quem cabe e mostra a lista **"não coube"** com o motivo (sem profissional livre a tempo). O studio resolve (freelancer, ajustar horário, ou o override de Gerente/Admin que já existe na 04.2). **Não** remarca clientes comuns.
 - **D-17:** Tudo da fase vale para **noiva e debutante** (`BridalGroup.eventKind`), inclusive o cronograma e o filtro "atende noiva/debutante".
 
+### Decisões complementares (2026-11-26, após a pesquisa)
+- **D-18:** **Prioridade estrita**: se uma fixa elegível cabe antes do limite, ela ganha da não fixa mesmo que o horário fique bem mais cedo; a sugestão avisa "atendida X min antes do make-off".
+- **D-19:** O filtro "atende noiva/debutante" vale em **todo lugar de serviço da noiva/debutante**: cronograma, sugestão de agenda, **prova** e **editor manual** da agenda do evento (e o servidor recusa quem não atende noiva para a noiva). Acompanhantes continuam sem filtro.
+- **D-20:** A **grade da Agenda** (colunas das profissionais) **não muda** de ordem; "fixas primeiro" vale só nos seletores de profissional.
+- **D-21 (padrão recomendado):** Make-off = `registryStartsAt` do cronograma confirmado. Título do texto do WhatsApp mantém o formato da 04.2 também para debutante. "Acompanhantes prontas até" é usado sempre pela sugestão; o guarda do agendamento manual só atua com cronograma confirmado (como na 04.2 D-04).
+
 ### Claude's Discretion
 - Modelagem: colunas no `members` (ex.: `is_fixed`, `serves_bridal`), coluna no `bridal_groups` para "acompanhantes prontas até", e como guardar a "última sugestão" para o revezamento (coluna/timestamp por profissional ou derivado dos agendamentos). Migração + RLS nos padrões das fases 4/09.1/10.
 - Um módulo de domínio puro e testado (TDD) para o ranking de profissionais (elegíveis → fixas → minutos no dia → revezamento), reaproveitado por cronograma, sugestão de agenda e agendamento comum.
