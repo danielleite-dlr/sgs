@@ -21,6 +21,7 @@ const timeline: ConfirmedTimelineLite = {
   brideLabel: 'VITORIA',
   registryStartsAt: at('15:30'),
   registryLabel: 'fotos',
+  companionsReadyBy: null,
   windows: [
     { kind: 'make', professionalId: PRO_A, startsAt: at('12:30'), endsAt: at('14:00') },
     { kind: 'hair', professionalId: PRO_B, startsAt: at('14:00'), endsAt: at('15:30') },
@@ -42,7 +43,7 @@ describe('evaluateCompanionRules', () => {
     const r = evaluateCompanionRules(timeline, slot(PRO_C, '14:45', '15:45'), TZ);
     expect(r?.rule).toBe('TIMELINE_AFTER_REGISTRY');
     expect(r?.message).toBe(
-      'Esta acompanhante precisa terminar até 15:30, quando começa "fotos" da noiva VITORIA.',
+      'Esta acompanhante precisa terminar até 15:30, antes do make-off ("fotos") da noiva/debutante VITORIA.',
     );
   });
 
@@ -65,6 +66,29 @@ describe('evaluateCompanionRules', () => {
   it('dá prioridade à regra do registro', () => {
     const r = evaluateCompanionRules(timeline, slot(PRO_A, '14:00', '16:00'), TZ);
     expect(r?.rule).toBe('TIMELINE_AFTER_REGISTRY');
+  });
+
+  it('mensagem do limite por make-off cita make-off e a hora', () => {
+    const r = evaluateCompanionRules(timeline, slot(PRO_C, '14:30', '15:35'), TZ);
+    expect(r?.rule).toBe('TIMELINE_AFTER_REGISTRY');
+    expect(r?.message).toContain('make-off');
+    expect(r?.message).toContain('15:30');
+  });
+
+  it('usa companionsReadyBy quando antes do make-off', () => {
+    const t = { ...timeline, companionsReadyBy: at('15:00') };
+    expect(evaluateCompanionRules(t, slot(PRO_C, '14:00', '15:00'), TZ)).toBeNull();
+    const r = evaluateCompanionRules(t, slot(PRO_C, '14:00', '15:05'), TZ);
+    expect(r?.rule).toBe('TIMELINE_AFTER_REGISTRY');
+    expect(r?.message).toContain('saída das acompanhantes');
+    expect(r?.message).toContain('15h');
+  });
+
+  it('companionsReadyBy depois do make-off: limite continua o make-off', () => {
+    const t = { ...timeline, companionsReadyBy: at('16:00') };
+    const r = evaluateCompanionRules(t, slot(PRO_C, '15:00', '15:45'), TZ);
+    expect(r?.message).toContain('make-off');
+    expect(r?.message).toContain('15:30');
   });
 
   it('ignora janela sem profissional definida', () => {

@@ -19,6 +19,8 @@ export interface ConfirmedTimelineLite {
   brideLabel: string;
   registryStartsAt: Date;
   registryLabel: string;
+  /** Acompanhantes prontas até (11 D-14); null = igual ao make-off. */
+  companionsReadyBy: Date | null;
   windows: {
     kind: 'make' | 'hair';
     professionalId: string | null;
@@ -41,20 +43,27 @@ function localMinutes(instant: Date, timeZone: string): number {
 }
 
 /**
- * Regra das acompanhantes (D-04), pura: termina até o início do registro e não usa a
- * profissional enquanto ela está com a noiva. A regra do registro tem prioridade.
+ * Regra das acompanhantes (D-04), pura: termina até o limite efetivo e não usa a
+ * profissional enquanto ela está com a noiva. A regra do limite tem prioridade.
+ * make-off = início do registro do cronograma confirmado (11 D-13/D-21); o limite efetivo
+ * é o mais cedo entre o make-off e "acompanhantes prontas até" (11 D-14).
  */
 export function evaluateCompanionRules(
   t: ConfirmedTimelineLite,
   a: { professionalId: string; startsAt: Date; endsAt: Date },
   timeZone: string,
 ): { rule: CompanionRule; message: string } | null {
-  if (a.endsAt.getTime() > t.registryStartsAt.getTime()) {
+  const byDeparture =
+    t.companionsReadyBy !== null &&
+    t.companionsReadyBy.getTime() < t.registryStartsAt.getTime();
+  const limit = byDeparture ? (t.companionsReadyBy as Date) : t.registryStartsAt;
+  if (a.endsAt.getTime() > limit.getTime()) {
+    const hour = formatHour(localMinutes(limit, timeZone));
     return {
       rule: 'TIMELINE_AFTER_REGISTRY',
-      message: `Esta acompanhante precisa terminar até ${formatHour(
-        localMinutes(t.registryStartsAt, timeZone),
-      )}, quando começa "${t.registryLabel}" da noiva ${t.brideLabel}.`,
+      message: byDeparture
+        ? `Esta acompanhante precisa estar pronta até ${hour} (saída das acompanhantes).`
+        : `Esta acompanhante precisa terminar até ${hour}, antes do make-off ("${t.registryLabel}") da noiva/debutante ${t.brideLabel}.`,
     };
   }
   for (const w of t.windows) {
@@ -95,7 +104,10 @@ type TimelineRow = {
   hairEndsAt: Date | null;
 };
 
-function toLite(r: TimelineRow): ConfirmedTimelineLite {
+function toLite(
+  r: TimelineRow,
+  companionsReadyBy: Date | null,
+): ConfirmedTimelineLite {
   const windows: ConfirmedTimelineLite['windows'] = [];
   if (r.makeStartsAt && r.makeEndsAt) {
     windows.push({
@@ -119,6 +131,7 @@ function toLite(r: TimelineRow): ConfirmedTimelineLite {
     brideLabel: r.brideLabel,
     registryStartsAt: r.registryStartsAt,
     registryLabel: r.registryLabel,
+    companionsReadyBy,
     windows,
   };
 }
@@ -139,8 +152,9 @@ export async function findConfirmedTimelinesForCompanionTx(
         members: { some: { clientId, role: 'companion' } },
       },
     },
+    include: { group: { select: { companionsReadyBy: true } } },
   });
-  return rows.map(toLite);
+  return rows.map((r) => toLite(r, r.group.companionsReadyBy));
 }
 
 export async function assertTimelineRulesTx(
@@ -262,6 +276,7 @@ export async function findCompanionIssuesTx(
     where: { id: groupId },
     select: {
       eventDate: true,
+      companionsReadyBy: true,
       members: { where: { role: 'companion' }, select: { clientId: true } },
     },
   });
@@ -276,7 +291,7 @@ export async function findCompanionIssuesTx(
     FROM organizations o LIMIT 1`;
   if (!win[0]) return [];
 
-  const lite = toLite(timeline);
+  const lite = toLite(timeline, group.companionsReadyBy);
   const tz = await orgTimezone(tx);
   const excluded = [timeline.makeAppointmentId, timeline.hairAppointmentId].filter(
     (x): x is string => !!x,
