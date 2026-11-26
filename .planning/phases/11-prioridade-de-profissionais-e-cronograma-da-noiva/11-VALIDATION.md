@@ -126,4 +126,15 @@ Respondido pela usuária (26/11):
 - Profissional pode continuar com a marcação "Assistente da Noiva" além de make/penteado; o papel
   "Assistente" é para quem **só** assiste.
 
+### Gap G-02 (26/11, usuária): cronograma antes da agenda do evento
+No grupo da noiva as abas são "Pessoas | Agenda do evento | Cronograma do dia". A usuária: "o ideal
+é que finalize primeiro o cronograma para depois fazer a agenda" (confirmar o cronograma já coloca
+make e penteado da noiva na agenda).
+
+Decisões da usuária:
+- Ordem nova: **Pessoas | Cronograma do dia | Agenda do evento**.
+- Sem cronograma confirmado, a aba Agenda do evento mostra **só um aviso** ("Confirme primeiro o
+  cronograma do dia") com botão que leva à aba do cronograma; **não trava** a geração da agenda.
+  O agendamento do teste não muda.
+
 Próximo: `/gsd:plan-phase 11 --gaps`.
