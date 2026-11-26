@@ -9,14 +9,10 @@ import { BRIDAL_SCHEDULE_TX_OPTIONS, type BridalDepositInput } from '../bridal-s
 import { BridalService, type BridalSchedulePayload } from '../bridal.service';
 import { AiScheduleContextBuilder, type AiScheduleBuild } from './ai-schedule-context';
 import { SYSTEM_PROMPT, buildPromptInput, canonicalHash } from './ai-schedule.prompt';
-import {
-  ProposalSchema,
-  type Proposal,
-  type ScheduleContext,
-} from './ai-schedule.schema';
+import { ProposalSchema, type Proposal, type ScheduleContext } from './ai-schedule.schema';
 import { ANTHROPIC_CLIENT, type AnthropicLike } from './anthropic-client';
 import { buildHeuristicProposal } from './heuristic-scheduler';
-import { validateProposal, type Violation } from './schedule-validator';
+import { checkPriority, validateProposal, type Violation } from './schedule-validator';
 
 export type FallbackReason = 'NO_API_KEY' | 'LIMIT_REACHED' | 'API_ERROR' | 'INVALID_OUTPUT';
 
@@ -25,12 +21,21 @@ const CACHE_WINDOW_MS = 24 * 60 * 60 * 1000;
 interface Unscheduled {
   personRef: string;
   serviceId: string;
+  /** Opcional: sugestões antigas (cache/banco) não têm motivo. */
+  reason?: 'NO_ELIGIBLE_PROFESSIONAL' | 'NO_FREE_PROFESSIONAL_BEFORE_LIMIT';
+}
+
+interface EarlyByPriority {
+  personRef: string;
+  serviceId: string;
+  minutesBeforeLimit: number;
 }
 
 interface Decision {
   source: 'claude' | 'heuristic';
   proposal: Proposal;
   unscheduled: Unscheduled[];
+  earlyByPriority: EarlyByPriority[];
   warnings: string[];
   fallbackReason: FallbackReason | null;
   inputTokens: number | null;
@@ -52,6 +57,8 @@ export interface AiScheduleSuggestionView {
     serviceName: string;
     professionalId: string;
     professionalName: string;
+    /** false = não fixa (selo na UI) */
+    professionalIsFixed: boolean;
     startsAt: Date;
     endsAt: Date;
   }[];
@@ -60,11 +67,13 @@ export interface AiScheduleSuggestionView {
     personLabel: string;
     serviceId: string;
     serviceName: string;
+    reason: string | null;
   }[];
   warnings: string[];
   dayStart: Date;
   dayEnd: Date;
   readyBy: Date;
+  companionReadyBy: Date;
 }
 
 export interface AiScheduleSuggestionPayload {
@@ -104,14 +113,19 @@ export class AiScheduleService {
   ) {}
 
   /** Chama o modelo (até 2 vezes) e valida; qualquer falha cai na heurística. */
-  private async decide(ctx: ScheduleContext, model: string, limitReached: boolean): Promise<Decision> {
+  private async decide(
+    ctx: ScheduleContext,
+    model: string,
+    limitReached: boolean,
+  ): Promise<Decision> {
     const fallback = (reason: FallbackReason, tokens?: [number, number]): Decision => {
-      const { proposal, unscheduled } = buildHeuristicProposal(ctx);
+      const { proposal, unscheduled, earlyByPriority } = buildHeuristicProposal(ctx);
       const check = validateProposal(proposal, ctx);
       return {
         source: 'heuristic',
         proposal,
         unscheduled,
+        earlyByPriority,
         warnings: check.warnings.map((w) => w.message),
         fallbackReason: reason,
         inputTokens: tokens ? tokens[0] : null,
@@ -145,18 +159,21 @@ export class AiScheduleService {
           ];
         } else {
           const check = validateProposal(parsed.data, ctx);
-          if (check.ok) {
+          // 11 D-18: não fixa com fixa elegível livre é violação (só aqui, nunca no confirm).
+          const prio = check.ok ? checkPriority(parsed.data, ctx) : [];
+          if (check.ok && prio.length === 0) {
             return {
               source: 'claude',
               proposal: parsed.data,
               unscheduled: [],
+              earlyByPriority: [],
               warnings: check.warnings.map((w) => w.message),
               fallbackReason: null,
               inputTokens: tokensIn,
               outputTokens: tokensOut,
             };
           }
-          violations = check.violations;
+          violations = check.ok ? prio : check.violations;
         }
       } catch (e) {
         // Nunca logar o prompt (contém a agenda); só a mensagem do erro.
@@ -211,6 +228,11 @@ export class AiScheduleService {
 
       const limit = this.config.aiScheduleDailyLimit;
       const decision = await this.decide(pre.build.ctx, model, pre.used >= limit);
+      decision.warnings = [
+        ...decision.warnings,
+        ...this.priorityWarnings(pre.build, decision.earlyByPriority),
+        ...this.noBridalProfessionWarnings(pre.build),
+      ];
 
       const stored: StoredProposal = {
         items: decision.proposal.items,
@@ -254,6 +276,32 @@ export class AiScheduleService {
     }
   }
 
+  /** Avisos de antecipação: atendida mais cedo para usar uma fixa (D-12). */
+  private priorityWarnings(build: AiScheduleBuild, early: EarlyByPriority[]): string[] {
+    return early.map((e) => {
+      const info = build.refs.get(e.personRef);
+      const svc = build.serviceNames.get(e.serviceId) ?? 'Serviço';
+      const limite = info?.role === 'bride' ? 'horário "pronta até"' : 'make-off';
+      return `${info?.clientName ?? 'Pessoa'} (${svc}) atendida ${e.minutesBeforeLimit} min antes do ${limite} para usar uma profissional fixa.`;
+    });
+  }
+
+  /** D-04: serviço da noiva/debutante sem nenhuma profissional marcada para atendê-la. */
+  private noBridalProfessionWarnings(build: AiScheduleBuild): string[] {
+    const out: string[] = [];
+    for (const p of build.ctx.persons) {
+      if (p.role !== 'bride') continue;
+      for (const sv of p.services) {
+        if (sv.eligibleProfessionalIds.length > 0) continue;
+        const nome = build.serviceNames.get(sv.serviceId) ?? sv.label;
+        out.push(
+          `Nenhuma profissional marcada como "Atende noiva/debutante" faz ${nome} da noiva/debutante. Marque em Profissionais.`,
+        );
+      }
+    }
+    return out;
+  }
+
   private toView(
     build: AiScheduleBuild,
     s: {
@@ -285,6 +333,8 @@ export class AiScheduleService {
           serviceName: build.serviceNames.get(i.serviceId) ?? 'Serviço',
           professionalId: i.professionalId,
           professionalName: build.profLabels.get(i.professionalId) ?? 'Profissional',
+          professionalIsFixed:
+            build.ctx.professionals.find((x) => x.id === i.professionalId)?.isFixed ?? false,
           startsAt: new Date(i.startsAt),
           endsAt: new Date(i.endsAt),
         })),
@@ -293,11 +343,13 @@ export class AiScheduleService {
         personLabel: person(u.personRef).clientName,
         serviceId: u.serviceId,
         serviceName: build.serviceNames.get(u.serviceId) ?? 'Serviço',
+        reason: u.reason ?? null,
       })),
       warnings: s.warnings,
       dayStart: new Date(build.ctx.dayStart),
       dayEnd: new Date(build.ctx.dayEnd),
       readyBy: new Date(build.ctx.readyBy),
+      companionReadyBy: new Date(build.ctx.companionReadyBy),
     };
   }
 
@@ -338,13 +390,13 @@ export class AiScheduleService {
           });
           if (unknown.length > 0) return unknown;
 
+          // 11 D-08/Pitfall 4: troca manual para não fixa é permitida (sem checkPriority aqui).
           const check = validateProposal(proposal, build.ctx);
           if (check.ok) return [];
           return check.violations.map((v) => {
             const idx = items.findIndex(
               (it) =>
-                refByMember.get(it.groupMemberId) === v.personRef &&
-                it.serviceId === v.serviceId,
+                refByMember.get(it.groupMemberId) === v.personRef && it.serviceId === v.serviceId,
             );
             return {
               code: 'INVALID_PROPOSAL',

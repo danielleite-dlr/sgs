@@ -1,13 +1,14 @@
 import { sha256Hex } from '../../contracts/domain/contract-template';
 import type { ScheduleContext } from './ai-schedule.schema';
 
-export const SYSTEM_PROMPT = `Você monta a agenda de um evento de noiva num salão. Regras obrigatórias: cada pessoa recebe cada serviço listado exatamente uma vez; use só profissionais em eligibleProfessionalIds do serviço; duração exata; sem sobreposição por profissional, por pessoa nem com busy; dentro de [dayStart, dayEnd]; todos terminam até readyBy; a noiva (role bride) termina por último, o mais perto possível de readyBy; com deslocamento, reserve travelBeforeMinutes antes do primeiro e travelAfterMinutes depois do último atendimento de cada profissional. Prefira concentrar o trabalho e evitar janelas ociosas. Responda só com o JSON do schema; horários ISO 8601 UTC.`;
+export const SYSTEM_PROMPT = `Você monta a agenda de um evento de noiva num salão. Regras obrigatórias: cada pessoa recebe cada serviço listado exatamente uma vez; use só profissionais em eligibleProfessionalIds do serviço; duração exata; sem sobreposição por profissional, por pessoa nem com busy; dentro de [dayStart, dayEnd]; a noiva (role bride) termina até readyBy, por último e o mais perto possível dele; cada acompanhante (role companion) termina até companionReadyBy (make-off ou saída das acompanhantes), o mais perto possível dele; com deslocamento, reserve travelBeforeMinutes antes do primeiro e travelAfterMinutes depois do último atendimento de cada profissional. Prioridade de profissional: prefira sempre profissionais com isFixed=true livres; use isFixed=false só se nenhuma fixa elegível estiver livre no horário, mesmo que a fixa fique mais cedo. Entre fixas, prefira a de menor dayMinutes (somando o que você já atribuiu) e, empatando, a de menor rotationRank. A lista professionals já vem na ordem de preferência. Prefira concentrar o trabalho e evitar janelas ociosas. Responda só com o JSON do schema; horários ISO 8601 UTC.`;
 
 /** Entrada enviada ao modelo: somente rótulos (pessoas p1..pN, profissionais prof_1..), sem PII. */
 export function buildPromptInput(ctx: ScheduleContext): string {
   return JSON.stringify({
     eventDate: ctx.eventDate,
     readyBy: ctx.readyBy,
+    companionReadyBy: ctx.companionReadyBy,
     dayStart: ctx.dayStart,
     dayEnd: ctx.dayEnd,
     travelBeforeMinutes: ctx.travelBeforeMinutes,
@@ -22,7 +23,13 @@ export function buildPromptInput(ctx: ScheduleContext): string {
         eligibleProfessionalIds: s.eligibleProfessionalIds,
       })),
     })),
-    professionals: ctx.professionals.map((x) => ({ id: x.id, label: x.label })),
+    professionals: ctx.professionals.map((x) => ({
+      id: x.id,
+      label: x.label,
+      isFixed: x.isFixed,
+      dayMinutes: x.dayMinutes,
+      rotationRank: x.rotationRank,
+    })),
     busy: ctx.busy,
   });
 }
@@ -33,6 +40,7 @@ export function canonicalHash(ctx: ScheduleContext, model: string): string {
   const canon = {
     eventDate: ctx.eventDate,
     readyBy: ctx.readyBy,
+    companionReadyBy: ctx.companionReadyBy,
     dayStart: ctx.dayStart,
     dayEnd: ctx.dayEnd,
     travelBeforeMinutes: ctx.travelBeforeMinutes,
@@ -50,7 +58,9 @@ export function canonicalHash(ctx: ScheduleContext, model: string): string {
             eligibleProfessionalIds: [...s.eligibleProfessionalIds].sort(),
           })),
       })),
-    professionals: ctx.professionals.map((x) => x.id).sort(),
+    professionals: [...ctx.professionals]
+      .sort(byStr((x) => x.id))
+      .map((x) => [x.id, x.isFixed, x.dayMinutes, x.rotationRank]),
     busy: [...ctx.busy]
       .sort(byStr((b) => `${b.professionalId}|${b.startsAt}|${b.endsAt}`))
       .map((b) => [b.professionalId, b.startsAt, b.endsAt]),
