@@ -1,7 +1,7 @@
 ---
 phase: 10
 slug: permiss-es-por-usu-rio
-status: green
+status: verified
 nyquist_compliant: true
 wave_0_complete: true
 created: 2026-11-24
@@ -72,11 +72,11 @@ created: 2026-11-24
 
 ## Manual-Only Verifications
 
-| Behavior | Requirement | Why Manual | Test Instructions |
-|----------|-------------|------------|-------------------|
-| Matriz padrão por papel aprovada pela usuária | PERM-02 (D-14) | decisão de produto | mostrar a tabela papel × item no staging e registrar o ok |
-| App instalado no iPhone e Android Gestor Beauty atualizam o menu ao voltar do segundo plano | PERM-15 | depende de aparelho | desligar um item da pessoa no computador, voltar ao app no celular, conferir que o item some em até 1 min |
-| Aparência da tela Perfis de acesso (celular e computador) | PERM-16 | visual | abrir Profissionais › Perfis de acesso e o atalho "Acessos" no staging |
+| Behavior | Requirement | Why Manual | Test Instructions | Resultado |
+|----------|-------------|------------|-------------------|-----------|
+| Matriz padrão por papel aprovada pela usuária | PERM-02 (D-14) | decisão de produto | mostrar a tabela papel × item no staging e registrar o ok | ✅ Matriz padrão: aprovada pela usuária em 26/11/2026 (com a lista completa do que muda) |
+| App instalado no iPhone e Android Gestor Beauty atualizam o menu ao voltar do segundo plano | PERM-15 | depende de aparelho | desligar um item da pessoa no computador, voltar ao app no celular, conferir que o item some em até 1 min | ✅ aprovado pela usuária em 26/11/2026 |
+| Aparência da tela Perfis de acesso (celular e computador) | PERM-16 | visual | abrir Profissionais › Perfis de acesso e o atalho "Acessos" no staging | ✅ aprovado pela usuária em 26/11/2026 |
 
 ---
 
@@ -90,3 +90,37 @@ created: 2026-11-24
 - [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** automatizado verde em 25/11/2026 (gate: unit 827, integração 960, vitest 165 arquivos, shared, E2E 76/76; codegen contra o schema ok). Verificações manuais no 10-16.
+
+---
+
+## Roteiro da verificação humana (10-16)
+
+Matriz padrão aprovada em 26/11/2026 (`EXPECTED_DEFAULTS` de `access-resolve.spec.ts`; Admin e Gerente: todos os 23 itens).
+
+| Item | Administrador | Gerente | Atendente | Profissional |
+|------|:-:|:-:|:-:|:-:|
+| Agenda | ✅ | ✅ | ✅ | ✅ |
+| Todos os clientes | ✅ | ✅ | ✅ | ✅ |
+| Todos os profissionais | ✅ | ✅ | ✅ | ✅ |
+| Perfis de acesso | ✅ | ✅ | — | — |
+| Todos os serviços | ✅ | ✅ | ✅ | ✅ |
+| Todos os produtos | ✅ | ✅ | ✅ | ✅ |
+| Pacotes cadastrados | ✅ | ✅ | ✅ | ✅ |
+| Categorias | ✅ | ✅ | ✅ | ✅ |
+| Controle de entrada e saída | ✅ | ✅ | — | — |
+| Previsão de caixa | ✅ | ✅ | — | — |
+| Despesas fixas | ✅ | ✅ | — | — |
+| Comissões calculadas | ✅ | ✅ | — | ✅ |
+| Crédito de cliente | ✅ | ✅ | ✅ | — |
+| Comandas | ✅ | ✅ | ✅ | ✅ |
+| Regras de comissão | ✅ | ✅ | — | — |
+| Grupos de Noivas | ✅ | ✅ | ✅ | — |
+| Contratos | ✅ | ✅ | ✅ | — |
+| Painel comercial | ✅ | ✅ | ✅ | — |
+| Leads | ✅ | ✅ | ✅ | — |
+| Pipeline | ✅ | ✅ | ✅ | — |
+| Lembretes | ✅ | ✅ | ✅ | — |
+| Relatórios (Comercial) | ✅ | ✅ | — | — |
+| Etapas e formulário | ✅ | ✅ | — | — |
+
+O que muda para quem usa hoje: a Profissional deixa de ver Crédito de cliente, Noivas, Contratos e o Comercial (fica com Comissões e Comandas no Financeiro); a Atendente deixa de ver Controle financeiro, Previsão de caixa, Despesas fixas, Comissões, Regras de comissão e Relatórios/Etapas do Comercial. Cada pessoa pode ganhar o item de volta em Perfis de acesso.

@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-02)
 
 **Core value:** Profissional do beleza consegue agendar, atender, cobrar e comunicar com cliente em um único fluxo — sem sair da plataforma.
-**Current focus:** Phase 10 — permissões por usuário
+**Current focus:** Phase 10 concluída — próxima: Phase 11 (prioridade de profissionais e cronograma da noiva)
 
 ## Current Position
 
-Phase: 10 (permissões por usuário) — EXECUTING
+Phase: 10 (permissões por usuário) — COMPLETE
 Plan: 16 of 16
-Status: Checkpoint 10-16 (verificação humana no staging)
+Status: Fase verificada pela usuária; pronta para /gsd:discuss-phase 11
 Last activity: 2026-11-26
 
 Progress: [██████████] 100% (Phase 1 of 5)
