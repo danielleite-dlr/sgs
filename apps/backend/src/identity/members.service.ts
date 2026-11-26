@@ -1,25 +1,25 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { Prisma } from "@prisma/client";
-import { PrismaService } from "../database/prisma.service";
-import { TenantContextService } from "../database/tenant-context.service";
-import type { TenantPrismaClient } from "../database/types";
-import { PasswordService } from "../auth/password.service";
+import { Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { PrismaService } from '../database/prisma.service';
+import { TenantContextService } from '../database/tenant-context.service';
+import type { TenantPrismaClient } from '../database/types';
+import { PasswordService } from '../auth/password.service';
 import {
   TEMP_PASSWORD_MAX,
   TEMP_PASSWORD_MIN,
   generatePassword,
-} from "../auth/temporary-password";
+} from '../auth/temporary-password';
 import {
   CreateMemberInput,
   MEMBER_STATUS_ACTIVE,
   MEMBER_STATUS_INACTIVE,
   UpdateMemberInput,
-} from "./dto/member.input";
-import { normalizeBrPhone, normalizePixKey } from "./member-contact";
-import { recordAudit } from "../common/audit-log";
-import { orgTimezone } from "../bridal/bridal-schedule";
-import { localDateYmd } from "../push/push-messages";
-import { loadCategoryParents, memberServesCategory } from "./member-categories";
+} from './dto/member.input';
+import { normalizeBrPhone, normalizePixKey } from './member-contact';
+import { recordAudit } from '../common/audit-log';
+import { orgTimezone } from '../bridal/bridal-schedule';
+import { localDateYmd } from '../push/push-messages';
+import { loadCategoryParents, memberServesCategory } from './member-categories';
 
 export interface UserError {
   code: string;
@@ -55,15 +55,15 @@ export function openWorkMessage(
   const parts: string[] = [];
   if (appointments > 0) {
     parts.push(
-      `${appointments} ${appointments === 1 ? "atendimento agendado" : "atendimentos agendados"}`,
+      `${appointments} ${appointments === 1 ? 'atendimento agendado' : 'atendimentos agendados'}`,
     );
   }
   if (comandas > 0) {
     parts.push(
-      `${comandas} ${comandas === 1 ? "comanda aberta" : "comandas abertas"}`,
+      `${comandas} ${comandas === 1 ? 'comanda aberta' : 'comandas abertas'}`,
     );
   }
-  return `${name} tem ${parts.join(" e ")}. Conclua ou remaneje antes de excluir.`;
+  return `${name} tem ${parts.join(' e ')}. Conclua ou remaneje antes de excluir.`;
 }
 
 /** Grupos de noiva ativos, com evento de hoje (fuso da org) em diante, em que a pessoa é a assistente. */
@@ -76,7 +76,7 @@ async function countActiveBridalLinks(
   return tx.bridalGroup.count({
     where: {
       assistantMemberId: memberId,
-      status: "active",
+      status: 'active',
       eventDate: { gte: today },
     },
   });
@@ -96,7 +96,7 @@ const resetErr = (code: string, message: string) => ({
 });
 
 const EXISTING_ACCOUNT_WARNING =
-  "Essa pessoa já tem conta no SGS e entra com a senha que já usa.";
+  'Essa pessoa já tem conta no SGS e entra com a senha que já usa.';
 
 const MEMBER_SELECT = {
   id: true,
@@ -140,7 +140,7 @@ type MemberRow = {
   }[];
 };
 
-const PERSONAL_DATA_ROLES = ["ADMIN", "MANAGER"];
+const PERSONAL_DATA_ROLES = ['ADMIN', 'MANAGER'];
 
 /**
  * LGPD: telefone, Pix e nascimento só para ADMIN/MANAGER. Os demais papéis
@@ -164,10 +164,10 @@ type BlockingAppointment = {
   serviceName: string;
 };
 
-const ADMIN_ROLE_NAME = "ADMIN";
-const PROFESSIONAL_ROLE_NAME = "PROFESSIONAL";
+const ADMIN_ROLE_NAME = 'ADMIN';
+const PROFESSIONAL_ROLE_NAME = 'PROFESSIONAL';
 const ALREADY_MEMBER_MESSAGE =
-  "Essa pessoa já faz parte deste salão (pode estar inativa ou removida da equipe).";
+  'Essa pessoa já faz parte deste salão (pode estar inativa ou removida da equipe).';
 
 /**
  * True when `member` is an active ADMIN and no OTHER active, non-deleted ADMIN
@@ -208,7 +208,7 @@ function toMemberDto(r: MemberRow) {
     id: r.id,
     displayName: r.displayName,
     email: r.user.email,
-    roleName: r.role?.name ?? "UNKNOWN",
+    roleName: r.role?.name ?? 'UNKNOWN',
     seniorityTier: r.seniorityTier ?? null,
     isProfessional: r.isProfessional,
     isBridalAssistant: r.isBridalAssistant,
@@ -222,7 +222,7 @@ function toMemberDto(r: MemberRow) {
     categories: r.categories
       .filter((c) => c.category.deletedAt === null)
       .map((c) => ({ id: c.category.id, name: c.category.name }))
-      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
+      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
   };
 }
 
@@ -273,7 +273,7 @@ export class MembersService {
             status: MEMBER_STATUS_ACTIVE,
           },
           select: MEMBER_SELECT,
-          orderBy: { displayName: "asc" },
+          orderBy: { displayName: 'asc' },
         })
         .then((rows) => rows.map(toMemberDto)),
     );
@@ -289,7 +289,7 @@ export class MembersService {
         .findMany({
           where: { organizationId: orgId, deletedAt: null },
           select: MEMBER_SELECT,
-          orderBy: { displayName: "asc" },
+          orderBy: { displayName: 'asc' },
         })
         .then((rows) => rows.map(toMemberDto)),
     );
@@ -312,7 +312,7 @@ export class MembersService {
         include: { role: { select: { name: true } } },
       });
       if (!existing) {
-        return errPayload("MEMBER_NOT_FOUND", "Membro não encontrado.");
+        return errPayload('MEMBER_NOT_FOUND', 'Membro não encontrado.');
       }
 
       const data: {
@@ -331,7 +331,7 @@ export class MembersService {
         const phone =
           input.phone === null ? null : normalizeBrPhone(input.phone);
         if (!phone) {
-          return errPayload("INVALID_PHONE", "Telefone inválido.", "phone");
+          return errPayload('INVALID_PHONE', 'Telefone inválido.', 'phone');
         }
         data.phone = phone;
       }
@@ -340,7 +340,7 @@ export class MembersService {
         const pix =
           input.pixKey === null ? null : normalizePixKey(input.pixKey);
         if (!pix) {
-          return errPayload("INVALID_PIX_KEY", "Chave Pix inválida.", "pixKey");
+          return errPayload('INVALID_PIX_KEY', 'Chave Pix inválida.', 'pixKey');
         }
         data.pixKey = pix.value;
       }
@@ -354,16 +354,16 @@ export class MembersService {
           where: { name: input.roleName, isSystem: true },
         });
         if (!role) {
-          return errPayload("ROLE_NOT_FOUND", "Papel inválido.", "roleName");
+          return errPayload('ROLE_NOT_FOUND', 'Papel inválido.', 'roleName');
         }
         if (
           input.roleName !== ADMIN_ROLE_NAME &&
           (await isLastActiveAdmin(tx, orgId, existing))
         ) {
           return errPayload(
-            "LAST_ADMIN",
-            "Não é possível remover o papel de administrador do último administrador ativo do salão. Promova outro membro a administrador antes.",
-            "roleName",
+            'LAST_ADMIN',
+            'Não é possível remover o papel de administrador do último administrador ativo do salão. Promova outro membro a administrador antes.',
+            'roleName',
           );
         }
         data.roleId = role.id;
@@ -382,11 +382,11 @@ export class MembersService {
             await recordAudit(tx, {
               orgId,
               actorMemberId,
-              action: "member.access.reset",
-              entityType: "member",
+              action: 'member.access.reset',
+              entityType: 'member',
               entityId: input.id,
               metadata: {
-                reason: "role_change",
+                reason: 'role_change',
                 fromRole: existing.role?.name,
                 toRole: input.roleName,
                 removed,
@@ -411,9 +411,9 @@ export class MembersService {
 
       if (input.isBridalAssistant === true && !finalIsProfessional) {
         return errPayload(
-          "BRIDAL_ASSISTANT_REQUIRES_PROFESSIONAL",
-          "Só profissionais podem ser Assistente da Noiva.",
-          "isBridalAssistant",
+          'BRIDAL_ASSISTANT_REQUIRES_PROFESSIONAL',
+          'Só profissionais podem ser Assistente da Noiva.',
+          'isBridalAssistant',
         );
       }
       const finalIsBridalAssistant = finalIsProfessional
@@ -423,9 +423,9 @@ export class MembersService {
         const linked = await countActiveBridalLinks(tx, input.id);
         if (linked > 0) {
           return errPayload(
-            "MEMBER_IS_BRIDAL_ASSISTANT",
+            'MEMBER_IS_BRIDAL_ASSISTANT',
             `${existing.displayName} é assistente de ${linked} noiva(s) com evento a partir de hoje. Troque a assistente nesses grupos antes de tirar a função.`,
-            "isBridalAssistant",
+            'isBridalAssistant',
           );
         }
       }
@@ -434,10 +434,10 @@ export class MembersService {
       }
 
       // Fase 11: marcações de prioridade; deixar de ser profissional zera as duas.
-      for (const f of ["isFixed", "servesBridal"] as const) {
+      for (const f of ['isFixed', 'servesBridal'] as const) {
         if (input[f] === true && !finalIsProfessional) {
           return errPayload(
-            "PRIORITY_FLAG_REQUIRES_PROFESSIONAL",
+            'PRIORITY_FLAG_REQUIRES_PROFESSIONAL',
             'Só profissionais podem ser marcadas como fixa ou como "atende noiva/debutante".',
             f,
           );
@@ -459,9 +459,9 @@ export class MembersService {
         categoryIds = [...new Set(input.categoryIds)];
         if (!(await categoriesExist(tx, categoryIds))) {
           return errPayload(
-            "CATEGORY_NOT_FOUND",
-            "Categoria não encontrada.",
-            "categoryIds",
+            'CATEGORY_NOT_FOUND',
+            'Categoria não encontrada.',
+            'categoryIds',
           );
         }
       }
@@ -502,31 +502,31 @@ export class MembersService {
   ) {
     const displayName = input.displayName.trim();
     if (displayName.length < MIN_NAME_LENGTH) {
-      return createErr("INVALID_NAME", "Informe o nome.", "displayName");
+      return createErr('INVALID_NAME', 'Informe o nome.', 'displayName');
     }
     const email = input.email.trim().toLowerCase();
     const phone = normalizeBrPhone(input.phone);
     if (!phone) {
-      return createErr("INVALID_PHONE", "Telefone inválido.", "phone");
+      return createErr('INVALID_PHONE', 'Telefone inválido.', 'phone');
     }
     const pix = normalizePixKey(input.pixKey);
     if (!pix) {
-      return createErr("INVALID_PIX_KEY", "Chave Pix inválida.", "pixKey");
+      return createErr('INVALID_PIX_KEY', 'Chave Pix inválida.', 'pixKey');
     }
 
     const isProfessional =
       input.roleName === PROFESSIONAL_ROLE_NAME ? true : !!input.isProfessional;
     if (input.isBridalAssistant === true && !isProfessional) {
       return createErr(
-        "BRIDAL_ASSISTANT_REQUIRES_PROFESSIONAL",
-        "Só profissionais podem ser Assistente da Noiva.",
-        "isBridalAssistant",
+        'BRIDAL_ASSISTANT_REQUIRES_PROFESSIONAL',
+        'Só profissionais podem ser Assistente da Noiva.',
+        'isBridalAssistant',
       );
     }
-    for (const f of ["isFixed", "servesBridal"] as const) {
+    for (const f of ['isFixed', 'servesBridal'] as const) {
       if (input[f] === true && !isProfessional) {
         return createErr(
-          "PRIORITY_FLAG_REQUIRES_PROFESSIONAL",
+          'PRIORITY_FLAG_REQUIRES_PROFESSIONAL',
           'Só profissionais podem ser marcadas como fixa ou como "atende noiva/debutante".',
           f,
         );
@@ -537,9 +537,9 @@ export class MembersService {
       : [];
     if (isProfessional && categoryIds.length === 0) {
       return createErr(
-        "CATEGORY_REQUIRED",
-        "Escolha ao menos uma categoria que o profissional atende.",
-        "categoryIds",
+        'CATEGORY_REQUIRED',
+        'Escolha ao menos uma categoria que o profissional atende.',
+        'categoryIds',
       );
     }
 
@@ -554,9 +554,9 @@ export class MembersService {
       const pwd = input.temporaryPassword;
       if (pwd.length < TEMP_PASSWORD_MIN || pwd.length > TEMP_PASSWORD_MAX) {
         return createErr(
-          "WEAK_PASSWORD",
+          'WEAK_PASSWORD',
           `A senha provisória deve ter entre ${TEMP_PASSWORD_MIN} e ${TEMP_PASSWORD_MAX} caracteres.`,
-          "temporaryPassword",
+          'temporaryPassword',
         );
       }
       passwordHash = await this.password.hash(pwd);
@@ -568,13 +568,13 @@ export class MembersService {
           where: { name: input.roleName, isSystem: true },
         });
         if (!role) {
-          return createErr("ROLE_NOT_FOUND", "Papel inválido.", "roleName");
+          return createErr('ROLE_NOT_FOUND', 'Papel inválido.', 'roleName');
         }
         if (!(await categoriesExist(tx, categoryIds))) {
           return createErr(
-            "CATEGORY_NOT_FOUND",
-            "Categoria não encontrada.",
-            "categoryIds",
+            'CATEGORY_NOT_FOUND',
+            'Categoria não encontrada.',
+            'categoryIds',
           );
         }
 
@@ -591,16 +591,16 @@ export class MembersService {
           });
           if (already) {
             return createErr(
-              "MEMBER_ALREADY_EXISTS",
+              'MEMBER_ALREADY_EXISTS',
               ALREADY_MEMBER_MESSAGE,
-              "email",
+              'email',
             );
           }
           userId = existingUser.id;
         } else {
           if (!passwordHash) {
             throw new Error(
-              "create member: missing password hash for new user",
+              'create member: missing password hash for new user',
             );
           }
           const user = await tx.user.create({
@@ -659,12 +659,12 @@ export class MembersService {
     } catch (e) {
       if (
         e instanceof Prisma.PrismaClientKnownRequestError &&
-        e.code === "P2002"
+        e.code === 'P2002'
       ) {
         return createErr(
-          "MEMBER_ALREADY_EXISTS",
+          'MEMBER_ALREADY_EXISTS',
           ALREADY_MEMBER_MESSAGE,
-          "email",
+          'email',
         );
       }
       throw e;
@@ -689,18 +689,18 @@ export class MembersService {
         },
       });
       if (!existing) {
-        return resetErr("MEMBER_NOT_FOUND", "Membro não encontrado.");
+        return resetErr('MEMBER_NOT_FOUND', 'Membro não encontrado.');
       }
       if (existing.id === callerMemberId) {
         return resetErr(
-          "CANNOT_RESET_SELF",
+          'CANNOT_RESET_SELF',
           'Você não pode gerar uma senha provisória para si mesmo. Use "Trocar senha".',
         );
       }
       const inOtherOrg = () =>
         resetErr(
-          "MEMBER_IN_OTHER_ORGANIZATION",
-          "Essa pessoa também trabalha em outro salão; a senha dela não pode ser redefinida por aqui.",
+          'MEMBER_IN_OTHER_ORGANIZATION',
+          'Essa pessoa também trabalha em outro salão; a senha dela não pode ser redefinida por aqui.',
         );
       if (existing.user.isPlatformAdmin) return inOtherOrg();
 
@@ -750,12 +750,12 @@ export class MembersService {
         },
       });
       if (!existing) {
-        return deleteErr("MEMBER_NOT_FOUND", "Membro não encontrado.");
+        return deleteErr('MEMBER_NOT_FOUND', 'Membro não encontrado.');
       }
       if (existing.id === callerMemberId) {
         return deleteErr(
-          "CANNOT_DELETE_SELF",
-          "Você não pode excluir a si mesmo.",
+          'CANNOT_DELETE_SELF',
+          'Você não pode excluir a si mesmo.',
         );
       }
       const owner = await tx.member.findFirst({
@@ -764,13 +764,13 @@ export class MembersService {
           deletedAt: null,
           role: { name: ADMIN_ROLE_NAME },
         },
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: 'asc' },
         select: { id: true },
       });
       if (owner?.id === existing.id) {
         return deleteErr(
-          "CANNOT_DELETE_OWNER",
-          "O dono do salão não pode ser excluído.",
+          'CANNOT_DELETE_OWNER',
+          'O dono do salão não pode ser excluído.',
         );
       }
 
@@ -778,16 +778,16 @@ export class MembersService {
         tx.appointment.count({
           where: {
             professionalId: id,
-            status: { in: ["scheduled", "confirmed", "in_progress"] },
+            status: { in: ['scheduled', 'confirmed', 'in_progress'] },
           },
         }),
         tx.comanda.count({
-          where: { status: "open", items: { some: { professionalId: id } } },
+          where: { status: 'open', items: { some: { professionalId: id } } },
         }),
       ]);
       if (appointments > 0 || comandas > 0) {
         return deleteErr(
-          "MEMBER_HAS_OPEN_WORK",
+          'MEMBER_HAS_OPEN_WORK',
           openWorkMessage(existing.displayName, appointments, comandas),
           { appointments, comandas },
         );
@@ -797,8 +797,8 @@ export class MembersService {
       await recordAudit(tx, {
         orgId,
         actorMemberId: callerMemberId,
-        action: "member.delete_permanent",
-        entityType: "member",
+        action: 'member.delete_permanent',
+        entityType: 'member',
         entityId: id,
         metadata: {
           displayName: existing.displayName,
@@ -833,7 +833,7 @@ export class MembersService {
       });
       if (!existing) {
         return {
-          ...errPayload("MEMBER_NOT_FOUND", "Membro não encontrado."),
+          ...errPayload('MEMBER_NOT_FOUND', 'Membro não encontrado.'),
           futureAppointmentCount: 0,
           blockingAppointments: [] as BlockingAppointment[],
           activeCommissionRuleCount: 0,
@@ -851,9 +851,9 @@ export class MembersService {
           activeCommissionRuleCount: ruleCount,
           errors: [
             {
-              code: "LAST_ADMIN",
+              code: 'LAST_ADMIN',
               message:
-                "Não é possível desativar o último administrador ativo do salão. Promova outro membro a administrador antes.",
+                'Não é possível desativar o último administrador ativo do salão. Promova outro membro a administrador antes.',
               field: null,
             },
           ] as UserError[],
@@ -864,7 +864,7 @@ export class MembersService {
       const futureWhere = {
         professionalId: id,
         startsAt: { gt: now },
-        status: { notIn: ["cancelled", "no_show"] },
+        status: { notIn: ['cancelled', 'no_show'] },
       };
 
       const [futureAppointmentCount, blocking, activeCommissionRuleCount] =
@@ -872,7 +872,7 @@ export class MembersService {
           tx.appointment.count({ where: futureWhere }),
           tx.appointment.findMany({
             where: futureWhere,
-            orderBy: { startsAt: "asc" },
+            orderBy: { startsAt: 'asc' },
             take: 5,
             select: {
               id: true,
@@ -896,8 +896,8 @@ export class MembersService {
       if (futureAppointmentCount > 0) {
         const first = blockingAppointments[0];
         const firstDate = first
-          ? first.startsAt.toLocaleDateString("pt-BR")
-          : "";
+          ? first.startsAt.toLocaleDateString('pt-BR')
+          : '';
         return {
           member: null,
           futureAppointmentCount,
@@ -905,7 +905,7 @@ export class MembersService {
           activeCommissionRuleCount,
           errors: [
             {
-              code: "MEMBER_HAS_FUTURE_APPOINTMENTS",
+              code: 'MEMBER_HAS_FUTURE_APPOINTMENTS',
               message: `${existing.displayName} tem ${futureAppointmentCount} agendamento(s) futuro(s) — o primeiro em ${firstDate}. Remaneje-os antes de desativar.`,
               field: null,
             },
@@ -922,7 +922,7 @@ export class MembersService {
           activeCommissionRuleCount,
           errors: [
             {
-              code: "MEMBER_IS_BRIDAL_ASSISTANT",
+              code: 'MEMBER_IS_BRIDAL_ASSISTANT',
               message: `${existing.displayName} é assistente de ${bridalLinks} noiva(s) com evento a partir de hoje. Troque a assistente nesses grupos antes de desativar.`,
               field: null,
             },
@@ -974,7 +974,7 @@ export class MembersService {
           },
           select: MEMBER_SELECT,
           // Fase 11 D-09: fixas primeiro; a grade da Agenda (listActive/listAll) não muda (D-20).
-          orderBy: [{ isFixed: "desc" }, { displayName: "asc" }, { id: "asc" }],
+          orderBy: [{ isFixed: 'desc' }, { displayName: 'asc' }, { id: 'asc' }],
         }),
         loadCategoryParents(tx),
       ]);
@@ -1003,7 +1003,7 @@ export class MembersService {
         where: { id, organizationId: orgId, deletedAt: null },
       });
       if (!existing) {
-        return errPayload("MEMBER_NOT_FOUND", "Membro não encontrado.");
+        return errPayload('MEMBER_NOT_FOUND', 'Membro não encontrado.');
       }
 
       const row = await tx.member.update({

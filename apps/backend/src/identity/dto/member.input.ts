@@ -6,18 +6,18 @@ import {
   IsOptional,
   IsString,
   IsUUID,
-} from "class-validator";
+} from 'class-validator';
 
-export type SeniorityTier = "junior" | "pleno" | "senior";
-export const MEMBER_STATUS_ACTIVE = "active" as const;
-export const MEMBER_STATUS_INACTIVE = "inactive" as const;
+export type SeniorityTier = 'junior' | 'pleno' | 'senior';
+export const MEMBER_STATUS_ACTIVE = 'active' as const;
+export const MEMBER_STATUS_INACTIVE = 'inactive' as const;
 
 export class UpdateMemberInput {
   @IsUUID()
   id!: string;
 
   @IsOptional()
-  @IsIn(["ADMIN", "MANAGER", "ATTENDANT", "PROFESSIONAL"])
+  @IsIn(['ADMIN', 'MANAGER', 'ATTENDANT', 'PROFESSIONAL'])
   roleName?: string;
 
   @IsOptional()
@@ -37,7 +37,7 @@ export class UpdateMemberInput {
   servesBridal?: boolean;
 
   @IsOptional()
-  @IsEnum(["junior", "pleno", "senior"])
+  @IsEnum(['junior', 'pleno', 'senior'])
   seniorityTier?: SeniorityTier | null;
 
   /** Telefone/Pix não podem ser limpos; null é tratado como inválido. */
@@ -76,7 +76,7 @@ export class CreateMemberInput {
   @IsOptional()
   birthDate?: Date | null;
 
-  @IsIn(["ADMIN", "MANAGER", "ATTENDANT", "PROFESSIONAL"])
+  @IsIn(['ADMIN', 'MANAGER', 'ATTENDANT', 'PROFESSIONAL'])
   roleName!: string;
 
   @IsOptional()
@@ -117,6 +117,6 @@ export class InviteMemberInput {
   @IsBoolean()
   isProfessional?: boolean;
   @IsOptional()
-  @IsEnum(["junior", "pleno", "senior"])
+  @IsEnum(['junior', 'pleno', 'senior'])
   seniorityTier?: SeniorityTier;
 }
