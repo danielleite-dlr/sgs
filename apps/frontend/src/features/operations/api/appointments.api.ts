@@ -183,16 +183,17 @@ export interface CreateAppointmentResult {
 
 /** Profissionais ativos que atendem a categoria do serviço (filtro no backend). */
 export const ProfessionalsForServiceQuery = gql`
-  query ProfessionalsForService($serviceId: UUID!) {
-    professionalsForService(serviceId: $serviceId) {
+  query ProfessionalsForService($serviceId: UUID!, $bridal: Boolean) {
+    professionalsForService(serviceId: $serviceId, bridal: $bridal) {
       id
       displayName
+      isFixed
     }
   }
 `;
 
 export interface ProfessionalsForServiceResult {
-  professionalsForService: { id: string; displayName: string }[];
+  professionalsForService: { id: string; displayName: string; isFixed: boolean }[];
 }
 
 // ─── Visita (agendamento multi-serviço + sinal) ──────────────────────────────

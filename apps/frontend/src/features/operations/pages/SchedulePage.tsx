@@ -800,6 +800,7 @@ export function SchedulePage() {
             color: tone.bg,
             tone,
             seniorityTier: member.seniorityTier ?? null,
+            isFixed: member.isFixed,
           };
         }),
     [membersData, ownOnly, memberId, toneByProfessional],

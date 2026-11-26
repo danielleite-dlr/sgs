@@ -71,7 +71,7 @@ const profsMock: MockedResponse = {
   maxUsageCount: 50,
   result: withTypes({
     data: {
-      professionalsForService: [{ id: 'p1', displayName: 'Paula' }],
+      professionalsForService: [{ id: 'p1', displayName: 'Paula', isFixed: false }],
     },
   }),
 };

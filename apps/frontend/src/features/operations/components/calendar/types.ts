@@ -18,6 +18,8 @@ export interface ScheduleProfessional {
   initials: string;
   color: string;
   seniorityTier?: string | null;
+  // Fase 11: fixa (equipe do studio). Só informa os seletores; a ordem da grade não usa (D-20).
+  isFixed?: boolean;
   // Cor automática da profissional (quick-261108-n4s); sem tom = visual neutro (branco).
   tone?: ProfessionalTone;
 }
