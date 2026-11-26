@@ -102,6 +102,8 @@ test.describe('Agenda: cor e nome completo por profissional', () => {
   }) => {
     await loginViaUi(page, seed.attendant.email, seed.attendant.password);
     await openAgendaAt(page, ahead);
+    // A agenda abre com o menu de filtros recolhido (quick 261126-f22).
+    await page.getByRole('button', { name: 'Mostrar filtros' }).click();
 
     for (const pro of pros) {
       const nome = displayName(pro.name);

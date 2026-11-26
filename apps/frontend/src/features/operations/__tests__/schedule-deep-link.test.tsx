@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
 import { MembersQuery } from '@/features/catalog/api/members.api';
@@ -94,7 +94,7 @@ function renderAt(url: string) {
       maxUsageCount: 20,
     },
   ];
-  return render(
+  const utils = render(
     <MockedProvider mocks={mocks}>
       <MemoryRouter initialEntries={[url]}>
         <Probe />
@@ -102,6 +102,9 @@ function renderAt(url: string) {
       </MemoryRouter>
     </MockedProvider>,
   );
+  // A agenda abre com o menu de filtros recolhido (quick 261126-f22).
+  fireEvent.click(screen.getByRole('button', { name: 'Mostrar filtros' }));
+  return utils;
 }
 
 afterEach(cleanup);

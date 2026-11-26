@@ -27,6 +27,8 @@ async function expectMemberEverywhere(page: import('@playwright/test').Page, nam
   await expect(page.getByRole('dialog')).toBeHidden();
 
   await navigateViaMenu(page, ...AGENDA);
+  // A agenda abre com o menu de filtros recolhido (quick 261126-f22).
+  await page.getByRole('button', { name: 'Mostrar filtros' }).click();
   await expect(page.getByRole('button', { name: `${name} — visível` })).toBeVisible();
 
   await navigateViaMenu(page, ...COMISSOES);

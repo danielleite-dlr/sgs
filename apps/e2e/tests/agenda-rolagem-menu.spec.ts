@@ -25,6 +25,8 @@ test.describe('Agenda: rolagem e menu recolhido', () => {
     const scroll = page.getByTestId('schedule-scroll');
     await expect(page.getByTestId('day-grid')).toBeVisible();
 
+    // A agenda abre com o menu de filtros recolhido (quick 261126-f22).
+    await page.getByRole('button', { name: 'Mostrar filtros' }).click();
     await page.locator('#col-G').click(); // Coluna: G
     const m = await scroll.evaluate((el) => ({
       vertical: el.scrollHeight > el.clientHeight,

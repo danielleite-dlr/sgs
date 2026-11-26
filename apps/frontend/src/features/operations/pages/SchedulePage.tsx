@@ -747,7 +747,8 @@ export function SchedulePage() {
   const [showFolga, setShowFolga] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // A agenda abre com o menu de filtros recolhido; o botão ao lado da grade o mostra.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   // Filtro "só esta noiva e as acompanhantes" (quick 261112-cko).
   const [bridalFilter, setBridalFilter] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);

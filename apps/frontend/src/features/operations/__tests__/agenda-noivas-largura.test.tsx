@@ -100,13 +100,16 @@ function renderSchedule() {
       maxUsageCount: 10,
     },
   ];
-  return render(
+  const utils = render(
     <MockedProvider mocks={mocks}>
       <MemoryRouter>
         <SchedulePage />
       </MemoryRouter>
     </MockedProvider>,
   );
+  // A agenda abre com o menu de filtros recolhido (quick 261126-f22).
+  fireEvent.click(screen.getByRole('button', { name: 'Mostrar filtros' }));
+  return utils;
 }
 
 const laneOrder = () =>

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MockedProvider, type MockedResponse } from "@apollo/client/testing";
 import { MemoryRouter } from "react-router-dom";
 import { MembersQuery } from "@/features/catalog/api/members.api";
@@ -62,13 +62,16 @@ function renderSchedule(
       maxUsageCount: 10,
     },
   ];
-  return render(
+  const utils = render(
     <MockedProvider mocks={mocks}>
       <MemoryRouter>
         <SchedulePage />
       </MemoryRouter>
     </MockedProvider>,
   );
+  // A agenda abre com o menu de filtros recolhido (quick 261126-f22).
+  fireEvent.click(screen.getByRole("button", { name: "Mostrar filtros" }));
+  return utils;
 }
 
 describe("SchedulePage por papel", () => {

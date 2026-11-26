@@ -281,7 +281,7 @@ describe('semana (D-11)', () => {
   });
 });
 
-function renderSchedule() {
+function renderSchedule({ abrirFiltros = true }: { abrirFiltros?: boolean } = {}) {
   useAuthStore.setState({ roleName: 'ADMIN', memberId: 'x' });
   const members = [
     {
@@ -308,16 +308,29 @@ function renderSchedule() {
       maxUsageCount: 10,
     },
   ];
-  return render(
+  const utils = render(
     <MockedProvider mocks={mocks}>
       <MemoryRouter>
         <SchedulePage />
       </MemoryRouter>
     </MockedProvider>,
   );
+  // A agenda abre com o menu de filtros recolhido (quick 261126-f22).
+  if (abrirFiltros) fireEvent.click(screen.getByRole('button', { name: 'Mostrar filtros' }));
+  return utils;
 }
 
 describe('barra da agenda (D-06, D-19, D-25)', () => {
+  it('abre com o menu de filtros recolhido e o botão o mostra (quick 261126-f22)', async () => {
+    renderSchedule({ abrirFiltros: false });
+    await waitFor(() => expect(screen.getByTestId('view-day')).toBeInTheDocument());
+    expect(screen.queryByText('Nome do profissional')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Ocultar filtros' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Mostrar filtros' }));
+    expect(screen.getByText('Nome do profissional')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ocultar filtros' })).toBeInTheDocument();
+  });
+
   it('"Agendar" é a ação principal roxa com texto branco', async () => {
     renderSchedule();
     const agendar = await screen.findByRole('button', { name: 'Agendar' });
