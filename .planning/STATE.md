@@ -48,7 +48,7 @@ Plan: 14 of 16
 Plan: 14 of 16
 Plan: 14 of 16
 Status: Ready to execute
-Last activity: 2026-11-26 - Completed quick task 261126-f22: Agenda abre com o menu de filtros recolhido
+Last activity: 2026-11-26 - Completed quick task 261126-qyt: Filtro recolhido da agenda vira faixa "Filtros" com contador
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -340,6 +340,7 @@ Recent decisions affecting current work:
 | 261124-pkz | Ficha da cliente: acompanhante não vê mais o contrato do grupo (só noiva/debutante/responsável ou quem está no contrato); Histórico com bloco "Comandas abertas", comandas abertas e atendimentos passados em aberto na lista, contador no trigger | 2026-11-24 | a96ea04 | [261124-pkz-ficha-da-cliente-contrato-so-da-noiva-e-](./quick/261124-pkz-ficha-da-cliente-contrato-so-da-noiva-e-/) |
 | 261124-qhs | Profissional vê só a comissão: relatório impresso sem "Valor cobrado"; tela sem Cobrado/Regra/cheio para PROFESSIONAL; API mascara cobrado/base/regra para PROFESSIONAL (comissões e comanda); linha "Total a pagar" na tabela de todas as profissionais | 2026-11-24 | 713f4df | [261124-qhs-comissao-profissional-ve-so-o-que-recebe](./quick/261124-qhs-comissao-profissional-ve-so-o-que-recebe/) |
 | 261126-f22 | Agenda abre com o menu de filtros recolhido | 2026-11-26 | e2f2090 | [261126-f22-agenda-abre-com-o-menu-de-filtros-recolh](./quick/261126-f22-agenda-abre-com-o-menu-de-filtros-recolh/) |
+| 261126-qyt | Filtro recolhido da agenda vira faixa "Filtros" com contador | 2026-11-26 | 67b212d | [261126-qyt-agenda-filtro-recolhido-mais-evidente](./quick/261126-qyt-agenda-filtro-recolhido-mais-evidente/) |
 
 ## Session Continuity
 
