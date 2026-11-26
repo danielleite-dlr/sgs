@@ -7,7 +7,8 @@ import { TimeBlockDialog } from "../components/calendar/TimeBlockDialog";
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
 const professionals = [
-  { id: "p1", name: "Bia Souza", initials: "BS", color: "#5D54C7" },
+  { id: "p1", name: "Bia Souza", initials: "BS", color: "#5D54C7", isFixed: true },
+  { id: "p0", name: "Ana Lima", initials: "AL", color: "#5D54C7", isFixed: false },
 ];
 const day = new Date(2026, 10, 4);
 
@@ -56,6 +57,13 @@ describe("TimeBlockDialog", () => {
     fireEvent.click(screen.getByTestId("block-submit"));
     await waitFor(() => expect(onCreated).toHaveBeenCalled());
     expect(result).toHaveBeenCalled();
+  });
+
+  it("lista profissionais fixas primeiro (D-09)", () => {
+    setup();
+    const select = screen.getByTestId("block-professional");
+    const labels = Array.from(select.querySelectorAll("option")).map((o) => o.textContent);
+    expect(labels).toEqual(["Selecione…", "Bia Souza", "Ana Lima"]);
   });
 
   it("fim antes do início mostra erro", () => {

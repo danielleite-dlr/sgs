@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from '@apollo/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import {
 import { brDateToIso, maskDateBR, maskTime } from '../../lib/input-masks';
 import { MANUAL_TIME_BLOCK_KINDS } from '../../lib/operations-labels';
 import type { ScheduleProfessional } from './types';
+import { sortFixedFirst } from '../../professional-order';
 
 interface Props {
   open: boolean;
@@ -49,6 +50,10 @@ export function TimeBlockDialog({
   defaultProfessionalId,
   onCreated,
 }: Props) {
+  const orderedProfessionals = useMemo(
+    () => sortFixedFirst(professionals, (p) => p.name),
+    [professionals],
+  );
   const [kind, setKind] = useState<string>('folga');
   const [professionalId, setProfessionalId] = useState(defaultProfessionalId ?? '');
   const [dateBr, setDateBr] = useState(() => dateToBr(defaultDate));
@@ -170,7 +175,7 @@ export function TimeBlockDialog({
               className={SELECT_CLASS}
             >
               <option value="">Selecione…</option>
-              {professionals.map((p) => (
+              {orderedProfessionals.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
                 </option>

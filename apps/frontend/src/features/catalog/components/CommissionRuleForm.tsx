@@ -32,7 +32,8 @@ import {
   CommissionRulesQuery,
   type CommissionRuleData,
 } from '../api/comissoes.api';
-import { MembersQuery } from '../api/members.api';
+import { MembersQuery, type MemberData } from '../api/members.api';
+import { sortFixedFirst } from '@/features/operations/professional-order';
 import { ServicesQuery } from '../api/servicos.api';
 import { CategoriesQuery } from '../api/categorias.api';
 import { ProductsQuery } from '../api/produtos.api';
@@ -167,9 +168,11 @@ export function CommissionRuleForm({
   );
 
   // ---- Map query results to EntityCombobox items ----
-  const memberItems = (membersData?.members ?? [])
-    .filter((m: { isProfessional: boolean }) => m.isProfessional)
-    .map((m: { id: string; displayName: string; roleName: string }) => ({
+  // Fixas primeiro e depois por nome (D-09)
+  const memberItems = sortFixedFirst<MemberData>(
+    (membersData?.members ?? []).filter((m: MemberData) => m.isProfessional),
+    (m) => m.displayName,
+  ).map((m: MemberData) => ({
       id: m.id,
       label: m.displayName,
       sublabel: m.roleName,
