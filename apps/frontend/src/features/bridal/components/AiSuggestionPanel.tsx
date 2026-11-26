@@ -31,6 +31,7 @@ import {
   depositsToInput,
   findRowConflicts,
   isRowComplete,
+  professionalKey,
   rowsToScheduleItems,
   suggestionToRows,
   toZoned,
@@ -73,26 +74,33 @@ export function AiSuggestionPanel({ group, onScheduled }: Props) {
   );
   const hasSchedule = appointments.length > 0;
 
-  const serviceIds = useMemo(
-    () => Array.from(new Set(rows.map((r) => r.serviceId))).sort(),
+  const listKeys = useMemo(
+    () => Array.from(new Set(rows.map((r) => professionalKey(r.serviceId, r.role)))).sort(),
     [rows],
   );
-  const serviceKey = serviceIds.join(',');
+  const serviceKey = listKeys.join(',');
 
   useEffect(() => {
     let cancelled = false;
-    for (const id of serviceIds) {
-      if (professionals[id]) continue;
+    for (const key of listKeys) {
+      if (professionals[key]) continue;
+      const bridal = key.endsWith('|bride');
+      const serviceId = bridal ? key.slice(0, -'|bride'.length) : key;
       client
         .query<ProfessionalsForServiceResult>({
           query: ProfessionalsForServiceQuery,
-          variables: { serviceId: id },
+          variables: { serviceId, bridal },
         })
         .then((res) => {
           if (cancelled) return;
+          // ordem do servidor: fixas primeiro (D-02)
           setProfessionals((prev) => ({
             ...prev,
-            [id]: res.data.professionalsForService.map((p) => ({ id: p.id, name: p.displayName })),
+            [key]: res.data.professionalsForService.map((p) => ({
+              id: p.id,
+              name: p.displayName,
+              isFixed: p.isFixed,
+            })),
           }));
         })
         .catch(() => undefined);

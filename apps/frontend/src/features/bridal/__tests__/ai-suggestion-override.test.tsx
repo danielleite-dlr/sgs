@@ -47,7 +47,7 @@ const profsMock: MockedResponse = {
   variableMatcher: () => true,
   maxUsageCount: 20,
   result: {
-    data: { professionalsForService: [{ __typename: 'Member', id: 'p1', displayName: 'Paula' }] },
+    data: { professionalsForService: [{ __typename: 'Member', id: 'p1', displayName: 'Paula', isFixed: true }] },
   },
 };
 

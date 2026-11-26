@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { NATIVE_SELECT_CLASS } from '@/lib/field-classes';
 import { cn } from '@/lib/utils';
@@ -5,6 +6,7 @@ import { DEPOSIT_METHODS } from '../lib/bridal-labels';
 import {
   addMinutes,
   findRowConflicts,
+  professionalKey,
   type DepositDraft,
   type ScheduleRow,
 } from '../lib/schedule-rows';
@@ -12,6 +14,7 @@ import {
 export interface ProfessionalOption {
   id: string;
   name: string;
+  isFixed?: boolean;
 }
 
 function durationOf(r: ScheduleRow): number {
@@ -72,7 +75,9 @@ export function BridalScheduleEditor({
           <tbody>
             {rows.map((r, i) => {
               const conflict = conflicts.get(i);
-              let options = professionalsByService[r.serviceId] ?? [];
+              const listKey = professionalKey(r.serviceId, r.role);
+              const loaded = professionalsByService[listKey];
+              let options = loaded ?? [];
               if (r.professionalId && !options.some((o) => o.id === r.professionalId)) {
                 options = [...options, { id: r.professionalId, name: r.professionalName ?? 'Profissional' }];
               }
@@ -107,9 +112,21 @@ export function BridalScheduleEditor({
                       {options.map((o) => (
                         <option key={o.id} value={o.id}>
                           {o.name}
+                          {o.isFixed === false ? ' (não fixa)' : ''}
                         </option>
                       ))}
                     </select>
+                    {r.role === 'bride' && loaded && loaded.length === 0 && (
+                      <p
+                        className="mt-xs text-[12px] text-warning"
+                        data-testid={`row-${i}-bride-empty`}
+                      >
+                        Ninguém marcado como "Atende noiva/debutante".{' '}
+                        <Link to="/profissionais" className="underline">
+                          Marcar
+                        </Link>
+                      </p>
+                    )}
                   </td>
                   <td className="p-sm">
                     <label className="sr-only" htmlFor={`row-${i}-start`}>

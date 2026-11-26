@@ -67,8 +67,8 @@ const profsMock: MockedResponse = {
   result: {
     data: {
       professionalsForService: [
-        { __typename: 'Member', id: 'p1', displayName: 'Jessica Seixas' },
-        { __typename: 'Member', id: 'p9', displayName: 'A definir' },
+        { __typename: 'Member', id: 'p1', displayName: 'Jessica Seixas', isFixed: true },
+        { __typename: 'Member', id: 'p9', displayName: 'A definir', isFixed: false },
       ],
     },
   },
@@ -103,6 +103,30 @@ describe('BridalTrialCard', () => {
     fireEvent.click(screen.getByTestId('trial-start'));
     expect(screen.getAllByTestId(/^schedule-row-\d+$/)).toHaveLength(1);
     expect(screen.getByTestId('schedule-row-0')).toHaveTextContent('Ewelly');
+  });
+
+  it('D-19: a consulta da linha da noiva vai com bridal: true', async () => {
+    useAuthStore.setState({ roleName: 'MANAGER' });
+    const seen: { serviceId: string; bridal: boolean }[] = [];
+    const spy: MockedResponse = {
+      request: { query: ProfessionalsForServiceQuery },
+      variableMatcher: (v) => {
+        seen.push(v as { serviceId: string; bridal: boolean });
+        return true;
+      },
+      maxUsageCount: 20,
+      result: { data: { professionalsForService: [] } },
+    };
+    render(
+      <MockedProvider mocks={[spy]}>
+        <MemoryRouter>
+          <BridalTrialCard group={baseGroup()} onScheduled={() => undefined} />
+        </MemoryRouter>
+      </MockedProvider>,
+    );
+    fireEvent.click(screen.getByTestId('trial-start'));
+    await waitFor(() => expect(seen).toContainEqual({ serviceId: 'make', bridal: true }));
+    expect(await screen.findByTestId('row-0-bride-empty')).toBeInTheDocument();
   });
 
   it('D-01: pré-preenche a profissional do evento ativo; sem evento ou cancelado fica em branco', () => {

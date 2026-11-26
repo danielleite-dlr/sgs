@@ -34,6 +34,7 @@ function item(i: number, prof: string) {
     professionalName: prof === 'p1' ? 'Paula' : 'Paulo',
     startsAt: start.toISOString(),
     endsAt: new Date(start.getTime() + 60 * 60_000).toISOString(),
+    professionalIsFixed: true,
   };
 }
 const items = Array.from({ length: 7 }, (_, i) => item(i, i % 2 === 0 ? 'p1' : 'p2'));
@@ -60,6 +61,7 @@ function suggestMock(): MockedResponse {
             dayStart: '2026-12-05T10:00:00.000Z',
             dayEnd: '2026-12-05T22:00:00.000Z',
             readyBy: '2026-12-05T17:00:00.000Z',
+            companionReadyBy: '2026-12-05T16:00:00.000Z',
           },
         },
       },
@@ -74,8 +76,8 @@ const profsMock: MockedResponse = {
   result: {
     data: {
       professionalsForService: [
-        { __typename: 'Member', id: 'p1', displayName: 'Paula' },
-        { __typename: 'Member', id: 'p2', displayName: 'Paulo' },
+        { __typename: 'Member', id: 'p1', displayName: 'Paula', isFixed: true },
+        { __typename: 'Member', id: 'p2', displayName: 'Paulo', isFixed: true },
       ],
     },
   },

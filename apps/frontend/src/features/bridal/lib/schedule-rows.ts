@@ -3,6 +3,14 @@ import type { BridalDepositInput, BridalScheduleItemInput } from '../api/bridal.
 
 export const SALON_TZ = 'America/Sao_Paulo';
 
+/**
+ * Chave da lista de profissionais de uma linha.
+ * 11 D-19: noiva/debutante só com quem atende noiva/debutante; acompanhantes veem todas.
+ */
+export function professionalKey(serviceId: string, role: string): string {
+  return role === 'bride' ? `${serviceId}|bride` : serviceId;
+}
+
 export interface ScheduleRow {
   key: string;
   groupMemberId: string;
