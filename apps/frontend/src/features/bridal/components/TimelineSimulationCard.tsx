@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { BridalTimelinePreviewData, TimelineConflictData } from '../api/timeline.api';
@@ -64,6 +65,7 @@ export function TimelineSimulationCard({
               <span className="w-12 shrink-0 font-semibold">{r.time}</span>
               <span>
                 {r.name}
+                {r.isRegistry ? ' (make-off)' : ''}
                 {r.label ? ` ${r.label}` : ''}
                 {r.professionalName ? (
                   <span className="text-neutral-500"> — {r.professionalName}</span>
@@ -74,12 +76,40 @@ export function TimelineSimulationCard({
         )}
       </ul>
 
+      {sim.brideSlots.some((b) => b.suggested || b.isFixed === false) && (
+        <ul className="mb-sm space-y-xs text-body" data-testid="timeline-slot-badges">
+          {sim.brideSlots
+            .filter((b) => b.suggested || b.isFixed === false)
+            .map((b) => (
+              <li key={b.kind} className="flex flex-wrap items-center gap-xs">
+                <span>
+                  {b.stepName}
+                  {b.professionalName ? ` — ${b.professionalName}` : ''}
+                </span>
+                {b.suggested && <Badge data-testid={`slot-suggested-${b.kind}`}>Sugerida</Badge>}
+                {b.isFixed === false && (
+                  <Badge variant="warning" data-testid={`slot-not-fixed-${b.kind}`}>
+                    Não fixa
+                  </Badge>
+                )}
+              </li>
+            ))}
+        </ul>
+      )}
+
       {sim.warnings.length > 0 && (
-        <div className="mb-sm flex flex-wrap gap-xs" data-testid="timeline-warnings">
+        <div className="mb-sm flex flex-wrap items-center gap-xs" data-testid="timeline-warnings">
           {sim.warnings.map((w, i) => (
-            <Badge key={`${w.code}-${i}`} variant="warning" title={w.message}>
-              {WARNING_LABEL[w.code] ?? w.message}
-            </Badge>
+            <span key={`${w.code}-${i}`} className="inline-flex items-center gap-xs">
+              <Badge variant="warning" title={w.message}>
+                {WARNING_LABEL[w.code] ?? w.message}
+              </Badge>
+              {w.code === 'NO_BRIDAL_PROFESSIONAL' && (
+                <Link to="/profissionais" className="text-[12px] underline">
+                  Marcar em Profissionais
+                </Link>
+              )}
+            </span>
           ))}
         </div>
       )}

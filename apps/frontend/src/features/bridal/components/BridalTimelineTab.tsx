@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLazyQuery, useMutation, useQuery } from '@apollo/client';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -80,10 +81,13 @@ function ProfessionalSelect({
   onChange: (v: string) => void;
   disabled: boolean;
 }) {
-  const { data } = useQuery<ProfessionalsForServiceResult>(ProfessionalsForServiceQuery, {
-    variables: { serviceId },
+  // Só quem atende noiva/debutante, fixas primeiro (ordenado no servidor).
+  const { data, loading } = useQuery<ProfessionalsForServiceResult>(ProfessionalsForServiceQuery, {
+    variables: { serviceId, bridal: true },
     skip: !serviceId,
   });
+  const list = data?.professionalsForService ?? [];
+  const empty = !!serviceId && !loading && !!data && list.length === 0;
   return (
     <div>
       <Label htmlFor={id} className="text-overline uppercase text-neutral-500">
@@ -98,12 +102,25 @@ function ProfessionalSelect({
         className={SELECT_CLASS}
       >
         <option value="">[a definir]</option>
-        {(data?.professionalsForService ?? []).map((p) => (
+        {list.map((p) => (
           <option key={p.id} value={p.id}>
             {p.displayName}
+            {p.isFixed ? '' : ' (não fixa)'}
           </option>
         ))}
       </select>
+      {empty && (
+        <p
+          data-testid={`${id}-empty`}
+          role="status"
+          className="mt-xs text-[12px] font-semibold text-warning-700"
+        >
+          Nenhuma profissional marcada como &quot;Atende noiva/debutante&quot;.{' '}
+          <Link to="/profissionais" className="underline">
+            Marcar em Profissionais
+          </Link>
+        </p>
+      )}
     </div>
   );
 }
@@ -119,6 +136,8 @@ export function BridalTimelineTab({ group, onChanged }: Props) {
   const [brideLabel, setBrideLabel] = useState(defaultBrideLabel(group));
   const [makeId, setMakeId] = useState('');
   const [hairId, setHairId] = useState('');
+  const [companionsTime, setCompanionsTime] = useState('');
+  const [companionsInit, setCompanionsInit] = useState(false);
   const [simulations, setSimulations] = useState<Simulation[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
   const [nextKey, setNextKey] = useState(1);
@@ -130,6 +149,13 @@ export function BridalTimelineTab({ group, onChanged }: Props) {
     { variables: { groupId: group.id }, fetchPolicy: 'cache-and-network' },
   );
   const official = officialData?.bridalTimeline ?? null;
+
+  // Valor inicial: saída das acompanhantes do cronograma oficial ou do grupo.
+  const initialCompanions = official?.companionsReadyBy ?? group.companionsReadyBy ?? null;
+  if (!companionsInit && (officialData || initialCompanions)) {
+    setCompanionsInit(true);
+    if (initialCompanions) setCompanionsTime(toZoned(initialCompanions, SALON_TZ).time);
+  }
 
   const [runPreview, { loading: generating }] = useLazyQuery<BridalTimelinePreviewResult>(
     BridalTimelinePreviewQuery,
@@ -151,6 +177,7 @@ export function BridalTimelineTab({ group, onChanged }: Props) {
       brideLabel: brideLabel.trim() || null,
       makeProfessionalId: makeId || null,
       hairProfessionalId: hairId || null,
+      companionsReadyTime: companionsTime,
     };
   }
 
@@ -168,6 +195,9 @@ export function BridalTimelineTab({ group, onChanged }: Props) {
         return;
       }
       const preview = payload.preview;
+      // O seletor reflete a sugestão; escolha já feita não muda.
+      if (!makeId && preview.makeProfessionalId) setMakeId(preview.makeProfessionalId);
+      if (!hairId && preview.hairProfessionalId) setHairId(preview.hairProfessionalId);
       setSimulations((prev) =>
         [{ key: nextKey, data: preview, conflicts: [], error: null }, ...prev].slice(
           0,
@@ -197,6 +227,7 @@ export function BridalTimelineTab({ group, onChanged }: Props) {
             brideLabel: d.brideLabel,
             makeProfessionalId: d.makeProfessionalId,
             hairProfessionalId: d.hairProfessionalId,
+            companionsReadyTime: companionsTime,
           },
         },
       });
@@ -223,6 +254,9 @@ export function BridalTimelineTab({ group, onChanged }: Props) {
   }
 
   const formDisabled = !active;
+  const registryIso = latest?.registryStartsAt ?? official?.registryStartsAt ?? null;
+  const makeOffTime = registryIso ? toZoned(registryIso, SALON_TZ).time : '';
+  const kindWord = group.eventKind === 'debutante' ? 'debutante' : 'noiva';
 
   return (
     <div className="space-y-md" data-testid="timeline-tab">
@@ -324,6 +358,27 @@ export function BridalTimelineTab({ group, onChanged }: Props) {
             </p>
           </div>
           <div>
+            <Label
+              htmlFor="timeline-companions-ready"
+              className="text-overline uppercase text-neutral-500"
+            >
+              Acompanhantes prontas até
+            </Label>
+            <Input
+              id="timeline-companions-ready"
+              data-testid="timeline-companions-ready"
+              type="time"
+              className="mt-xs"
+              value={companionsTime}
+              placeholder={makeOffTime}
+              disabled={formDisabled}
+              onChange={(e) => setCompanionsTime(e.target.value)}
+            />
+            <p className="mt-xs text-[12px] text-neutral-500">
+              Vazio = igual ao make-off{makeOffTime ? ` (${makeOffTime})` : ''}.
+            </p>
+          </div>
+          <div>
             <Label htmlFor="timeline-label" className="text-overline uppercase text-neutral-500">
               Nome no título
             </Label>
@@ -340,7 +395,7 @@ export function BridalTimelineTab({ group, onChanged }: Props) {
             <>
               <ProfessionalSelect
                 id="timeline-make"
-                label="Profissional de make"
+                label={`Make da ${kindWord}`}
                 serviceId={makeServiceId}
                 value={makeId}
                 onChange={setMakeId}
@@ -348,7 +403,7 @@ export function BridalTimelineTab({ group, onChanged }: Props) {
               />
               <ProfessionalSelect
                 id="timeline-hair"
-                label="Profissional de penteado"
+                label={`Penteado da ${kindWord}`}
                 serviceId={hairServiceId}
                 value={hairId}
                 onChange={setHairId}

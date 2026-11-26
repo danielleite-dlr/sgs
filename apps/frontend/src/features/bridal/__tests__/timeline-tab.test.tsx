@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import { PackagesQuery } from '@/features/catalog/api/pacotes.api';
@@ -65,9 +66,13 @@ const pkgMock: MockedResponse = {
   }),
 };
 
+const profVars: unknown[] = [];
 const profsMock: MockedResponse = {
   request: { query: ProfessionalsForServiceQuery },
-  variableMatcher: () => true,
+  variableMatcher: (v) => {
+    profVars.push(v);
+    return true;
+  },
   maxUsageCount: 50,
   result: withTypes({
     data: {
@@ -103,6 +108,7 @@ function preview(p: Partial<BridalTimelinePreviewData> = {}): BridalTimelinePrev
     text: GLAM_TEXT,
     warnings: [],
     registryStartsAt: null,
+    companionsReadyBy: null,
     brideSlots: [
       {
         kind: 'make',
@@ -113,6 +119,8 @@ function preview(p: Partial<BridalTimelinePreviewData> = {}): BridalTimelinePrev
         professionalName: null,
         startsAt: '2026-11-08T16:30:00Z',
         endsAt: '2026-11-08T18:00:00Z',
+        suggested: false,
+        isFixed: null,
       },
     ],
     conflicts: [],
@@ -136,6 +144,7 @@ function official(p: Partial<BridalTimelineData> = {}): BridalTimelineData {
     text: GLAM_TEXT,
     warnings: [],
     registryStartsAt: null,
+    companionsReadyBy: null,
     registryLabel: null,
     confirmedAt: '2026-11-08T12:00:00Z',
     confirmedByName: 'Joana Gerente',
@@ -181,6 +190,7 @@ const writeText = vi.fn().mockResolvedValue(undefined);
 
 beforeEach(() => {
   writeText.mockClear();
+  profVars.length = 0;
   Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
   useAuthStore.setState({ roleName: 'MANAGER' });
 });
@@ -189,11 +199,18 @@ afterEach(() => {
   useAuthStore.setState({ roleName: null });
 });
 
-function renderTab(mocks: MockedResponse[], onChanged = () => undefined) {
+function renderTab(
+  mocks: MockedResponse[],
+  onChanged = () => undefined,
+  grp: typeof g = g,
+  profs: MockedResponse = profsMock,
+) {
   return render(
-    <MockedProvider mocks={[pkgMock, profsMock, ...mocks]}>
-      <BridalTimelineTab group={g} onChanged={onChanged} />
-    </MockedProvider>,
+    <MemoryRouter>
+      <MockedProvider mocks={[pkgMock, profs, ...mocks]}>
+        <BridalTimelineTab group={grp} onChanged={onChanged} />
+      </MockedProvider>
+    </MemoryRouter>,
   );
 }
 
@@ -227,6 +244,7 @@ describe('BridalTimelineTab', () => {
         brideLabel: 'VITÓRIA',
         makeProfessionalId: null,
         hairProfessionalId: null,
+        companionsReadyTime: '',
       },
     });
   });
@@ -297,6 +315,88 @@ describe('BridalTimelineTab', () => {
     await waitFor(() => expect(make.querySelectorAll('option').length).toBe(2));
   });
 
+  it('seletores consultam só quem atende noiva/debutante (bridal: true)', async () => {
+    renderTab([officialMock(null), previewMock([preview()])]);
+    await generate();
+    await screen.findByTestId('timeline-make');
+    await waitFor(() => expect(profVars.length).toBeGreaterThan(0));
+    expect(profVars[0]).toEqual({ serviceId: 'sv-make', bridal: true });
+  });
+
+  it('lista vazia mostra o aviso com link para /profissionais', async () => {
+    const empty: MockedResponse = {
+      request: { query: ProfessionalsForServiceQuery },
+      variableMatcher: () => true,
+      maxUsageCount: 50,
+      result: withTypes({ data: { professionalsForService: [] } }),
+    };
+    renderTab([officialMock(null), previewMock([preview()])], undefined, g, empty);
+    await generate();
+    const msg = await screen.findByTestId('timeline-make-empty');
+    expect(msg).toHaveTextContent('Nenhuma profissional marcada como "Atende noiva/debutante"');
+    expect(msg.querySelector('a')).toHaveAttribute('href', '/profissionais');
+  });
+
+  it('sugestão preenche o select e mostra os selos Sugerida e Não fixa', async () => {
+    const slot = {
+      kind: 'make',
+      stepName: 'Make da noiva',
+      serviceId: 'sv-make',
+      serviceName: 'Maquiagem',
+      professionalId: 'p1',
+      professionalName: 'Paula',
+      startsAt: '2026-11-08T16:30:00Z',
+      endsAt: '2026-11-08T18:00:00Z',
+      suggested: true,
+      isFixed: false,
+    };
+    renderTab([
+      officialMock(null),
+      previewMock([preview({ makeProfessionalId: 'p1', brideSlots: [slot] })]),
+    ]);
+    await generate();
+    expect(await screen.findByTestId('slot-suggested-make')).toHaveTextContent('Sugerida');
+    expect(screen.getByTestId('slot-not-fixed-make')).toHaveTextContent('Não fixa');
+    const make = await screen.findByTestId('timeline-make');
+    await waitFor(() => expect(make).toHaveValue('p1'));
+  });
+
+  it('confirmar envia companionsReadyTime preenchido', async () => {
+    let sent: { input: { companionsReadyTime?: string } } | null = null;
+    renderTab([
+      officialMock(null),
+      previewMock([preview()]),
+      {
+        request: { query: ConfirmBridalTimelineMutation },
+        variableMatcher: (v) => {
+          sent = v as typeof sent;
+          return true;
+        },
+        result: () => ({
+          data: withTypes({
+            confirmBridalTimeline: { timeline: official(), conflicts: [], errors: [] },
+          }),
+        }),
+      },
+    ]);
+    fireEvent.change(screen.getByTestId('timeline-companions-ready'), {
+      target: { value: '09:30' },
+    });
+    await generate();
+    await screen.findByTestId('timeline-text');
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar (ok do studio)' }));
+    await waitFor(() => expect(sent).not.toBeNull());
+    expect(sent!.input.companionsReadyTime).toBe('09:30');
+  });
+
+  it('grupo debutante usa os rótulos de debutante', async () => {
+    const deb = { ...g, eventKind: 'debutante' as const };
+    renderTab([officialMock(null), previewMock([preview()])], undefined, deb);
+    await generate();
+    expect(await screen.findByText('Make da debutante')).toBeInTheDocument();
+    expect(screen.getByText('Penteado da debutante')).toBeInTheDocument();
+  });
+
   it('confirma com as variáveis da simulação e mostra o cronograma oficial', async () => {
     let sent: unknown = null;
     let confirmed = false;
@@ -335,6 +435,7 @@ describe('BridalTimelineTab', () => {
         brideLabel: 'VITÓRIA',
         makeProfessionalId: null,
         hairProfessionalId: null,
+        companionsReadyTime: '',
       },
     });
     expect(await screen.findByTestId('timeline-official-meta')).toHaveTextContent('Versão 3');
