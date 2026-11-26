@@ -16,6 +16,7 @@ export const ACCESS_EXEMPT: ReadonlySet<string> = new Set([
   'members', // listas de seleção usadas por todas as telas (agenda, comissões, comanda)
   'allMembers', // idem, incluindo inativos, para históricos
   'professionalsForService', // escolha de profissional no agendamento, vale para quem agenda
+  'suggestProfessionals', // fase 11: sugestão de profissional no agendamento, vale para quem agenda
   'pendingInvitations', // convites pendentes: gestão de equipe, não é uma área do menu
   'acceptInvitation', // convite aceito pelo próprio convidado
   'notifications', // sino de notificações: de todos, sem área
