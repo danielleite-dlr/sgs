@@ -57,4 +57,32 @@ describe('prompt da agenda IA', () => {
     expect(canonicalHash(c, 'm')).not.toBe(canonicalHash(a, 'm'));
     expect(canonicalHash(a, 'outro')).not.toBe(canonicalHash(a, 'm'));
   });
+
+  it('envia companionReadyBy e os atributos de prioridade', () => {
+    const out = JSON.parse(buildPromptInput(ctx()));
+    expect(out.companionReadyBy).toBe('2030-06-15T18:00:00.000Z');
+    expect(out.professionals[0]).toEqual({
+      id: 'a',
+      label: 'prof_1',
+      isFixed: false,
+      dayMinutes: 0,
+      rotationRank: 0,
+    });
+  });
+
+  it('hash muda com isFixed, dayMinutes, rotationRank e companionReadyBy', () => {
+    const base = canonicalHash(ctx(), 'm');
+    const a = ctx();
+    a.professionals[0].isFixed = true;
+    expect(canonicalHash(a, 'm')).not.toBe(base);
+    const b = ctx();
+    b.professionals[0].dayMinutes = 30;
+    expect(canonicalHash(b, 'm')).not.toBe(base);
+    const c = ctx();
+    c.professionals[0].rotationRank = 5;
+    expect(canonicalHash(c, 'm')).not.toBe(base);
+    const d = ctx();
+    d.companionReadyBy = '2030-06-15T17:00:00.000Z';
+    expect(canonicalHash(d, 'm')).not.toBe(base);
+  });
 });
