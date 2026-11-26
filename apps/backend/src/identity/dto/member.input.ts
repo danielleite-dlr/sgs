@@ -29,6 +29,14 @@ export class UpdateMemberInput {
   isBridalAssistant?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  isFixed?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  servesBridal?: boolean;
+
+  @IsOptional()
   @IsEnum(['junior', 'pleno', 'senior'])
   seniorityTier?: SeniorityTier | null;
 
@@ -78,6 +86,14 @@ export class CreateMemberInput {
   @IsOptional()
   @IsBoolean()
   isBridalAssistant?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isFixed?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  servesBridal?: boolean;
 
   @IsOptional()
   @IsArray()

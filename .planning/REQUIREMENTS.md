@@ -117,7 +117,7 @@
 
 ### Prioridade de profissionais (Fase 11)
 
-- [ ] **PRIO-01**: A profissional tem as marcações "Fixa (equipe do studio)" (`isFixed`) e "Atende noiva/debutante" (`servesBridal`), falsas por padrão e sem migração de dados que marque alguém; só profissionais podem tê-las; a API cria, edita e devolve as duas; a marcação muda só a ordem/sugestão (comissão, repasse e diária não mudam) _(11 D-01, D-03, D-05)_
+- [x] **PRIO-01**: A profissional tem as marcações "Fixa (equipe do studio)" (`isFixed`) e "Atende noiva/debutante" (`servesBridal`), falsas por padrão e sem migração de dados que marque alguém; só profissionais podem tê-las; a API cria, edita e devolve as duas; a marcação muda só a ordem/sugestão (comissão, repasse e diária não mudam) _(11 D-01, D-03, D-05)_
 - [ ] **PRIO-02**: Os diálogos criar/editar profissional mostram e editam as duas marcações (só para profissional) e a tela Profissionais mostra os selos "Fixa" e "Atende noiva/debutante" _(11 D-05)_
 - [x] **PRIO-03**: Um módulo de domínio puro e determinístico ordena candidatas: só livres → (noiva/debutante: só quem atende noiva) → fixas antes de não fixas com prioridade estrita → menos minutos agendados no dia → revezamento (quem recebeu há mais tempo; nunca = primeiro) → id _(11 D-07, D-10, D-11, D-12, D-18)_
 - [x] **PRIO-04**: Existe uma ordenação "fixas primeiro, depois por nome" reutilizável no backend e no frontend para as listas de escolha _(11 D-09)_
@@ -132,7 +132,7 @@
 - [ ] **PRIO-13**: O grupo tem o campo "Acompanhantes prontas até" (vazio = igual ao make-off), editável no formulário do grupo e na aba Cronograma, no mesmo dia do evento _(11 D-14)_
 - [ ] **PRIO-14**: A sugestão de agenda usa limite por papel (noiva: pronta até/make-off; acompanhante: limite efetivo), encaixa a acompanhante o mais perto possível do limite e lista "não coube" com o motivo, sem remarcar clientes comuns _(11 D-15, D-16)_
 - [ ] **PRIO-15**: Tudo da fase vale igual para noiva e debutante (`eventKind`); o título do texto do cronograma mantém o formato da 04.2 _(11 D-17, D-21)_
-- [ ] **PRIO-16**: Todos os seletores de profissional mostram as fixas primeiro (depois as não fixas); a ordem das colunas da grade da Agenda não muda _(11 D-09, D-20)_
+- [x] **PRIO-16**: Todos os seletores de profissional mostram as fixas primeiro (depois as não fixas); a ordem das colunas da grade da Agenda não muda _(11 D-09, D-20)_
 
 ### Qualidade / Observabilidade
 
@@ -258,7 +258,7 @@
 | PERM-14 | Phase 10 | Complete |
 | PERM-15 | Phase 10 | Complete |
 | PERM-16 | Phase 10 | Complete |
-| PRIO-01 | Phase 11 | Pending |
+| PRIO-01 | Phase 11 | Complete |
 | PRIO-02 | Phase 11 | Pending |
 | PRIO-03 | Phase 11 | Complete |
 | PRIO-04 | Phase 11 | Complete |
@@ -273,7 +273,7 @@
 | PRIO-13 | Phase 11 | Pending |
 | PRIO-14 | Phase 11 | Pending |
 | PRIO-15 | Phase 11 | Pending |
-| PRIO-16 | Phase 11 | Pending |
+| PRIO-16 | Phase 11 | Complete |
 | QA-01 | Backlog | Deferred |
 | QA-02 | Backlog | Deferred |
 | QA-03 | Backlog | Deferred |

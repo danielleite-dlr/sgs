@@ -48,11 +48,13 @@ export class MembersResolver {
   @Query('professionalsForService')
   async professionalsForService(
     @Args('serviceId') serviceId: string,
+    @Args('bridal', { nullable: true }) bridal: boolean | null,
     @CurrentTenant() tenantCtx: TenantContext,
   ) {
     const rows = await this.members.listProfessionalsForService(
       tenantCtx.organizationId,
       serviceId,
+      { bridal: bridal === true },
     );
     return rows.map((r) => redactPersonal(r, tenantCtx.roleName));
   }

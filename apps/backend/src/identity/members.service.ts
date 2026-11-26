@@ -104,6 +104,8 @@ const MEMBER_SELECT = {
   seniorityTier: true,
   isProfessional: true,
   isBridalAssistant: true,
+  isFixed: true,
+  servesBridal: true,
   status: true,
   phone: true,
   pixKey: true,
@@ -124,6 +126,8 @@ type MemberRow = {
   seniorityTier: string | null;
   isProfessional: boolean;
   isBridalAssistant: boolean;
+  isFixed: boolean;
+  servesBridal: boolean;
   status: string;
   phone: string | null;
   pixKey: string | null;
@@ -208,6 +212,8 @@ function toMemberDto(r: MemberRow) {
     seniorityTier: r.seniorityTier ?? null,
     isProfessional: r.isProfessional,
     isBridalAssistant: r.isBridalAssistant,
+    isFixed: r.isFixed,
+    servesBridal: r.servesBridal,
     status: r.status,
     phone: r.phone ?? null,
     pixKey: r.pixKey ?? null,
@@ -313,6 +319,8 @@ export class MembersService {
         roleId?: string;
         isProfessional?: boolean;
         isBridalAssistant?: boolean;
+        isFixed?: boolean;
+        servesBridal?: boolean;
         seniorityTier?: string | null;
         phone?: string;
         pixKey?: string;
@@ -346,11 +354,7 @@ export class MembersService {
           where: { name: input.roleName, isSystem: true },
         });
         if (!role) {
-          return errPayload(
-            'ROLE_NOT_FOUND',
-            'Papel inválido.',
-            'roleName',
-          );
+          return errPayload('ROLE_NOT_FOUND', 'Papel inválido.', 'roleName');
         }
         if (
           input.roleName !== ADMIN_ROLE_NAME &&
@@ -429,6 +433,23 @@ export class MembersService {
         data.isBridalAssistant = finalIsBridalAssistant;
       }
 
+      // Fase 11: marcações de prioridade; deixar de ser profissional zera as duas.
+      for (const f of ['isFixed', 'servesBridal'] as const) {
+        if (input[f] === true && !finalIsProfessional) {
+          return errPayload(
+            'PRIORITY_FLAG_REQUIRES_PROFESSIONAL',
+            'Só profissionais podem ser marcadas como fixa ou como "atende noiva/debutante".',
+            f,
+          );
+        }
+        const finalFlag = finalIsProfessional
+          ? (input[f] ?? existing[f])
+          : false;
+        if (finalFlag !== existing[f]) {
+          data[f] = finalFlag;
+        }
+      }
+
       if (input.seniorityTier !== undefined) {
         data.seniorityTier = input.seniorityTier;
       }
@@ -502,6 +523,15 @@ export class MembersService {
         'isBridalAssistant',
       );
     }
+    for (const f of ['isFixed', 'servesBridal'] as const) {
+      if (input[f] === true && !isProfessional) {
+        return createErr(
+          'PRIORITY_FLAG_REQUIRES_PROFESSIONAL',
+          'Só profissionais podem ser marcadas como fixa ou como "atende noiva/debutante".',
+          f,
+        );
+      }
+    }
     const categoryIds = isProfessional
       ? [...new Set(input.categoryIds ?? [])]
       : [];
@@ -569,7 +599,9 @@ export class MembersService {
           userId = existingUser.id;
         } else {
           if (!passwordHash) {
-            throw new Error('create member: missing password hash for new user');
+            throw new Error(
+              'create member: missing password hash for new user',
+            );
           }
           const user = await tx.user.create({
             data: {
@@ -591,7 +623,11 @@ export class MembersService {
             roleId: role.id,
             displayName,
             isProfessional,
-            isBridalAssistant: isProfessional ? !!input.isBridalAssistant : false,
+            isBridalAssistant: isProfessional
+              ? !!input.isBridalAssistant
+              : false,
+            isFixed: isProfessional ? !!input.isFixed : false,
+            servesBridal: isProfessional ? !!input.servesBridal : false,
             status: MEMBER_STATUS_ACTIVE,
             phone,
             pixKey: pix.value,
@@ -625,7 +661,11 @@ export class MembersService {
         e instanceof Prisma.PrismaClientKnownRequestError &&
         e.code === 'P2002'
       ) {
-        return createErr('MEMBER_ALREADY_EXISTS', ALREADY_MEMBER_MESSAGE, 'email');
+        return createErr(
+          'MEMBER_ALREADY_EXISTS',
+          ALREADY_MEMBER_MESSAGE,
+          'email',
+        );
       }
       throw e;
     }
@@ -911,7 +951,11 @@ export class MembersService {
    * descendente de uma vinculada; sem vínculos atende tudo). Serviço
    * inexistente/de outra organização -> lista vazia.
    */
-  async listProfessionalsForService(orgId: string, serviceId: string) {
+  async listProfessionalsForService(
+    orgId: string,
+    serviceId: string,
+    opts: { bridal?: boolean } = {},
+  ) {
     return this.tenant.runWithTenant(orgId, async (tx) => {
       const service = await tx.service.findFirst({
         where: { id: serviceId, deletedAt: null },
@@ -926,9 +970,11 @@ export class MembersService {
             deletedAt: null,
             status: MEMBER_STATUS_ACTIVE,
             isProfessional: true,
+            ...(opts.bridal ? { servesBridal: true } : {}),
           },
           select: MEMBER_SELECT,
-          orderBy: { displayName: 'asc' },
+          // Fase 11 D-09: fixas primeiro; a grade da Agenda (listActive/listAll) não muda (D-20).
+          orderBy: [{ isFixed: 'desc' }, { displayName: 'asc' }, { id: 'asc' }],
         }),
         loadCategoryParents(tx),
       ]);

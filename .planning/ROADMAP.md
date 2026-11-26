@@ -448,11 +448,11 @@ Plans:
 **Goal:** Pedido da usuária em 2026-11-18. (1) Na tela Profissionais, marcar quem **atende noiva** e quem é **fixa**. (2) Ao sugerir/distribuir atendimentos, **preencher primeiro as fixas livres** (e, para noivas, as fixas que atendem noiva), só depois as não fixas; com **duas ou mais fixas livres, sugerir a divisão mais justa possível**. (3) No cronograma do grupo de noiva, a noiva e as acompanhantes do grupo têm prioridade para cumprir o cronograma da noiva: **todas maquiadas e penteadas antes do make-off (fotos)** e **prontas no horário de saída configurável**, sempre respeitando o cronograma. Base existente: cronograma por pacote da 04.2 (`departureTime`, etapas antes da saída) e a sugestão de agenda da fase 4 (heurística/IA em `apps/backend/src/bridal/ai`). Ordem decidida: depois da fase 10, antes do app iOS.
 **Requirements**: PRIO-01, PRIO-02, PRIO-03, PRIO-04, PRIO-05, PRIO-06, PRIO-07, PRIO-08, PRIO-09, PRIO-10, PRIO-11, PRIO-12, PRIO-13, PRIO-14, PRIO-15, PRIO-16
 **Depends on:** Phase 10
-**Plans:** 1/16 plans executed
+**Plans:** 2/16 plans executed
 
 Plans:
 - [x] 11-01-PLAN.md — TDD do ranking puro de profissionais (fixa estrita, minutos do dia, revezamento, id) (onda 1)
-- [ ] 11-02-PLAN.md — migração das marcações e de companions_ready_by, API do Member, filtro bridal e fixtures (onda 1)
+- [x] 11-02-PLAN.md — migração das marcações e de companions_ready_by, API do Member, filtro bridal e fixtures (onda 1)
 - [ ] 11-03-PLAN.md — dados do ranking (minutos do dia, revezamento derivado) e query suggestProfessionals (onda 2)
 - [ ] 11-04-PLAN.md — "Acompanhantes prontas até" no grupo e guarda com limite do make-off (onda 2)
 - [ ] 11-05-PLAN.md — servidor recusa profissional que não atende noiva/debutante (evento, prova, IA) (onda 2)

@@ -22,11 +22,19 @@ const orgFilter = (prefix: string) =>
 /** Mundo da Fase 3 + pacote de noiva (entrada de 30%). */
 export async function createPhase4World(
   prefix: string,
-  opts: { anthropicClient?: AnthropicLike | null } = {},
+  opts: { anthropicClient?: AnthropicLike | null; bridalPros?: boolean } = {},
 ): Promise<Phase4World> {
   // sobras de uma execucao anterior referenciam clientes/servicos; limpar antes do cleanup da Fase 3
   await deletePhase4Rows(orgFilter(prefix));
   const w = await createPhase3World(prefix, opts);
+  // Fase 11 D-02: o filtro "atende noiva/debutante" é rígido; o mundo de noiva marca as duas
+  // profissionais para os testes da 04/04.2 continuarem válidos. Teste de lista vazia usa bridalPros: false.
+  if (opts.bridalPros !== false) {
+    await adminPrisma.member.updateMany({
+      where: { id: { in: [w.members.proA, w.members.proB] } },
+      data: { servesBridal: true },
+    });
+  }
   const bridalPackageId = (
     await adminPrisma.package.create({
       data: {
