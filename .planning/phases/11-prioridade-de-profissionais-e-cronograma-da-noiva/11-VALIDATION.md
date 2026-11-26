@@ -1,9 +1,9 @@
 ---
 phase: 11
 slug: prioridade-de-profissionais-e-cronograma-da-noiva
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: green
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-11-26
 ---
 
@@ -39,23 +39,23 @@ created: 2026-11-26
 
 | Req | Comportamento | Tipo | Comando / arquivo | File Exists | Status |
 |-----|---------------|------|-------------------|-------------|--------|
-| PRIO-01 | `isFixed`/`servesBridal` no Member, default false, API | integração | `test/integration/phase11-members-flags.e2e.spec.ts` | ❌ W0 | ⬜ pending |
-| PRIO-02 | diálogos e tela Profissionais | vitest | `member-dialogs.test.tsx`, `profissionais-page.test.tsx` | estender | ⬜ pending |
-| PRIO-03 | ranking puro e determinístico | unit | `src/scheduling/professional-ranking.spec.ts` | ❌ W0 | ⬜ pending |
-| PRIO-04 | ordenação fixas primeiro (back/front) | unit | mesmo spec + `professional-order.test.ts` | ❌ W0 | ⬜ pending |
-| PRIO-05 | minutos do dia e revezamento derivado | integração | `phase11-ranking-data.e2e.spec.ts` | ❌ W0 | ⬜ pending |
-| PRIO-06 | heurística usa ranking (prioridade estrita D-18) | unit | `heuristic-scheduler.spec.ts` | estender | ⬜ pending |
-| PRIO-07 | IA: contexto, hash, checkPriority, selo não fixa | unit + integração | `ai-schedule.*.spec.ts`, `schedule-validator.spec.ts`, `phase4-ai-schedule.e2e.spec.ts` | estender | ⬜ pending |
-| PRIO-08 | simulação pré-sugere make/penteado | integração | `phase42-timeline-preview/confirm.e2e.spec.ts`, `timeline-domain.spec.ts` | estender | ⬜ pending |
-| PRIO-09 | lista vazia com aviso (D-04), filtro em todo serviço da noiva (D-19) | integração + vitest | `phase11-bridal-empty.e2e.spec.ts`, `timeline-tab.test.tsx` | ❌ W0 | ⬜ pending |
-| PRIO-10 | query `suggestProfessionals` + RLS | integração | `phase11-suggest-professionals.e2e.spec.ts` | ❌ W0 | ⬜ pending |
-| PRIO-11 | VisitFormDialog pré-seleciona / só sugere | vitest | `novo-agendamento-gestor-beauty.test.tsx` | estender | ⬜ pending |
-| PRIO-12 | limite efetivo = min(make-off, prontas até) | unit + integração | `timeline-guard.spec.ts`, `phase42-companion-guard.e2e.spec.ts` | estender | ⬜ pending |
-| PRIO-13 | campo `companions_ready_by` | integração + vitest | `phase4-bridal-group.e2e.spec.ts`, `timeline-tab.test.tsx` | estender | ⬜ pending |
-| PRIO-14 | limite por papel e "não coube" com motivo | unit + vitest | `schedule-validator.spec.ts`, `heuristic-scheduler.spec.ts`, `AiSuggestionPanel` | estender | ⬜ pending |
-| PRIO-15 | debutante igual à noiva | integração + E2E | specs acima com `eventKind='debutante'`, `debutante-contrato.spec.ts` | estender | ⬜ pending |
-| PRIO-16 | seletores com fixas primeiro (grade da Agenda inalterada, D-20) | vitest | testes dos componentes do inventário | estender | ⬜ pending |
-| E2E | marcar → simulação preenchida → confirmar → acompanhante após limite recusada | Playwright | `apps/e2e/tests/prioridade-profissionais.spec.ts` | ❌ W0 | ⬜ pending |
+| PRIO-01 | `isFixed`/`servesBridal` no Member, default false, API | integração | `test/integration/phase11-members-flags.e2e.spec.ts` | ✅ | ✅ green |
+| PRIO-02 | diálogos e tela Profissionais | vitest | `member-dialogs.test.tsx`, `profissionais-page.test.tsx` | ✅ | ✅ green |
+| PRIO-03 | ranking puro e determinístico | unit | `src/scheduling/professional-ranking.spec.ts` | ✅ | ✅ green |
+| PRIO-04 | ordenação fixas primeiro (back/front) | unit | mesmo spec + `professional-order.test.ts` | ✅ | ✅ green |
+| PRIO-05 | minutos do dia e revezamento derivado | integração | `phase11-ranking-data.e2e.spec.ts` | ✅ | ✅ green |
+| PRIO-06 | heurística usa ranking (prioridade estrita D-18) | unit | `heuristic-scheduler.spec.ts` | ✅ | ✅ green |
+| PRIO-07 | IA: contexto, hash, checkPriority, selo não fixa | unit + integração | `ai-schedule.*.spec.ts`, `schedule-validator.spec.ts`, `phase4-ai-schedule.e2e.spec.ts` | ✅ | ✅ green |
+| PRIO-08 | simulação pré-sugere make/penteado | integração | `phase42-timeline-preview/confirm.e2e.spec.ts`, `timeline-domain.spec.ts` | ✅ | ✅ green |
+| PRIO-09 | lista vazia com aviso (D-04), filtro em todo serviço da noiva (D-19) | integração + vitest | `phase11-bridal-empty.e2e.spec.ts`, `phase11-bridal-filter.e2e.spec.ts` (D-19), `timeline-tab.test.tsx` | ✅ | ✅ green |
+| PRIO-10 | query `suggestProfessionals` + RLS | integração | `phase11-suggest-professionals.e2e.spec.ts` | ✅ | ✅ green |
+| PRIO-11 | VisitFormDialog pré-seleciona / só sugere | vitest | `novo-agendamento-gestor-beauty.test.tsx`, `visit-line-interval.test.ts`, `schedule-editor-bridal.test.tsx` | ✅ | ✅ green |
+| PRIO-12 | limite efetivo = min(make-off, prontas até) | unit + integração | `timeline-guard.spec.ts`, `phase42-companion-guard.e2e.spec.ts` | ✅ | ✅ green |
+| PRIO-13 | campo `companions_ready_by` | integração + vitest | `phase4-bridal-group.e2e.spec.ts`, `timeline-tab.test.tsx` | ✅ | ✅ green |
+| PRIO-14 | limite por papel e "não coube" com motivo | unit + vitest | `schedule-validator.spec.ts`, `heuristic-scheduler.spec.ts`, `AiSuggestionPanel` | ✅ | ✅ green |
+| PRIO-15 | debutante igual à noiva | integração + E2E | specs acima com `eventKind='debutante'`, `debutante-contrato.spec.ts` | ✅ | ✅ green |
+| PRIO-16 | seletores com fixas primeiro (grade da Agenda inalterada, D-20) | vitest | testes dos componentes do inventário | ✅ | ✅ green |
+| E2E | marcar → simulação preenchida → confirmar → acompanhante após limite recusada | Playwright | `apps/e2e/tests/prioridade-profissionais.spec.ts` | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -63,11 +63,11 @@ created: 2026-11-26
 
 ## Wave 0 Requirements
 
-- [ ] `apps/backend/src/scheduling/professional-ranking.spec.ts` (TDD, antes da implementação)
-- [ ] `apps/backend/test/integration/phase11-*.e2e.spec.ts` (members-flags, ranking-data, suggest-professionals, bridal-empty)
-- [ ] Helpers `markServesBridal`/`markFixed` em `apps/backend/test/integration/helpers/` e `apps/e2e/support/`
-- [ ] `apps/frontend/src/features/operations/professional-order.ts` + teste
-- [ ] `apps/e2e/tests/prioridade-profissionais.spec.ts`
+- [x] `apps/backend/src/scheduling/professional-ranking.spec.ts` (TDD, antes da implementação)
+- [x] `apps/backend/test/integration/phase11-*.e2e.spec.ts` (members-flags, ranking-data, suggest-professionals, bridal-empty)
+- [x] Helpers `markServesBridal`/`markFixed` em `apps/backend/test/integration/helpers/` e `apps/e2e/support/`
+- [x] `apps/frontend/src/features/operations/professional-order.ts` + teste
+- [x] `apps/e2e/tests/prioridade-profissionais.spec.ts`
 
 ---
 
@@ -82,11 +82,11 @@ created: 2026-11-26
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 60s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 60s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** automatizado aprovado em 2026-11-26 (11-15); linhas manuais ficam para o 11-16
