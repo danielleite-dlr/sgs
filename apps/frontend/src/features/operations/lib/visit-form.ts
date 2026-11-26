@@ -33,12 +33,27 @@ function parseTime(time: string): { h: number; m: number } | null {
   return { h, m };
 }
 
+/** Data BR + hora + duração → intervalo ISO (mesma conta do envio); null se inválido. */
+export function lineInterval(
+  dateBr: string,
+  time: string,
+  durationMinutes: number,
+): { startsAt: string; endsAt: string } | null {
+  const iso = brDateToIso(dateBr);
+  if (!iso) return null;
+  const t = parseTime(time);
+  if (!t) return null;
+  if (!Number.isInteger(durationMinutes) || durationMinutes <= 0) return null;
+  const [y, mo, d] = iso.split('-').map(Number);
+  const start = new Date(y, mo - 1, d, t.h, t.m, 0, 0);
+  const end = new Date(start.getTime() + durationMinutes * 60_000);
+  return { startsAt: start.toISOString(), endsAt: end.toISOString() };
+}
+
 export function buildCreateVisitInput(v: VisitFormValues): BuildResult {
   if (!v.clientId) return { ok: false, error: 'Escolha o cliente.' };
   if (v.lines.length === 0) return { ok: false, error: 'Inclua ao menos um serviço.' };
-  const iso = brDateToIso(v.date);
-  if (!iso) return { ok: false, error: 'Data inválida.' };
-  const [y, mo, d] = iso.split('-').map(Number);
+  if (!brDateToIso(v.date)) return { ok: false, error: 'Data inválida.' };
 
   const items: CreateVisitInputVars['items'] = [];
   for (const line of v.lines) {
@@ -51,14 +66,14 @@ export function buildCreateVisitInput(v: VisitFormValues): BuildResult {
     if (!Number.isInteger(line.durationMinutes) || line.durationMinutes <= 0) {
       return { ok: false, error: 'Informe uma duração válida.' };
     }
-    const start = new Date(y, mo - 1, d, t.h, t.m, 0, 0);
-    const end = new Date(start.getTime() + line.durationMinutes * 60_000);
+    const interval = lineInterval(v.date, line.time, line.durationMinutes);
+    if (!interval) return { ok: false, error: 'Hora inválida.' };
     items.push({
       serviceId: line.serviceId,
       serviceVariantId: line.variantId,
       professionalId: line.professionalId,
-      startsAt: start.toISOString(),
-      endsAt: end.toISOString(),
+      startsAt: interval.startsAt,
+      endsAt: interval.endsAt,
     });
   }
 
