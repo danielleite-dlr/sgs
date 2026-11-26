@@ -16,7 +16,8 @@ const membersMock = {
   result: {
     data: {
       members: [
-        { id: 'mem-1', displayName: 'Ana Silva', email: 'ana@test.com', roleName: 'PROFESSIONAL', seniorityTier: 'senior', isProfessional: true },
+        { id: 'mem-1', displayName: 'Ana Silva', email: 'ana@test.com', roleName: 'PROFESSIONAL', seniorityTier: 'senior', isProfessional: true, isFixed: false },
+        { id: 'mem-2', displayName: 'Zélia Costa', email: 'z@test.com', roleName: 'PROFESSIONAL', seniorityTier: 'senior', isProfessional: true, isFixed: true },
       ],
     },
   },
@@ -194,6 +195,16 @@ describe('CommissionRuleForm', () => {
       expect(screen.getByText(/selecione o profissional/i)).toBeInTheDocument();
       expect(screen.getByText(/selecione o serviço/i)).toBeInTheDocument();
     });
+  });
+
+  it('3b. combobox de profissional lista a fixa primeiro (D-09)', async () => {
+    renderForm();
+    fireEvent.click(screen.getByLabelText(/profissional \+ serviço/i));
+    const trigger = await screen.findByText(/selecione o profissional/i);
+    fireEvent.click(trigger);
+    const zelia = await screen.findByText('Zélia Costa');
+    const ana = await screen.findByText('Ana Silva');
+    expect(zelia.compareDocumentPosition(ana) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('4. selecting scope category — category select appears', async () => {

@@ -17,6 +17,7 @@ import { ServicesQuery, type ServicesQueryResult } from '@/features/catalog/api/
 import { ProductsQuery, type ProductsQueryResult } from '@/features/catalog/api/produtos.api';
 import { PackagesQuery, type PackagesQueryResult } from '@/features/catalog/api/pacotes.api';
 import { MembersQuery, type MembersQueryResult } from '@/features/catalog/api/members.api';
+import { sortFixedFirst } from '../../professional-order';
 import { formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
 import {
   ProfessionalsForServiceQuery,
@@ -61,7 +62,8 @@ function useProfessionalsFor(serviceId: string) {
     skip: !serviceId,
     fetchPolicy: 'cache-and-network',
   });
-  return serviceId ? (data?.professionalsForService ?? []) : [];
+  // Defensivo: o backend já ordena, mas garantimos fixas primeiro (D-09)
+  return serviceId ? sortFixedFirst(data?.professionalsForService ?? [], (p) => p.displayName) : [];
 }
 
 function ServiceFields({
