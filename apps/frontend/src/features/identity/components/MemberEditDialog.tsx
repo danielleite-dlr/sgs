@@ -72,6 +72,8 @@ function buildSchema(member: AdminMemberData) {
     roleName: z.enum(ROLE_OPTIONS),
     isProfessional: z.boolean(),
     isBridalAssistant: z.boolean(),
+    isFixed: z.boolean(),
+    servesBridal: z.boolean(),
     seniorityTier: z.enum(SENIORITY_OPTIONS).nullable(),
     phone: z
       .string()
@@ -118,6 +120,8 @@ function defaultsFor(member: AdminMemberData): FormValues {
     roleName: member.roleName as FormValues['roleName'],
     isProfessional: member.isProfessional,
     isBridalAssistant: member.isBridalAssistant ?? false,
+    isFixed: member.isFixed ?? false,
+    servesBridal: member.servesBridal ?? false,
     seniorityTier: (member.seniorityTier ?? null) as FormValues['seniorityTier'],
     phone: maskBrPhone(member.phone ?? ''),
     pixKeyType: detectPixKeyType(member.pixKey),
@@ -173,6 +177,8 @@ export function MemberEditDialog({ member, open, onClose }: MemberEditDialogProp
       roleName: values.roleName,
       isProfessional: professional,
       isBridalAssistant: professional ? values.isBridalAssistant : false,
+      isFixed: professional ? values.isFixed : false,
+      servesBridal: professional ? values.servesBridal : false,
       seniorityTier: professional ? values.seniorityTier : null,
     };
 
@@ -350,6 +356,58 @@ export function MemberEditDialog({ member, open, onClose }: MemberEditDialogProp
                     </div>
                     <p className="text-xs text-neutral-600">
                       {t('team.editDialog.isBridalAssistantHint')}
+                    </p>
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {isProfessional && (
+              <FormField
+                control={form.control}
+                name="isFixed"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="member-fixed"
+                        data-testid="member-fixed"
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                      />
+                      <Label htmlFor="member-fixed">
+                        {t('team.editDialog.isFixedLabel')}
+                      </Label>
+                    </div>
+                    <p className="text-xs text-neutral-600">
+                      {t('team.editDialog.isFixedHint')}
+                    </p>
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {isProfessional && (
+              <FormField
+                control={form.control}
+                name="servesBridal"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="member-serves-bridal"
+                        data-testid="member-serves-bridal"
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                      />
+                      <Label htmlFor="member-serves-bridal">
+                        {t('team.editDialog.servesBridalLabel')}
+                      </Label>
+                    </div>
+                    <p className="text-xs text-neutral-600">
+                      {t('team.editDialog.servesBridalHint')}
                     </p>
                   </FormItem>
                 )}

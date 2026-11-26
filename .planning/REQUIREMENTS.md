@@ -118,7 +118,7 @@
 ### Prioridade de profissionais (Fase 11)
 
 - [x] **PRIO-01**: A profissional tem as marcações "Fixa (equipe do studio)" (`isFixed`) e "Atende noiva/debutante" (`servesBridal`), falsas por padrão e sem migração de dados que marque alguém; só profissionais podem tê-las; a API cria, edita e devolve as duas; a marcação muda só a ordem/sugestão (comissão, repasse e diária não mudam) _(11 D-01, D-03, D-05)_
-- [ ] **PRIO-02**: Os diálogos criar/editar profissional mostram e editam as duas marcações (só para profissional) e a tela Profissionais mostra os selos "Fixa" e "Atende noiva/debutante" _(11 D-05)_
+- [x] **PRIO-02**: Os diálogos criar/editar profissional mostram e editam as duas marcações (só para profissional) e a tela Profissionais mostra os selos "Fixa" e "Atende noiva/debutante" _(11 D-05)_
 - [x] **PRIO-03**: Um módulo de domínio puro e determinístico ordena candidatas: só livres → (noiva/debutante: só quem atende noiva) → fixas antes de não fixas com prioridade estrita → menos minutos agendados no dia → revezamento (quem recebeu há mais tempo; nunca = primeiro) → id _(11 D-07, D-10, D-11, D-12, D-18)_
 - [x] **PRIO-04**: Existe uma ordenação "fixas primeiro, depois por nome" reutilizável no backend e no frontend para as listas de escolha _(11 D-09)_
 - [x] **PRIO-05**: Os dados do ranking vêm do banco: minutos agendados no dia local do salão (só status que ocupam agenda) e o último agendamento criado por profissional (revezamento derivado, sem gravar nada ao só ver uma sugestão) _(11 D-10, D-11)_
@@ -259,7 +259,7 @@
 | PERM-15 | Phase 10 | Complete |
 | PERM-16 | Phase 10 | Complete |
 | PRIO-01 | Phase 11 | Complete |
-| PRIO-02 | Phase 11 | Pending |
+| PRIO-02 | Phase 11 | Complete |
 | PRIO-03 | Phase 11 | Complete |
 | PRIO-04 | Phase 11 | Complete |
 | PRIO-05 | Phase 11 | Complete |

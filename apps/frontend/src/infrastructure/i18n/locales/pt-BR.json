@@ -912,7 +912,9 @@
       "seniority": "Senioridade",
       "status": "Status",
       "actions": "Ações",
-      "bridalAssistantBadge": "Assistente da Noiva"
+      "bridalAssistantBadge": "Assistente da Noiva",
+      "fixedBadge": "Fixa",
+      "servesBridalBadge": "Atende noiva/debutante"
     },
     "roles": {
       "ADMIN": "Admin",
@@ -996,6 +998,10 @@
       "alsoProfessionalLabel": "Também atende clientes",
       "isBridalAssistantLabel": "Assistente da Noiva",
       "isBridalAssistantHint": "Acompanha a noiva no estúdio o dia todo. Não usa o sistema e não recebe notificações.",
+      "isFixedLabel": "Fixa (equipe do studio)",
+      "isFixedHint": "Fixas livres são sugeridas antes das não fixas. Não muda comissão, repasse nem diária.",
+      "servesBridalLabel": "Atende noiva/debutante",
+      "servesBridalHint": "Só quem está marcada aparece para make e penteado da noiva/debutante (cronograma, sugestão, teste e agenda do evento).",
       "passwordLabel": "Senha provisória",
       "generate": "Gerar",
       "cancel": "Cancelar",
@@ -1025,6 +1031,10 @@
       "isProfessionalLabel": "É profissional",
       "isBridalAssistantLabel": "Assistente da Noiva",
       "isBridalAssistantHint": "Acompanha a noiva no estúdio o dia todo. Não usa o sistema e não recebe notificações.",
+      "isFixedLabel": "Fixa (equipe do studio)",
+      "isFixedHint": "Fixas livres são sugeridas antes das não fixas. Não muda comissão, repasse nem diária.",
+      "servesBridalLabel": "Atende noiva/debutante",
+      "servesBridalHint": "Só quem está marcada aparece para make e penteado da noiva/debutante (cronograma, sugestão, teste e agenda do evento).",
       "seniorityLabel": "Senioridade",
       "seniorityPlaceholder": "Selecione a senioridade",
       "cancel": "Cancelar",

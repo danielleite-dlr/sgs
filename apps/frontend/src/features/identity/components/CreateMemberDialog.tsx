@@ -62,6 +62,8 @@ const schema = z
     }),
     alsoProfessional: z.boolean(),
     isBridalAssistant: z.boolean(),
+    isFixed: z.boolean(),
+    servesBridal: z.boolean(),
     categoryIds: z.array(z.string()),
     temporaryPassword: z
       .string()
@@ -96,6 +98,8 @@ function defaultValues(): FormValues {
     roleName: undefined as unknown as FormValues['roleName'],
     alsoProfessional: false,
     isBridalAssistant: false,
+    isFixed: false,
+    servesBridal: false,
     categoryIds: [],
     temporaryPassword: generateTemporaryPassword(),
   };
@@ -193,6 +197,8 @@ export function CreateMemberDialog({
           roleName: values.roleName,
           isProfessional: professional,
           isBridalAssistant: professional ? values.isBridalAssistant : false,
+          isFixed: professional ? values.isFixed : false,
+          servesBridal: professional ? values.servesBridal : false,
           categoryIds: professional ? values.categoryIds : [],
           temporaryPassword: values.temporaryPassword,
         },
@@ -428,6 +434,58 @@ export function CreateMemberDialog({
                         </div>
                         <p className="text-xs text-neutral-600">
                           {t('team.createDialog.isBridalAssistantHint')}
+                        </p>
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {isProfessional && (
+                  <FormField
+                    control={form.control}
+                    name="isFixed"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id="member-fixed"
+                            data-testid="member-fixed"
+                            checked={field.value}
+                            onChange={(e) => field.onChange(e.target.checked)}
+                          />
+                          <Label htmlFor="member-fixed">
+                            {t('team.createDialog.isFixedLabel')}
+                          </Label>
+                        </div>
+                        <p className="text-xs text-neutral-600">
+                          {t('team.createDialog.isFixedHint')}
+                        </p>
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {isProfessional && (
+                  <FormField
+                    control={form.control}
+                    name="servesBridal"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id="member-serves-bridal"
+                            data-testid="member-serves-bridal"
+                            checked={field.value}
+                            onChange={(e) => field.onChange(e.target.checked)}
+                          />
+                          <Label htmlFor="member-serves-bridal">
+                            {t('team.createDialog.servesBridalLabel')}
+                          </Label>
+                        </div>
+                        <p className="text-xs text-neutral-600">
+                          {t('team.createDialog.servesBridalHint')}
                         </p>
                       </FormItem>
                     )}

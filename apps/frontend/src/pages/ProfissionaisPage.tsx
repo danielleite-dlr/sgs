@@ -173,6 +173,16 @@ export function ProfissionaisPage() {
                         {t('team.table.bridalAssistantBadge')}
                       </Badge>
                     )}
+                    {r.isFixed && (
+                      <Badge variant="outline" data-testid={`member-fixed-badge-${r.id}`}>
+                        {t('team.table.fixedBadge')}
+                      </Badge>
+                    )}
+                    {r.servesBridal && (
+                      <Badge variant="outline" data-testid={`member-serves-bridal-badge-${r.id}`}>
+                        {t('team.table.servesBridalBadge')}
+                      </Badge>
+                    )}
                   </div>
                 ),
               },
