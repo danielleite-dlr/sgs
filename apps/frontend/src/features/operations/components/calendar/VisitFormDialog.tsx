@@ -48,16 +48,24 @@ import { PAYMENT_METHODS } from '../../lib/operations-labels';
 import {
   buildCreateVisitInput,
   expandPackageLines,
+  lineInterval,
   suggestVariant,
   type VisitLine,
 } from '../../lib/visit-form';
 import { filterProfessionalsForService, shouldClearProfessional } from '../../professional-filter';
+import { sortFixedFirst } from '../../professional-order';
+import {
+  SuggestProfessionalsQuery,
+  type SuggestProfessionalsResult,
+} from '../../api/professional-suggestion.api';
 import type { ScheduleProfessional } from './types';
 
 interface LineState {
   serviceId: string;
   variantId: string;
   professionalId: string;
+  /** Escolha da pessoa (clique, coluna clicada ou cópia da linha anterior): a sugestão nunca troca (D-08). */
+  professionalTouched: boolean;
   time: string;
   duration: string;
 }
@@ -90,7 +98,14 @@ function seedTime(initial?: { hour: number; minute: number }): string {
 }
 
 function emptyLine(time: string, professionalId = ''): LineState {
-  return { serviceId: '', variantId: '', professionalId, time, duration: '' };
+  return {
+    serviceId: '',
+    variantId: '',
+    professionalId,
+    professionalTouched: professionalId !== '',
+    time,
+    duration: '',
+  };
 }
 
 interface LineRowProps {
@@ -101,6 +116,9 @@ interface LineRowProps {
   lockedService: boolean;
   canRemove: boolean;
   dateField?: ReactNode;
+  dateBr: string;
+  /** Falso vindo do grupo da noiva (prefill): sem pré-seleção. */
+  suggestEnabled: boolean;
   onChange: (patch: Partial<LineState>) => void;
   onRemove: () => void;
 }
@@ -182,6 +200,8 @@ function LineRow({
   lockedService,
   canRemove,
   dateField,
+  dateBr,
+  suggestEnabled,
   onChange,
   onRemove,
 }: LineRowProps) {
@@ -198,8 +218,34 @@ function LineRow({
       line.serviceId && forService ? forService.professionalsForService.map((p) => p.id) : null,
     [line.serviceId, forService],
   );
-  const visible = filterProfessionalsForService(professionals, allowedIds);
+  const visible = useMemo(
+    () => sortFixedFirst(filterProfessionalsForService(professionals, allowedIds), (p) => p.name),
+    [professionals, allowedIds],
+  );
   const service = services.find((s) => s.id === line.serviceId);
+
+  // Intervalo da linha com debounce de 300 ms para não consultar a cada tecla.
+  const rawInterval = lineInterval(dateBr, line.time, Number(line.duration));
+  const rawKey = rawInterval ? `${rawInterval.startsAt}|${rawInterval.endsAt}` : '';
+  const [debouncedKey, setDebouncedKey] = useState(rawKey);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedKey(rawKey), 300);
+    return () => clearTimeout(t);
+  }, [rawKey]);
+  const interval = useMemo(() => {
+    if (!debouncedKey) return null;
+    const [startsAt, endsAt] = debouncedKey.split('|');
+    return { startsAt, endsAt };
+  }, [debouncedKey]);
+  const { data: suggestionData } = useQuery<SuggestProfessionalsResult>(SuggestProfessionalsQuery, {
+    variables: { serviceId: line.serviceId, ...interval },
+    skip: !suggestEnabled || !line.serviceId || !interval,
+    fetchPolicy: 'network-only',
+  });
+  const suggested =
+    suggestEnabled && line.serviceId && interval
+      ? (suggestionData?.suggestProfessionals.find((s) => s.suggested) ?? null)
+      : null;
   const segmented = visible.length > 0 && visible.length <= SEGMENTED_MAX;
 
   useEffect(() => {
@@ -215,11 +261,34 @@ function LineRow({
     onChange({ variantId, ...(minutes ? { duration: String(minutes) } : {}) });
   }
 
+  // Pré-seleção (D-08): só enquanto a pessoa não escolheu; aplica a variante por senioridade
+  // como a escolha manual, mas sem marcar como tocada (acompanha mudanças de horário).
+  useEffect(() => {
+    if (!suggested || line.professionalTouched) return;
+    if (line.professionalId === suggested.professionalId) return;
+    const target = visible.find((p) => p.id === suggested.professionalId);
+    if (!target) return;
+    const tier = target.seniorityTier ?? null;
+    const variant = service ? suggestVariant(service.pricingVariants, tier) : null;
+    onChange({ professionalId: target.id });
+    if (variant && !line.variantId) applyVariant(variant, service);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suggested?.professionalId, line.professionalTouched, line.serviceId, visible]);
+
+  const suggestionText = (() => {
+    if (!suggested) return '';
+    const kind = suggested.isFixed ? 'fixa livre' : 'não fixa livre';
+    if (line.professionalId === suggested.professionalId) {
+      return line.professionalTouched ? '' : `Sugestão do sistema: ${suggested.displayName} (${kind})`;
+    }
+    return line.professionalTouched ? `Sugestão: ${suggested.displayName} (${kind})` : '';
+  })();
+
   function chooseProfessional(professionalId: string) {
     const tier = professionals.find((p) => p.id === professionalId)?.seniorityTier ?? null;
-    const suggested = service ? suggestVariant(service.pricingVariants, tier) : null;
-    onChange({ professionalId });
-    if (suggested && !line.variantId) applyVariant(suggested, service);
+    const suggestedVariant = service ? suggestVariant(service.pricingVariants, tier) : null;
+    onChange({ professionalId, professionalTouched: true });
+    if (suggestedVariant && !line.variantId) applyVariant(suggestedVariant, service);
   }
 
   const timeField = (
@@ -358,6 +427,15 @@ function LineRow({
               ))}
             </select>
           </>
+        )}
+        {suggestionText && (
+          <p
+            data-testid={`visit-line-${index}-suggestion`}
+            aria-live="polite"
+            className="mt-xs text-caption text-neutral-600"
+          >
+            {suggestionText}
+          </p>
         )}
         {allowedIds !== null && visible.length === 0 && (
           <p className="mt-xs text-[12px] leading-4 text-neutral-500">
@@ -584,6 +662,7 @@ export function VisitFormDialog({
         serviceId: l.serviceId,
         variantId: '',
         professionalId: l.professionalId,
+        professionalTouched: l.professionalId !== '',
         time: l.time,
         duration: String(l.durationMinutes),
       })),
@@ -883,6 +962,8 @@ export function VisitFormDialog({
                 lockedService={selectedPackage !== null}
                 canRemove={selectedPackage === null && lines.length > 1}
                 dateField={i === 0 ? dateField : undefined}
+                dateBr={dateBr}
+                suggestEnabled={!prefill}
                 onChange={(patch) => patchLine(i, patch)}
                 onRemove={() => setLines((cur) => cur.filter((_, idx) => idx !== i))}
               />

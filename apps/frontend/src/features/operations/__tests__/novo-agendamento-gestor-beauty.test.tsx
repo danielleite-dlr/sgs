@@ -1,9 +1,10 @@
-import { describe, expect, it } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import { ClientsListQuery } from '@/features/clients/api/clients.api';
 import { ServicesQuery } from '@/features/catalog/api/servicos.api';
+import { SuggestProfessionalsQuery } from '../api/professional-suggestion.api';
 import { VisitFormDialog } from '../components/calendar/VisitFormDialog';
 import type { ScheduleProfessional } from '../components/calendar/types';
 
@@ -55,23 +56,31 @@ function pros(n: number): ScheduleProfessional[] {
 }
 
 function renderDialog(
-  opts: { professionals?: ScheduleProfessional[]; profId?: string; open?: boolean } = {},
+  opts: {
+    professionals?: ScheduleProfessional[];
+    profId?: string;
+    open?: boolean;
+    mocks?: MockedResponse[];
+    prefill?: { clientId: string; clientName: string; serviceIds: string[] } | null;
+  } = {},
 ) {
+  const mocks = [emptyClients, servicesMock, ...(opts.mocks ?? [])];
   const props = {
     onOpenChange: () => undefined,
     date: new Date(2026, 10, 6),
     professionals: opts.professionals ?? [],
     initialTime: opts.profId ? { hour: 9, minute: 0, profId: opts.profId } : undefined,
     onCreated: () => undefined,
+    prefill: opts.prefill,
   };
   const utils = render(
-    <MockedProvider mocks={[emptyClients, servicesMock]}>
+    <MockedProvider mocks={mocks}>
       <VisitFormDialog open={opts.open ?? true} {...props} />
     </MockedProvider>,
   );
   const rerenderOpen = (open: boolean) =>
     utils.rerender(
-      <MockedProvider mocks={[emptyClients, servicesMock]}>
+      <MockedProvider mocks={mocks}>
         <VisitFormDialog open={open} {...props} />
       </MockedProvider>,
     );
@@ -255,5 +264,141 @@ describe('Novo agendamento: Sinal recolhido (D-20)', () => {
     rerenderOpen(true);
     expect(screen.getByTestId('visit-deposit-toggle')).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByTestId('visit-deposit-amount')).toHaveValue('50,00');
+  });
+});
+
+// Fase 11 (11-09): pré-seleção da profissional sugerida (D-08, D-12) e fixas primeiro (D-09).
+function suggestion(
+  professionalId: string,
+  displayName: string,
+  isFixed: boolean,
+  suggested: boolean,
+) {
+  return {
+    __typename: 'ProfessionalSuggestion',
+    professionalId,
+    displayName,
+    isFixed,
+    free: true,
+    dayMinutes: 0,
+    suggested,
+  };
+}
+
+function suggestMock(list: ReturnType<typeof suggestion>[], onCall?: () => void): MockedResponse {
+  return {
+    request: { query: SuggestProfessionalsQuery },
+    variableMatcher: () => {
+      onCall?.();
+      return true;
+    },
+    maxUsageCount: 50,
+    result: { data: { suggestProfessionals: list } },
+  };
+}
+
+function withFixed(list: ScheduleProfessional[], fixedIds: string[]): ScheduleProfessional[] {
+  return list.map((p) => ({ ...p, isFixed: fixedIds.includes(p.id) }));
+}
+
+async function fillLine(time = '09:00') {
+  await screen.findByRole('option', { name: 'Maquiagem social' });
+  fireEvent.change(screen.getByTestId('visit-line-0-service'), { target: { value: 's1' } });
+  fireEvent.change(screen.getByTestId('visit-line-0-time'), { target: { value: time } });
+}
+
+describe('Novo agendamento: sugestão de profissional (11 D-08, D-09, D-12)', () => {
+  it('pré-seleciona a sugerida quando a profissional está vazia', async () => {
+    renderDialog({
+      professionals: withFixed(pros(3), ['p2']),
+      mocks: [suggestMock([suggestion('p2', 'Profissional 2', true, true)])],
+    });
+    await fillLine();
+    const radio = await screen.findByTestId('visit-line-0-professional-p2');
+    await waitFor(() => expect(radio).toHaveAttribute('aria-checked', 'true'));
+    expect(screen.getByTestId('visit-line-0-suggestion')).toHaveTextContent(
+      'Sugestão do sistema: Profissional 2 (fixa livre)',
+    );
+  });
+
+  it('coluna clicada não é trocada: só mostra a sugestão', async () => {
+    renderDialog({
+      professionals: withFixed(pros(3), ['p2']),
+      profId: 'p1',
+      mocks: [suggestMock([suggestion('p2', 'Profissional 2', true, true)])],
+    });
+    await fillLine();
+    await waitFor(() =>
+      expect(screen.getByTestId('visit-line-0-suggestion')).toHaveTextContent(
+        'Sugestão: Profissional 2 (fixa livre)',
+      ),
+    );
+    expect(screen.getByTestId('visit-line-0-professional-p1')).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+  });
+
+  it('escolha manual não é trocada ao mudar a hora', async () => {
+    renderDialog({
+      professionals: withFixed(pros(3), ['p2']),
+      mocks: [suggestMock([suggestion('p2', 'Profissional 2', true, true)])],
+    });
+    await fillLine();
+    await waitFor(() =>
+      expect(screen.getByTestId('visit-line-0-professional-p2')).toHaveAttribute(
+        'aria-checked',
+        'true',
+      ),
+    );
+    fireEvent.click(screen.getByTestId('visit-line-0-professional-p3'));
+    fireEvent.change(screen.getByTestId('visit-line-0-time'), { target: { value: '10:00' } });
+    await new Promise((r) => setTimeout(r, 450));
+    expect(screen.getByTestId('visit-line-0-professional-p3')).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    expect(screen.getByTestId('visit-line-0-professional-p2')).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+  });
+
+  it('sugestão não fixa leva "não fixa livre" no texto', async () => {
+    renderDialog({
+      professionals: pros(3),
+      mocks: [suggestMock([suggestion('p3', 'Profissional 3', false, true)])],
+    });
+    await fillLine();
+    await waitFor(() =>
+      expect(screen.getByTestId('visit-line-0-suggestion')).toHaveTextContent(
+        'Sugestão do sistema: Profissional 3 (não fixa livre)',
+      ),
+    );
+  });
+
+  it('vindo do grupo da noiva (prefill) não consulta nem pré-seleciona', async () => {
+    const onCall = vi.fn();
+    renderDialog({
+      professionals: withFixed(pros(3), ['p2']),
+      prefill: { clientId: 'c1', clientName: 'Noiva', serviceIds: ['s1'] },
+      mocks: [suggestMock([suggestion('p2', 'Profissional 2', true, true)], onCall)],
+    });
+    await screen.findByRole('option', { name: 'Maquiagem social' });
+    fireEvent.change(screen.getByTestId('visit-line-0-time'), { target: { value: '09:00' } });
+    await new Promise((r) => setTimeout(r, 450));
+    expect(onCall).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('visit-line-0-suggestion')).toBeNull();
+    for (const r of within(screen.getByTestId('visit-line-0-professional')).getAllByRole('radio')) {
+      expect(r).toHaveAttribute('aria-checked', 'false');
+    }
+  });
+
+  it('opções da linha aparecem com as fixas primeiro', () => {
+    renderDialog({ professionals: withFixed(pros(3), ['p3']) });
+    const names = within(screen.getByTestId('visit-line-0-professional'))
+      .getAllByRole('radio')
+      .map((r) => r.textContent);
+    expect(names).toEqual(['Profissional 3', 'Profissional 1', 'Profissional 2']);
   });
 });
