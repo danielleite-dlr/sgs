@@ -14,6 +14,8 @@ import { TenantContextService } from '../../database/tenant-context.service';
 import { PushEventsService } from '../../push/push-events.service';
 import type { TenantPrismaClient } from '../../database/types';
 import { professionalServesCategory } from '../../identity/member-categories';
+import { loadRankingDataTx } from '../../scheduling/professional-ranking-data';
+import { pickBest, type RankCandidate } from '../../scheduling/professional-ranking';
 import { BridalError, mapBridalError, type BridalUserError } from '../bridal-errors';
 import { loadPackageTimelineTx } from '../../catalog/packages/package-timeline';
 import {
@@ -35,6 +37,8 @@ export interface BridalTimelineInput {
   brideLabel?: string | null;
   makeProfessionalId?: string | null;
   hairProfessionalId?: string | null;
+  /** "HH:MM" de "Acompanhantes prontas até"; undefined = mantém; ''/null = igual ao make-off (11 D-14) */
+  companionsReadyTime?: string | null;
 }
 
 export interface BuiltTimelineSlot {
@@ -46,6 +50,9 @@ export interface BuiltTimelineSlot {
   professionalName: string | null;
   startsAt: Date;
   endsAt: Date;
+  /** true = profissional sugerida pelo sistema (11 D-06) */
+  suggested: boolean;
+  isFixed: boolean | null;
 }
 
 export interface BuiltTimelineConflict {
@@ -83,18 +90,29 @@ export interface BuiltTimeline {
   /** limites do dia do evento no fuso do salão (usados na adoção) */
   eventDayStart: Date;
   eventDayEnd: Date;
+  /** "Acompanhantes prontas até" vindo do input já convertido (undefined = não veio) */
+  companionsReadyBy: Date | null | undefined;
+  /** grupo de debutante: mensagens de tela dizem "noiva/debutante" */
+  isDebutante: boolean;
 }
+
+const COMPANIONS_TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 const firstName = (n: string) => n.trim().split(/\s+/)[0] ?? n;
 
 async function loadProfessional(
   tx: TenantPrismaClient,
   id: string | null | undefined,
-): Promise<{ id: string; displayName: string } | null> {
+): Promise<{
+  id: string;
+  displayName: string;
+  servesBridal: boolean;
+  isFixed: boolean;
+} | null> {
   if (!id) return null;
   return tx.member.findFirst({
     where: { id, status: 'active', deletedAt: null, isProfessional: true },
-    select: { id: true, displayName: true },
+    select: { id: true, displayName: true, servesBridal: true, isFixed: true },
   });
 }
 
@@ -103,6 +121,7 @@ export async function buildTimelineTx(
   tx: TenantPrismaClient,
   _orgId: string,
   input: BridalTimelineInput,
+  opts: { autoSuggest?: boolean } = {},
 ): Promise<BuiltTimeline> {
   const group = await tx.bridalGroup.findFirst({
     where: { id: input.groupId },
@@ -111,11 +130,14 @@ export async function buildTimelineTx(
     },
   });
   if (!group) throw new BridalError('NOT_FOUND', 'Grupo não encontrado.', 'groupId');
+  const isDebutante = group.eventKind === 'debutante';
+  const principal = isDebutante ? 'debutante' : 'noiva';
   if (group.status !== 'active') {
     throw new BridalError('GROUP_NOT_ACTIVE', 'O grupo não está ativo.', 'groupId');
   }
   const bride = group.members.find((m) => m.role === 'bride');
-  if (!bride) throw new BridalError('NO_BRIDE', 'O grupo não tem noiva cadastrada.', 'groupId');
+  if (!bride)
+    throw new BridalError('NO_BRIDE', `O grupo não tem ${principal} cadastrada.`, 'groupId');
   if (!group.eventDate) {
     throw new BridalError('NO_EVENT_DATE', 'O grupo não tem data do evento.', 'groupId');
   }
@@ -148,17 +170,22 @@ export async function buildTimelineTx(
     missing.push('A profissional escolhida para penteado não está ativa.');
   }
 
-  let result: TimelineResult;
-  try {
-    result = computeTimeline({
+  const compute = (makeName: string | null, hairName: string | null) =>
+    computeTimeline({
       packageName: pkg.name,
       brideLabel,
       eventDateDdMm: formatDdMm(eventDay),
       departureMinutes,
       steps,
-      makeProfessionalName: make ? firstName(make.displayName) : null,
-      hairProfessionalName: hair ? firstName(hair.displayName) : null,
+      makeProfessionalName: makeName,
+      hairProfessionalName: hairName,
     });
+  let result: TimelineResult;
+  try {
+    result = compute(
+      make ? firstName(make.displayName) : null,
+      hair ? firstName(hair.displayName) : null,
+    );
   } catch (e) {
     if (e instanceof TimelineDomainError) {
       throw new BridalError(
@@ -170,13 +197,36 @@ export async function buildTimelineTx(
     throw e;
   }
 
-  const dep = await tx.$queryRaw<{ d: Date; day_start: Date; day_end: Date }[]>`
+  const readyTime = input.companionsReadyTime?.trim() || null;
+  if (readyTime && !COMPANIONS_TIME_RE.test(readyTime)) {
+    throw new BridalError(
+      'INVALID_COMPANIONS_READY_TIME',
+      'Horário "acompanhantes prontas até" inválido.',
+      'companionsReadyTime',
+    );
+  }
+  const dep = await tx.$queryRaw<
+    {
+      d: Date;
+      day_start: Date;
+      day_end: Date;
+      tz: string;
+      ready: Date | null;
+    }[]
+  >`
     SELECT ((${eventDay}::date + ${input.departureTime}::time) AT TIME ZONE o.timezone) AS d,
+           o.timezone AS tz,
+           (CASE WHEN ${readyTime}::text IS NULL THEN NULL
+                 ELSE (${eventDay}::date + ${readyTime}::text::time) AT TIME ZONE o.timezone END) AS ready,
            ((${eventDay}::date + time '00:00') AT TIME ZONE o.timezone) AS day_start,
            ((${eventDay}::date + time '00:00' + interval '1 day') AT TIME ZONE o.timezone) AS day_end
     FROM organizations o LIMIT 1`;
   if (!dep[0]) throw new BridalError('NOT_FOUND', 'Organização não encontrada.');
   const departureAt = dep[0].d;
+  const orgTz = dep[0].tz;
+  // undefined = não veio (mantém); null = limpar; Date = novo limite
+  const companionsReadyBy: Date | null | undefined =
+    input.companionsReadyTime === undefined ? undefined : (dep[0].ready ?? null);
   const toInstant = (m: number) => new Date(departureAt.getTime() - (departureMinutes - m) * 60000);
 
   const registryStartsAt =
@@ -204,6 +254,8 @@ export async function buildTimelineTx(
       professionalName: pro ? firstName(pro.displayName) : null,
       startsAt: toInstant(w.startMinutes),
       endsAt: toInstant(w.endMinutes),
+      suggested: false,
+      isFixed: pro ? pro.isFixed : null,
     };
   });
 
@@ -226,6 +278,117 @@ export async function buildTimelineTx(
     for (const a of adoptable) own.add(a.id);
   }
   const ownAppointmentIds = [...own];
+
+  // Pré-sugestão (11 D-06, revoga 04.2 D-03): só na simulação e só onde o studio não escolheu.
+  let makeId = make?.id ?? null;
+  let hairId = hair?.id ?? null;
+  const extraWarnings: TimelineResult['warnings'] = [];
+  if (opts.autoSuggest) {
+    const toSuggest = slots.filter(
+      (s) =>
+        s.serviceId &&
+        !s.professionalId &&
+        (s.kind === 'make' ? !input.makeProfessionalId : !input.hairProfessionalId),
+    );
+    if (toSuggest.length > 0) {
+      const marked = await tx.member.findMany({
+        where: {
+          isProfessional: true,
+          status: 'active',
+          deletedAt: null,
+          servesBridal: true,
+          // a assistente do próprio grupo nunca é sugerida (Pitfall 9)
+          ...(group.assistantMemberId ? { id: { not: group.assistantMemberId } } : {}),
+        },
+        select: {
+          id: true,
+          displayName: true,
+          isFixed: true,
+          servesBridal: true,
+        },
+      });
+      const ranking = await loadRankingDataTx(tx, {
+        professionalIds: marked.map((m) => m.id),
+        dayStart: dep[0].day_start,
+        dayEnd: dep[0].day_end,
+        excludeAppointmentIds: ownAppointmentIds,
+      });
+      const hhmm = (d: Date) =>
+        new Intl.DateTimeFormat('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+          timeZone: orgTz,
+        }).format(d);
+      let warnedNoBridal = false;
+      // make primeiro, depois penteado: os minutos da escolhida no make contam no penteado
+      for (const s of [...toSuggest].sort((a) => (a.kind === 'make' ? -1 : 1))) {
+        const svc = svcById.get(s.serviceId!);
+        if (!svc) continue;
+        const eligible: typeof marked = [];
+        for (const m of marked) {
+          if (await professionalServesCategory(tx, m.id, svc.categoryId)) eligible.push(m);
+        }
+        if (eligible.length === 0) {
+          if (!warnedNoBridal) {
+            warnedNoBridal = true;
+            extraWarnings.push({
+              code: 'NO_BRIDAL_PROFESSIONAL',
+              message:
+                'Nenhuma profissional está marcada como "Atende noiva/debutante". Marque em Profissionais para o sistema sugerir make e penteado.',
+            });
+          }
+          continue;
+        }
+        const cands: (RankCandidate & { displayName: string })[] = [];
+        for (const m of eligible) {
+          const busy = await findSlotConflictsTx(tx, {
+            professionalId: m.id,
+            startsAt: s.startsAt,
+            endsAt: s.endsAt,
+            ignoreAppointmentIds: ownAppointmentIds,
+            ignoreGroupId: group.id,
+          });
+          cands.push({
+            id: m.id,
+            displayName: m.displayName,
+            isFixed: m.isFixed,
+            servesBridal: m.servesBridal,
+            dayMinutes: ranking.dayMinutes.get(m.id) ?? 0,
+            lastAssignedAt: ranking.lastAssignedAt.get(m.id) ?? null,
+            free: busy.length === 0,
+          });
+        }
+        const best = pickBest(cands, { bridal: true });
+        if (!best) {
+          extraWarnings.push({
+            code: 'NO_FREE_PROFESSIONAL',
+            message: `Nenhuma profissional que atende noiva/debutante está livre para ${
+              s.kind === 'make' ? 'a make' : 'o penteado'
+            } das ${hhmm(s.startsAt)}–${hhmm(s.endsAt)}.`,
+          });
+          continue;
+        }
+        s.professionalId = best.id;
+        s.professionalName = firstName(best.displayName);
+        s.suggested = true;
+        s.isFixed = best.isFixed;
+        if (s.kind === 'make') makeId = best.id;
+        else hairId = best.id;
+        const spent = Math.round((s.endsAt.getTime() - s.startsAt.getTime()) / 60000);
+        const mine = ranking.dayMinutes.get(best.id) ?? 0;
+        ranking.dayMinutes.set(best.id, mine + spent);
+      }
+      const nameOf = (kind: 'make' | 'hair') => {
+        const sl = slots.find((x) => x.kind === kind);
+        return sl?.professionalName ?? null;
+      };
+      result = compute(nameOf('make'), nameOf('hair'));
+    }
+  }
+  if (extraWarnings.length > 0) {
+    result = { ...result, warnings: [...result.warnings, ...extraWarnings] };
+  }
 
   const conflicts: BuiltTimelineConflict[] = [];
   for (const s of slots) {
@@ -258,8 +421,16 @@ export async function buildTimelineTx(
   if (hair1 && !hair1.serviceId) {
     missing.push('A etapa de penteado não está ligada a um serviço do pacote.');
   }
-  if (!input.makeProfessionalId) missing.push('Escolha a profissional de make.');
-  if (!input.hairProfessionalId) missing.push('Escolha a profissional de penteado.');
+  if (!makeId) missing.push('Escolha a profissional de make.');
+  if (!hairId) missing.push('Escolha a profissional de penteado.');
+  // D-19: a escolhida pelo studio precisa atender noiva/debutante
+  for (const p of [make, hair]) {
+    if (p && !p.servesBridal) {
+      missing.push(
+        `${firstName(p.displayName)} não atende noiva/debutante. Marque em Profissionais ou escolha outra.`,
+      );
+    }
+  }
   for (const s of slots) {
     if (!s.professionalId || !s.serviceId) continue;
     const svc = svcById.get(s.serviceId);
@@ -285,8 +456,8 @@ export async function buildTimelineTx(
     departureTime: input.departureTime,
     departureAt,
     brideLabel,
-    makeProfessionalId: make?.id ?? null,
-    hairProfessionalId: hair?.id ?? null,
+    makeProfessionalId: makeId,
+    hairProfessionalId: hairId,
     result,
     registryStartsAt,
     registryLabel: result.registryName,
@@ -297,6 +468,8 @@ export async function buildTimelineTx(
     ownAppointmentIds,
     eventDayStart: dep[0].day_start,
     eventDayEnd: dep[0].day_end,
+    companionsReadyBy,
+    isDebutante,
   };
 }
 
@@ -363,6 +536,10 @@ async function loadTimelineViewTx(tx: TenantPrismaClient, groupId: string) {
       })
     : null;
   const companionIssues: TimelineCompanionIssue[] = await findCompanionIssuesTx(tx, groupId);
+  const grp = await tx.bridalGroup.findFirst({
+    where: { id: groupId },
+    select: { companionsReadyBy: true },
+  });
   return {
     id: t.id,
     groupId: t.groupId,
@@ -381,6 +558,7 @@ async function loadTimelineViewTx(tx: TenantPrismaClient, groupId: string) {
     confirmedByName: by?.displayName ?? null,
     version: t.version,
     companionIssues,
+    companionsReadyBy: grp?.companionsReadyBy ?? null,
   };
 }
 
@@ -409,8 +587,25 @@ export class BridalTimelineService {
   async preview(orgId: string, input: BridalTimelineInput): Promise<BridalTimelinePreviewPayload> {
     try {
       return await this.tenant.runWithTenant(orgId, async (tx) => {
-        const built = await buildTimelineTx(tx, orgId, input);
-        return { preview: previewView(built), errors: [] };
+        const built = await buildTimelineTx(tx, orgId, input, {
+          autoSuggest: true,
+        });
+        const current =
+          built.companionsReadyBy === undefined
+            ? (
+                await tx.bridalGroup.findFirst({
+                  where: { id: built.group.id },
+                  select: { companionsReadyBy: true },
+                })
+              )?.companionsReadyBy
+            : built.companionsReadyBy;
+        return {
+          preview: {
+            ...previewView(built),
+            companionsReadyBy: current ?? null,
+          },
+          errors: [],
+        };
       });
     } catch (e) {
       return { preview: null, errors: toErrors(e) };
@@ -535,7 +730,7 @@ async function confirmTimelineTx(
     if (adoptable.length > 1) {
       throw new BridalError(
         'TIMELINE_AMBIGUOUS_APPOINTMENTS',
-        `A noiva tem ${adoptable.length} agendamentos de ${slot.serviceName} neste evento; cancele os que sobram antes de confirmar.`,
+        `${b.isDebutante ? 'A debutante' : 'A noiva'} tem ${adoptable.length} agendamentos de ${slot.serviceName} neste evento; cancele os que sobram antes de confirmar.`,
         null,
       );
     }
@@ -667,7 +862,10 @@ async function confirmTimelineTx(
 
   await tx.bridalGroup.update({
     where: { id: groupId },
-    data: { readyBy: b.departureAt },
+    data: {
+      readyBy: b.departureAt,
+      ...(b.companionsReadyBy !== undefined ? { companionsReadyBy: b.companionsReadyBy } : {}),
+    },
   });
 
   await recordAudit(tx, {
@@ -682,6 +880,10 @@ async function confirmTimelineTx(
       departureTime: b.departureTime,
       makeAppointmentId: idByKind.get('make') ?? null,
       hairAppointmentId: idByKind.get('hair') ?? null,
+      companionsReadyBy:
+        b.companionsReadyBy === undefined
+          ? 'mantido'
+          : (b.companionsReadyBy?.toISOString() ?? null),
       adopted: targets.filter((t) => t.adopted).map((t) => t.id),
       created,
     },

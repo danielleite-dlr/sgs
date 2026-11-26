@@ -38,7 +38,9 @@ export type TimelineWarningCode =
   | 'ARRIVAL_BEFORE_06'
   | 'PROFESSIONAL_UNDEFINED'
   | 'NO_REGISTRY_STEP'
-  | 'SERVICE_UNDEFINED';
+  | 'SERVICE_UNDEFINED'
+  | 'NO_BRIDAL_PROFESSIONAL'
+  | 'NO_FREE_PROFESSIONAL';
 export interface TimelineWarning {
   code: TimelineWarningCode;
   message: string;
