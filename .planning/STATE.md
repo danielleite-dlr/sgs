@@ -48,7 +48,7 @@ Plan: 14 of 16
 Plan: 14 of 16
 Plan: 14 of 16
 Status: Ready to execute
-Last activity: 2026-11-26
+Last activity: 2026-11-26 - Completed quick task 261126-f22: Agenda abre com o menu de filtros recolhido
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -339,6 +339,7 @@ Recent decisions affecting current work:
 | 261124-owd | Agendamento novo (agenda ou grupo da noiva) reaproveita a comanda aberta da cliente com atendimento ativo no mesmo dia; comanda fechada ou outro dia abre nova. Edna (20/11) juntada na C-2026-025 e C-2026-117 cancelada | 2026-11-24 | a55f873 | [261124-owd-comanda-unica-por-cliente-no-dia-ao-agen](./quick/261124-owd-comanda-unica-por-cliente-no-dia-ao-agen/) |
 | 261124-pkz | Ficha da cliente: acompanhante não vê mais o contrato do grupo (só noiva/debutante/responsável ou quem está no contrato); Histórico com bloco "Comandas abertas", comandas abertas e atendimentos passados em aberto na lista, contador no trigger | 2026-11-24 | a96ea04 | [261124-pkz-ficha-da-cliente-contrato-so-da-noiva-e-](./quick/261124-pkz-ficha-da-cliente-contrato-so-da-noiva-e-/) |
 | 261124-qhs | Profissional vê só a comissão: relatório impresso sem "Valor cobrado"; tela sem Cobrado/Regra/cheio para PROFESSIONAL; API mascara cobrado/base/regra para PROFESSIONAL (comissões e comanda); linha "Total a pagar" na tabela de todas as profissionais | 2026-11-24 | 713f4df | [261124-qhs-comissao-profissional-ve-so-o-que-recebe](./quick/261124-qhs-comissao-profissional-ve-so-o-que-recebe/) |
+| 261126-f22 | Agenda abre com o menu de filtros recolhido | 2026-11-26 | (ver git) | [261126-f22-agenda-abre-com-o-menu-de-filtros-recolh](./quick/261126-f22-agenda-abre-com-o-menu-de-filtros-recolh/) |
 
 ## Session Continuity
 
