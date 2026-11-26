@@ -448,7 +448,7 @@ Plans:
 **Goal:** Pedido da usuária em 2026-11-18. (1) Na tela Profissionais, marcar quem **atende noiva** e quem é **fixa**. (2) Ao sugerir/distribuir atendimentos, **preencher primeiro as fixas livres** (e, para noivas, as fixas que atendem noiva), só depois as não fixas; com **duas ou mais fixas livres, sugerir a divisão mais justa possível**. (3) No cronograma do grupo de noiva, a noiva e as acompanhantes do grupo têm prioridade para cumprir o cronograma da noiva: **todas maquiadas e penteadas antes do make-off (fotos)** e **prontas no horário de saída configurável**, sempre respeitando o cronograma. Base existente: cronograma por pacote da 04.2 (`departureTime`, etapas antes da saída) e a sugestão de agenda da fase 4 (heurística/IA em `apps/backend/src/bridal/ai`). Ordem decidida: depois da fase 10, antes do app iOS.
 **Requirements**: PRIO-01, PRIO-02, PRIO-03, PRIO-04, PRIO-05, PRIO-06, PRIO-07, PRIO-08, PRIO-09, PRIO-10, PRIO-11, PRIO-12, PRIO-13, PRIO-14, PRIO-15, PRIO-16
 **Depends on:** Phase 10
-**Plans:** 9/16 plans executed
+**Plans:** 10/16 plans executed
 
 Plans:
 - [x] 11-01-PLAN.md — TDD do ranking puro de profissionais (fixa estrita, minutos do dia, revezamento, id) (onda 1)
@@ -459,7 +459,7 @@ Plans:
 - [x] 11-06-PLAN.md — frontend das marcações em Profissionais, helper fixas primeiro e queries com isFixed/bridal (onda 2)
 - [x] 11-07-PLAN.md — contexto, heurística e validador da sugestão com ranking e limite por papel (onda 3)
 - [x] 11-08-PLAN.md — cronograma sugere make/penteado, avisos de lista vazia e grava saída das acompanhantes (onda 3)
-- [ ] 11-09-PLAN.md — agendamento comum pré-seleciona a fixa livre mais justa (onda 3)
+- [x] 11-09-PLAN.md — agendamento comum pré-seleciona a fixa livre mais justa (onda 3)
 - [x] 11-10-PLAN.md — fixas primeiro nos demais seletores (bloqueio, comissão, comanda) (onda 3)
 - [ ] 11-11-PLAN.md — IA: prompt/hash, checkPriority no decide, selo não fixa e motivo do não coube (onda 4)
 - [ ] 11-12-PLAN.md — frontend da aba Cronograma e do formulário do grupo (onda 4)
