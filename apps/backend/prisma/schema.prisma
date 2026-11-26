@@ -155,6 +155,10 @@ model Member {
   isProfessional          Boolean                  @default(false) @map("is_professional")
   /// Função de assistente da noiva (09.1); independente de categoria.
   isBridalAssistant       Boolean                  @default(false) @map("is_bridal_assistant")
+  /// Fixa = equipe do studio (11 D-01); só muda a ordem de sugestão.
+  isFixed                 Boolean                  @default(false) @map("is_fixed")
+  /// Atende noiva/debutante (11 D-02): filtro rígido nos serviços da noiva.
+  servesBridal            Boolean                  @default(false) @map("serves_bridal")
   status                  String                   @default("active") @db.VarChar(20)
   seniorityTier           String?                  @map("seniority_tier") @db.VarChar(20)
   phone                   String?                  @db.VarChar(20)
@@ -877,6 +881,8 @@ model BridalGroup {
   name                String    @db.VarChar(160)
   eventDate           DateTime  @map("event_date") @db.Date
   readyBy             DateTime? @map("ready_by") @db.Timestamptz(6)
+  /// "Acompanhantes prontas até" (11 D-14); null = igual ao make-off.
+  companionsReadyBy   DateTime? @map("companions_ready_by") @db.Timestamptz(6)
   locationKind        String    @default("studio") @map("location_kind") @db.VarChar(10)
   locationAddress     String?   @map("location_address") @db.Text
   travelMinutesBefore Int       @default(0) @map("travel_minutes_before")

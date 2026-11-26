@@ -2,7 +2,11 @@ extend type Query {
   members: [Member!]!
   allMembers: [Member!]!
   "Profissionais ativos que atendem a categoria do serviço (sem vínculos = atende tudo)."
-  professionalsForService(serviceId: UUID!): [Member!]!
+  professionalsForService(
+    serviceId: UUID!
+    "true = só quem atende noiva/debutante (11 D-02)"
+    bridal: Boolean
+  ): [Member!]!
   pendingInvitations: [PendingInvitation!]!
 }
 
@@ -32,6 +36,10 @@ type Member {
   isProfessional: Boolean!
   "Função Assistente da Noiva (09.1): acompanha a noiva no estúdio o dia todo. Só para profissionais."
   isBridalAssistant: Boolean!
+  "Fixa = equipe do studio (11): só muda a ordem de sugestão."
+  isFixed: Boolean!
+  "Atende noiva/debutante (11): filtro dos serviços da noiva."
+  servesBridal: Boolean!
   status: MemberStatus!
   "Dados pessoais: só ADMIN/MANAGER recebem valores (LGPD); os demais recebem null."
   phone: String
@@ -56,6 +64,8 @@ input CreateMemberInput {
   roleName: String!
   isProfessional: Boolean
   isBridalAssistant: Boolean
+  isFixed: Boolean
+  servesBridal: Boolean
   categoryIds: [UUID!]
   temporaryPassword: String!
 }
@@ -99,6 +109,8 @@ input UpdateMemberInput {
   roleName: String
   isProfessional: Boolean
   isBridalAssistant: Boolean
+  isFixed: Boolean
+  servesBridal: Boolean
   seniorityTier: SeniorityTier
   phone: String
   pixKey: String
