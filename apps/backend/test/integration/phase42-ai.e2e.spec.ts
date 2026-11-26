@@ -11,12 +11,14 @@ import {
   type Phase4World,
 } from './helpers/phase4-fixtures';
 import { deletePhase4Rows } from './helpers/phase4-cleanup';
+import { markFixed, markServesBridal } from './helpers/phase11-fixtures';
 
 const SUGGEST = `mutation($groupId: UUID!) {
   suggestBridalSchedule(groupId: $groupId) {
     suggestion {
-      id source fallbackReason readyBy
-      items { groupMemberId role serviceId professionalId startsAt endsAt }
+      id source fallbackReason readyBy companionReadyBy cached warnings
+      items { groupMemberId role serviceId professionalId professionalIsFixed startsAt endsAt }
+      unscheduled { groupMemberId serviceId reason }
     }
     errors { code message field }
   }
@@ -50,10 +52,20 @@ type Item = {
   role: string;
   serviceId: string;
   professionalId: string;
+  professionalIsFixed: boolean;
   startsAt: string;
   endsAt: string;
 };
-type Suggestion = { id: string; source: string; fallbackReason: string | null; items: Item[] };
+type Suggestion = {
+  id: string;
+  source: string;
+  fallbackReason: string | null;
+  cached: boolean;
+  warnings: string[];
+  companionReadyBy: string;
+  items: Item[];
+  unscheduled: { groupMemberId: string; serviceId: string; reason: string | null }[];
+};
 
 describe('Fase 4.2 - sugestão de agenda por IA com cronograma confirmado', () => {
   const fake = new FakeAnthropic();
@@ -67,9 +79,11 @@ describe('Fase 4.2 - sugestão de agenda por IA com cronograma confirmado', () =
   afterAll(async () => {
     await destroyPhase4World(w);
   });
-  beforeEach(() => {
+  beforeEach(async () => {
     fake.calls = [];
     fake.next = [];
+    await markFixed([w.members.proA, w.members.proB], false);
+    await markServesBridal([w.members.proA, w.members.proB], true);
   });
   afterEach(async () => {
     await deletePhase4Rows(orgFilter);
@@ -255,5 +269,142 @@ describe('Fase 4.2 - sugestão de agenda por IA com cronograma confirmado', () =
     expect(r.suggestion!.source).toBe('claude');
     expect(r.suggestion!.items).toHaveLength(4);
     expect(r.suggestion!.items.some((i) => i.groupMemberId === g.brideMemberId)).toBe(true);
+  });
+
+  describe('Fase 11 - prioridade de fixas', () => {
+    it('nenhuma fixa e propostas sem prioridade: Claude aceita e vem professionalIsFixed=false', async () => {
+      const g = await newGroup(false);
+      fake.respondWith(heuristicFromPrompt);
+      const r = await suggest(g.groupId);
+      expect(r.suggestion!.source).toBe('claude');
+      expect(r.suggestion!.items.every((i) => i.professionalIsFixed === false)).toBe(true);
+      expect(Date.parse(r.suggestion!.companionReadyBy)).toBeGreaterThan(0);
+    });
+
+    it('sem cliente útil (heurística): a fixa recebe os serviços e o selo é true', async () => {
+      await markFixed([w.members.proA]);
+      const g = await newGroup(false);
+      const r = await suggest(g.groupId); // fake sem resposta -> API_ERROR -> heurística
+      expect(r.suggestion!.source).toBe('heuristic');
+      const first = [...r.suggestion!.items].sort(
+        (a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt),
+      )[0];
+      expect(first.professionalId).toBe(w.members.proA);
+      for (const i of r.suggestion!.items) {
+        expect(i.professionalIsFixed).toBe(i.professionalId === w.members.proA);
+      }
+    });
+
+    it('Claude usando não fixa com fixa livre nas 2 tentativas: heurística e PRIORITY_NOT_FOLLOWED no retry', async () => {
+      await markFixed([w.members.proA]);
+      const g = await newGroup(false);
+      const bad = (args: unknown) => {
+        const content = (args as { messages: { content: string }[] }).messages[0].content;
+        const ctx = JSON.parse(content.split('\n')[0]) as ScheduleContext;
+        // todas as pessoas/serviços sequenciais na não fixa (proB), um depois do outro
+        const nonFixed = ctx.professionals.find((x) => !x.isFixed)!;
+        let t = Date.parse(ctx.dayStart);
+        const items = ctx.persons.flatMap((pe) =>
+          pe.services.map((sv) => {
+            const startsAt = new Date(t).toISOString();
+            t += sv.durationMinutes * 60_000;
+            return {
+              personRef: pe.ref,
+              serviceId: sv.serviceId,
+              professionalId: nonFixed.id,
+              startsAt,
+              endsAt: new Date(t).toISOString(),
+            };
+          }),
+        );
+        return { items, rationale: 'x' };
+      };
+      fake.respondWith(bad).respondWith(bad);
+      const r = await suggest(g.groupId);
+      expect(r.errors).toEqual([]);
+      expect(r.suggestion).toMatchObject({ source: 'heuristic', fallbackReason: 'INVALID_OUTPUT' });
+      expect(fake.calls).toHaveLength(2);
+      expect(fake.contentOf(1)).toContain('PRIORITY_NOT_FOLLOWED');
+    });
+
+    it('hash muda depois de markFixed: segunda sugestão não vem do cache', async () => {
+      const g = await newGroup(false);
+      fake.respondWith(heuristicFromPrompt).respondWith(heuristicFromPrompt);
+      const a = (await suggest(g.groupId)).suggestion!;
+      await markFixed([w.members.proA]);
+      const b = (await suggest(g.groupId)).suggestion!;
+      expect(a.cached).toBe(false);
+      expect(b.cached).toBe(false);
+      expect(fake.calls.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('noiva sem profissional que atende noiva: unscheduled NO_ELIGIBLE_PROFESSIONAL + aviso', async () => {
+      await markServesBridal([w.members.proA, w.members.proB], false);
+      const g = await newGroup(false);
+      const r = await suggest(g.groupId);
+      const s = r.suggestion!;
+      const bride = s.unscheduled.filter((u) => u.groupMemberId === g.brideMemberId);
+      expect(bride.length).toBeGreaterThan(0);
+      expect(bride.every((u) => u.reason === 'NO_ELIGIBLE_PROFESSIONAL')).toBe(true);
+      expect(s.warnings.some((x) => x.includes('Atende noiva/debutante'))).toBe(true);
+    });
+
+    it('acompanhante com limite cedo demais: NO_FREE_PROFESSIONAL_BEFORE_LIMIT', async () => {
+      const g = await newGroup(false);
+      await adminPrisma.bridalGroup.update({
+        where: { id: g.groupId },
+        data: { companionsReadyBy: new Date(at(eventDay, 0, 30)) },
+      });
+      const r = await suggest(g.groupId);
+      const s = r.suggestion!;
+      const comp = s.unscheduled.filter((u) => g.companionMemberIds.includes(u.groupMemberId));
+      expect(comp.length).toBeGreaterThan(0);
+      expect(comp.every((u) => u.reason === 'NO_FREE_PROFESSIONAL_BEFORE_LIMIT')).toBe(true);
+    });
+
+    it('grupo debutante: sem profissional que atende debutante também cai em NO_ELIGIBLE_PROFESSIONAL', async () => {
+      await markServesBridal([w.members.proA, w.members.proB], false);
+      const g = await insertBridalGroupRow(w, {
+        companions: 1,
+        eventDate: eventDay,
+        readyBy: at(eventDay, 17),
+        eventKind: 'debutante',
+      });
+      await adminPrisma.bridalMemberService.create({
+        data: {
+          organizationId: w.orgId,
+          groupMemberId: g.brideMemberId,
+          serviceId: w.serviceId,
+          purpose: 'event',
+          sortOrder: 0,
+        },
+      });
+      const r = await suggest(g.groupId);
+      expect(r.suggestion!.unscheduled[0].reason).toBe('NO_ELIGIBLE_PROFESSIONAL');
+    });
+
+    it('confirm aceita a troca manual de fixa por não fixa (sem regra de prioridade)', async () => {
+      const g = await newGroup(false);
+      await markFixed([w.members.proA]);
+      const s = (await suggest(g.groupId)).suggestion!;
+      expect(s.items.some((i) => i.professionalId === w.members.proA)).toBe(true);
+      // Reescreve tudo em sequência na não fixa (proB): válido, mas fora da prioridade.
+      const sorted = [...s.items].sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
+      let t = Date.parse(at(eventDay, 9));
+      const items = sorted.map((i) => {
+        const dur = Date.parse(i.endsAt) - Date.parse(i.startsAt);
+        const out = {
+          groupMemberId: i.groupMemberId,
+          serviceId: i.serviceId,
+          professionalId: w.members.proB,
+          startsAt: new Date(t).toISOString(),
+          endsAt: new Date(t + dur).toISOString(),
+        };
+        t += dur;
+        return out;
+      });
+      const r = await confirm({ groupId: g.groupId, items });
+      expect(r.errors.filter((e) => e.code === 'INVALID_PROPOSAL')).toEqual([]);
+    });
   });
 });

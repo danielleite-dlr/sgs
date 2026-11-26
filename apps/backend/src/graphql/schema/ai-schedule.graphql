@@ -7,6 +7,8 @@ type AiScheduleItem {
   serviceName: String!
   professionalId: UUID!
   professionalName: String!
+  "false = não fixa (11 D-12)"
+  professionalIsFixed: Boolean!
   startsAt: DateTime!
   endsAt: DateTime!
 }
@@ -16,6 +18,8 @@ type AiScheduleUnscheduled {
   personLabel: String!
   serviceId: UUID!
   serviceName: String!
+  "NO_ELIGIBLE_PROFESSIONAL | NO_FREE_PROFESSIONAL_BEFORE_LIMIT"
+  reason: String
 }
 
 type AiScheduleSuggestion {
@@ -32,6 +36,8 @@ type AiScheduleSuggestion {
   dayStart: DateTime!
   dayEnd: DateTime!
   readyBy: DateTime!
+  "Limite das acompanhantes (make-off ou saída)"
+  companionReadyBy: DateTime!
 }
 
 type AiScheduleSuggestionPayload {

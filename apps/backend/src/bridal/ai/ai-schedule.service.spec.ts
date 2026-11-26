@@ -35,13 +35,16 @@ const ctx: ScheduleContext = {
   busy: [],
 };
 
-const build = (): AiScheduleBuild => ({
-  ctx,
+const build = (c: ScheduleContext = ctx): AiScheduleBuild => ({
+  ctx: c,
   refs: new Map([
     ['p1', { groupMemberId: 'm1', clientName: 'Maria Silva', role: 'bride' }],
     ['p2', { groupMemberId: 'm2', clientName: 'Ana Souza', role: 'companion' }],
   ]),
-  profLabels: new Map([['a', 'Profissional A']]),
+  profLabels: new Map([
+    ['a', 'Profissional A'],
+    ['b', 'Profissional B'],
+  ]),
   serviceNames: new Map([['s1', 'Maquiagem']]),
 });
 
@@ -56,7 +59,7 @@ interface Row {
   createdAt: Date;
 }
 
-function setup(opts: { client: AnthropicLike | null; limit?: number }) {
+function setup(opts: { client: AnthropicLike | null; limit?: number; ctx?: ScheduleContext }) {
   const rows: Row[] = [];
   const tx = {
     aiScheduleSuggestion: {
@@ -76,7 +79,7 @@ function setup(opts: { client: AnthropicLike | null; limit?: number }) {
   const tenant = {
     runWithTenant: async (_org: string, fn: (t: unknown) => unknown) => fn(tx),
   } as unknown as TenantContextService;
-  const builder = { build: async () => build() } as unknown as AiScheduleContextBuilder;
+  const builder = { build: async () => build(opts.ctx) } as unknown as AiScheduleContextBuilder;
   const config = {
     anthropicModel: 'claude-test',
     aiScheduleDailyLimit: opts.limit ?? 20,
@@ -104,7 +107,11 @@ const valid = (): Proposal => buildHeuristicProposal(ctx).proposal;
 const ok = () => ({ parsed_output: valid(), usage: { input_tokens: 100, output_tokens: 50 } });
 const conflicting = () => {
   const p = valid();
-  p.items = p.items.map((i) => ({ ...i, startsAt: p.items[0].startsAt, endsAt: p.items[0].endsAt }));
+  p.items = p.items.map((i) => ({
+    ...i,
+    startsAt: p.items[0].startsAt,
+    endsAt: p.items[0].endsAt,
+  }));
   return { parsed_output: p, usage: { input_tokens: 10, output_tokens: 5 } };
 };
 
@@ -177,5 +184,67 @@ describe('AiScheduleService.suggest', () => {
     const r = await svc.suggest('org', 'mem', 'g');
     expect(r.suggestion?.fallbackReason).toBe('LIMIT_REACHED');
     expect(calls).toHaveLength(0);
+  });
+
+  describe('prioridade de fixas (11)', () => {
+    // a: fixa, b: não fixa; ambas fazem Make; só a noiva e a acompanhante.
+    const prioCtx: ScheduleContext = {
+      ...ctx,
+      persons: ctx.persons.map((p) => ({
+        ...p,
+        services: p.services.map((sv) => ({ ...sv, eligibleProfessionalIds: ['a', 'b'] })),
+      })),
+      professionals: [
+        { id: 'a', label: 'prof_1', isFixed: true, dayMinutes: 0, rotationRank: 0 },
+        { id: 'b', label: 'prof_2', isFixed: false, dayMinutes: 0, rotationRank: 1 },
+      ],
+    };
+    const usingNonFixed = () => {
+      const p = buildHeuristicProposal(prioCtx).proposal;
+      // mesma grade, mas o item da noiva vai para a não fixa (livre, sem choque: a fixa fica com a outra)
+      p.items = p.items.map((i) => (i.personRef === 'p1' ? { ...i, professionalId: 'b' } : i));
+      return { parsed_output: p, usage: { input_tokens: 10, output_tokens: 5 } };
+    };
+    const good = () => ({
+      parsed_output: buildHeuristicProposal(prioCtx).proposal,
+      usage: { input_tokens: 10, output_tokens: 5 },
+    });
+
+    it('não fixa com fixa livre nas 2 tentativas: heurística INVALID_OUTPUT e retry cita a violação', async () => {
+      const { client, calls } = fakeClient([usingNonFixed, usingNonFixed]);
+      const { svc } = setup({ client, ctx: prioCtx });
+      const r = await svc.suggest('org', 'mem', 'g');
+      expect(r.suggestion?.source).toBe('heuristic');
+      expect(r.suggestion?.fallbackReason).toBe('INVALID_OUTPUT');
+      expect(JSON.stringify(calls[1])).toContain('PRIORITY_NOT_FOLLOWED');
+    });
+
+    it('1ª viola a prioridade e a 2ª corrige: source claude', async () => {
+      const { client, calls } = fakeClient([usingNonFixed, good]);
+      const { svc } = setup({ client, ctx: prioCtx });
+      const r = await svc.suggest('org', 'mem', 'g');
+      expect(r.suggestion?.source).toBe('claude');
+      expect(calls).toHaveLength(2);
+      expect(r.suggestion?.items.every((i) => i.professionalIsFixed)).toBe(true);
+    });
+
+    it('heurística com antecipação: aviso com o nome da pessoa e minutos', async () => {
+      // fixa ocupada logo antes do limite: a noiva é antecipada para usar a fixa
+      const busyCtx: ScheduleContext = {
+        ...prioCtx,
+        busy: [
+          {
+            professionalId: 'a',
+            startsAt: '2030-06-15T16:00:00.000Z',
+            endsAt: '2030-06-15T17:00:00.000Z',
+          },
+        ],
+      };
+      const { svc } = setup({ client: null, ctx: busyCtx });
+      const r = await svc.suggest('org', 'mem', 'g');
+      expect(r.suggestion?.warnings.join('\n')).toMatch(
+        /Ana Souza \(Maquiagem\) atendida \d+ min antes do make-off/,
+      );
+    });
   });
 });
