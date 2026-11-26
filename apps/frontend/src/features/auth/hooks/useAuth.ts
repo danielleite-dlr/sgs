@@ -7,6 +7,9 @@ import type { AuthSession as StoredSession } from '@/infrastructure/stores/auth.
 import { useLogoutMutation, useRefreshMutation } from '../api/auth.api';
 import type { AuthPayload } from '../types';
 
+/** Teto de espera da limpeza do logout antes de encerrar a sessão local. */
+export const LOGOUT_CLEANUP_TIMEOUT_MS = 3000;
+
 function toStoredSession(payload: AuthPayload): StoredSession | null {
   if (!payload.accessToken || !payload.session) return null;
   const m = payload.session.memberships[0];
@@ -103,18 +106,31 @@ export function useAuth() {
       return;
     }
 
-    // Fase 7: o aparelho deixa de receber push desta usuária. Sem rede/erro, segue o logout.
-    await unregisterCurrentDeviceToken().catch(() => {});
-    // Fase 8: no iPhone a inscrição também é cancelada no aparelho (D-06). No Android é no-op.
-    await unsubscribeWebPush().catch(() => {});
+    // Limpeza no servidor e no aparelho, na ordem de sempre. Teto de tempo: com rede
+    // lenta ou uma requisição empacada, o botão Sair ficava parado e só o F5 saía
+    // (quick 261126-fgp). Passado o teto, a sessão local é encerrada assim mesmo.
+    const cleanup = (async () => {
+      // Fase 7: o aparelho deixa de receber push desta usuária. Sem rede/erro, segue o logout.
+      await unregisterCurrentDeviceToken().catch(() => {});
+      // Fase 8: no iPhone a inscrição também é cancelada no aparelho (D-06). No Android é no-op.
+      await unsubscribeWebPush().catch(() => {});
 
-    if (refreshToken) {
-      await logoutMutation({
-        variables: { input: { refreshToken } },
-      }).catch(() => {
-        // ignore logout errors — always clear local session
-      });
-    }
+      if (refreshToken) {
+        await logoutMutation({
+          variables: { input: { refreshToken } },
+        }).catch(() => {
+          // ignore logout errors — always clear local session
+        });
+      }
+    })();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    await Promise.race([
+      cleanup,
+      new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, LOGOUT_CLEANUP_TIMEOUT_MS);
+      }),
+    ]);
+    clearTimeout(timer);
     clearSession();
     navigate('/login', { replace: true });
   }, [impersonating, exitClient, refreshToken, logoutMutation, clearSession, navigate]);

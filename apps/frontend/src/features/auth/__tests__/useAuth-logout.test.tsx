@@ -22,7 +22,7 @@ vi.mock('../api/auth.api', () => ({
 }));
 
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
-import { useAuth } from '../hooks/useAuth';
+import { LOGOUT_CLEANUP_TIMEOUT_MS, useAuth } from '../hooks/useAuth';
 
 const wrapper = ({ children }: { children: ReactNode }) => (
   <MemoryRouter>{children}</MemoryRouter>
@@ -100,5 +100,29 @@ describe('useAuth.logout e token do aparelho', () => {
     });
     expect(m.unregister).not.toHaveBeenCalled();
     expect(m.unsubscribe).not.toHaveBeenCalled();
+  });
+
+  it('servidor empacado: encerra a sessão local no teto de tempo (quick 261126-fgp)', async () => {
+    vi.useFakeTimers();
+    try {
+      m.logoutMutation.mockReturnValue(new Promise(() => {}));
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      let done = false;
+      await act(async () => {
+        void result.current.logout().then(() => {
+          done = true;
+        });
+        await vi.advanceTimersByTimeAsync(LOGOUT_CLEANUP_TIMEOUT_MS - 1);
+      });
+      expect(done).toBe(false);
+      expect(useAuthStore.getState().accessToken).toBe('a');
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1);
+      });
+      expect(done).toBe(true);
+      expect(useAuthStore.getState().accessToken).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
