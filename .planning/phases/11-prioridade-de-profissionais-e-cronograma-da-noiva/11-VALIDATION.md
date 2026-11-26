@@ -90,3 +90,17 @@ created: 2026-11-26
 - [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** automatizado aprovado em 2026-11-26 (11-15); linhas manuais ficam para o 11-16
+
+## Roteiro da verificação humana (11-16)
+
+**Aviso (D-03):** na subida ninguém está marcado. Até você marcar, make e penteado da noiva aparecem vazios com o aviso "Nenhuma profissional marcada como Atende noiva/debutante" — é o esperado.
+
+**Profissionais ativas da Studio JS no staging (todas desmarcadas em 26/11):** Camila, Dani, Dani Make, Danila, Jessica Make, Jessica Rodrigues, Jessica Seixas, Josy, Karol, Kayte, Lilian, Raquel Menoli, Sarah, Thayna (e o cadastro "A definir", que não deve ser marcado).
+
+**Grupo sugerido:** Noiva Cecilia Jurado — 05/12/2026 — pacote Experience — sem cronograma confirmado. (Alternativa Glam: Noiva Milena — 13/12/2026.)
+
+1. Computador → https://sgs.jessicaseixasmakeup.com.br → Noivas → Noiva Cecilia Jurado → Cronograma: make e penteado vazios com o aviso e link para Profissionais.
+2. Profissionais → editar cada profissional da lista acima e marcar "Fixa (equipe do studio)" e/ou "Atende noiva/debutante" como é de verdade no studio. Conferir os selos na lista.
+3. Voltar à Noiva Cecilia Jurado → Cronograma → informar a saída → Gerar simulação: make e penteado vêm com uma fixa que atende noiva (selo "Sugerida"; "Não fixa" se for o caso). Trocar uma delas e gerar de novo: a escolha é mantida. Preencher "Acompanhantes prontas até" se quiser. Confirmar só se o cronograma estiver certo de verdade.
+4. Agenda → Novo agendamento comum (cliente qualquer, serviço e horário): a fixa livre vem marcada com "Sugestão do sistema"; clicando na coluna de outra profissional ela é mantida e só aparece "Sugestão: ...". Cancelar sem salvar.
+5. Celular: repetir a olhada dos passos 2 e 3 (selos na lista, campo "Acompanhantes prontas até", selos da simulação) e dizer se está legível.
