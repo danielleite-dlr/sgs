@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { randomBytes } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { PrismaService } from '../database/prisma.service';
 import { isUuid } from '../database/tenant-context.service';
 import { PasswordService } from './password.service';
@@ -51,6 +51,7 @@ export class TokenService {
   ): Promise<{ plaintext: string; tokenId: string; familyId: string }> {
     const plaintext = randomBytes(64).toString('base64url');
     const tokenHash = await this.password.hash(plaintext);
+    const lookupHash = refreshLookupHash(plaintext);
     const familyUuid = familyId ?? this.newFamilyUuid();
     const ttlDays = parseTtlToDays(
       this.config.get('JWT_REFRESH_EXPIRES_IN', { infer: true }),
@@ -60,6 +61,7 @@ export class TokenService {
       data: {
         userId,
         tokenHash,
+        lookupHash,
         familyId: familyUuid,
         expiresAt: new Date(Date.now() + ttlDays * 24 * 60 * 60 * 1000),
       },
@@ -72,29 +74,14 @@ export class TokenService {
    * Rotates a refresh token. On success, revokes old token and issues new one
    * in the same family. If the presented token is already revoked, triggers
    * REUSE_DETECTED: entire family is revoked as defense-in-depth.
-   *
-   * NOTE: Token lookup is O(N) scan over non-expired tokens (Argon2 hashes are
-   * not searchable). Acceptable for Phase 1 (N << 10k). A follow-up plan will
-   * add a lookup_hash column for O(1) indexed lookup.
    */
   async rotateRefresh(plaintext: string): Promise<{
     accessToken: string;
     refreshToken: string;
     userId: string;
   }> {
-    const candidates = await this.prisma.refreshToken.findMany({
-      where: { expiresAt: { gt: new Date() } },
-      orderBy: { issuedAt: 'desc' },
-      take: 5000,
-    });
-
-    let found: (typeof candidates)[number] | null = null;
-    for (const c of candidates) {
-      if (await this.password.verify(c.tokenHash, plaintext)) {
-        found = c;
-        break;
-      }
-    }
+    // Revogados entram na busca: é assim que o reuso é detectado.
+    const found = await this.findRefresh(plaintext, { includeRevoked: true });
     if (!found) throw new AuthError('TOKEN_INVALID', 'Refresh token not recognized');
 
     if (found.revokedAt) {
@@ -145,20 +132,51 @@ export class TokenService {
    * Revokes a refresh token by plaintext. Idempotent — no-op if not found.
    */
   async revokeRefresh(plaintext: string): Promise<void> {
-    const candidates = await this.prisma.refreshToken.findMany({
-      where: { expiresAt: { gt: new Date() }, revokedAt: null },
+    const found = await this.findRefresh(plaintext, { includeRevoked: false });
+    if (!found) return; // No-op if not found — logout should be idempotent
+    await this.prisma.refreshToken.update({
+      where: { id: found.id },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  /**
+   * Acha o refresh token vivo (não vencido) pelo texto.
+   *
+   * Caminho normal: índice único em lookup_hash (sha256) e uma única conferência
+   * Argon2. Antes (quick 261126-fgp) cada logout/renovação comparava o token com
+   * todos os vivos via Argon2 — ~6 s para sair com 84 sessões no staging.
+   * Tokens emitidos antes da coluna (lookup_hash NULL) caem na busca antiga,
+   * restrita a eles, até vencerem (30 dias) ou serem renovados.
+   */
+  private async findRefresh(
+    plaintext: string,
+    opts: { includeRevoked: boolean },
+  ) {
+    const now = new Date();
+    const byLookup = await this.prisma.refreshToken.findUnique({
+      where: { lookupHash: refreshLookupHash(plaintext) },
+    });
+    if (byLookup) {
+      if (byLookup.expiresAt <= now) return null;
+      if (!opts.includeRevoked && byLookup.revokedAt) return null;
+      return (await this.password.verify(byLookup.tokenHash, plaintext)) ? byLookup : null;
+    }
+
+    const legacy = await this.prisma.refreshToken.findMany({
+      where: {
+        lookupHash: null,
+        expiresAt: { gt: now },
+        ...(opts.includeRevoked ? {} : { revokedAt: null }),
+      },
+      // Vivos primeiro: quem renova normalmente acha o token antes dos revogados.
+      orderBy: [{ revokedAt: { sort: 'asc', nulls: 'first' } }, { issuedAt: 'desc' }],
       take: 5000,
     });
-    for (const c of candidates) {
-      if (await this.password.verify(c.tokenHash, plaintext)) {
-        await this.prisma.refreshToken.update({
-          where: { id: c.id },
-          data: { revokedAt: new Date() },
-        });
-        return;
-      }
+    for (const c of legacy) {
+      if (await this.password.verify(c.tokenHash, plaintext)) return c;
     }
-    // No-op if not found — logout should be idempotent
+    return null;
   }
 
   /**
@@ -202,4 +220,9 @@ function parseTtlToDays(ttl: string): number {
   if (ttl.endsWith('h')) return Number(ttl.slice(0, -1)) / 24;
   if (ttl.endsWith('m')) return Number(ttl.slice(0, -1)) / (24 * 60);
   return 30;
+}
+
+/** sha256 hex do refresh token — chave de busca indexada (o token tem 512 bits aleatórios). */
+export function refreshLookupHash(plaintext: string): string {
+  return createHash('sha256').update(plaintext).digest('hex');
 }
