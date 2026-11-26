@@ -120,8 +120,10 @@ Decisões da usuária:
 - Assistente passa a valer para **noiva e debutante** (revoga em parte o 09.1 D-03, que deixava
   debutante de fora): pacote de debutante também pode marcar "inclui assistente".
 
-Em aberto para o plano de gaps: assistente de debutante segue a regra "só no estúdio"?; papel
-"Assistente" tem login? (09.1 D-02: assistente não usa o sistema); o que acontece com quem já
-está marcada "Assistente da Noiva" sendo Profissional.
+Respondido pela usuária (26/11):
+- Papel "Assistente" **não faz login** (mantém 09.1 D-02: e-mail fictício, sem notificações).
+- Assistente de debutante vale **só no estúdio**, como a de noiva.
+- Profissional pode continuar com a marcação "Assistente da Noiva" além de make/penteado; o papel
+  "Assistente" é para quem **só** assiste.
 
 Próximo: `/gsd:plan-phase 11 --gaps`.
