@@ -11,7 +11,7 @@
  *  4. Revezamento: quem recebeu há mais tempo; "nunca recebeu" vem primeiro (D-11).
  *  5. Último desempate: id (ordem estável).
  *
- * O módulo é puro e determinístico: sem `Date.now`, sem `Math.random` e sem
+ * O módulo é puro e determinístico: sem relógio, sem sorteio e sem
  * Prisma. Quem consome (cronograma, sugestão de agenda, agendamento comum)
  * só monta as candidatas e chama estas funções; ordenar por conta própria
  * nos consumidores é bug.
