@@ -324,7 +324,7 @@ describe('09.1 — ciclo da assistente: repasse, cancelamento e mudanças do gru
     ).data.updateBridalGroup;
     expect(r.errors).toEqual([]);
     expect(r.warning).toContain('foi removida');
-    expect(r.warning).toContain('o pacote não inclui assistente da noiva');
+    expect(r.warning).toContain('o pacote não inclui assistente');
     expect((await groupRow(g.groupId)).assistantMemberId).toBeNull();
     expect(await escortBlocks(g.groupId)).toHaveLength(0);
   });

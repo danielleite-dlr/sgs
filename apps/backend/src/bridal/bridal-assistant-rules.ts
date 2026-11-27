@@ -6,6 +6,8 @@
 /** Tipo do bloqueio de agenda da assistente ("acompanhamento"). */
 export const BRIDAL_ASSISTANT_BLOCK_KIND = 'acompanhamento' as const;
 
+const ASSISTANT_EVENT_KINDS = ['noiva', 'debutante'] as const;
+
 export type AssistantGroupLike = {
   eventKind: string;
   locationKind: string;
@@ -19,10 +21,13 @@ export type AssistantGroupLike = {
  */
 export function assistantIneligibilityReason(g: AssistantGroupLike): string | null {
   if (g.status !== 'active') return 'o grupo não está ativo';
-  if (g.eventKind !== 'noiva') return 'só noivas têm assistente';
+  // Fase 11 G-01 (26/11): debutante no estúdio também tem assistente — revoga em parte 09.1 D-03.
+  if (!(ASSISTANT_EVENT_KINDS as readonly string[]).includes(g.eventKind)) {
+    return 'só noivas e debutantes têm assistente';
+  }
   if (g.locationKind !== 'studio') return 'evento fora do estúdio';
   if (!g.pkg || g.pkg.deletedAt || !g.pkg.includesBridalAssistant) {
-    return 'o pacote não inclui assistente da noiva';
+    return 'o pacote não inclui assistente';
   }
   return null;
 }
@@ -52,11 +57,11 @@ export function isAssistantPending(
 }
 
 /** Nota do bloqueio de agenda da assistente. */
-export function assistantBlockNote(brideName: string): string {
-  return `Acompanhando noiva ${brideName}`;
+export function assistantBlockNote(brideName: string, eventKind = 'noiva'): string {
+  return `Acompanhando ${eventKind === 'debutante' ? 'debutante' : 'noiva'} ${brideName}`;
 }
 
 /** Nome do item de repasse (diária) da assistente. */
-export function assistantAccrualItemName(groupName: string): string {
-  return `Assistente da Noiva — ${groupName}`;
+export function assistantAccrualItemName(groupName: string, eventKind = 'noiva'): string {
+  return `Assistente da ${eventKind === 'debutante' ? 'Debutante' : 'Noiva'} — ${groupName}`;
 }
