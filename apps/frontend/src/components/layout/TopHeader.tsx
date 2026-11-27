@@ -52,7 +52,6 @@ export function TopHeader({ notificationsOpen, onNotificationsOpenChange }: TopH
         >
           <BrandMark />
           <span className="flex min-w-0 flex-col">
-            <span className="truncate font-serif text-headline-sm text-neutral-800">{marca}</span>
             <span
               data-testid="top-date-mobile"
               className="truncate text-[12px] leading-4 tabular-nums text-neutral-500"

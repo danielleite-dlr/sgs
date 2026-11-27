@@ -148,6 +148,8 @@ describe('casco Gestor Beauty: topo (D-16)', () => {
       expect(screen.queryByText(texto)).toBeNull();
       expect(screen.queryByRole('button', { name: texto })).toBeNull();
     }
+    // Nome do estabelecimento oculto no cabeçalho do celular.
+    expect(screen.queryByText('Studio JS')).toBeNull();
     const header = container.querySelector('header');
     expect(header).toHaveClass('h-14', 'bg-white', 'border-b', 'border-neutral-200');
     semSombra(header!);
@@ -216,6 +218,8 @@ describe('casco Gestor Beauty: gaveta "Mais" (D-17, D-02)', () => {
     );
     const gaveta = screen.getByRole('dialog');
     expect(within(gaveta).getByText('Studio JS')).toBeInTheDocument();
+    // No celular o nome do estabelecimento fica oculto (só leitor de tela).
+    expect(within(gaveta).getByTestId('drawer-org')).toHaveClass('sr-only');
     expect(within(gaveta).queryByText(/Trocar estabelecimento/)).toBeNull();
     expect(within(gaveta).queryByText(/Studio Beleza/)).toBeNull();
 
