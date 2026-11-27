@@ -37,8 +37,8 @@ describe('bridal-assistant-rules', () => {
     it('evento externo não tem assistente (D-03)', () => {
       expect(isAssistantEligible(group({ locationKind: 'external' }))).toBe(false);
     });
-    it('debutante fica fora da fase', () => {
-      expect(isAssistantEligible(group({ eventKind: 'debutante' }))).toBe(false);
+    it('debutante no estúdio é elegível (11 G-01)', () => {
+      expect(isAssistantEligible(group({ eventKind: 'debutante' }))).toBe(true);
     });
     it('grupo cancelado não é elegível', () => {
       expect(isAssistantEligible(group({ status: 'cancelled' }))).toBe(false);
@@ -69,10 +69,15 @@ describe('bridal-assistant-rules', () => {
         'o grupo não está ativo',
       );
     });
-    it('não é noiva', () => {
-      expect(assistantIneligibilityReason(group({ eventKind: 'debutante' }))).toBe(
-        'só noivas têm assistente',
+    it('não é noiva nem debutante', () => {
+      expect(assistantIneligibilityReason(group({ eventKind: 'outro' }))).toBe(
+        'só noivas e debutantes têm assistente',
       );
+    });
+    it('debutante fora do estúdio', () => {
+      expect(
+        assistantIneligibilityReason(group({ eventKind: 'debutante', locationKind: 'external' })),
+      ).toBe('evento fora do estúdio');
     });
     it('fora do estúdio', () => {
       expect(assistantIneligibilityReason(group({ locationKind: 'external' }))).toBe(
@@ -80,7 +85,7 @@ describe('bridal-assistant-rules', () => {
       );
     });
     it('pacote sem assistente (sem pacote, excluído ou sem marca)', () => {
-      const msg = 'o pacote não inclui assistente da noiva';
+      const msg = 'o pacote não inclui assistente';
       expect(assistantIneligibilityReason(group({ pkg: null }))).toBe(msg);
       expect(
         assistantIneligibilityReason(
@@ -127,6 +132,10 @@ describe('bridal-assistant-rules', () => {
     });
     it('nome do item de repasse', () => {
       expect(assistantAccrualItemName('Noiva Maria')).toBe('Assistente da Noiva — Noiva Maria');
+    });
+    it('textos de debutante', () => {
+      expect(assistantBlockNote('Bia', 'debutante')).toBe('Acompanhando debutante Bia');
+      expect(assistantAccrualItemName('G', 'debutante')).toBe('Assistente da Debutante — G');
     });
     it('kind do bloqueio', () => {
       expect(BRIDAL_ASSISTANT_BLOCK_KIND).toBe('acompanhamento');

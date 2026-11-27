@@ -1,4 +1,5 @@
 import type { Prisma } from '@prisma/client';
+import { ASSISTANT_ROLE_NAME } from '../identity/assistant-role';
 import { recordAudit } from '../common/audit-log';
 import { fromCents, toCents } from '../common/money';
 import { applyStockDelta, StockError } from '../catalog/products/stock';
@@ -181,7 +182,23 @@ export async function closeComandaTx(
   }));
   const parents = await loadCategoryParents(tx);
   const eventsWithTrial = await eventItemsWithIncludedTrial(tx, items);
-  const records: Prisma.CommissionRecordCreateManyInput[] = items.map((item) => {
+  // Fase 11 G-01: Assistente recebe só a diária (abaixo), nunca comissão de serviço — protege itens antigos de quem virou Assistente.
+  const assistantIds = new Set(
+    (
+      await tx.member.findMany({
+        where: {
+          id: {
+            in: [...new Set(items.map((i) => i.professionalId).filter((x): x is string => !!x))],
+          },
+          role: { name: ASSISTANT_ROLE_NAME },
+        },
+        select: { id: true },
+      })
+    ).map((m) => m.id),
+  );
+  const records: Prisma.CommissionRecordCreateManyInput[] = items
+    .filter((i) => !assistantIds.has(i.professionalId))
+    .map((item) => {
     const match = resolveCommissionRule(rules, {
       kind: item.kind === 'product' ? 'product' : 'service',
       memberId: item.professionalId,

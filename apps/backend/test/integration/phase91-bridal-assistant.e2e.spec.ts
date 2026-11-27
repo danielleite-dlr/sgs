@@ -271,11 +271,16 @@ describe('09.1 — vínculo da assistente da noiva', () => {
     expect(await rate(g1.groupId)).toBe('220.00');
   });
 
-  it('recusa grupo externo, debutante e pacote sem a flag', async () => {
+  it('recusa grupo externo e pacote sem a flag; debutante no estúdio aceita (11 G-01)', async () => {
     const ext = await create(D, { locationKind: 'external' });
     expect((await bind(ext.groupId, w.assistants.a)).errors[0].code).toBe('ASSISTANT_NOT_ALLOWED');
+    const debExt = await create(D, { eventKind: 'debutante', locationKind: 'external' });
+    expect((await bind(debExt.groupId, w.assistants.a)).errors[0].code).toBe(
+      'ASSISTANT_NOT_ALLOWED',
+    );
     const deb = await create(D, { eventKind: 'debutante' });
-    expect((await bind(deb.groupId, w.assistants.a)).errors[0].code).toBe('ASSISTANT_NOT_ALLOWED');
+    expect((await bind(deb.groupId, w.assistants.a)).errors).toEqual([]);
+    expect((await escortBlocks(deb.groupId))[0].note).toMatch(/^Acompanhando debutante /);
     const noFlag = await create(D, { packageId: w.packageId });
     expect((await bind(noFlag.groupId, w.assistants.a)).errors[0].code).toBe(
       'ASSISTANT_NOT_ALLOWED',

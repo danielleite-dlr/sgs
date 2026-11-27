@@ -182,7 +182,7 @@ export async function setAssistantTx(
       startsAt: day.startsAt,
       endsAt: day.endsAt,
       allDay: true,
-      note: assistantBlockNote(g.brideName ?? g.name),
+      note: assistantBlockNote(g.brideName ?? g.name, g.eventKind),
       bridalGroupId: groupId,
       createdBy: actorId,
     },
@@ -334,9 +334,9 @@ export async function bridalAssistantAccrualsTx(
 ): Promise<Prisma.CommissionRecordCreateManyInput[]> {
   const { orgId, comandaId, cycle, now } = args;
   const rows = await tx.$queryRaw<
-    { id: string; name: string; assistant_member_id: string; rate: string }[]
+    { id: string; name: string; event_kind: string; assistant_member_id: string; rate: string }[]
   >`
-    SELECT g.id, g.name, g.assistant_member_id, g.assistant_daily_rate::text AS rate
+    SELECT g.id, g.name, g.event_kind, g.assistant_member_id, g.assistant_daily_rate::text AS rate
       FROM bridal_groups g
      WHERE g.status = 'active' AND g.assistant_member_id IS NOT NULL AND g.assistant_daily_rate > 0
        AND EXISTS (SELECT 1 FROM appointments a
@@ -365,7 +365,7 @@ export async function bridalAssistantAccrualsTx(
     ruleSnapshot: {
       kind: 'bridal_assistant',
       bridalGroupId: g.id,
-      itemName: assistantAccrualItemName(g.name),
+      itemName: assistantAccrualItemName(g.name, g.event_kind),
       dailyRate: g.rate,
       quantity: 1,
       fixedPer: 'unit',
@@ -422,7 +422,7 @@ export async function syncAssistantAfterUpdateTx(
       startsAt: day.startsAt,
       endsAt: day.endsAt,
       allDay: true,
-      note: assistantBlockNote(g.brideName ?? g.name),
+      note: assistantBlockNote(g.brideName ?? g.name, g.eventKind),
       bridalGroupId: groupId,
       createdBy: actorId,
     },

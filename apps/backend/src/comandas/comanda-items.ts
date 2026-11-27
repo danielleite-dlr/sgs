@@ -1,4 +1,5 @@
 import type { Prisma } from '@prisma/client';
+import { isAssistantRole } from '../identity/assistant-role';
 import { fromCents, splitProportional, toCents } from '../common/money';
 import type { TenantPrismaClient } from '../database/types';
 import {
@@ -97,12 +98,19 @@ async function requireProfessional(
       isProfessional: true,
       deletedAt: null,
     },
-    select: { id: true },
+    select: { id: true, displayName: true, role: { select: { name: true } } },
   });
   if (!pro) {
     throw new ComandaError(
       'PROFESSIONAL_NOT_FOUND',
       'Profissional não encontrado.',
+      'professionalId',
+    );
+  }
+  if (isAssistantRole(pro.role?.name)) {
+    throw new ComandaError(
+      'PROFESSIONAL_IS_ASSISTANT',
+      `${pro.displayName} é assistente de noiva/debutante: não entra em item de comanda e recebe só a diária.`,
       'professionalId',
     );
   }
