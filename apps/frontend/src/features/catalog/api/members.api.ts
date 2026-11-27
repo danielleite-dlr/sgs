@@ -41,7 +41,9 @@ export interface MembersQueryResult {
 
 // ---- Admin team screen (`/profissionais`) — allMembers + member lifecycle ----
 
-export const ROLE_OPTIONS = ['ADMIN', 'MANAGER', 'ATTENDANT', 'PROFESSIONAL'] as const;
+export const ROLE_OPTIONS = ['ADMIN', 'MANAGER', 'ATTENDANT', 'PROFESSIONAL', 'ASSISTANT'] as const;
+/** Convite por e-mail: só papéis que entram no sistema. */
+export const INVITE_ROLE_OPTIONS = ['ADMIN', 'MANAGER', 'ATTENDANT', 'PROFESSIONAL'] as const;
 export const SENIORITY_OPTIONS = ['junior', 'pleno', 'senior'] as const;
 
 export type MemberStatus = 'active' | 'inactive';
@@ -173,7 +175,7 @@ export const CreateMemberMutation = gql`
 
 export interface CreateMemberInputData {
   displayName: string;
-  email: string;
+  email: string | null;
   phone: string;
   pixKey: string;
   birthDate?: string | null;
@@ -183,7 +185,7 @@ export interface CreateMemberInputData {
   isFixed?: boolean;
   servesBridal?: boolean;
   categoryIds?: string[];
-  temporaryPassword: string;
+  temporaryPassword: string | null;
 }
 
 export interface CreateMemberResult {
