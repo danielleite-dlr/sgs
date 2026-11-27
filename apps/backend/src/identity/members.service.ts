@@ -19,6 +19,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { BLOCKING_STATUSES } from '../appointments/appointment-status';
 import {
   ASSISTANT_NO_LOGIN_MESSAGE,
+  NOT_ASSISTANT_ROLE_WHERE,
   fictitiousAssistantEmail,
   isAssistantRole,
 } from './assistant-role';
@@ -1070,6 +1071,7 @@ export class MembersService {
           deletedAt: null,
           status: MEMBER_STATUS_ACTIVE,
           isProfessional: true,
+          ...NOT_ASSISTANT_ROLE_WHERE,
           ...(opts.bridal ? { servesBridal: true } : {}),
         },
         select: MEMBER_SELECT,

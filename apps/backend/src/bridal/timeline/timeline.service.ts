@@ -13,6 +13,12 @@ import { syncContractCoverageTx } from '../bridal-coverage';
 import { TenantContextService } from '../../database/tenant-context.service';
 import { PushEventsService } from '../../push/push-events.service';
 import type { TenantPrismaClient } from '../../database/types';
+import {
+  ASSISTANT_NOT_SCHEDULABLE_CODE,
+  NOT_ASSISTANT_ROLE_WHERE,
+  assistantNotSchedulableMessage,
+  isAssistantRole,
+} from '../../identity/assistant-role';
 import { professionalServesCategory } from '../../identity/member-categories';
 import { loadRankingDataTx } from '../../scheduling/professional-ranking-data';
 import { pickBest, type RankCandidate } from '../../scheduling/professional-ranking';
@@ -110,10 +116,26 @@ async function loadProfessional(
   isFixed: boolean;
 } | null> {
   if (!id) return null;
-  return tx.member.findFirst({
+  const found = await tx.member.findFirst({
     where: { id, status: 'active', deletedAt: null, isProfessional: true },
-    select: { id: true, displayName: true, servesBridal: true, isFixed: true },
+    select: {
+      id: true,
+      displayName: true,
+      servesBridal: true,
+      isFixed: true,
+      role: { select: { name: true } },
+    },
   });
+  if (!found) return null;
+  const { role, ...professional } = found;
+  if (isAssistantRole(role?.name)) {
+    throw new BridalError(
+      ASSISTANT_NOT_SCHEDULABLE_CODE,
+      assistantNotSchedulableMessage(professional.displayName),
+      'professionalId',
+    );
+  }
+  return professional;
 }
 
 /** Cálculo do cronograma no servidor (compartilhado entre simulação e confirmação). Lança BridalError. */
@@ -297,6 +319,7 @@ export async function buildTimelineTx(
           status: 'active',
           deletedAt: null,
           servesBridal: true,
+          ...NOT_ASSISTANT_ROLE_WHERE,
           // a assistente do próprio grupo nunca é sugerida (Pitfall 9)
           ...(group.assistantMemberId ? { id: { not: group.assistantMemberId } } : {}),
         },

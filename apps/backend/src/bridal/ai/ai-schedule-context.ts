@@ -1,3 +1,4 @@
+import { NOT_ASSISTANT_ROLE_WHERE } from '../../identity/assistant-role';
 import { Injectable } from '@nestjs/common';
 import { BLOCKING_STATUSES } from '../../appointments/appointment-status';
 import { ContractSettingsService } from '../../contracts/contract-settings.service';
@@ -111,7 +112,12 @@ export class AiScheduleContextBuilder {
     const serviceById = new Map(services.map((s) => [s.id, s]));
 
     const proRows = await tx.member.findMany({
-      where: { isProfessional: true, status: 'active', deletedAt: null },
+      where: {
+        isProfessional: true,
+        status: 'active',
+        deletedAt: null,
+        ...NOT_ASSISTANT_ROLE_WHERE,
+      },
       orderBy: [{ displayName: 'asc' }, { id: 'asc' }],
       select: {
         id: true,

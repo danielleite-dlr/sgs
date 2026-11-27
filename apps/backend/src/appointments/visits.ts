@@ -1,3 +1,8 @@
+import {
+  ASSISTANT_NOT_SCHEDULABLE_CODE,
+  assistantNotSchedulableMessage,
+  isAssistantRole,
+} from "../identity/assistant-role";
 import { fromCents, parseMoneyInput } from "../common/money";
 import { CASH_METHODS } from "../comandas/comanda-math";
 import { findReusableComandaTx, openComandaTx } from "../comandas/comanda-open";
@@ -146,12 +151,19 @@ export async function createVisitTx(
         deletedAt: null,
         isProfessional: true,
       },
-      select: { id: true },
+      select: { id: true, displayName: true, role: { select: { name: true } } },
     });
     if (!professional) {
       throw new SchedulingError(
         "PROFESSIONAL_NOT_FOUND",
         "Profissional ativo não encontrado.",
+        "professionalId",
+      );
+    }
+    if (isAssistantRole(professional.role?.name)) {
+      throw new SchedulingError(
+        ASSISTANT_NOT_SCHEDULABLE_CODE,
+        assistantNotSchedulableMessage(professional.displayName),
         "professionalId",
       );
     }

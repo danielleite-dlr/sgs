@@ -1,3 +1,8 @@
+import {
+  ASSISTANT_NOT_SCHEDULABLE_CODE,
+  assistantNotSchedulableMessage,
+  isAssistantRole,
+} from "../identity/assistant-role";
 import type { TenantPrismaClient } from "../database/types";
 import { professionalServesCategory } from "../identity/member-categories";
 import {
@@ -76,11 +81,19 @@ export async function moveAppointmentTx(
         deletedAt: null,
         isProfessional: true,
       },
+      include: { role: { select: { name: true } } },
     });
     if (!professional) {
       throw new SchedulingError(
         "PROFESSIONAL_NOT_FOUND",
         "Profissional ativo não encontrado.",
+        "professionalId",
+      );
+    }
+    if (isAssistantRole(professional.role?.name)) {
+      throw new SchedulingError(
+        ASSISTANT_NOT_SCHEDULABLE_CODE,
+        assistantNotSchedulableMessage(professional.displayName),
         "professionalId",
       );
     }
