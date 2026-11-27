@@ -478,7 +478,7 @@ Plans:
 
 ### Phase 12: Ajustar cadastro de agendamento
 
-**Goal:** [To be planned]
+**Goal:** No modal "Cadastrar agendamento", o pacote é escolhido na própria linha de serviço (Serviço ou Pacote, um pacote por agendamento) e entra com os serviços em sequência; o campo Data ganha calendário clicável
 **Requirements**: TBD
 **Depends on:** Phase 11
 **Plans:** 0 plans
