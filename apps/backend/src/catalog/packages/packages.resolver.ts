@@ -47,6 +47,17 @@ export class PackagesResolver {
     return this.svc.getById(t.organizationId, id);
   }
 
+  @Query('visitPackageOptions')
+  @RequireAccess('CATALOGO_REF')
+  @RequirePermission(PERMISSIONS.PACKAGE_READ)
+  visitPackageOptions(
+    @CurrentTenant() t: TenantContext,
+    @Args('clientId') clientId: string | null,
+    @Args('date') date: string,
+  ) {
+    return this.svc.visitPackageOptions(t.organizationId, clientId ?? null, date);
+  }
+
   @Query('bridalAssistantSettings')
   @RequireAccess('CATALOGO_REF')
   @RequirePermission(PERMISSIONS.PACKAGE_READ)

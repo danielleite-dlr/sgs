@@ -91,6 +91,12 @@ function dateToBr(d: Date): string {
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
+/** "dd/mm/aaaa" → "aaaa-mm-dd"; null se a data ainda está incompleta. */
+function brToIso(br: string): string | null {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(br);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : null;
+}
+
 function seedTime(initial?: { hour: number; minute: number }): string {
   return initial
     ? `${String(initial.hour).padStart(2, '0')}:${String(initial.minute).padStart(2, '0')}`
@@ -521,8 +527,11 @@ export function VisitFormDialog({
     skip: !open,
   });
   const { data: servicesData } = useQuery<ServicesQueryResult>(ServicesQuery, { skip: !open });
+  // Pacote de noiva só aparece para a noiva/debutante no dia do contrato; o resto é social.
+  const dateIso = brToIso(dateBr);
   const { data: packagesData } = useQuery<VisitPackagesResult>(VisitPackagesQuery, {
-    skip: !open,
+    variables: { clientId: clientId || null, date: dateIso ?? '' },
+    skip: !open || !dateIso,
   });
   const [createVisit, { loading }] = useMutation<CreateVisitResult>(CreateVisitMutation);
   const canOverrideTimeline = useBridalPermission('bridal.scheduleOverride');
@@ -532,6 +541,12 @@ export function VisitFormDialog({
   );
   const services = servicesData?.services ?? [];
   const selectedPackage = packagesData?.packages.find((p) => p.id === packageId) ?? null;
+
+  // Trocou cliente ou data e o pacote escolhido deixou de valer: volta para "Sem pacote".
+  useEffect(() => {
+    if (packageId && packagesData && !selectedPackage) choosePackage('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [packagesData, packageId, selectedPackage]);
 
   useEffect(() => {
     if (open) {

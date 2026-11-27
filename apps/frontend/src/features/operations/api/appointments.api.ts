@@ -328,8 +328,9 @@ export interface DeleteTimeBlockResult {
 
 /** Pacotes com a duração padrão dos serviços (usada para expandir as linhas da visita). */
 export const VisitPackagesQuery = gql`
-  query VisitPackages {
-    packages {
+  # quick 261126-w01: noiva/debutante no dia do contrato → pacotes do contrato; senão → sociais
+  query VisitPackages($clientId: UUID, $date: String!) {
+    packages: visitPackageOptions(clientId: $clientId, date: $date) {
       id
       name
       services {

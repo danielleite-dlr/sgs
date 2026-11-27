@@ -131,6 +131,12 @@ type ServicePayload {
 extend type Query {
   packages: [Package!]!
   package(id: UUID!): Package
+  """
+  Pacotes que o agendamento avulso pode oferecer (quick 261126-w00): cliente com contrato de
+  noiva/debutante e evento nessa data (YYYY-MM-DD) → só os pacotes do contrato; senão → só os
+  sociais (sem assistente e nunca usados em contrato ou grupo de noiva).
+  """
+  visitPackageOptions(clientId: UUID, date: String!): [Package!]!
   "Diária vigente da assistente da noiva (09.1 D-06)"
   bridalAssistantSettings: BridalAssistantSettings!
 }

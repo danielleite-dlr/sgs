@@ -217,6 +217,55 @@ export class PackagesService {
   }
 
   /**
+   * Pacotes do agendamento avulso (quick 261126-w00).
+   * - Cliente é noiva/debutante de um contrato não cancelado cujo evento cai em `date`
+   *   → só os pacotes desse contrato (o do contrato e os dos itens).
+   * - Senão (sem contrato, outra data, acompanhante) → só pacotes sociais: sem assistente
+   *   e nunca usados em contrato ou grupo de noiva.
+   */
+  async visitPackageOptions(orgId: string, clientId: string | null, date: string) {
+    const day = /^\d{4}-\d{2}-\d{2}$/.test(date) ? new Date(`${date}T00:00:00Z`) : null;
+    return this.tenant.runWithTenant(orgId, async (tx) => {
+      let contractIds: string[] = [];
+      if (clientId && day) {
+        const contracts = await tx.contract.findMany({
+          where: {
+            brideClientId: clientId,
+            status: { not: 'cancelled' },
+            group: { eventDate: day, status: { not: 'cancelled' } },
+          },
+          select: { packageId: true, items: { select: { packageId: true } } },
+        });
+        contractIds = [
+          ...new Set(
+            contracts.flatMap((c) => [c.packageId, ...c.items.map((i) => i.packageId)]),
+          ),
+        ].filter((id): id is string => !!id);
+      }
+
+      const where =
+        contractIds.length > 0
+          ? { id: { in: contractIds } }
+          : {
+              deletedAt: null,
+              includesBridalAssistant: false,
+              contracts: { none: {} },
+              contractItems: { none: {} },
+              bridalGroups: { none: {} },
+            };
+      const pkgs = await tx.package.findMany({
+        where,
+        orderBy: [{ name: 'asc' }],
+        include: PACKAGE_INCLUDE,
+      });
+      const ctx = await loadCostContext(tx);
+      const rate = await loadBridalAssistantDailyRate(tx);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return pkgs.map((p: any) => toPackageView(p, ctx, rate));
+    });
+  }
+
+  /**
    * Retrieves a single package by ID with services and computed individualSum.
    * Returns null if not found or soft-deleted.
    */
