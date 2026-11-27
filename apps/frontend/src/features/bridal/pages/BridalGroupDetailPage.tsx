@@ -31,6 +31,7 @@ import {
   LOCATION_LABEL,
   formatEventDate,
 } from '../lib/bridal-labels';
+import { BridalTimelineQuery, type BridalTimelineResult } from '../api/timeline.api';
 import { toZoned } from '../lib/schedule-rows';
 
 const GROUP_STATUS_VARIANT: Record<string, 'success' | 'neutral' | 'error'> = {
@@ -48,6 +49,7 @@ export function BridalGroupDetailPage() {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [tab, setTab] = useState<'people' | 'timeline' | 'schedule'>('people');
   const navigate = useNavigate();
   const [deleteGroup, { loading: deleting }] = useMutation<DeleteBridalGroupPermanentlyResult>(
     DeleteBridalGroupPermanentlyMutation,
@@ -59,6 +61,17 @@ export function BridalGroupDetailPage() {
     fetchPolicy: 'cache-and-network',
   });
   const group = data?.bridalGroup ?? null;
+  // Mesma query/variáveis da BridalTimelineTab: cache compartilhado.
+  const {
+    data: timelineData,
+    loading: timelineLoading,
+    error: timelineError,
+  } = useQuery<BridalTimelineResult>(BridalTimelineQuery, {
+    variables: { groupId: id },
+    skip: !id,
+  });
+  const timelineConfirmed = !!timelineData?.bridalTimeline?.confirmedAt;
+  const showTimelineHint = !timelineLoading && !timelineError && !timelineConfirmed;
 
   if (!group) {
     return (
@@ -224,23 +237,44 @@ export function BridalGroupDetailPage() {
 
       <BridalAssistantCard group={group} canWrite={canWrite && active} />
 
-      <Tabs defaultValue="people">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <TabsList>
           <TabsTrigger value="people">Pessoas</TabsTrigger>
-          <TabsTrigger value="schedule">Agenda do evento</TabsTrigger>
           <TabsTrigger value="timeline">Cronograma do dia</TabsTrigger>
+          <TabsTrigger value="schedule">Agenda do evento</TabsTrigger>
         </TabsList>
         <TabsContent value="people">
           <BridalMembersCard group={group} />
         </TabsContent>
+        <TabsContent value="timeline">
+          <BridalTimelineTab group={group} onChanged={() => void refetch()} />
+        </TabsContent>
         <TabsContent value="schedule">
           <div className="space-y-lg">
+            {showTimelineHint && (
+              <div
+                role="status"
+                data-testid="schedule-needs-timeline"
+                className="flex flex-col gap-sm rounded-md border border-warning-500/40 bg-warning-50 p-md sm:flex-row sm:items-center sm:justify-between"
+              >
+                <p className="text-body text-neutral-800">
+                  Confirme primeiro o cronograma do dia: ao confirmar, make e penteado da{' '}
+                  {group.eventKind === 'debutante' ? 'debutante' : 'noiva'} já entram na agenda.
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  data-testid="schedule-go-timeline"
+                  onClick={() => setTab('timeline')}
+                >
+                  Ir para o cronograma do dia
+                </Button>
+              </div>
+            )}
             <BridalTrialCard group={group} onScheduled={() => void refetch()} />
             <AiSuggestionPanel group={group} onScheduled={() => void refetch()} />
           </div>
-        </TabsContent>
-        <TabsContent value="timeline">
-          <BridalTimelineTab group={group} onChanged={() => void refetch()} />
         </TabsContent>
       </Tabs>
 

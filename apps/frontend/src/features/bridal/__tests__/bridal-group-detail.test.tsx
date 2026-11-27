@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ServicesQuery } from '@/features/catalog/api/servicos.api';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
 import { BridalGroupQuery, SetBridalMemberCoverageMutation } from '../api/bridal.api';
+import { BridalTimelineQuery } from '../api/timeline.api';
 import { BridalGroupDetailPage } from '../pages/BridalGroupDetailPage';
 import { group, member } from './bridal-fixtures';
 
@@ -31,9 +32,50 @@ const servicesMock: MockedResponse = {
   result: { data: { services: [] } },
 };
 
-function renderPage(extra: MockedResponse[] = [], main: MockedResponse = queryMock) {
+function timelineMock(bridalTimeline: unknown): MockedResponse {
+  return {
+    request: { query: BridalTimelineQuery },
+    variableMatcher: () => true,
+    maxUsageCount: 20,
+    result: { data: { bridalTimeline } },
+  };
+}
+
+const confirmedTimeline = {
+  __typename: 'BridalTimeline',
+  id: 't1',
+  groupId: 'g1',
+  packageId: null,
+  packageName: null,
+  departureTime: null,
+  brideLabel: 'Noiva',
+  makeProfessionalId: null,
+  hairProfessionalId: null,
+  rows: [],
+  text: '',
+  warnings: [],
+  registryStartsAt: null,
+  companionsReadyBy: null,
+  registryLabel: null,
+  confirmedAt: '2026-11-26T12:00:00.000Z',
+  confirmedByName: 'Dona',
+  version: 1,
+  companionIssues: [],
+};
+
+function openTab(name: string) {
+  const tab = screen.getByRole('tab', { name });
+  fireEvent.mouseDown(tab);
+  fireEvent.click(tab);
+}
+
+function renderPage(
+  extra: MockedResponse[] = [],
+  main: MockedResponse = queryMock,
+  timeline: MockedResponse = timelineMock(null),
+) {
   return render(
-    <MockedProvider mocks={[main, servicesMock, ...extra]}>
+    <MockedProvider mocks={[main, servicesMock, timeline, ...extra]}>
       <MemoryRouter initialEntries={['/noivas/g1']}>
         <Routes>
           <Route path="/noivas/:id" element={<BridalGroupDetailPage />} />
@@ -165,5 +207,49 @@ describe('BridalGroupDetailPage', () => {
       expect(row).toHaveTextContent('(11) 98888-7777');
       expect(row).not.toHaveTextContent('+5511988887777');
     });
+  });
+
+  it('abas na ordem Pessoas, Cronograma do dia, Agenda do evento', async () => {
+    renderPage();
+    await screen.findByTestId('coverage-m2');
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual([
+      'Pessoas',
+      'Cronograma do dia',
+      'Agenda do evento',
+    ]);
+  });
+
+  it('sem cronograma confirmado a agenda mostra o aviso e o botão leva ao cronograma', async () => {
+    renderPage();
+    await screen.findByTestId('coverage-m2');
+    openTab('Agenda do evento');
+    expect(await screen.findByTestId('schedule-needs-timeline')).toHaveTextContent(
+      'Confirme primeiro o cronograma do dia',
+    );
+    fireEvent.click(screen.getByTestId('schedule-go-timeline'));
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Cronograma do dia' })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      ),
+    );
+  });
+
+  it('o aviso não trava a agenda', async () => {
+    useAuthStore.setState({ roleName: 'MANAGER' });
+    renderPage();
+    await screen.findByTestId('coverage-m2');
+    openTab('Agenda do evento');
+    await screen.findByTestId('schedule-needs-timeline');
+    expect(screen.getByTestId('ai-suggest')).toBeInTheDocument();
+  });
+
+  it('com cronograma confirmado não há aviso', async () => {
+    useAuthStore.setState({ roleName: 'MANAGER' });
+    renderPage([], queryMock, timelineMock(confirmedTimeline));
+    await screen.findByTestId('coverage-m2');
+    openTab('Agenda do evento');
+    await screen.findByTestId('ai-suggest');
+    expect(screen.queryByTestId('schedule-needs-timeline')).toBeNull();
   });
 });
