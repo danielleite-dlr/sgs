@@ -1311,3 +1311,240 @@ describe('MemberEditDialog (acessos)', () => {
     await waitFor(() => expect(screen.queryByText(/voltam ao padrão do novo papel/)).toBeNull());
   });
 });
+
+// ---------------------------------------------------------------------------
+// Papel Assistente (fase 11, G-01)
+// ---------------------------------------------------------------------------
+
+const assistantMember: AdminMemberData = {
+  ...professionalMember,
+  id: 'mem-ast',
+  displayName: 'Dani Assistente',
+  roleName: 'ASSISTANT',
+  seniorityTier: null,
+  isProfessional: true,
+  isBridalAssistant: true,
+  categories: [],
+};
+
+async function pickCreateRole(name: string) {
+  fireEvent.click(screen.getByRole('combobox', { name: 'Papel' }));
+  fireEvent.click(await screen.findByRole('option', { name }));
+}
+
+describe('CreateMemberDialog - Assistente', () => {
+  it('esconde e-mail, senha, marcações e categorias e mostra o aviso', async () => {
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <CreateMemberDialog open onClose={vi.fn()} callerRoleName="ADMIN" />
+      </MockedProvider>,
+    );
+    expect(screen.getByRole('textbox', { name: 'E-mail' })).toBeInTheDocument();
+    await pickCreateRole('Assistente');
+
+    expect(await screen.findByTestId('assistant-role-hint')).toHaveTextContent(
+      'não entra no sistema',
+    );
+    expect(screen.queryByRole('textbox', { name: 'E-mail' })).toBeNull();
+    expect(screen.queryByText('Senha provisória')).toBeNull();
+    expect(screen.queryByLabelText('Também atende clientes')).toBeNull();
+    expect(screen.queryByTestId('member-bridal-assistant')).toBeNull();
+    expect(screen.queryByTestId('member-fixed')).toBeNull();
+    expect(screen.queryByTestId('member-serves-bridal')).toBeNull();
+    expect(screen.queryByText('Categorias atendidas')).toBeNull();
+  });
+
+  it('envia email/senha nulos, flags forçadas e mostra a tela final sem senha', async () => {
+    const mock = {
+      request: {
+        query: CreateMemberMutation,
+        variables: {
+          input: {
+            displayName: 'Carla Nova',
+            email: null,
+            phone: '+5511987654321',
+            pixKey: '12345678909',
+            birthDate: null,
+            roleName: 'ASSISTANT',
+            isProfessional: true,
+            isBridalAssistant: true,
+            isFixed: false,
+            servesBridal: false,
+            categoryIds: [],
+            temporaryPassword: null,
+          },
+        },
+      },
+      result: {
+        data: {
+          createMember: {
+            member: { ...createdMember, roleName: 'ASSISTANT', isBridalAssistant: true },
+            existingAccount: false,
+            warning: null,
+            errors: [],
+          },
+        },
+      },
+    };
+    render(
+      <MockedProvider mocks={[mock, categoriesMock]} addTypename={false}>
+        <CreateMemberDialog open onClose={vi.fn()} callerRoleName="ADMIN" />
+      </MockedProvider>,
+    );
+
+    fireEvent.change(screen.getByLabelText('Nome'), { target: { value: 'Carla Nova' } });
+    fireEvent.change(screen.getByLabelText('Telefone'), {
+      target: { value: '(11) 98765-4321' },
+    });
+    fireEvent.click(screen.getByRole('radio', { name: 'CPF' }));
+    fireEvent.change(screen.getByLabelText('Chave Pix'), {
+      target: { value: '123.456.789-09' },
+    });
+    await pickCreateRole('Assistente');
+    fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    expect(await screen.findByText(/foi cadastrada como Assistente/)).toBeInTheDocument();
+    expect(screen.queryByTestId('temporary-password')).toBeNull();
+    expect(screen.queryByText(/Ela não será exibida novamente/)).toBeNull();
+  });
+
+  it('profissional sem e-mail continua exigindo o e-mail', async () => {
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <CreateMemberDialog open onClose={vi.fn()} callerRoleName="ADMIN" />
+      </MockedProvider>,
+    );
+    await fillCreateForm();
+    fireEvent.change(screen.getByRole('textbox', { name: 'E-mail' }), { target: { value: '' } });
+    fireEvent.click(await screen.findByLabelText('Cabelo'));
+    fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
+    expect(await screen.findByText('Este campo é obrigatório.')).toBeInTheDocument();
+  });
+
+  it('trocar de Assistente para Profissional traz de volta e-mail e categorias', async () => {
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <CreateMemberDialog open onClose={vi.fn()} callerRoleName="ADMIN" />
+      </MockedProvider>,
+    );
+    await pickCreateRole('Assistente');
+    await screen.findByTestId('assistant-role-hint');
+    await pickCreateRole('Profissional');
+    expect(await screen.findByRole('textbox', { name: 'E-mail' })).toBeInTheDocument();
+    expect(await screen.findByLabelText('Cabelo')).toBeInTheDocument();
+    expect(screen.queryByTestId('assistant-role-hint')).toBeNull();
+  });
+});
+
+describe('MemberEditDialog - Assistente', () => {
+  afterEach(() => useAuthStore.setState({ access: null }));
+
+  it('mostra o papel, esconde campos de profissional e o atalho de acessos', () => {
+    useAuthStore.setState({
+      access: { ...accessWithout([], ['agenda']), canManageAccess: true },
+    });
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <MemberEditDialog member={assistantMember} open onClose={vi.fn()} />
+      </MockedProvider>,
+    );
+    expect(screen.getByRole('combobox', { name: 'Papel' })).toHaveTextContent('Assistente');
+    expect(screen.getByTestId('assistant-role-hint')).toBeInTheDocument();
+    expect(screen.queryByLabelText('É profissional')).toBeNull();
+    expect(screen.queryByTestId('member-bridal-assistant')).toBeNull();
+    expect(screen.queryByTestId('member-fixed')).toBeNull();
+    expect(screen.queryByTestId('member-serves-bridal')).toBeNull();
+    expect(screen.queryByRole('combobox', { name: 'Senioridade' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Acessos' })).toBeNull();
+  });
+
+  it('salva com roleName ASSISTANT sem categoryIds', async () => {
+    const onClose = vi.fn();
+    const mock = {
+      request: {
+        query: UpdateMemberMutation,
+        variables: {
+          input: {
+            id: 'mem-ast',
+            roleName: 'ASSISTANT',
+            isProfessional: true,
+            isBridalAssistant: true,
+            isFixed: false,
+            servesBridal: false,
+            seniorityTier: null,
+          },
+        },
+      },
+      result: {
+        data: {
+          updateMember: {
+            member: { ...assistantMember, phone: '+5511987654321' },
+            errors: [],
+          },
+        },
+      },
+    };
+    render(
+      <MockedProvider mocks={[mock, categoriesMock]} addTypename={false}>
+        <MemberEditDialog member={assistantMember} open onClose={onClose} />
+      </MockedProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+  });
+
+  it('Profissional para Assistente com atendimento futuro mostra o erro no campo Papel', async () => {
+    const mock = {
+      request: {
+        query: UpdateMemberMutation,
+        variables: {
+          input: {
+            id: 'mem-1',
+            roleName: 'ASSISTANT',
+            isProfessional: true,
+            isBridalAssistant: true,
+            isFixed: false,
+            servesBridal: false,
+            seniorityTier: null,
+          },
+        },
+      },
+      result: {
+        data: {
+          updateMember: {
+            member: null,
+            errors: [
+              {
+                code: 'MEMBER_HAS_FUTURE_APPOINTMENTS',
+                message: 'Há atendimentos futuros para esta pessoa.',
+                field: 'roleName',
+              },
+            ],
+          },
+        },
+      },
+    };
+    render(
+      <MockedProvider mocks={[mock, categoriesMock]} addTypename={false}>
+        <MemberEditDialog member={professionalMember} open onClose={vi.fn()} />
+      </MockedProvider>,
+    );
+    fireEvent.click(screen.getByRole('combobox', { name: 'Papel' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Assistente' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    expect(
+      await screen.findByText('Há atendimentos futuros para esta pessoa.'),
+    ).toBeInTheDocument();
+  });
+
+  it('o convite por e-mail não oferece o papel Assistente', async () => {
+    render(
+      <MockedProvider mocks={[categoriesMock]} addTypename={false}>
+        <InviteMemberDialog open onClose={vi.fn()} />
+      </MockedProvider>,
+    );
+    fireEvent.click(screen.getByRole('combobox', { name: 'Papel' }));
+    expect(await screen.findByRole('option', { name: 'Atendente' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Assistente' })).toBeNull();
+  });
+});

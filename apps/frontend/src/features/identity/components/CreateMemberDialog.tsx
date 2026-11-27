@@ -36,6 +36,7 @@ import {
   ROLE_OPTIONS,
 } from '@/features/catalog/api/members.api';
 import type { CreateMemberResult } from '@/features/catalog/api/members.api';
+import { isAssistantRole } from '../assistant-role';
 import { generateTemporaryPassword } from '../temporary-password';
 import { maskBrPhone, normalizeBrPhone } from '../member-validation';
 import { PIX_KEY_TYPES, pixKeyError, toPixKeyPayload } from '../pix-key';
@@ -48,7 +49,7 @@ const REQUIRED = 'Este campo é obrigatório.';
 const schema = z
   .object({
     displayName: z.string().trim().min(2, REQUIRED),
-    email: z.string().trim().min(1, REQUIRED).email('E-mail inválido.'),
+    email: z.string().trim(),
     phone: z
       .string()
       .trim()
@@ -57,25 +58,52 @@ const schema = z
     pixKeyType: z.enum(PIX_KEY_TYPES).nullable(),
     pixKey: z.string(),
     birthDate: z.string(),
-    roleName: z.enum(ROLE_OPTIONS, {
-      errorMap: () => ({ message: 'Selecione um papel.' }),
-    }),
+    // String (e não enum) para o superRefine rodar mesmo sem papel escolhido.
+    roleName: z
+      .string()
+      .optional()
+      .refine(
+        (v) => v !== undefined && (ROLE_OPTIONS as readonly string[]).includes(v),
+        'Selecione um papel.',
+      ),
     alsoProfessional: z.boolean(),
     isBridalAssistant: z.boolean(),
     isFixed: z.boolean(),
     servesBridal: z.boolean(),
     categoryIds: z.array(z.string()),
-    temporaryPassword: z
-      .string()
-      .min(8, 'A senha deve ter pelo menos 8 caracteres.')
-      .max(128, 'A senha deve ter no máximo 128 caracteres.'),
+    temporaryPassword: z.string(),
   })
   .superRefine((v, ctx) => {
     const pixError = pixKeyError(v.pixKeyType, v.pixKey);
     if (pixError) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: pixError, path: ['pixKey'] });
     }
-    const professional = v.roleName === 'PROFESSIONAL' || v.alsoProfessional;
+    const assistant = isAssistantRole(v.roleName);
+    if (!assistant) {
+      if (!v.email) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: REQUIRED, path: ['email'] });
+      } else if (!z.string().email().safeParse(v.email).success) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'E-mail inválido.',
+          path: ['email'],
+        });
+      }
+      if (v.temporaryPassword.length < 8) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'A senha deve ter pelo menos 8 caracteres.',
+          path: ['temporaryPassword'],
+        });
+      } else if (v.temporaryPassword.length > 128) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'A senha deve ter no máximo 128 caracteres.',
+          path: ['temporaryPassword'],
+        });
+      }
+    }
+    const professional = !assistant && (v.roleName === 'PROFESSIONAL' || v.alsoProfessional);
     if (professional && v.categoryIds.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -95,7 +123,7 @@ function defaultValues(): FormValues {
     pixKeyType: null,
     pixKey: '',
     birthDate: '',
-    roleName: undefined as unknown as FormValues['roleName'],
+    roleName: undefined as unknown as string,
     alsoProfessional: false,
     isBridalAssistant: false,
     isFixed: false,
@@ -121,6 +149,7 @@ interface CreatedState {
   /** null quando o e-mail já tinha conta (senha não foi criada nem alterada). */
   password: string | null;
   warning: string | null;
+  assistant?: boolean;
 }
 
 export interface CreateMemberDialogProps {
@@ -153,7 +182,8 @@ export function CreateMemberDialog({
 
   const roleName = form.watch('roleName');
   const alsoProfessional = form.watch('alsoProfessional');
-  const isProfessional = roleName === 'PROFESSIONAL' || alsoProfessional;
+  const assistant = isAssistantRole(roleName);
+  const isProfessional = !assistant && (roleName === 'PROFESSIONAL' || alsoProfessional);
   // Quick 261118-gpm: Gerente gerencia a equipe como o Admin, todos os papéis disponíveis.
   const roleOptions = ROLE_OPTIONS;
 
@@ -185,22 +215,23 @@ export function CreateMemberDialog({
   }
 
   async function onSubmit(values: FormValues) {
+    const isAssistant = isAssistantRole(values.roleName);
     const professional = values.roleName === 'PROFESSIONAL' || values.alsoProfessional;
     const res = await createMember({
       variables: {
         input: {
           displayName: values.displayName.trim(),
-          email: values.email.trim(),
+          email: isAssistant ? null : values.email.trim(),
           phone: normalizeBrPhone(values.phone) ?? values.phone,
           pixKey: toPixKeyPayload(values.pixKeyType!, values.pixKey),
           birthDate: values.birthDate ? `${values.birthDate}T00:00:00.000Z` : null,
           roleName: values.roleName,
-          isProfessional: professional,
-          isBridalAssistant: professional ? values.isBridalAssistant : false,
-          isFixed: professional ? values.isFixed : false,
-          servesBridal: professional ? values.servesBridal : false,
-          categoryIds: professional ? values.categoryIds : [],
-          temporaryPassword: values.temporaryPassword,
+          isProfessional: isAssistant ? true : professional,
+          isBridalAssistant: isAssistant ? true : professional ? values.isBridalAssistant : false,
+          isFixed: !isAssistant && professional ? values.isFixed : false,
+          servesBridal: !isAssistant && professional ? values.servesBridal : false,
+          categoryIds: !isAssistant && professional ? values.categoryIds : [],
+          temporaryPassword: isAssistant ? null : values.temporaryPassword,
         },
       },
     });
@@ -213,6 +244,15 @@ export function CreateMemberDialog({
       } else {
         toast.error(first.message);
       }
+      return;
+    }
+    if (isAssistant) {
+      setCreated({
+        name: values.displayName.trim(),
+        password: null,
+        warning: null,
+        assistant: true,
+      });
       return;
     }
     setCreated({
@@ -234,16 +274,18 @@ export function CreateMemberDialog({
           <>
             <DialogHeader>
               <DialogTitle>
-                {created.password
+                {created.password || created.assistant
                   ? t('team.createDialog.resultTitle')
                   : t('team.createDialog.existingTitle')}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
               <p className="text-sm">
-                {t('team.createDialog.createdBody', { name: created.name })}
+                {created.assistant
+                  ? t('team.createDialog.assistantCreatedBody', { name: created.name })
+                  : t('team.createDialog.createdBody', { name: created.name })}
               </p>
-              {created.password ? (
+              {created.assistant ? null : created.password ? (
                 <>
                   <TemporaryPasswordBox password={created.password} />
                   <p className="text-sm text-neutral-600">
@@ -283,6 +325,7 @@ export function CreateMemberDialog({
                   )}
                 />
 
+                {!assistant && (
                 <FormField
                   control={form.control}
                   name="email"
@@ -301,6 +344,7 @@ export function CreateMemberDialog({
                     </FormItem>
                   )}
                 />
+                )}
 
                 <FormField
                   control={form.control}
@@ -379,7 +423,17 @@ export function CreateMemberDialog({
                   )}
                 />
 
-                {roleName && roleName !== 'PROFESSIONAL' && (
+                {assistant && (
+                  <p
+                    role="note"
+                    data-testid="assistant-role-hint"
+                    className="rounded-md border border-neutral-300 bg-neutral-50 p-3 text-sm text-neutral-800"
+                  >
+                    {t('team.createDialog.assistantRoleHint')}
+                  </p>
+                )}
+
+                {roleName && roleName !== 'PROFESSIONAL' && !assistant && (
                   <FormField
                     control={form.control}
                     name="alsoProfessional"
@@ -492,6 +546,7 @@ export function CreateMemberDialog({
                   />
                 )}
 
+                {!assistant && (
                 <FormField
                   control={form.control}
                   name="temporaryPassword"
@@ -529,6 +584,7 @@ export function CreateMemberDialog({
                     </FormItem>
                   )}
                 />
+                )}
 
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={handleClose}>

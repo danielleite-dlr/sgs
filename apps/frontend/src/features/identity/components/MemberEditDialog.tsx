@@ -49,6 +49,7 @@ import type {
   AdminMemberData,
   UpdateMemberResult,
 } from '@/features/catalog/api/members.api';
+import { isAssistantRole } from '../assistant-role';
 import { maskBrPhone, normalizeBrPhone } from '../member-validation';
 import {
   PIX_KEY_TYPES,
@@ -154,7 +155,8 @@ export function MemberEditDialog({ member, open, onClose }: MemberEditDialogProp
   const [accessOpen, setAccessOpen] = useState(false);
   const isProfessionalChecked = form.watch('isProfessional');
   // Papel PROFESSIONAL implica profissional (o backend também força).
-  const isProfessional = roleName === 'PROFESSIONAL' || isProfessionalChecked;
+  const assistant = isAssistantRole(roleName);
+  const isProfessional = !assistant && (roleName === 'PROFESSIONAL' || isProfessionalChecked);
 
   const [updateMember, { loading }] = useMutation<UpdateMemberResult>(
     UpdateMemberMutation,
@@ -171,16 +173,28 @@ export function MemberEditDialog({ member, open, onClose }: MemberEditDialogProp
   );
 
   async function onSubmit(values: FormValues) {
-    const professional = values.roleName === 'PROFESSIONAL' || values.isProfessional;
-    const input: Record<string, unknown> = {
-      id: member.id,
-      roleName: values.roleName,
-      isProfessional: professional,
-      isBridalAssistant: professional ? values.isBridalAssistant : false,
-      isFixed: professional ? values.isFixed : false,
-      servesBridal: professional ? values.servesBridal : false,
-      seniorityTier: professional ? values.seniorityTier : null,
-    };
+    const isAssistant = isAssistantRole(values.roleName);
+    const professional =
+      !isAssistant && (values.roleName === 'PROFESSIONAL' || values.isProfessional);
+    const input: Record<string, unknown> = isAssistant
+      ? {
+          id: member.id,
+          roleName: 'ASSISTANT',
+          isProfessional: true,
+          isBridalAssistant: true,
+          isFixed: false,
+          servesBridal: false,
+          seniorityTier: null,
+        }
+      : {
+          id: member.id,
+          roleName: values.roleName,
+          isProfessional: professional,
+          isBridalAssistant: professional ? values.isBridalAssistant : false,
+          isFixed: professional ? values.isFixed : false,
+          servesBridal: professional ? values.servesBridal : false,
+          seniorityTier: professional ? values.seniorityTier : null,
+        };
 
     const phone = values.phone.trim();
     if (phone) {
@@ -300,7 +314,17 @@ export function MemberEditDialog({ member, open, onClose }: MemberEditDialogProp
               )}
             />
 
-            {roleName !== 'PROFESSIONAL' && (
+            {assistant && (
+              <p
+                role="note"
+                data-testid="assistant-role-hint"
+                className="rounded-md border border-neutral-300 bg-neutral-50 p-3 text-sm text-neutral-800"
+              >
+                {t('team.editDialog.assistantRoleHint')}
+              </p>
+            )}
+
+            {roleName !== 'PROFESSIONAL' && !assistant && (
               <FormField
                 control={form.control}
                 name="isProfessional"
@@ -414,6 +438,7 @@ export function MemberEditDialog({ member, open, onClose }: MemberEditDialogProp
               />
             )}
 
+            {!assistant && (
             <FormField
               control={form.control}
               name="seniorityTier"
@@ -444,6 +469,7 @@ export function MemberEditDialog({ member, open, onClose }: MemberEditDialogProp
                 </FormItem>
               )}
             />
+            )}
 
             {roleName !== member.roleName && (
               <p
@@ -455,7 +481,7 @@ export function MemberEditDialog({ member, open, onClose }: MemberEditDialogProp
             )}
 
             <DialogFooter>
-              {canManageAccess && (
+              {canManageAccess && !assistant && !isAssistantRole(member.roleName) && (
                 <Button
                   type="button"
                   variant="outline"
