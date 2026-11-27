@@ -24,7 +24,12 @@ COPY . .
 # (delegates dos models, Prisma.PrismaClientKnownRequestError). Na ordem
 # inversa o build falha com ~15 erros de implicit any / propriedade ausente.
 RUN pnpm prisma generate
-RUN pnpm build
+# A cópia de assets do nest build (watchAssets) é assíncrona e às vezes termina antes
+# de copiar os .graphql (26/11: backend do staging subiu sem schema). Copia explícita
+# e falha o build se o schema não estiver no dist.
+RUN pnpm build \
+ && (cd src && find . -name '*.graphql' | tar -cf - -T - | tar -xf - -C ../dist) \
+ && test "$(find dist -name '*.graphql' | wc -l)" -gt 0
 
 # ─── Production ───────────────────────────────────────────────────────────────
 FROM node:22-alpine AS production
