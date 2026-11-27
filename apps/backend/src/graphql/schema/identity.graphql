@@ -78,7 +78,8 @@ type MemberCategory {
 
 input CreateMemberInput {
   displayName: String!
-  email: Email!
+  "Obrigatório, exceto para roleName ASSISTANT (Assistente não entra no sistema: o servidor gera e-mail fictício e senha)."
+  email: Email
   phone: String!
   pixKey: String!
   birthDate: DateTime
@@ -88,7 +89,8 @@ input CreateMemberInput {
   isFixed: Boolean
   servesBridal: Boolean
   categoryIds: [UUID!]
-  temporaryPassword: String!
+  "Obrigatório, exceto para roleName ASSISTANT (Assistente não entra no sistema: o servidor gera e-mail fictício e senha)."
+  temporaryPassword: String
 }
 
 "A senha provisória NÃO volta aqui: o frontend já a tem e a exibe uma única vez."

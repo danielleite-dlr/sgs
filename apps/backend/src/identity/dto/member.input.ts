@@ -17,7 +17,7 @@ export class UpdateMemberInput {
   id!: string;
 
   @IsOptional()
-  @IsIn(['ADMIN', 'MANAGER', 'ATTENDANT', 'PROFESSIONAL'])
+  @IsIn(['ADMIN', 'MANAGER', 'ATTENDANT', 'PROFESSIONAL', 'ASSISTANT'])
   roleName?: string;
 
   @IsOptional()
@@ -64,8 +64,10 @@ export class CreateMemberInput {
   @IsString()
   displayName!: string;
 
+  /** Obrigatórios, exceto para o papel Assistente (o servidor gera). */
+  @IsOptional()
   @IsString()
-  email!: string;
+  email?: string | null;
 
   @IsString()
   phone!: string;
@@ -76,7 +78,7 @@ export class CreateMemberInput {
   @IsOptional()
   birthDate?: Date | null;
 
-  @IsIn(['ADMIN', 'MANAGER', 'ATTENDANT', 'PROFESSIONAL'])
+  @IsIn(['ADMIN', 'MANAGER', 'ATTENDANT', 'PROFESSIONAL', 'ASSISTANT'])
   roleName!: string;
 
   @IsOptional()
@@ -100,8 +102,10 @@ export class CreateMemberInput {
   @IsUUID(undefined, { each: true })
   categoryIds?: string[];
 
+  /** Obrigatória, exceto para o papel Assistente (o servidor gera). */
+  @IsOptional()
   @IsString()
-  temporaryPassword!: string;
+  temporaryPassword?: string | null;
 }
 
 export class ResetMemberPasswordInput {
