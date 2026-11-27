@@ -137,4 +137,17 @@ Decisões da usuária:
   cronograma do dia") com botão que leva à aba do cronograma; **não trava** a geração da agenda.
   O agendamento do teste não muda.
 
-Próximo: `/gsd:plan-phase 11 --gaps`.
+Planejado (26/11): 11-17 (G-02), 11-18..11-23 (G-01), 11-24 (gate, backup, deploy, CI). Depois o 11-16 é retomado.
+
+### Reverificação dos gaps (retomada do 11-16, depois do 11-24)
+6. Profissionais → Cadastrar → Papel **Assistente**: o formulário pede só nome, telefone, Pix (e nascimento), sem e-mail e
+   sem senha, com o aviso de que ela não entra no sistema. Cadastrar (ou editar quem só assiste e trocar o papel para
+   Assistente). Na lista ela aparece como "Assistente" com o selo "Assistente da Noiva". Profissional que também assiste
+   continua Profissional com a marcação "Assistente da Noiva".
+7. Agenda → Novo agendamento comum: a Assistente **não** aparece para escolher (nem sugerida); a coluna dela continua na
+   grade. Cancelar sem salvar.
+8. Pacotes → um pacote de debutante: a marcação agora diz "Inclui assistente (noiva ou debutante, no estúdio)". Marcar só se
+   for verdade no studio. Numa debutante no estúdio com esse pacote, o card "Assistente da debutante" pede a escolha.
+9. Noivas → qualquer grupo: abas na ordem **Pessoas | Cronograma do dia | Agenda do evento**. Sem cronograma confirmado,
+   a Agenda do evento mostra "Confirme primeiro o cronograma do dia" com o botão que leva ao cronograma; o teste e a
+   sugestão de agenda continuam disponíveis.

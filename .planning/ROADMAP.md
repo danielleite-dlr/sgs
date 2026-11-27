@@ -448,7 +448,7 @@ Plans:
 **Goal:** Pedido da usuária em 2026-11-18. (1) Na tela Profissionais, marcar quem **atende noiva** e quem é **fixa**. (2) Ao sugerir/distribuir atendimentos, **preencher primeiro as fixas livres** (e, para noivas, as fixas que atendem noiva), só depois as não fixas; com **duas ou mais fixas livres, sugerir a divisão mais justa possível**. (3) No cronograma do grupo de noiva, a noiva e as acompanhantes do grupo têm prioridade para cumprir o cronograma da noiva: **todas maquiadas e penteadas antes do make-off (fotos)** e **prontas no horário de saída configurável**, sempre respeitando o cronograma. Base existente: cronograma por pacote da 04.2 (`departureTime`, etapas antes da saída) e a sugestão de agenda da fase 4 (heurística/IA em `apps/backend/src/bridal/ai`). Ordem decidida: depois da fase 10, antes do app iOS.
 **Requirements**: PRIO-01, PRIO-02, PRIO-03, PRIO-04, PRIO-05, PRIO-06, PRIO-07, PRIO-08, PRIO-09, PRIO-10, PRIO-11, PRIO-12, PRIO-13, PRIO-14, PRIO-15, PRIO-16
 **Depends on:** Phase 10
-**Plans:** 15/16 plans executed
+**Plans:** 15/24 plans executed
 
 Plans:
 - [x] 11-01-PLAN.md — TDD do ranking puro de profissionais (fixa estrita, minutos do dia, revezamento, id) (onda 1)
@@ -467,6 +467,14 @@ Plans:
 - [x] 11-14-PLAN.md — E2E Playwright da prioridade e ajuste dos E2E de noiva (onda 6)
 - [x] 11-15-PLAN.md — gate, backup, deploy no staging e CI (onda 7)
 - [ ] 11-16-PLAN.md — verificação humana no staging, inclusive celular (onda 8)
+- [ ] 11-17-PLAN.md — gap G-02: Cronograma do dia antes da Agenda do evento, aviso sem trava (gaps onda 1)
+- [ ] 11-18-PLAN.md — gap G-01: papel Assistente no backend (cadastro sem login, sem acessos) (gaps onda 1)
+- [ ] 11-19-PLAN.md — gap G-01: Assistente fora do agendamento, da sugestão e do cronograma (gaps onda 2)
+- [ ] 11-20-PLAN.md — gap G-01: só diária (sem comissão) e assistente de debutante no estúdio (gaps onda 2)
+- [ ] 11-21-PLAN.md — gap G-01: papel Assistente nos diálogos, Profissionais e Perfis de acesso (gaps onda 2)
+- [ ] 11-22-PLAN.md — gap G-01: Novo agendamento/comissão sem Assistente e card de debutante (gaps onda 3)
+- [ ] 11-23-PLAN.md — gap G-01: E2E do papel Assistente (gaps onda 4)
+- [ ] 11-24-PLAN.md — gaps: gate, backup, deploy no staging e CI; depois retoma o 11-16 (gaps onda 5)
 
 ### Phase 12: Ajustar cadastro de agendamento
 
