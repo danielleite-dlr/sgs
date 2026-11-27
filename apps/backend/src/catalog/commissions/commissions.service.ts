@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { isAssistantRole } from '../../identity/assistant-role';
 import { Prisma } from '@prisma/client';
 import { TenantContextService } from '../../database/tenant-context.service';
 import type { TenantPrismaClient } from '../../database/types';
@@ -220,7 +221,16 @@ export class CommissionsService {
           status: 'active',
           isProfessional: true,
         },
+        include: { role: { select: { name: true } } },
       });
+      if (member && isAssistantRole(member.role?.name)) {
+        return {
+          code: 'PROFESSIONAL_IS_ASSISTANT',
+          message:
+            'Assistente não tem comissão de serviço: ela recebe só a diária de assistente.',
+          field: 'memberId',
+        };
+      }
       if (!member) {
         return {
           code: 'PROFESSIONAL_NOT_FOUND',
