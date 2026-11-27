@@ -49,7 +49,10 @@ describe('casco Gestor Beauty: menu lateral (D-15)', () => {
     renderSidebar();
     const marca = screen.getByTestId('sidebar-brand');
     expect(within(marca).getByAltText('Gestor Beauty')).toBeInTheDocument();
-    expect(within(marca).getByText('Studio JS')).toBeInTheDocument();
+    expect(within(marca).queryByText('Studio JS')).not.toBeInTheDocument();
+    const org = screen.getByTestId('sidebar-org');
+    expect(org).toHaveTextContent('Studio JS');
+    expect(org).toHaveClass('border-b', 'border-neutral-200');
 
     const nav = screen.getByRole('navigation', { name: 'Navegação principal' });
     expect(nav).toHaveClass('w-64', 'bg-white', 'border-r', 'border-neutral-200');

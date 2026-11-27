@@ -82,15 +82,21 @@ export function SidebarNav({
           data-testid="sidebar-brand"
           aria-label={`${brandName(organizationName)} — início`}
           className={cn(
-            'flex h-14 shrink-0 flex-col justify-center gap-0.5 border-b border-neutral-200 px-md',
+            'flex h-14 shrink-0 items-center border-b border-neutral-200 px-md',
             FOCO,
           )}
         >
-          <img src={logoUrl} alt="Gestor Beauty" className="h-6 w-auto self-start" />
-          <span className="truncate text-xs text-neutral-600">{brandName(organizationName)}</span>
+          <img src={logoUrl} alt="Gestor Beauty" className="h-7 w-auto" />
         </Link>
 
         <div className="flex-1 overflow-y-auto px-sm py-md">
+          {/* Nome do estabelecimento acima dos menus, com linha separadora (quick 261127). */}
+          <p
+            data-testid="sidebar-org"
+            className="mb-sm truncate border-b border-neutral-200 px-sm pb-sm text-body font-semibold text-neutral-800"
+          >
+            {brandName(organizationName)}
+          </p>
           <SidebarList
             items={menu}
             className="space-y-xs"
