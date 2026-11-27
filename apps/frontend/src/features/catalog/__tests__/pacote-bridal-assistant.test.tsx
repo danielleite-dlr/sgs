@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import '@/infrastructure/i18n/index';
 import { useAuthStore } from '@/infrastructure/stores/auth.store';
 import { PacoteForm } from '../components/PacoteForm';
-import { BridalAssistantRateCard } from '../components/BridalAssistantRateCard';
+import { BridalAssistantRateEditor } from '../components/BridalAssistantRateEditor';
 import { PacotesPage } from '@/pages/PacotesPage';
 import { CommissionRulesQuery } from '../api/comissoes.api';
 import { CategoriesQuery } from '../api/categorias.api';
@@ -119,6 +119,28 @@ describe('Pacote com assistente da noiva (09.1)', () => {
     fireEvent.click(screen.getByTestId('pkg-bridal-assistant'));
     expect((screen.getByTestId('pkg-bridal-assistant') as HTMLInputElement).checked).toBe(true);
     expect(screen.queryByTestId('pkg-bridal-assistant-cost')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('pkg-bridal-assistant-rate')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('bridal-assistant-rate-edit')).not.toBeInTheDocument();
+  });
+
+  it('a assistente é uma linha do bloco Serviços, com a diária ao lado (quick 261126-w00)', async () => {
+    useAuthStore.setState({ roleName: 'MANAGER' } as never);
+    renderForm();
+    const row = screen.getByTestId('pkg-services-assistant-row');
+    expect(within(row).getByTestId('pkg-bridal-assistant')).toBeInTheDocument();
+    expect(within(row).getByText('Assistente (no estúdio)')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(within(row).getByTestId('pkg-bridal-assistant-rate')).toHaveTextContent(
+        /diária R\$\s?220,00/,
+      ),
+    );
+    // O lápis discreto para editar a diária fica na mesma linha.
+    expect(within(row).getByTestId('bridal-assistant-rate-edit')).toBeInTheDocument();
+    // Fica antes do preço do pacote e fora de "Outros custos".
+    const costs = screen.getByTestId('package-cost-items');
+    expect(within(costs).queryByTestId('pkg-bridal-assistant')).toBeNull();
+    const price = screen.getAllByText(/Preço do pacote/).find((el) => el.tagName === 'LABEL')!;
+    expect(row.compareDocumentPosition(price) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('edição salva includesBridalAssistant na mutation', async () => {
@@ -156,7 +178,7 @@ describe('Pacote com assistente da noiva (09.1)', () => {
     expect(input.price).toBe('1000.00');
   });
 
-  it('BridalAssistantRateCard: edita a diária e salva 250.00', async () => {
+  it('BridalAssistantRateEditor: abre pelo lápis, edita a diária e salva 250.00', async () => {
     const spy = vi.fn();
     const mocks = [
       settingsMock(),
@@ -175,9 +197,10 @@ describe('Pacote com assistente da noiva (09.1)', () => {
     ];
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
-        <BridalAssistantRateCard />
+        <BridalAssistantRateEditor />
       </MockedProvider>,
     );
+    fireEvent.click(screen.getByTestId('bridal-assistant-rate-edit'));
     const input = screen.getByTestId('bridal-assistant-rate') as HTMLInputElement;
     await waitFor(() => expect(input.value).toBe('220,00'));
     fireEvent.change(input, { target: { value: '25000' } });
@@ -187,7 +210,7 @@ describe('Pacote com assistente da noiva (09.1)', () => {
     await waitFor(() => expect(toastMock.success).toHaveBeenCalledWith('Diária atualizada.'));
   });
 
-  it('BridalAssistantRateCard: INVALID_DAILY_RATE mostra toast de erro', async () => {
+  it('BridalAssistantRateEditor: INVALID_DAILY_RATE mostra toast de erro', async () => {
     const mocks = [
       settingsMock(),
       {
@@ -205,9 +228,10 @@ describe('Pacote com assistente da noiva (09.1)', () => {
     ];
     render(
       <MockedProvider mocks={mocks} addTypename={false}>
-        <BridalAssistantRateCard />
+        <BridalAssistantRateEditor />
       </MockedProvider>,
     );
+    fireEvent.click(screen.getByTestId('bridal-assistant-rate-edit'));
     const input = screen.getByTestId('bridal-assistant-rate') as HTMLInputElement;
     await waitFor(() => expect(input.value).toBe('220,00'));
     fireEvent.change(input, { target: { value: '25000' } });
@@ -259,17 +283,18 @@ function renderPage() {
 }
 
 describe('PacotesPage com assistente (09.1)', () => {
-  it('ATTENDANT não vê o card da diária; selo aparece só no pacote marcado', async () => {
+  it('selo aparece só no pacote marcado', async () => {
     useAuthStore.setState({ roleName: 'ATTENDANT' } as never);
     renderPage();
     await screen.findByText('ESSENCE');
-    expect(screen.queryByTestId('bridal-assistant-rate')).not.toBeInTheDocument();
     expect(screen.getAllByTestId('pkg-badge-bridal-assistant')).toHaveLength(1);
   });
 
-  it('MANAGER vê o card da diária', async () => {
+  it('MANAGER não tem mais o card da diária no topo da página', async () => {
     useAuthStore.setState({ roleName: 'MANAGER' } as never);
     renderPage();
-    expect(await screen.findByTestId('bridal-assistant-rate')).toBeInTheDocument();
+    await screen.findByText('ESSENCE');
+    expect(screen.queryByTestId('bridal-assistant-rate-card')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('bridal-assistant-rate')).not.toBeInTheDocument();
   });
 });

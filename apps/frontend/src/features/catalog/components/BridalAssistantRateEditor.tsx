@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
+import { Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   BridalAssistantSettingsQuery,
   UpdateBridalAssistantSettingsMutation,
@@ -23,9 +24,14 @@ interface UpdateResult {
   };
 }
 
-/** Diária vigente da assistente da noiva (09.1 D-06). Só ADMIN/MANAGER veem. */
-export function BridalAssistantRateCard() {
+/**
+ * Diária vigente da assistente (09.1 D-06), editada de forma discreta na linha da
+ * assistente dentro de Serviços do pacote (quick 261126-w00). Vale para todos os pacotes.
+ * Quem renderiza decide a permissão (financial.read).
+ */
+export function BridalAssistantRateEditor() {
   const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
   const { data } = useQuery<SettingsResult>(BridalAssistantSettingsQuery);
   const [update, { loading }] = useMutation<UpdateResult>(UpdateBridalAssistantSettingsMutation, {
     refetchQueries: ['Packages', 'BridalAssistantSettings'],
@@ -37,7 +43,7 @@ export function BridalAssistantRateCard() {
 
   useEffect(() => {
     if (serverRate != null) setValue(formatCurrencyDisplay(serverRate));
-  }, [serverRate]);
+  }, [serverRate, open]);
 
   const unchanged = value === serverDisplay;
 
@@ -50,41 +56,56 @@ export function BridalAssistantRateCard() {
         return;
       }
       toast.success(t('catalog.pacote.bridalAssistantRateSaved'));
+      setOpen(false);
     } catch {
       toast.error(t('catalog.servico.errors.generic', 'Não foi possível salvar. Tente novamente.'));
     }
   }
 
   return (
-    <Card className="mb-md" data-testid="bridal-assistant-rate-card">
-      <CardHeader>
-        <CardTitle className="text-base">{t('catalog.pacote.bridalAssistantRateTitle')}</CardTitle>
-        <CardDescription>{t('catalog.pacote.bridalAssistantRateHint')}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex items-end gap-sm">
-        <div className="space-y-1">
-          <Label htmlFor="bridal-assistant-rate">
-            {t('catalog.pacote.bridalAssistantDailyCostLabel')} (R$)
-          </Label>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          data-testid="bridal-assistant-rate-edit"
+          aria-label={t('catalog.pacote.bridalAssistantRateEdit')}
+          title={t('catalog.pacote.bridalAssistantRateEdit')}
+          className="inline-flex h-7 w-7 items-center justify-center rounded text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64 space-y-2" data-testid="bridal-assistant-rate-popover">
+        <Label htmlFor="bridal-assistant-rate" className="text-sm">
+          {t('catalog.pacote.bridalAssistantDailyCostLabel')} (R$)
+        </Label>
+        <div className="flex gap-2">
           <Input
             id="bridal-assistant-rate"
             data-testid="bridal-assistant-rate"
-            className="w-40"
             inputMode="numeric"
             placeholder="0,00"
             value={value}
             onChange={(e) => setValue(maskCurrency(e.target.value))}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (!loading && !unchanged && value !== '') void handleSave();
+              }
+            }}
           />
+          <Button
+            type="button"
+            size="sm"
+            data-testid="bridal-assistant-rate-save"
+            disabled={loading || unchanged || value === ''}
+            onClick={handleSave}
+          >
+            {t('catalog.pacote.bridalAssistantRateSave')}
+          </Button>
         </div>
-        <Button
-          type="button"
-          data-testid="bridal-assistant-rate-save"
-          disabled={loading || unchanged || value === ''}
-          onClick={handleSave}
-        >
-          {t('catalog.pacote.bridalAssistantRateSave')}
-        </Button>
-      </CardContent>
-    </Card>
+        <p className="text-xs text-neutral-500">{t('catalog.pacote.bridalAssistantRateHint')}</p>
+      </PopoverContent>
+    </Popover>
   );
 }

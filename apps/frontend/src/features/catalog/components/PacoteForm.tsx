@@ -32,6 +32,7 @@ import {
 import { PackagePriceSummary } from './PackagePriceSummary';
 import { PackageCostSummary } from './PackageCostSummary';
 import { PackageServicesPicker } from './PackageServicesPicker';
+import { BridalAssistantRateEditor } from './BridalAssistantRateEditor';
 import { maskCurrency, unmaskCurrency, formatCurrencyDisplay } from '../utils/currency-mask';
 
 const schema = z.object({
@@ -297,6 +298,45 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
               {fieldState.error && (
                 <p className="text-sm text-error-500">{fieldState.error.message}</p>
               )}
+              {/* Assistente como linha de Serviços (09.1 D-04; quick 261126-w00): só a tela muda */}
+              <div
+                className="mt-2 border-t border-neutral-200 pt-2"
+                data-testid="pkg-services-assistant-row"
+              >
+                <div className="flex min-h-11 items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="pkg-bridal-assistant"
+                    data-testid="pkg-bridal-assistant"
+                    className="h-5 w-5"
+                    checked={watched.includesBridalAssistant}
+                    onChange={(e) =>
+                      form.setValue('includesBridalAssistant', e.target.checked, {
+                        shouldDirty: true,
+                      })
+                    }
+                  />
+                  <label htmlFor="pkg-bridal-assistant" className="flex-1 text-sm">
+                    {t('catalog.pacote.includesBridalAssistantLabel')}
+                  </label>
+                  {canSeeCosts && (
+                    <span
+                      className="text-xs text-neutral-500 tabular-nums"
+                      data-testid="pkg-bridal-assistant-rate"
+                    >
+                      diária{' '}
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      }).format(assistantRate)}
+                    </span>
+                  )}
+                  {canSeeCosts && <BridalAssistantRateEditor />}
+                </div>
+                <p className="pl-7 text-xs text-neutral-600">
+                  {t('catalog.pacote.includesBridalAssistantHint')}
+                </p>
+              </div>
             </FormItem>
           )}
         />
@@ -327,38 +367,13 @@ export function PacoteForm({ initial, onClose }: PacoteFormProps) {
           packagePrice={unmaskCurrency(form.watch('price') || '') || '0'}
         />
 
-        {/* Assistente da noiva no estúdio (09.1 D-04) */}
-        <FormField
-          control={form.control}
-          name="includesBridalAssistant"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="pkg-bridal-assistant"
-                  data-testid="pkg-bridal-assistant"
-                  checked={field.value}
-                  onChange={(e) => field.onChange(e.target.checked)}
-                />
-                <label htmlFor="pkg-bridal-assistant" className="text-sm font-medium">
-                  {t('catalog.pacote.includesBridalAssistantLabel')}
-                </label>
-              </div>
-              <p className="text-xs text-neutral-600">
-                {t('catalog.pacote.includesBridalAssistantHint')}
-              </p>
-            </FormItem>
-          )}
-        />
-
         {/* Custos do pacote (só o salão vê) */}
         <div className="space-y-sm" data-testid="package-cost-items">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold">Outros custos do pacote</p>
               <p className="text-xs text-neutral-500">
-                Lanche, champagne, assistente… O repasse às profissionais vem da comissão de
+                Lanche, champagne… O repasse às profissionais vem da comissão de
                 cada serviço.
               </p>
             </div>

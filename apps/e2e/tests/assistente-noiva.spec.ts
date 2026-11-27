@@ -82,7 +82,8 @@ test.describe('Assistente da noiva (09.1)', () => {
     await expect(dialog).toBeHidden();
 
     await expect(row.getByTestId('pkg-badge-bridal-assistant')).toBeVisible();
-    await expect(page.getByTestId('bridal-assistant-rate')).toHaveValue('220,00');
+    // A diária saiu do topo da página e fica no lápis dentro de Serviços (quick 261126-w00).
+    await expect(page.getByTestId('bridal-assistant-rate-card')).toHaveCount(0);
   });
 
   test('3. a atendente vincula a assistente e não vê a diária', async ({ page }) => {

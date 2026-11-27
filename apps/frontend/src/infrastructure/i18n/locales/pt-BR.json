@@ -744,12 +744,13 @@
       "empty": "Nenhum resultado."
     },
     "pacote": {
-      "includesBridalAssistantLabel": "Inclui assistente (noiva ou debutante, no estúdio)",
-      "includesBridalAssistantHint": "A diária da assistente entra no custo do pacote. Não muda o preço nem o contrato.",
+      "includesBridalAssistantLabel": "Assistente (no estúdio)",
+      "includesBridalAssistantHint": "Noiva ou debutante. Custo interno: não muda o preço nem o contrato.",
       "bridalAssistantDailyCostLabel": "Diária da assistente",
       "bridalAssistantRateTitle": "Diária da assistente da noiva",
       "bridalAssistantRateHint": "Vale para as próximas noivas vinculadas. Noivas que já têm assistente mantêm o valor de quando foram vinculadas.",
       "bridalAssistantRateSave": "Salvar diária",
+      "bridalAssistantRateEdit": "Editar diária da assistente",
       "bridalAssistantRateSaved": "Diária atualizada.",
       "bridalAssistantBadge": "Com assistente",
       "summary": {

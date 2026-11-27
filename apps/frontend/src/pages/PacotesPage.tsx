@@ -28,8 +28,6 @@ import { DataTable } from '@/components/ui/data-table';
 import { EntityAvatar } from '@/components/ui/entity-avatar';
 import { PackagePriceSummary } from '@/features/catalog/components/PackagePriceSummary';
 import { PackageCostSummary } from '@/features/catalog/components/PackageCostSummary';
-import { BridalAssistantRateCard } from '@/features/catalog/components/BridalAssistantRateCard';
-import { useHasPermission } from '@/features/operations/operations-permissions';
 import { PacoteForm } from '@/features/catalog/components/PacoteForm';
 import { PackageTimelineDialog } from '@/features/catalog/components/PackageTimelineDialog';
 import type {
@@ -45,8 +43,6 @@ const fmt = (v: string | number) =>
 export function PacotesPage() {
   const { t } = useTranslation();
   const { data, loading } = useQuery(PackagesQuery);
-  // Diária da assistente é custo: mesmo gate do lucro (ADMIN/MANAGER)
-  const canEditRate = useHasPermission('financial.read');
   const [softDelete] = useMutation(SoftDeletePackageMutation, {
     refetchQueries: [{ query: PackagesQuery }],
   });
@@ -178,8 +174,6 @@ export function PacotesPage() {
         ]}
         cta={<Button onClick={() => setCreateOpen(true)}>{t('pages.pacotes.newCta')}</Button>}
       />
-
-      {canEditRate && <BridalAssistantRateCard />}
 
       <DataTable
         columns={columns}
