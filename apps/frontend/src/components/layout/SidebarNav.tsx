@@ -18,6 +18,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { type MenuItem } from './menu-config';
 import { useMenu } from './use-menu';
 import { contemAvisoEstoque, temRotaAtiva, useMenuAccordion } from './use-menu-accordion';
+import logoUrl from '@/assets/marca/logo-horizontal-principal.svg';
 import { BrandMark } from './BrandMark';
 import { SessionUser } from './SessionUser';
 
@@ -81,14 +82,12 @@ export function SidebarNav({
           data-testid="sidebar-brand"
           aria-label={`${brandName(organizationName)} — início`}
           className={cn(
-            'flex h-14 shrink-0 items-center gap-sm border-b border-neutral-200 px-md',
+            'flex h-14 shrink-0 flex-col justify-center gap-0.5 border-b border-neutral-200 px-md',
             FOCO,
           )}
         >
-          <BrandMark organizationName={organizationName} />
-          <span className="truncate font-serif text-headline-sm text-neutral-800">
-            {brandName(organizationName)}
-          </span>
+          <img src={logoUrl} alt="Gestor Beauty" className="h-6 w-auto self-start" />
+          <span className="truncate text-xs text-neutral-600">{brandName(organizationName)}</span>
         </Link>
 
         <div className="flex-1 overflow-y-auto px-sm py-md">
@@ -332,7 +331,7 @@ function CollapsedSidebar({
             FOCO,
           )}
         >
-          <BrandMark organizationName={organizationName} />
+          <BrandMark />
         </Link>
 
         <ul className="flex w-full flex-1 flex-col items-center gap-xs overflow-y-auto py-md">

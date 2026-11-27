@@ -1,13 +1,14 @@
-import { brandInitials } from '@/lib/brand';
+import simboloUrl from '@/assets/marca/simbolo-principal.svg';
 
-/** Quadrado roxo com a sigla do estúdio (menu lateral, topo do celular e gaveta). */
-export function BrandMark({ organizationName }: { organizationName: string | null }) {
+/** Símbolo da marca Gestor Beauty (menu recolhido, topo do celular e gaveta). */
+export function BrandMark() {
   return (
-    <span
+    <img
+      src={simboloUrl}
+      alt=""
       aria-hidden="true"
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary font-serif text-[15px] font-semibold text-white"
-    >
-      {brandInitials(organizationName)}
-    </span>
+      data-testid="brand-symbol"
+      className="h-8 w-8 shrink-0"
+    />
   );
 }

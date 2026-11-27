@@ -57,7 +57,7 @@ describe('index.html do app instalável', () => {
     expect(html).toContain('<link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png"');
     expect(html).toContain('name="apple-mobile-web-app-capable" content="yes"');
     expect(html).toContain('name="apple-mobile-web-app-title" content="Gestor Beauty"');
-    expect(html).toContain('name="theme-color" content="#570080"');
+    expect(html).toContain('name="theme-color" content="#7E22CE"');
     expect(html).toContain('viewport-fit=cover');
   });
 });

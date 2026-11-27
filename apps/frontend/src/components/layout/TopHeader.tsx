@@ -50,7 +50,7 @@ export function TopHeader({ notificationsOpen, onNotificationsOpenChange }: TopH
           aria-label={`${marca} — início`}
           className="flex min-w-0 items-center gap-sm lg:hidden"
         >
-          <BrandMark organizationName={organizationName} />
+          <BrandMark />
           <span className="flex min-w-0 flex-col">
             <span className="truncate font-serif text-headline-sm text-neutral-800">{marca}</span>
             <span

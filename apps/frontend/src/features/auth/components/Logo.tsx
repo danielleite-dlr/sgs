@@ -1,7 +1,9 @@
+import logoUrl from '@/assets/marca/logo-horizontal-principal.svg';
+
 export function Logo() {
   return (
-    <div className="text-center mb-lg">
-      <span className="text-display text-primary-700 font-semibold">SGS</span>
+    <div className="mb-lg flex justify-center">
+      <img src={logoUrl} alt="Gestor Beauty" className="h-10 w-auto" />
     </div>
   );
 }

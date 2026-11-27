@@ -46,7 +46,7 @@ export function AppDrawer({
       <SheetContent side="left" className="flex w-full max-w-sm flex-col p-0">
         <SheetHeader className="border-b border-neutral-200 bg-white px-md py-md">
           <SheetTitle className="flex items-center gap-sm text-left">
-            <BrandMark organizationName={organizationName} />
+            <BrandMark />
             <span className="truncate font-serif text-headline-sm text-neutral-800">
               {brandName(organizationName)}
             </span>

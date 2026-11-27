@@ -1,0 +1,16 @@
+GESTOR BEAUTY · ARQUIVOS DO LOGO
+
+Logo principal: logo-horizontal-principal (fundo claro)
+Fundo escuro: logo-horizontal-fundo-escuro
+Uma cor só: logo-horizontal-escuro-1-cor e logo-horizontal-branco
+
+Cores
+  Roxo escuro   #250B42  (texto "gestor", fundos escuros)
+  Roxo          #7E22CE  (símbolo e "beauty" no fundo claro)
+  Roxo vivo     #A855F7  (símbolo no fundo escuro, fundo do ícone)
+  Lilás         #D8B4FE  ("beauty" no fundo escuro)
+
+Fonte: Sora (Google Fonts) · "gestor" Bold 700 · "beauty" Regular 400
+Nos SVG o texto já está convertido em curvas: não precisa ter a fonte instalada.
+
+Ícone do app: PNGs quadrados sem cantos arredondados (a loja aplica a máscara).
