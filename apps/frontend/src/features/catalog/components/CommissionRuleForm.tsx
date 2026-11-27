@@ -33,6 +33,7 @@ import {
   type CommissionRuleData,
 } from '../api/comissoes.api';
 import { MembersQuery, type MemberData } from '../api/members.api';
+import { isAssistantRole } from '@/features/identity/assistant-role';
 import { sortFixedFirst } from '@/features/operations/professional-order';
 import { ServicesQuery } from '../api/servicos.api';
 import { CategoriesQuery } from '../api/categorias.api';
@@ -170,7 +171,9 @@ export function CommissionRuleForm({
   // ---- Map query results to EntityCombobox items ----
   // Fixas primeiro e depois por nome (D-09)
   const memberItems = sortFixedFirst<MemberData>(
-    (membersData?.members ?? []).filter((m: MemberData) => m.isProfessional),
+    (membersData?.members ?? []).filter(
+      (m: MemberData) => m.isProfessional && !isAssistantRole(m.roleName),
+    ),
     (m) => m.displayName,
   ).map((m: MemberData) => ({
       id: m.id,

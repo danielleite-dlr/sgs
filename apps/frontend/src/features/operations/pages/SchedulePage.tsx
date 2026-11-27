@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useMutation, useQuery } from "@apollo/client";
+import { isAssistantRole } from "@/features/identity/assistant-role";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -802,6 +803,7 @@ export function SchedulePage() {
             tone,
             seniorityTier: member.seniorityTier ?? null,
             isFixed: member.isFixed,
+            isAssistant: isAssistantRole(member.roleName),
           };
         }),
     [membersData, ownOnly, memberId, toneByProfessional],

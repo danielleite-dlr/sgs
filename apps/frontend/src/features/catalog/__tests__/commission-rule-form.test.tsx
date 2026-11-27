@@ -18,6 +18,7 @@ const membersMock = {
       members: [
         { id: 'mem-1', displayName: 'Ana Silva', email: 'ana@test.com', roleName: 'PROFESSIONAL', seniorityTier: 'senior', isProfessional: true, isFixed: false },
         { id: 'mem-2', displayName: 'Zélia Costa', email: 'z@test.com', roleName: 'PROFESSIONAL', seniorityTier: 'senior', isProfessional: true, isFixed: true },
+        { id: 'mem-3', displayName: 'Bia Assistente', email: 'b@test.com', roleName: 'ASSISTANT', seniorityTier: null, isProfessional: true, isFixed: false },
       ],
     },
   },
@@ -205,6 +206,14 @@ describe('CommissionRuleForm', () => {
     const zelia = await screen.findByText('Zélia Costa');
     const ana = await screen.findByText('Ana Silva');
     expect(zelia.compareDocumentPosition(ana) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('3c. a Assistente não aparece no combobox de profissional (G-01)', async () => {
+    renderForm();
+    fireEvent.click(screen.getByLabelText(/profissional \+ serviço/i));
+    fireEvent.click(await screen.findByText(/selecione o profissional/i));
+    await screen.findByText('Ana Silva');
+    expect(screen.queryByText('Bia Assistente')).toBeNull();
   });
 
   it('4. selecting scope category — category select appears', async () => {

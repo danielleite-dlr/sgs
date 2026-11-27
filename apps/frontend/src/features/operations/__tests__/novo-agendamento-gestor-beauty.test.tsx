@@ -401,4 +401,24 @@ describe('Novo agendamento: sugestão de profissional (11 D-08, D-09, D-12)', ()
       .map((r) => r.textContent);
     expect(names).toEqual(['Profissional 3', 'Profissional 1', 'Profissional 2']);
   });
+
+  it('a Assistente não aparece no seletor, nem antes nem depois do serviço (G-01)', async () => {
+    const list = [...pros(2), { ...pros(3)[2], name: 'Bia Assistente', isAssistant: true }];
+    renderDialog({ professionals: list });
+    const group = screen.getByTestId('visit-line-0-professional');
+    expect(within(group).queryByText('Bia Assistente')).toBeNull();
+    expect(within(group).getAllByRole('radio')).toHaveLength(2);
+    await screen.findByRole('option', { name: 'Maquiagem social' });
+    fireEvent.change(screen.getByTestId('visit-line-0-service'), { target: { value: 's1' } });
+    expect(within(screen.getByTestId('visit-line-0-professional')).queryByText('Bia Assistente'))
+      .toBeNull();
+  });
+
+  it('coluna da Assistente clicada abre sem profissional pré-selecionada', () => {
+    const list = [...pros(2), { ...pros(3)[2], isAssistant: true }];
+    renderDialog({ professionals: list, profId: 'p3' });
+    for (const r of within(screen.getByTestId('visit-line-0-professional')).getAllByRole('radio')) {
+      expect(r).toHaveAttribute('aria-checked', 'false');
+    }
+  });
 });

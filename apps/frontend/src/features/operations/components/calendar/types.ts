@@ -22,6 +22,8 @@ export interface ScheduleProfessional {
   isFixed?: boolean;
   // Cor automática da profissional (quick-261108-n4s); sem tom = visual neutro (branco).
   tone?: ProfessionalTone;
+  // Fase 11 G-01: papel Assistente — tem coluna na grade, mas não faz atendimento.
+  isAssistant?: boolean;
 }
 
 export interface ScheduleAppointment {

@@ -490,8 +490,17 @@ export function VisitFormDialog({
   const canCreateClient = useHasPermission('client.write');
   const [dateBr, setDateBr] = useState(() => dateToBr(date));
   const [packageId, setPackageId] = useState('');
+  // Fase 11 G-01: a Assistente tem coluna na grade, mas não é pré-selecionada nem escolhida.
+  const serviceProfessionals = useMemo(
+    () => professionals.filter((p) => !p.isAssistant),
+    [professionals],
+  );
+  const seedProfId =
+    initialTime?.profId && !professionals.find((p) => p.id === initialTime.profId)?.isAssistant
+      ? initialTime.profId
+      : undefined;
   const [lines, setLines] = useState<LineState[]>(() => [
-    emptyLine(seedTime(initialTime), initialTime?.profId),
+    emptyLine(seedTime(initialTime), seedProfId),
   ]);
   const [depositAmount, setDepositAmount] = useState('');
   const [depositMethod, setDepositMethod] = useState('pix');
@@ -531,12 +540,12 @@ export function VisitFormDialog({
         pickClient(prefill.clientId, prefill.clientName, null);
         setLines(
           prefill.serviceIds.map((serviceId) => ({
-            ...emptyLine(seedTime(initialTime), initialTime?.profId),
+            ...emptyLine(seedTime(initialTime), seedProfId),
             serviceId,
           })),
         );
       } else {
-        setLines([emptyLine(seedTime(initialTime), initialTime?.profId)]);
+        setLines([emptyLine(seedTime(initialTime), seedProfId)]);
       }
       setPackageId('');
       setError('');
@@ -958,7 +967,7 @@ export function VisitFormDialog({
                 index={i}
                 line={line}
                 services={services}
-                professionals={professionals}
+                professionals={serviceProfessionals}
                 lockedService={selectedPackage !== null}
                 canRemove={selectedPackage === null && lines.length > 1}
                 dateField={i === 0 ? dateField : undefined}
