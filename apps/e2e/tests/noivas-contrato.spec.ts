@@ -274,10 +274,21 @@ test.describe('Fase 4: pacote -> grupo de noivas -> contrato -> aceite público 
     );
   });
 
+  test('G-02: abas na ordem Pessoas, Cronograma do dia, Agenda do evento; aviso leva ao cronograma', async ({ page }) => {
+    await loginViaUi(page, seed.owner.email, seed.owner.password);
+    await page.goto(`/noivas/${groupId}`);
+    await expect(page.getByRole('tab')).toHaveText(['Pessoas', 'Cronograma do dia', 'Agenda do evento']);
+    await page.getByRole('tab', { name: 'Agenda do evento' }).click();
+    await page.getByTestId('schedule-go-timeline').click();
+    await expect(page.getByRole('tab', { name: 'Cronograma do dia' })).toHaveAttribute('aria-selected', 'true');
+  });
+
   test('Sugerir agenda IA sem chave (sugestão simples), confirmar e ver na agenda', async ({ page }) => {
     await loginViaUi(page, seed.owner.email, seed.owner.password);
     await page.goto(`/noivas/${groupId}`);
     await page.getByRole('tab', { name: 'Agenda do evento' }).click();
+    // G-02: sem cronograma confirmado, a agenda avisa mas não trava
+    await expect(page.getByTestId('schedule-needs-timeline')).toContainText('Confirme primeiro o cronograma do dia');
     await page.getByRole('button', { name: 'Sugerir agenda IA' }).click();
     await expect(page.getByText('IA não configurada — sugestão simples.')).toBeVisible();
     await expect(page.getByTestId('ai-errors')).toHaveText('');
