@@ -48,7 +48,7 @@ Plan: 14 of 16
 Plan: 14 of 16
 Plan: 14 of 16
 Status: Phase complete — ready for verification
-Last activity: 2026-11-27
+Last activity: 2026-11-27 - Completed quick task 261127-oea: marca Gestor Beauty no web e no app Android
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -347,6 +347,7 @@ Recent decisions affecting current work:
 | 261126-fgp | Sair e renovação de sessão rápidos (refresh token por índice + teto de 3 s no logout) | 2026-11-26 | 3776e4b | [261126-fgp-sair-e-renovacao-de-sessao-rapidos-com-b](./quick/261126-fgp-sair-e-renovacao-de-sessao-rapidos-com-b/) |
 | 261126-w00 | Assistente dentro de Serviços no pacote; diária por lápis discreto (sai o card do topo) | 2026-11-26 | bfd9823 | [261126-w00-assistente-dentro-de-servicos-do-pacote](./quick/261126-w00-assistente-dentro-de-servicos-do-pacote/) |
 | 261126-w01 | Agendamento mostra pacote de noiva só no dia do contrato; senão só sociais | 2026-11-26 | 09d796e | [261126-w01-pacotes-do-agendamento-pelo-contrato](./quick/261126-w01-pacotes-do-agendamento-pelo-contrato/) |
+| 261127-oea | Marca Gestor Beauty: logo no login e menu, favicon/PWA, paleta #7E22CE, ícone/splash Android e cor do push | 2026-11-27 | 7adf877 | [261127-oea-marca-gestor-beauty-no-web-e-no-app-andr](./quick/261127-oea-marca-gestor-beauty-no-web-e-no-app-andr/) |
 
 ## Session Continuity
 
