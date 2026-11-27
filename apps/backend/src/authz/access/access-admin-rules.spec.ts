@@ -16,6 +16,12 @@ describe('targetLock', () => {
     });
   });
 
+  it.each(['ADMIN', 'MANAGER'])('%s no Assistente', (actorRole) => {
+    expect(
+      targetLock({ ...base, actorRole, targetRole: 'ASSISTANT' }),
+    ).toMatchObject({ code: 'ACCESS_TARGET_ASSISTANT' });
+  });
+
   it.each(['MANAGER', 'ATTENDANT', 'PROFESSIONAL'])('Admin em %s', (r) => {
     expect(
       targetLock({ ...base, actorRole: 'ADMIN', targetRole: r }),
@@ -73,7 +79,12 @@ describe('itemAdjustability', () => {
 
   it('Perfis de acesso não liga para Atendente', () => {
     expect(
-      itemAdjustability(admin, 'ATTENDANT', item('profissionais-perfis'), false),
+      itemAdjustability(
+        admin,
+        'ATTENDANT',
+        item('profissionais-perfis'),
+        false,
+      ),
     ).toEqual({
       adjustable: false,
       lockReason: 'Perfis de acesso fica só com Administrador e Gerente.',
