@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 11-15-PLAN.md
-last_updated: "2026-11-26T06:22:13.316Z"
-last_activity: 2026-11-26
+stopped_at: Completed 11-18-PLAN.md
+last_updated: "2026-11-27T00:40:57.273Z"
+last_activity: 2026-11-27
 progress:
   total_phases: 16
   completed_phases: 12
-  total_plans: 186
-  completed_plans: 184
+  total_plans: 194
+  completed_plans: 185
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 11 (prioridade-de-profissionais-e-cronograma-da-noiva) — EXECUTING
-Plan: 15 of 16
+Plan: 16 of 16
 Plan: 14 of 16
 Plan: 14 of 16
 Plan: 14 of 16
@@ -48,7 +48,7 @@ Plan: 14 of 16
 Plan: 14 of 16
 Plan: 14 of 16
 Status: Ready to execute
-Last activity: 2026-11-26 - Completed quick task 261126-fgp: Sair e renovação de sessão rápidos
+Last activity: 2026-11-27
 
 Progress: [██████████] 100% (Phase 1 of 5)
 
@@ -156,6 +156,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 11 P11 | 30min | 2 tasks | 6 files |
 | Phase 11 P14 | 45min | 2 tasks | 5 files |
 | Phase 11 P15 | 50min | 2 tasks | 1 files |
+| Phase 11 P18 | 50min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -262,6 +263,7 @@ Recent decisions affecting current work:
 - [Phase 11]: 11-01: ranking puro de profissionais (fixa estrita > minutos no dia > revezamento > id); filtro de noiva sem fallback
 - [Phase 11]: 11-02: migração só ADD COLUMN (is_fixed, serves_bridal, companions_ready_by); fixas primeiro só em professionalsForService, grade da Agenda inalterada
 - [Phase 11]: 11-04: mudar o dia do evento sem companionsReadyBy zera o campo
+- [Phase 11]: Papel ASSISTANT = linha de sistema em roles, implica isProfessional/isBridalAssistant e zera fixa/atende noiva/categorias; sem login
 
 ### Pending Todos
 
@@ -345,8 +347,8 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-26T06:22:13.306Z
-Stopped at: Completed 11-15-PLAN.md
+Last session: 2026-11-27T00:40:57.262Z
+Stopped at: Completed 11-18-PLAN.md
 Resume file: None
 | 2026-11-12 | fast | Montar manualmente (noivas) sem duplicar serviços do teste | ✅ |
 | 2026-11-13 | fast | Comanda: crédito do cliente em destaque no pagamento e no card da cliente | ✅ |
