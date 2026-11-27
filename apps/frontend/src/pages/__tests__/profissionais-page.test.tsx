@@ -227,6 +227,25 @@ describe('ProfissionaisPage', () => {
     expect(screen.queryByText('Desativar')).toBeNull();
   });
 
+  it('mostra a Assistente com o papel "Assistente", sem categorias e sem redefinir senha', async () => {
+    const assistant: AdminMemberData = {
+      ...members[0],
+      id: 'mem-ast',
+      displayName: 'Dani Assistente',
+      email: 'dani@sem-login.invalid',
+      roleName: 'ASSISTANT',
+      seniorityTier: null,
+      isBridalAssistant: true,
+      categories: [],
+    };
+    renderPage([membersMock([assistant]), categoriesMock]);
+    const row = (await screen.findByText('Dani Assistente')).closest('tr')!;
+    expect(within(row).getByText('Assistente')).toBeInTheDocument();
+    openDropdown(within(row).getByRole('button', { name: 'Ações' }));
+    expect(await screen.findByText('Desativar')).toBeInTheDocument();
+    expect(screen.queryByText('Gerar nova senha provisória')).toBeNull();
+  });
+
   it('closes the actions menu when an action opens its dialog, so it does not reappear afterwards', async () => {
     renderPage();
     await screen.findByText('Ana Silva');

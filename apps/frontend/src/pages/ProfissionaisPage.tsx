@@ -25,6 +25,7 @@ import { ResetMemberPasswordDialog } from '@/features/identity/components/ResetM
 import { MemberEditDialog } from '@/features/identity/components/MemberEditDialog';
 import { DeactivateMemberDialog } from '@/features/identity/components/DeactivateMemberDialog';
 import { ConfirmByNameDialog } from '@/components/ui/confirm-by-name-dialog';
+import { isAssistantRole } from '@/features/identity/assistant-role';
 import { maskBrPhone } from '@/features/identity/member-validation';
 import {
   AllMembersQuery,
@@ -205,7 +206,7 @@ export function ProfissionaisPage() {
                 key: 'categories',
                 header: t('team.table.categories'),
                 cell: (r) =>
-                  r.categories.length > 0 ? (
+                  r.categories.length > 0 && !isAssistantRole(r.roleName) ? (
                     <div className="flex flex-wrap gap-1">
                       {r.categories.map((c) => (
                         <Badge key={c.id} variant="outline">
@@ -250,12 +251,14 @@ export function ProfissionaisPage() {
                             <Pencil className="mr-2 h-4 w-4" />
                             {t('team.actions.edit')}
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() => setResettingMember(r)}
-                          >
-                            <KeyRound className="mr-2 h-4 w-4" />
-                            {t('team.actions.resetPassword')}
-                          </DropdownMenuItem>
+                          {!isAssistantRole(r.roleName) && (
+                            <DropdownMenuItem
+                              onSelect={() => setResettingMember(r)}
+                            >
+                              <KeyRound className="mr-2 h-4 w-4" />
+                              {t('team.actions.resetPassword')}
+                            </DropdownMenuItem>
+                          )}
                           {r.status === 'active' ? (
                             <DropdownMenuItem
                               onSelect={() => setDeactivatingMember(r)}

@@ -20,6 +20,7 @@ import {
   MemberAccessOverviewQuery,
   type MemberAccessOverviewResult,
 } from '../access-admin.api';
+import { isAssistantRole } from '@/features/identity/assistant-role';
 import { MemberAccessPanel } from '../components/MemberAccessPanel';
 
 /** Minúsculas e sem acento, para busca por nome. */
@@ -52,7 +53,7 @@ export function PerfisAcessoPage() {
   const members = useMemo(() => {
     const q = fold(search.trim());
     return (data?.allMembers ?? [])
-      .filter((m) => m.status === 'active')
+      .filter((m) => m.status === 'active' && !isAssistantRole(m.roleName))
       .filter((m) => q === '' || fold(m.displayName).includes(q));
   }, [data, search]);
 

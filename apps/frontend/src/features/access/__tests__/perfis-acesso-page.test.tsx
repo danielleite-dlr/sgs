@@ -43,6 +43,7 @@ const mocks: MockedResponse[] = [
           member('m2', 'Bruno Souza', 'ATTENDANT'),
           member('m3', 'Érica Lima', 'PROFESSIONAL'),
           member('m4', 'Carlos Inativo', 'ATTENDANT', 'inactive'),
+          member('m5', 'Dani Assistente', 'ASSISTANT'),
         ],
       },
     },
@@ -105,6 +106,8 @@ describe('PerfisAcessoPage', () => {
     renderPage();
     expect(await screen.findByText('Bruno Souza')).toBeInTheDocument();
     expect(screen.queryByText('Carlos Inativo')).toBeNull();
+    // Assistente não entra no sistema: não tem acessos para ajustar.
+    expect(screen.queryByText('Dani Assistente')).toBeNull();
     await waitFor(() =>
       expect(screen.getByTestId('perfil-member-m2')).toHaveTextContent('2 ajustes'),
     );
