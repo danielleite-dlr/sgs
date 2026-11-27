@@ -345,6 +345,8 @@ Recent decisions affecting current work:
 | 261126-f22 | Agenda abre com o menu de filtros recolhido | 2026-11-26 | e2f2090 | [261126-f22-agenda-abre-com-o-menu-de-filtros-recolh](./quick/261126-f22-agenda-abre-com-o-menu-de-filtros-recolh/) |
 | 261126-qyt | Filtro recolhido da agenda vira faixa "Filtros" com contador | 2026-11-26 | 67b212d | [261126-qyt-agenda-filtro-recolhido-mais-evidente](./quick/261126-qyt-agenda-filtro-recolhido-mais-evidente/) |
 | 261126-fgp | Sair e renovação de sessão rápidos (refresh token por índice + teto de 3 s no logout) | 2026-11-26 | 3776e4b | [261126-fgp-sair-e-renovacao-de-sessao-rapidos-com-b](./quick/261126-fgp-sair-e-renovacao-de-sessao-rapidos-com-b/) |
+| 261126-w00 | Assistente dentro de Serviços no pacote; diária por lápis discreto (sai o card do topo) | 2026-11-26 | bfd9823 | [261126-w00-assistente-dentro-de-servicos-do-pacote](./quick/261126-w00-assistente-dentro-de-servicos-do-pacote/) |
+| 261126-w01 | Agendamento mostra pacote de noiva só no dia do contrato; senão só sociais | 2026-11-26 | 09d796e | [261126-w01-pacotes-do-agendamento-pelo-contrato](./quick/261126-w01-pacotes-do-agendamento-pelo-contrato/) |
 
 ## Session Continuity
 
