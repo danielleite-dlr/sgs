@@ -56,6 +56,11 @@ created: 2026-11-26
 | PRIO-15 | debutante igual à noiva | integração + E2E | specs acima com `eventKind='debutante'`, `debutante-contrato.spec.ts` | ✅ | ✅ green |
 | PRIO-16 | seletores com fixas primeiro (grade da Agenda inalterada, D-20) | vitest | testes dos componentes do inventário | ✅ | ✅ green |
 | E2E | marcar → simulação preenchida → confirmar → acompanhante após limite recusada | Playwright | `apps/e2e/tests/prioridade-profissionais.spec.ts` | ✅ | ✅ green |
+| G-01 | papel Assistente: cadastro sem login, sem acessos | integração + vitest | `test/integration/phase11-assistant-role.e2e.spec.ts`, `src/identity/assistant-role.spec.ts`, `member-dialogs.test.tsx` | ✅ | ✅ green |
+| G-01 | Assistente fora do agendamento/sugestão | integração + vitest | `test/integration/phase11-assistant-scheduling.e2e.spec.ts`, `novo-agendamento-gestor-beauty.test.tsx` | ✅ | ✅ green |
+| G-01 | só diária, sem comissão; debutante no estúdio | unit + integração | `src/bridal/bridal-assistant-rules.spec.ts`, `test/integration/phase11-assistant-pay.e2e.spec.ts`, `phase91-bridal-assistant.e2e.spec.ts` | ✅ | ✅ green |
+| G-02 | Cronograma antes da Agenda do evento, aviso sem trava | vitest + E2E | `bridal-group-detail.test.tsx`, `noivas-contrato.spec.ts` | ✅ | ✅ green |
+| E2E G-01 | cadastro, Novo agendamento, debutante | Playwright | `apps/e2e/tests/assistente-papel.spec.ts` | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
