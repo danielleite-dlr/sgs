@@ -474,7 +474,7 @@ Plans:
 - [x] 11-21-PLAN.md — gap G-01: papel Assistente nos diálogos, Profissionais e Perfis de acesso (gaps onda 2)
 - [x] 11-22-PLAN.md — gap G-01: Novo agendamento/comissão sem Assistente e card de debutante (gaps onda 3)
 - [x] 11-23-PLAN.md — gap G-01: E2E do papel Assistente (gaps onda 4)
-- [ ] 11-24-PLAN.md — gaps: gate, backup, deploy no staging e CI; depois retoma o 11-16 (gaps onda 5)
+- [x] 11-24-PLAN.md — gaps: gate, backup, deploy no staging e CI; depois retoma o 11-16 (gaps onda 5)
 
 ### Phase 12: Ajustar cadastro de agendamento
 
