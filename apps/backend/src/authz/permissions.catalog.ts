@@ -87,9 +87,10 @@ export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
  * Phase 4: 20261103000000_phase4_bridal_contracts
  * Phase 04.2: 20261114000000_bridal_timeline
  * Phase 9: 20261122000000_phase9_commercial
+ * Phase 11 G-01: 20261126200000_phase11_assistant_role (ASSISTANT, sem permissões)
  */
 export const ROLE_PERMISSIONS: Record<
-  'ADMIN' | 'MANAGER' | 'ATTENDANT' | 'PROFESSIONAL',
+  'ADMIN' | 'MANAGER' | 'ATTENDANT' | 'PROFESSIONAL' | 'ASSISTANT',
   Permission[]
 > = {
   ADMIN: [
@@ -236,4 +237,6 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.COMANDA_READ,
     PERMISSIONS.COMMISSION_RECORD_READ,
   ],
+  // Fase 11 G-01: não entra no sistema — nenhuma permissão.
+  ASSISTANT: [],
 };

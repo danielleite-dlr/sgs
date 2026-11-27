@@ -6,6 +6,10 @@ import { TokenService } from './token.service';
 import { EmailVerificationService } from './email-verification.service';
 import { EmailService } from '../email/email.service';
 import { AuthError } from './types';
+import {
+  ASSISTANT_NO_LOGIN_MESSAGE,
+  onlyAssistantMemberships,
+} from '../identity/assistant-role';
 import type {
   AuthPayloadDto,
   AuthSessionDto,
@@ -50,21 +54,27 @@ export class AuthService {
       return { success: true, errors: [] };
     } catch (e) {
       if (e instanceof AuthError) {
-        return { success: false, errors: [{ code: e.code, message: e.message }] };
+        return {
+          success: false,
+          errors: [{ code: e.code, message: e.message }],
+        };
       }
       throw e;
     }
   }
 
-  async resendVerification(
-    email: string,
-  ): Promise<{ success: boolean; cooldownSeconds: number | null; errors: UserError[] }> {
+  async resendVerification(email: string): Promise<{
+    success: boolean;
+    cooldownSeconds: number | null;
+    errors: UserError[];
+  }> {
     const user = await this.prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
     // Do not leak existence of email addresses
     if (!user) return { success: true, cooldownSeconds: null, errors: [] };
-    if (user.emailVerifiedAt) return { success: true, cooldownSeconds: null, errors: [] };
+    if (user.emailVerifiedAt)
+      return { success: true, cooldownSeconds: null, errors: [] };
 
     // 60s cooldown between resend requests
     const last = await this.verify.findLatestForUser(user.id);
@@ -84,7 +94,10 @@ export class AuthService {
     return { success: true, cooldownSeconds: 60, errors: [] };
   }
 
-  async login(email: string, plaintextPassword: string): Promise<AuthPayloadDto> {
+  async login(
+    email: string,
+    plaintextPassword: string,
+  ): Promise<AuthPayloadDto> {
     const user = await this.prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
@@ -113,12 +126,28 @@ export class AuthService {
       });
     }
 
-    const payload = await this.issueSession(user.id, user.email, user.fullName, {
-      isPlatformAdmin: user.isPlatformAdmin,
-      isPlatformMaster: user.isPlatformMaster,
-      canAccessClientOrgs: user.canAccessClientOrgs || user.isPlatformMaster,
-      mustChangePassword: user.mustChangePassword,
-    });
+    // Fase 11 G-01: quem só é Assistente não entra (nenhum token emitido).
+    if (
+      !user.isPlatformAdmin &&
+      onlyAssistantMemberships(await this.loadMemberships(user.id))
+    ) {
+      return this.errorPayload({
+        code: 'ASSISTANT_NO_LOGIN',
+        message: ASSISTANT_NO_LOGIN_MESSAGE,
+      });
+    }
+
+    const payload = await this.issueSession(
+      user.id,
+      user.email,
+      user.fullName,
+      {
+        isPlatformAdmin: user.isPlatformAdmin,
+        isPlatformMaster: user.isPlatformMaster,
+        canAccessClientOrgs: user.canAccessClientOrgs || user.isPlatformMaster,
+        mustChangePassword: user.mustChangePassword,
+      },
+    );
 
     // Cliente suspenso não entra. Platform admin escapa da regra: ele não
     // depende de membership e precisa acessar justamente para resolver.
@@ -221,14 +250,21 @@ export class AuthService {
         where: { id: out.userId },
       });
       const memberships = await this.loadMemberships(out.userId);
+      if (!user.isPlatformAdmin && onlyAssistantMemberships(memberships)) {
+        // Trocada para Assistente com sessão aberta: derruba a sessão.
+        await this.tokens.revokeRefresh(out.refreshToken);
+        return this.errorPayload({
+          code: 'ASSISTANT_NO_LOGIN',
+          message: ASSISTANT_NO_LOGIN_MESSAGE,
+        });
+      }
       const session: AuthSessionDto = {
         userId: user.id,
         email: user.email,
         fullName: user.fullName,
         isPlatformAdmin: user.isPlatformAdmin,
         isPlatformMaster: user.isPlatformMaster,
-        canAccessClientOrgs:
-          user.canAccessClientOrgs || user.isPlatformMaster,
+        canAccessClientOrgs: user.canAccessClientOrgs || user.isPlatformMaster,
         mustChangePassword: user.mustChangePassword,
         impersonating: false,
         memberships,
@@ -299,7 +335,8 @@ export class AuthService {
         organizationStatus: m.organizationStatus,
       })),
     });
-    const { plaintext: refreshToken } = await this.tokens.issueRefreshToken(userId);
+    const { plaintext: refreshToken } =
+      await this.tokens.issueRefreshToken(userId);
     return {
       accessToken,
       refreshToken,
@@ -351,6 +388,11 @@ export class AuthService {
   }
 
   private errorPayload(err: UserError): AuthPayloadDto {
-    return { accessToken: null, refreshToken: null, session: null, errors: [err] };
+    return {
+      accessToken: null,
+      refreshToken: null,
+      session: null,
+      errors: [err],
+    };
   }
 }

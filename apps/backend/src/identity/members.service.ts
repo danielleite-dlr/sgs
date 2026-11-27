@@ -15,6 +15,13 @@ import {
   MEMBER_STATUS_INACTIVE,
   UpdateMemberInput,
 } from './dto/member.input';
+import { randomBytes, randomUUID } from 'node:crypto';
+import { BLOCKING_STATUSES } from '../appointments/appointment-status';
+import {
+  ASSISTANT_NO_LOGIN_MESSAGE,
+  fictitiousAssistantEmail,
+  isAssistantRole,
+} from './assistant-role';
 import { normalizeBrPhone, normalizePixKey } from './member-contact';
 import { recordAudit } from '../common/audit-log';
 import { orgTimezone } from '../bridal/bridal-schedule';
@@ -398,8 +405,26 @@ export class MembersService {
       }
 
       const finalRoleName = input.roleName ?? existing.role?.name;
+      const finalIsAssistant = isAssistantRole(finalRoleName);
+      if (finalIsAssistant && !isAssistantRole(existing.role?.name)) {
+        // Fase 11 G-01: virar Assistente exige agenda de atendimento vazia.
+        const future = await tx.appointment.count({
+          where: {
+            professionalId: input.id,
+            status: { in: [...BLOCKING_STATUSES] },
+            startsAt: { gte: new Date() },
+          },
+        });
+        if (future > 0) {
+          return errPayload(
+            'MEMBER_HAS_FUTURE_APPOINTMENTS',
+            `${existing.displayName} tem ${future} atendimento(s) a partir de agora. Remaneje esses atendimentos antes de mudar o papel para Assistente.`,
+            'roleName',
+          );
+        }
+      }
       const finalIsProfessional =
-        finalRoleName === PROFESSIONAL_ROLE_NAME
+        finalRoleName === PROFESSIONAL_ROLE_NAME || finalIsAssistant
           ? true
           : (input.isProfessional ?? existing.isProfessional);
       if (
@@ -417,9 +442,11 @@ export class MembersService {
           'isBridalAssistant',
         );
       }
-      const finalIsBridalAssistant = finalIsProfessional
-        ? (input.isBridalAssistant ?? existing.isBridalAssistant)
-        : false;
+      const finalIsBridalAssistant = finalIsAssistant
+        ? true
+        : finalIsProfessional
+          ? (input.isBridalAssistant ?? existing.isBridalAssistant)
+          : false;
       if (existing.isBridalAssistant && !finalIsBridalAssistant) {
         const linked = await countActiveBridalLinks(tx, input.id);
         if (linked > 0) {
@@ -436,6 +463,11 @@ export class MembersService {
 
       // Fase 11: marcações de prioridade; deixar de ser profissional zera as duas.
       for (const f of ['isFixed', 'servesBridal'] as const) {
+        if (finalIsAssistant) {
+          // Assistente nunca é fixa nem atende noiva (G-01).
+          if (existing[f]) data[f] = false;
+          continue;
+        }
         if (input[f] === true && !finalIsProfessional) {
           return errPayload(
             'PRIORITY_FLAG_REQUIRES_PROFESSIONAL',
@@ -451,12 +483,18 @@ export class MembersService {
         }
       }
 
-      if (input.seniorityTier !== undefined) {
+      if (finalIsAssistant) {
+        data.seniorityTier = null;
+      } else if (input.seniorityTier !== undefined) {
         data.seniorityTier = input.seniorityTier;
       }
 
       let categoryIds: string[] | undefined;
-      if (finalIsProfessional && input.categoryIds !== undefined) {
+      if (
+        finalIsProfessional &&
+        !finalIsAssistant &&
+        input.categoryIds !== undefined
+      ) {
         categoryIds = [...new Set(input.categoryIds)];
         if (!(await categoriesExist(tx, categoryIds))) {
           return errPayload(
@@ -467,7 +505,7 @@ export class MembersService {
         }
       }
 
-      if (!finalIsProfessional) {
+      if (!finalIsProfessional || finalIsAssistant) {
         await tx.memberCategory.deleteMany({ where: { memberId: input.id } });
       } else if (categoryIds !== undefined) {
         await tx.memberCategory.deleteMany({ where: { memberId: input.id } });
@@ -505,7 +543,14 @@ export class MembersService {
     if (displayName.length < MIN_NAME_LENGTH) {
       return createErr('INVALID_NAME', 'Informe o nome.', 'displayName');
     }
-    const email = input.email.trim().toLowerCase();
+    const assistant = isAssistantRole(input.roleName);
+    // Assistente não entra no sistema: e-mail fictício gerado pelo servidor.
+    const email = assistant
+      ? fictitiousAssistantEmail(randomUUID())
+      : (input.email ?? '').trim().toLowerCase();
+    if (!assistant && email.length === 0) {
+      return createErr('INVALID_EMAIL', 'Informe o e-mail.', 'email');
+    }
     const phone = normalizeBrPhone(input.phone);
     if (!phone) {
       return createErr('INVALID_PHONE', 'Telefone inválido.', 'phone');
@@ -516,7 +561,9 @@ export class MembersService {
     }
 
     const isProfessional =
-      input.roleName === PROFESSIONAL_ROLE_NAME ? true : !!input.isProfessional;
+      input.roleName === PROFESSIONAL_ROLE_NAME || assistant
+        ? true
+        : !!input.isProfessional;
     if (input.isBridalAssistant === true && !isProfessional) {
       return createErr(
         'BRIDAL_ASSISTANT_REQUIRES_PROFESSIONAL',
@@ -525,7 +572,7 @@ export class MembersService {
       );
     }
     for (const f of ['isFixed', 'servesBridal'] as const) {
-      if (input[f] === true && !isProfessional) {
+      if (!assistant && input[f] === true && !isProfessional) {
         return createErr(
           'PRIORITY_FLAG_REQUIRES_PROFESSIONAL',
           'Só profissionais podem ser marcadas como fixa ou como "atende noiva/debutante".',
@@ -533,10 +580,9 @@ export class MembersService {
         );
       }
     }
-    const categoryIds = isProfessional
-      ? [...new Set(input.categoryIds ?? [])]
-      : [];
-    if (isProfessional && categoryIds.length === 0) {
+    const categoryIds =
+      isProfessional && !assistant ? [...new Set(input.categoryIds ?? [])] : [];
+    if (isProfessional && !assistant && categoryIds.length === 0) {
       return createErr(
         'CATEGORY_REQUIRED',
         'Escolha ao menos uma categoria que o profissional atende.',
@@ -551,8 +597,13 @@ export class MembersService {
       select: { id: true },
     });
     let passwordHash: string | null = null;
-    if (!preexisting) {
-      const pwd = input.temporaryPassword;
+    if (assistant) {
+      // Senha aleatória só para o hash; nunca é devolvida nem usada.
+      passwordHash = await this.password.hash(
+        randomBytes(24).toString('base64url'),
+      );
+    } else if (!preexisting) {
+      const pwd = input.temporaryPassword ?? '';
       if (pwd.length < TEMP_PASSWORD_MIN || pwd.length > TEMP_PASSWORD_MAX) {
         return createErr(
           'WEAK_PASSWORD',
@@ -611,7 +662,7 @@ export class MembersService {
               fullName: displayName,
               // Cadastro feito pelo admin: não há e-mail a confirmar.
               emailVerifiedAt: new Date(),
-              mustChangePassword: true,
+              mustChangePassword: !assistant,
             },
           });
           userId = user.id;
@@ -624,11 +675,14 @@ export class MembersService {
             roleId: role.id,
             displayName,
             isProfessional,
-            isBridalAssistant: isProfessional
-              ? !!input.isBridalAssistant
-              : false,
-            isFixed: isProfessional ? !!input.isFixed : false,
-            servesBridal: isProfessional ? !!input.servesBridal : false,
+            isBridalAssistant: assistant
+              ? true
+              : isProfessional
+                ? !!input.isBridalAssistant
+                : false,
+            isFixed: isProfessional && !assistant ? !!input.isFixed : false,
+            servesBridal:
+              isProfessional && !assistant ? !!input.servesBridal : false,
             status: MEMBER_STATUS_ACTIVE,
             phone,
             pixKey: pix.value,
@@ -686,11 +740,15 @@ export class MembersService {
         select: {
           id: true,
           userId: true,
+          role: { select: { name: true } },
           user: { select: { isPlatformAdmin: true } },
         },
       });
       if (!existing) {
         return resetErr('MEMBER_NOT_FOUND', 'Membro não encontrado.');
+      }
+      if (isAssistantRole(existing.role?.name)) {
+        return resetErr('ASSISTANT_NO_LOGIN', ASSISTANT_NO_LOGIN_MESSAGE);
       }
       if (existing.id === callerMemberId) {
         return resetErr(
@@ -978,7 +1036,12 @@ export class MembersService {
   ) {
     return this.tenant.runWithTenant(orgId, async (tx) => {
       const bridal = a.bridal === true;
-      const rows = await this.professionalsForServiceTx(tx, orgId, a.serviceId, { bridal });
+      const rows = await this.professionalsForServiceTx(
+        tx,
+        orgId,
+        a.serviceId,
+        { bridal },
+      );
       return suggestProfessionalsTx(tx, rows, {
         startsAt: a.startsAt,
         endsAt: a.endsAt,
@@ -1019,7 +1082,9 @@ export class MembersService {
     return rows
       .filter((r) =>
         memberServesCategory(
-          r.categories.filter((c) => c.category.deletedAt === null).map((c) => c.category.id),
+          r.categories
+            .filter((c) => c.category.deletedAt === null)
+            .map((c) => c.category.id),
           service.categoryId,
           parents,
         ),

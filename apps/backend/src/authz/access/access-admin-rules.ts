@@ -7,6 +7,7 @@ import { LOCKED_ROLES, type ResolvedAccess } from './access-resolve';
 export interface AdjustError {
   code:
     | 'ACCESS_TARGET_ADMIN'
+    | 'ACCESS_TARGET_ASSISTANT'
     | 'ACCESS_TARGET_FORBIDDEN'
     | 'ACCESS_TARGET_SELF';
   message: string;
@@ -15,6 +16,12 @@ export interface AdjustError {
 const ADMIN_LOCK: AdjustError = {
   code: 'ACCESS_TARGET_ADMIN',
   message: 'O Administrador sempre tem todos os acessos.',
+};
+
+const ASSISTANT_TARGET_LOCK: AdjustError = {
+  code: 'ACCESS_TARGET_ASSISTANT',
+  message:
+    'Assistente não entra no sistema, então não tem acessos para ajustar.',
 };
 
 const FORBIDDEN: AdjustError = {
@@ -30,6 +37,7 @@ export function targetLock(a: {
   targetId: string;
 }): AdjustError | null {
   if (a.actorRole !== 'ADMIN' && a.actorRole !== 'MANAGER') return FORBIDDEN;
+  if (a.targetRole === 'ASSISTANT') return ASSISTANT_TARGET_LOCK;
   if (a.targetRole === 'ADMIN') return ADMIN_LOCK;
   if (a.actorRole === 'ADMIN') return null;
   if (a.actorId === a.targetId) {

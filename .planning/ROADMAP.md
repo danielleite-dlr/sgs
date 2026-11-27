@@ -468,7 +468,7 @@ Plans:
 - [x] 11-15-PLAN.md — gate, backup, deploy no staging e CI (onda 7)
 - [ ] 11-16-PLAN.md — verificação humana no staging, inclusive celular (onda 8)
 - [x] 11-17-PLAN.md — gap G-02: Cronograma do dia antes da Agenda do evento, aviso sem trava (gaps onda 1)
-- [ ] 11-18-PLAN.md — gap G-01: papel Assistente no backend (cadastro sem login, sem acessos) (gaps onda 1)
+- [x] 11-18-PLAN.md — gap G-01: papel Assistente no backend (cadastro sem login, sem acessos) (gaps onda 1)
 - [ ] 11-19-PLAN.md — gap G-01: Assistente fora do agendamento, da sugestão e do cronograma (gaps onda 2)
 - [ ] 11-20-PLAN.md — gap G-01: só diária (sem comissão) e assistente de debutante no estúdio (gaps onda 2)
 - [ ] 11-21-PLAN.md — gap G-01: papel Assistente nos diálogos, Profissionais e Perfis de acesso (gaps onda 2)
