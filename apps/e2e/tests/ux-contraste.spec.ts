@@ -3,9 +3,9 @@ import { readSeedState } from '../support/seed-state';
 import { loginViaUi, navigateViaMenu } from '../support/ui';
 
 const BRANCO = 'rgb(255, 255, 255)';
-// Roxos de fundo que exigem letra branca (D-26): ação #570080, hover #4C0070, selecionado
-// #521873 e #370053.
-const ROXOS = ['rgb(87, 0, 128)', 'rgb(76, 0, 112)', 'rgb(82, 24, 115)', 'rgb(55, 0, 83)'];
+// Roxos de fundo que exigem letra branca (D-26): ação #7E22CE, hover #6B21A8, selecionado
+// #581C87 e #250B42.
+const ROXOS = ['rgb(126, 34, 206)', 'rgb(107, 33, 168)', 'rgb(88, 28, 135)', 'rgb(37, 11, 66)'];
 
 async function cores(el: Locator) {
   return el.evaluate((node) => {

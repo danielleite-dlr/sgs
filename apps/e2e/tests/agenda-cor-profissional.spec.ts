@@ -17,7 +17,7 @@ import { loginViaUi } from '../support/ui';
 test.use({ viewport: { width: 1600, height: 1200 } });
 
 const BRANCO = 'rgb(255, 255, 255)';
-const PRIMARY_50 = 'rgb(245, 230, 251)';
+const PRIMARY_50 = 'rgb(250, 245, 255)';
 
 // Cópia de apps/frontend/src/lib/format-name.ts (o E2E não importa do frontend).
 const PARTICLES = new Set(['da', 'de', 'do', 'das', 'dos', 'e']);

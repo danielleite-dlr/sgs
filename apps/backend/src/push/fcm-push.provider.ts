@@ -5,7 +5,7 @@ import { PushMessage, PushProvider, PushSendResult } from './push.types';
 export const FCM_SCOPE = 'https://www.googleapis.com/auth/firebase.messaging';
 export const ANDROID_CHANNEL_ID = 'agenda';
 export const ANDROID_NOTIFICATION_ICON = 'ic_stat_gestor_beauty';
-export const ANDROID_NOTIFICATION_COLOR = '#570080';
+export const ANDROID_NOTIFICATION_COLOR = '#7E22CE';
 
 export class NoopPushProvider implements PushProvider {
   readonly enabled = false;

@@ -81,7 +81,7 @@ describe('FcmPushProvider', () => {
     });
     expect(ANDROID_CHANNEL_ID).toBe('agenda');
     expect(ANDROID_NOTIFICATION_ICON).toBe('ic_stat_gestor_beauty');
-    expect(ANDROID_NOTIFICATION_COLOR).toBe('#570080');
+    expect(ANDROID_NOTIFICATION_COLOR).toBe('#7E22CE');
   });
 
   it('404 vira invalid_token', async () => {

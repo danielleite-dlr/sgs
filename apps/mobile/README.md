@@ -19,10 +19,10 @@ Keystore, secrets e ordem das ações humanas (conta Play primeiro): veja [`KEYS
 
 ## Trocar o ícone
 
-1. Edite `assets/icon.svg` (ou substitua `assets/icon-only.png`, `icon-foreground.png` e `icon-background.png` pelos PNGs do logo oficial).
+1. Os SVGs da marca vêm de `docs/marca/gestor-beauty/svg` (copiados em `assets/`: `icon.svg` = `icone-app.svg`, `simbolo-branco.svg`, `logo-vertical-*.svg`). `scripts/render-assets.mjs` gera os PNGs-fonte a partir deles.
 2. Rode `corepack pnpm --filter @sgs/mobile assets` (gera os PNGs-fonte e os recursos Android).
 3. Rode `corepack pnpm --filter @sgs/mobile exec cap sync android` e commite `android/app/src/main/res`.
-4. O gerador não mexe em `res/values/ic_launcher_background.xml`; ele já está em `#570080`.
+4. O gerador não mexe em `res/values/ic_launcher_background.xml`; ele já está em `#A855F7` (roxo vivo da marca).
 
 ## Plugins
 

@@ -1,6 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <rect width="1024" height="1024" fill="#570080"/>
-  <text x="512" y="512" dominant-baseline="central" text-anchor="middle"
-        font-family="'Source Serif 4', 'Noto Serif', Georgia, serif" font-weight="600"
-        font-size="400" letter-spacing="-8" fill="#FFFFFF">GB</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#A855F7"/><path transform="translate(20 20) scale(0.6)" d="M22 8 H78 A12 12 0 0 1 90 20 V80 A12 12 0 0 1 78 92 H53 L10 56 V20 A12 12 0 0 1 22 8 Z M27 23 H74 V76 H54 V48 H27 Z" fill="#FFFFFF" fill-rule="evenodd" stroke="#FFFFFF" stroke-width="3" stroke-linejoin="round"/></svg>

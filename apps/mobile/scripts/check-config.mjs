@@ -84,8 +84,12 @@ checkIfExists('android/app/src/main/res/drawable/ic_stat_gestor_beauty.xml');
 contem('android/app/src/main/res/values/styles.xml', 'windowSplashScreenBackground');
 
 // Ícone e splash (D-16/D-17)
-contem('assets/icon.svg', '>GB<');
-contem('assets/icon.svg', '#570080');
+contem('assets/icon.svg', '#A855F7');
+contem('assets/icon.svg', 'fill-rule="evenodd"');
+checkIfExists('assets/simbolo-branco.svg');
+checkIfExists('assets/logo-vertical-principal.svg');
+contem('android/app/src/main/res/values/ic_launcher_background.xml', '#A855F7');
+contem('android/app/src/main/res/values/gb_colors.xml', '#7E22CE');
 for (const png of ['icon-only', 'icon-foreground', 'icon-background', 'splash']) {
   checkIfExists(`assets/${png}.png`);
 }
