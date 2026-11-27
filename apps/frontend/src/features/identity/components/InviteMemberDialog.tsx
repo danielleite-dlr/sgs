@@ -31,14 +31,14 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import {
   InviteMemberMutation,
-  ROLE_OPTIONS,
+  INVITE_ROLE_OPTIONS,
   SENIORITY_OPTIONS,
 } from '@/features/catalog/api/members.api';
 import type { InviteMemberResult } from '@/features/catalog/api/members.api';
 
 const schema = z.object({
   email: z.string().min(1, 'Este campo é obrigatório.').email('E-mail inválido.'),
-  roleName: z.enum(ROLE_OPTIONS, { errorMap: () => ({ message: 'Selecione um papel.' }) }),
+  roleName: z.enum(INVITE_ROLE_OPTIONS, { errorMap: () => ({ message: 'Selecione um papel.' }) }),
   isProfessional: z.boolean(),
   seniorityTier: z.enum(SENIORITY_OPTIONS).nullable(),
 });
@@ -148,7 +148,7 @@ export function InviteMemberDialog({ open, onClose }: InviteMemberDialogProps) {
                         <SelectValue placeholder={t('team.inviteDialog.rolePlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
-                        {ROLE_OPTIONS.map((role) => (
+                        {INVITE_ROLE_OPTIONS.map((role) => (
                           <SelectItem key={role} value={role}>
                             {t(`team.roles.${role}`)}
                           </SelectItem>

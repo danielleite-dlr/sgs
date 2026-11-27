@@ -471,7 +471,7 @@ Plans:
 - [x] 11-18-PLAN.md — gap G-01: papel Assistente no backend (cadastro sem login, sem acessos) (gaps onda 1)
 - [x] 11-19-PLAN.md — gap G-01: Assistente fora do agendamento, da sugestão e do cronograma (gaps onda 2)
 - [x] 11-20-PLAN.md — gap G-01: só diária (sem comissão) e assistente de debutante no estúdio (gaps onda 2)
-- [ ] 11-21-PLAN.md — gap G-01: papel Assistente nos diálogos, Profissionais e Perfis de acesso (gaps onda 2)
+- [x] 11-21-PLAN.md — gap G-01: papel Assistente nos diálogos, Profissionais e Perfis de acesso (gaps onda 2)
 - [ ] 11-22-PLAN.md — gap G-01: Novo agendamento/comissão sem Assistente e card de debutante (gaps onda 3)
 - [ ] 11-23-PLAN.md — gap G-01: E2E do papel Assistente (gaps onda 4)
 - [ ] 11-24-PLAN.md — gaps: gate, backup, deploy no staging e CI; depois retoma o 11-16 (gaps onda 5)

@@ -744,7 +744,7 @@
       "empty": "Nenhum resultado."
     },
     "pacote": {
-      "includesBridalAssistantLabel": "Inclui assistente da noiva (no estúdio)",
+      "includesBridalAssistantLabel": "Inclui assistente (noiva ou debutante, no estúdio)",
       "includesBridalAssistantHint": "A diária da assistente entra no custo do pacote. Não muda o preço nem o contrato.",
       "bridalAssistantDailyCostLabel": "Diária da assistente",
       "bridalAssistantRateTitle": "Diária da assistente da noiva",
@@ -920,7 +920,8 @@
       "ADMIN": "Admin",
       "MANAGER": "Gerente",
       "ATTENDANT": "Atendente",
-      "PROFESSIONAL": "Profissional"
+      "PROFESSIONAL": "Profissional",
+      "ASSISTANT": "Assistente"
     },
     "seniority": {
       "junior": "Júnior",
@@ -984,6 +985,8 @@
       "oneTimeNotice": "Envie essa senha ao profissional (por exemplo, pelo WhatsApp). Ela não será exibida novamente."
     },
     "createDialog": {
+      "assistantRoleHint": "Assistente só acompanha noivas e debutantes no estúdio: não entra no sistema, não faz atendimento e recebe só a diária de assistente. Não precisa de e-mail nem senha.",
+      "assistantCreatedBody": "{{name}} foi cadastrada como Assistente. Ela não entra no sistema, então não há senha.",
       "title": "Cadastrar profissional",
       "nameLabel": "Nome",
       "emailLabel": "E-mail",
@@ -997,7 +1000,7 @@
       "rolePlaceholder": "Selecione o papel",
       "alsoProfessionalLabel": "Também atende clientes",
       "isBridalAssistantLabel": "Assistente da Noiva",
-      "isBridalAssistantHint": "Acompanha a noiva no estúdio o dia todo. Não usa o sistema e não recebe notificações.",
+      "isBridalAssistantHint": "Acompanha a noiva ou a debutante no estúdio o dia todo. Não usa o sistema e não recebe notificações.",
       "isFixedLabel": "Fixa (equipe do studio)",
       "isFixedHint": "Fixas livres são sugeridas antes das não fixas. Não muda comissão, repasse nem diária.",
       "servesBridalLabel": "Atende noiva/debutante",
@@ -1023,6 +1026,7 @@
       "resultTitle": "Nova senha de {{name}}"
     },
     "editDialog": {
+      "assistantRoleHint": "Assistente só acompanha noivas e debutantes no estúdio: não entra no sistema, não faz atendimento e recebe só a diária de assistente. Não precisa de e-mail nem senha.",
       "title": "Editar {{name}}",
       "phoneLabel": "Telefone",
       "pixLabel": "Chave Pix",
@@ -1030,7 +1034,7 @@
       "roleLabel": "Papel",
       "isProfessionalLabel": "É profissional",
       "isBridalAssistantLabel": "Assistente da Noiva",
-      "isBridalAssistantHint": "Acompanha a noiva no estúdio o dia todo. Não usa o sistema e não recebe notificações.",
+      "isBridalAssistantHint": "Acompanha a noiva ou a debutante no estúdio o dia todo. Não usa o sistema e não recebe notificações.",
       "isFixedLabel": "Fixa (equipe do studio)",
       "isFixedHint": "Fixas livres são sugeridas antes das não fixas. Não muda comissão, repasse nem diária.",
       "servesBridalLabel": "Atende noiva/debutante",
