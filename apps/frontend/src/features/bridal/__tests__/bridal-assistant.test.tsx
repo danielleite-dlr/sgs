@@ -126,6 +126,25 @@ afterEach(() => {
 });
 
 describe('Assistente da noiva (09.1)', () => {
+  it("grupo de debutante mostra 'Assistente da debutante'", async () => {
+    useAuthStore.setState({ roleName: 'ATTENDANT' });
+    renderDetail(
+      group({
+        id: 'g1',
+        name: 'Debutante Lia',
+        eventKind: 'debutante',
+        assistantRequired: true,
+        assistantPending: true,
+      }),
+      [candidatesMock],
+    );
+    expect(
+      await screen.findByRole('region', { name: 'Assistente da debutante' }),
+    ).toBeInTheDocument();
+    fireEvent.click(await screen.findByTestId('assistant-choose'));
+    expect(await screen.findByText('Escolher assistente da debutante')).toBeInTheDocument();
+  });
+
   it('pendente: ATTENDANT vê o aviso com botão; PROFESSIONAL vê só o aviso', async () => {
     useAuthStore.setState({ roleName: 'ATTENDANT' });
     const { unmount } = renderDetail(pendingGroup);

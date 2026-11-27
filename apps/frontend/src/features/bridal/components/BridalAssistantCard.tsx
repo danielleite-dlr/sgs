@@ -24,7 +24,7 @@ function formatRate(rate: string): string {
   return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-/** Assistente da noiva (Fase 09.1): aviso de pendência, escolha, troca e remoção. */
+/** Assistente da noiva ou da debutante (09.1 + fase 11 G-01): aviso de pendência, escolha, troca e remoção. */
 export function BridalAssistantCard({ group, canWrite }: Props) {
   const canSeeCost = useHasPermission('financial.read');
   const [chooseOpen, setChooseOpen] = useState(false);
@@ -65,13 +65,17 @@ export function BridalAssistantCard({ group, canWrite }: Props) {
     }
   }
 
+  const who = group.eventKind === 'debutante' ? 'debutante' : 'noiva';
+
   return (
     <section
-      aria-label="Assistente da noiva"
+      aria-label={`Assistente da ${who}`}
       className="mb-md space-y-sm rounded-md border border-neutral-200 bg-white p-md"
       data-testid="assistant-card"
     >
-      <h3 className="text-h3 font-semibold text-neutral-800">Assistente da noiva</h3>
+      <h3 className="text-h3 font-semibold text-neutral-800">
+        {`Assistente da ${who}`}
+      </h3>
 
       {group.assistantMemberId ? (
         <div className="space-y-xs">
@@ -128,7 +132,7 @@ export function BridalAssistantCard({ group, canWrite }: Props) {
       <Dialog open={chooseOpen} onOpenChange={setChooseOpen}>
         <DialogContent className="max-w-[480px]">
           <DialogTitle className="text-base font-bold text-neutral-800">
-            Escolher assistente da noiva
+            {`Escolher assistente da ${who}`}
           </DialogTitle>
           <DialogDescription className="text-sm text-neutral-600">
             As profissionais ocupadas no dia do evento aparecem desabilitadas.
