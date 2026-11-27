@@ -10,10 +10,10 @@
     --sgs-safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
 
     /* Cores — Previsão de caixa do Stitch (D-26) */
-    --color-primary-50:  #F5E6FB;
-    --color-primary-500: #570080;
-    --color-primary-700: #4C0070;
-    --color-primary-900: #370053;
+    --color-primary-50:  #FAF5FF;
+    --color-primary-500: #7E22CE;
+    --color-primary-700: #6B21A8;
+    --color-primary-900: #250B42;
 
     --color-success-500: #109868;
     --color-warning-500: #EF9F27;
@@ -35,7 +35,7 @@
 
     /* shadcn HSL bridges (matches the Tailwind theme above) */
     --border: 220 13% 91%;
-    --ring: 281 100% 25%;
+    --ring: 272 72% 47%;
   }
 
   html, body, #root { height: 100%; }

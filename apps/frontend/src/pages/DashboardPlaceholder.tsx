@@ -35,7 +35,7 @@ const DISCOVERY_CARDS: DiscoveryCard[] = [
     icon: Smartphone,
     title: 'App profissional',
     description: 'Acompanhe os atendimentos e comissões direto do celular',
-    color: '#570080',
+    color: '#7E22CE',
   },
   {
     id: 'agendamento-online',
@@ -79,7 +79,7 @@ const EXPENSE_LEGEND: ExpenseLegend[] = [
   { label: 'Fixas',    value: 'R$ 0,00', color: '#EF9F27' },
   { label: 'Variáveis', value: 'R$ 0,00', color: '#6B7280' },
   { label: 'Pessoal',  value: 'R$ 0,00', color: '#D85A30' },
-  { label: 'Impostos', value: 'R$ 0,00', color: '#570080' },
+  { label: 'Impostos', value: 'R$ 0,00', color: '#7E22CE' },
   { label: 'Outros',   value: 'R$ 0,00', color: '#1F2937' },
 ];
 

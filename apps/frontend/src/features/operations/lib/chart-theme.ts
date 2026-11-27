@@ -2,7 +2,7 @@
 // Verde e laranja cheios só em gráfico e número grande; texto pequeno usa os tons 700.
 
 export const CHART_COLORS = {
-  billed: '#521873',
+  billed: '#581C87',
   received: '#109868',
   inflow: '#109868',
   outflow: '#D85A30',
@@ -19,5 +19,5 @@ export const CHART_TOOLTIP_STYLE = {
   fontSize: 13,
 } as const;
 
-/** Botão selecionado do filtro segmentado (D-26): roxo #521873 com texto branco. */
+/** Botão selecionado do filtro segmentado (D-26): roxo #581C87 com texto branco. */
 export const SEGMENT_SELECTED_CLASS = 'bg-primary-800 text-white hover:bg-primary-800';

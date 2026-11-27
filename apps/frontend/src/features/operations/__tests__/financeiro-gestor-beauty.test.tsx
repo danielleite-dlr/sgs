@@ -101,7 +101,7 @@ describe('Financeiro no layout Gestor Beauty (06-06)', () => {
     }
   });
 
-  it('Agrupar por: 44 px e o selecionado em roxo #521873 com texto branco', async () => {
+  it('Agrupar por: 44 px e o selecionado em roxo #581C87 com texto branco', async () => {
     renderPage();
     await screen.findByTestId('financeiro-kpis');
     for (const g of ['day', 'week', 'month']) {
@@ -197,7 +197,7 @@ describe('Financeiro no layout Gestor Beauty (06-06)', () => {
 
   it('tema dos gráficos segue D-26', () => {
     expect(CHART_COLORS).toEqual({
-      billed: '#521873',
+      billed: '#581C87',
       received: '#109868',
       inflow: '#109868',
       outflow: '#D85A30',

@@ -51,7 +51,7 @@ function pros(n: number): ScheduleProfessional[] {
     id: `p${i + 1}`,
     name: `Profissional ${i + 1}`,
     initials: `P${i + 1}`,
-    color: '#570080',
+    color: '#7E22CE',
   }));
 }
 

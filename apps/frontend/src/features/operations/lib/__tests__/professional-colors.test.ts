@@ -65,7 +65,7 @@ describe('professional-colors', () => {
   it('tom neutro mantém o visual atual (branco)', () => {
     expect(NEUTRAL_TONE.bg).toBe('#FFFFFF');
     expect(NEUTRAL_TONE.bgHover).toBe('#F9FAFB');
-    expect(NEUTRAL_TONE.avatarBg).toBe('#F5E6FB');
+    expect(NEUTRAL_TONE.avatarBg).toBe('#FAF5FF');
   });
 
   it.each(PROFESSIONAL_TONES.map((t) => [t.name, t] as const))(

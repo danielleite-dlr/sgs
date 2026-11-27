@@ -19,7 +19,7 @@ const temClasses = (cls: string, esperadas: string[]) => {
 };
 
 describe('botão Gestor Beauty', () => {
-  it('padrão: roxo com texto branco, hover #4C0070, raio 6 px e 44 px', () => {
+  it('padrão: roxo com texto branco, hover #6B21A8, raio 6 px e 44 px', () => {
     render(<Button>Salvar</Button>);
     temClasses(screen.getByRole('button', { name: 'Salvar' }).className, [
       'bg-primary',

@@ -7,8 +7,8 @@ import { TimeBlockDialog } from "../components/calendar/TimeBlockDialog";
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
 const professionals = [
-  { id: "p1", name: "Bia Souza", initials: "BS", color: "#5D54C7", isFixed: true },
-  { id: "p0", name: "Ana Lima", initials: "AL", color: "#5D54C7", isFixed: false },
+  { id: "p1", name: "Bia Souza", initials: "BS", color: "#7E22CE", isFixed: true },
+  { id: "p0", name: "Ana Lima", initials: "AL", color: "#7E22CE", isFixed: false },
 ];
 const day = new Date(2026, 10, 4);
 

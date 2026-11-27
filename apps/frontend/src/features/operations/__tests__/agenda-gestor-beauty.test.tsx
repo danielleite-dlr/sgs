@@ -51,7 +51,7 @@ function renderCard(a: ScheduleAppointment) {
 
 describe('cor de status (D-11)', () => {
   it('statusSpineColor devolve a cor de cada status e um cinza para o desconhecido', () => {
-    expect(statusSpineColor('scheduled')).toBe('#570080');
+    expect(statusSpineColor('scheduled')).toBe('#7E22CE');
     expect(statusSpineColor('confirmed')).toBe('#109868');
     expect(statusSpineColor('in_progress')).toBe('#0E61A8');
     expect(statusSpineColor('completed')).toBe('#49454F');
@@ -192,7 +192,7 @@ const appointmentData = (id: string, day: Date, h: number, pro = 'p1'): Appointm
 });
 
 const professionals = [
-  { id: 'p1', name: 'BIA SOUZA', initials: 'BS', color: '#570080' },
+  { id: 'p1', name: 'BIA SOUZA', initials: 'BS', color: '#7E22CE' },
   { id: 'p2', name: 'Carla Lima', initials: 'CL', color: '#0B7A53' },
   { id: 'p3', name: 'Dora Reis', initials: 'DR', color: '#0E61A8' },
 ];

@@ -45,7 +45,7 @@ const ATIVO_SUB = 'bg-primary-800 font-semibold text-white';
  * 256 px, branco com borda à direita. Topo com a marca do estúdio; grupos de nível 0 com
  * rótulo em maiúsculas pequenas; itens de 44 px. Ativo no padrão da Previsão de caixa (D-26):
  * item de 1º nível (e o subgrupo que contém a rota atual) em lilás claro com texto roxo escuro
- * e ícone roxo; subitem ativo roxo #521873 com texto branco. Rodapé com a usuária logada e o
+ * e ícone roxo; subitem ativo roxo #581C87 com texto branco. Rodapé com a usuária logada e o
  * botão Sair. A árvore é a de `menu-config.ts` (já podada).
  */
 export function SidebarNav({

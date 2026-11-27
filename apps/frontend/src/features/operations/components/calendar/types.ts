@@ -44,7 +44,7 @@ export interface ScheduleAppointment {
 
 // Todas aceitam texto branco com contraste AA (fase 6, D-11/D-12).
 export const PROFESSIONAL_COLORS = [
-  "#570080",
+  "#7E22CE",
   "#0B7A53",
   "#0E61A8",
   "#49454F",

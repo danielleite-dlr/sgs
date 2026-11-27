@@ -12,9 +12,10 @@ const SOMBRA_PENDENTE: Record<string, string> = {};
 
 const SRC = join(__dirname, '../..');
 
-// Paleta original e a do 06-01 (Studio Editorial Density), trocadas pela Previsão de caixa (D-26).
+// Paletas antigas: original, 06-01 (Studio Editorial Density), Previsão de caixa (D-26) e o roxo
+// #570080 anterior à marca Gestor Beauty (quick 261127-oea).
 const COR_ANTIGA =
-  /#1D9E75|#888780|#2C2C2A|#FAFAF8|#E5E3DC|#3D005A|#2B003F|#B42318|#5D54C7|#3C3489|#DDE7F3|#F7F6F3|#E2DFE5|#221E26|#6B6670|#1B7A43|#BA1A1A|#F4F3F0|#CFCAD3|shadow-card|text-red-600/i;
+  /#1D9E75|#888780|#2C2C2A|#FAFAF8|#E5E3DC|#3D005A|#2B003F|#B42318|#5D54C7|#3C3489|#DDE7F3|#F7F6F3|#E2DFE5|#221E26|#6B6670|#1B7A43|#BA1A1A|#F4F3F0|#CFCAD3|#570080|#4C0070|#521873|#370053|#F5E6FB|#EBD3F5|#E0B8F0|#C98EE3|shadow-card|text-red-600/i;
 const PALETA_PADRAO =
   /\b(bg|text|border|ring|fill|stroke)-(slate|gray|zinc|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b/;
 const FONTE_ANTIGA = /Public[ +]Sans/;
@@ -23,7 +24,7 @@ const FONTE_ANTIGA = /Public[ +]Sans/;
 const SOMBRA_PERMITIDA = new Set([
   'shadow-sm',
   'shadow-none',
-  'shadow-[inset_0_0_0_0.5px_#570080]',
+  'shadow-[inset_0_0_0_0.5px_#7E22CE]',
 ]);
 
 function listarArquivos(dir: string): string[] {
@@ -148,7 +149,7 @@ describe('sem cor antiga, paleta padrão, sombra grande ou Public Sans (fase 6, 
     expect(temSombra("'rounded-lg border shadow-sm'")).toBe(false);
     expect(temSombra("'shadow-[0_-2px_8px_rgba(0,0,0,0.06)]'")).toBe(true);
     expect(temSombra("'group-[.toaster]:!shadow-none'")).toBe(false);
-    expect(temSombra("'focus-visible:shadow-[inset_0_0_0_0.5px_#570080]'")).toBe(false);
+    expect(temSombra("'focus-visible:shadow-[inset_0_0_0_0.5px_#7E22CE]'")).toBe(false);
     expect(temSombra('const boxShadow = 1;')).toBe(false);
   });
 });

@@ -14,7 +14,7 @@ export const NEUTRAL_TONE: ProfessionalTone = {
   name: 'neutro',
   bg: '#FFFFFF',
   bgHover: '#F9FAFB',
-  avatarBg: '#F5E6FB',
+  avatarBg: '#FAF5FF',
 };
 
 // Ordem pensada para vizinhas bem diferentes; tons claros, longe das cores de status.

@@ -15,7 +15,7 @@ const day = new Date(2026, 10, 4);
 const at = (h: number, m = 0) => new Date(2026, 10, 4, h, m).toISOString();
 
 const professionals = [
-  { id: "p1", name: "Bia Souza", initials: "BS", color: "#5D54C7" },
+  { id: "p1", name: "Bia Souza", initials: "BS", color: "#7E22CE" },
   { id: "p2", name: "Carla Lima", initials: "CL", color: "#1D9E75" },
 ];
 
@@ -182,7 +182,7 @@ describe("DayGrid", () => {
     const card = screen.getByTestId("appointment-card-a1");
     expect(card.style.getPropertyValue("--appt-bg")).toBe(NEUTRAL_TONE.bg);
     expect(screen.getByTestId("lane-avatar-p1").style.backgroundColor).toBe(
-      "rgb(245, 230, 251)",
+      "rgb(250, 245, 255)",
     );
   });
 

@@ -21,7 +21,7 @@ describe('manifest do Gestor Beauty', () => {
       start_url: '/',
       scope: '/',
       display: 'standalone',
-      theme_color: '#570080',
+      theme_color: '#7E22CE',
       background_color: '#F7F6F3',
       lang: 'pt-BR',
     });

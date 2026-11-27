@@ -72,7 +72,7 @@ describe('casco Gestor Beauty: menu lateral (D-15)', () => {
     semSombra(nav);
   });
 
-  it('subitem ativo roxo #521873 com texto branco e subgrupo pai em lilás (D-26)', () => {
+  it('subitem ativo roxo #581C87 com texto branco e subgrupo pai em lilás (D-26)', () => {
     render(
       <MemoryRouter initialEntries={['/clientes']}>
         <SidebarNav />
