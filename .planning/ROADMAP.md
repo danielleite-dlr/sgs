@@ -481,10 +481,13 @@ Plans:
 **Goal:** No modal "Cadastrar agendamento", o pacote é escolhido na própria linha de serviço (Serviço ou Pacote, um pacote por agendamento) e entra com os serviços em sequência; o campo Data ganha calendário clicável
 **Requirements**: TBD
 **Depends on:** Phase 11
-**Plans:** 0 plans
+**Plans:** 4 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 12 to break down)
+- [ ] 12-01-PLAN.md — reprodução do "Make & Penteado" no staging (D-12) + helpers puros do pacote na linha
+- [ ] 12-02-PLAN.md — DateField reutilizável com grade de mês própria (D-08/D-09)
+- [ ] 12-03-PLAN.md — pacote na linha de serviço no modal: Serviço | Pacote, sequência, um por agendamento, Remover pacote (D-01..D-07, D-10)
+- [ ] 12-04-PLAN.md — calendário no modal, prefill em sequência (D-11), gate + E2E + prints temporários
 
 ---
 
