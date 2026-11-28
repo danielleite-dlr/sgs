@@ -354,6 +354,7 @@ Recent decisions affecting current work:
 | 261126-w00 | Assistente dentro de Serviços no pacote; diária por lápis discreto (sai o card do topo) | 2026-11-26 | bfd9823 | [261126-w00-assistente-dentro-de-servicos-do-pacote](./quick/261126-w00-assistente-dentro-de-servicos-do-pacote/) |
 | 261126-w01 | Agendamento mostra pacote de noiva só no dia do contrato; senão só sociais | 2026-11-26 | 09d796e | [261126-w01-pacotes-do-agendamento-pelo-contrato](./quick/261126-w01-pacotes-do-agendamento-pelo-contrato/) |
 | 261127-oea | Marca Gestor Beauty: logo no login e menu, favicon/PWA, paleta #7E22CE, ícone/splash Android e cor do push | 2026-11-27 | 7adf877 | [261127-oea-marca-gestor-beauty-no-web-e-no-app-andr](./quick/261127-oea-marca-gestor-beauty-no-web-e-no-app-andr/) |
+| 261127-vmx | Busca nos campos Serviço e Pacote do agendamento + ícone e caixa alta no nome do estabelecimento | 2026-11-28 | 7421289 | [261127-vmx-busca-nos-selects-de-servi-o-e-pacote-do](./quick/261127-vmx-busca-nos-selects-de-servi-o-e-pacote-do/) |
 
 ## Session Continuity
 
@@ -364,4 +365,3 @@ Resume file: None
 | 2026-11-13 | fast | Comanda: crédito do cliente em destaque no pagamento e no card da cliente | ✅ |
 | 2026-11-19 | fast | Comercial como último grupo do menu | ✅ |
 | 2026-11-25 | fast | Tirar warning da ScheduleBridalEventMutation (BridalSchedulePayload não tem o campo; CI frontend-codegen vermelho e agendamento do cronograma quebrado no staging) | ✅ |
-| 261127-vmx | Busca nos campos Serviço e Pacote do agendamento + ícone e caixa alta no nome do estabelecimento | 2026-11-28 | 7421289 | [261127-vmx-busca-nos-selects-de-servi-o-e-pacote-do](./quick/261127-vmx-busca-nos-selects-de-servi-o-e-pacote-do/) |
