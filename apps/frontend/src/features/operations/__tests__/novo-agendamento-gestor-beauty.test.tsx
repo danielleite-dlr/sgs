@@ -223,9 +223,24 @@ describe('Novo agendamento: quando, erro e rodapé (D-20, UX-01)', () => {
     renderDialog();
     const when = screen.getByTestId('visit-when');
     expect(when).toHaveClass('grid-cols-12');
-    for (const id of ['visit-date', 'visit-line-0-time', 'visit-line-0-duration']) {
+    for (const id of [
+      'visit-date',
+      'visit-date-picker',
+      'visit-line-0-time',
+      'visit-line-0-duration',
+    ]) {
       expect(when).toContainElement(screen.getByTestId(id));
     }
+    expect(screen.getByTestId('visit-date-picker')).toHaveClass('h-11', 'w-11');
+  });
+
+  it('o calendário abre no mês e o dia escolhido preenche a data', () => {
+    renderDialog();
+    fireEvent.click(screen.getByTestId('visit-date-picker'));
+    expect(screen.getByTestId('visit-date-picker-panel')).toHaveTextContent('Novembro de 2026');
+    fireEvent.click(screen.getByTestId('visit-date-picker-day-2026-11-20'));
+    expect(screen.getByTestId('visit-date')).toHaveValue('20/11/2026');
+    expect(screen.queryByTestId('visit-date-picker-panel')).not.toBeInTheDocument();
   });
 
   it('o erro aparece logo depois dos serviços, antes do Sinal', () => {
