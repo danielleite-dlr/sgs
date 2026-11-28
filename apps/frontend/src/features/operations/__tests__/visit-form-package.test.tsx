@@ -5,7 +5,11 @@ import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import { ClientsListQuery } from '@/features/clients/api/clients.api';
 import { ServicesQuery } from '@/features/catalog/api/servicos.api';
 import { SuggestProfessionalsQuery } from '../api/professional-suggestion.api';
-import { CreateVisitMutation, VisitPackagesQuery } from '../api/appointments.api';
+import {
+  CreateVisitMutation,
+  ProfessionalsForServiceQuery,
+  VisitPackagesQuery,
+} from '../api/appointments.api';
 import { VisitFormDialog } from '../components/calendar/VisitFormDialog';
 import type { ScheduleProfessional } from '../components/calendar/types';
 
@@ -123,6 +127,21 @@ function mocks(): MockedResponse[] {
       variableMatcher: (v) => v.date === '2026-11-07',
       maxUsageCount: 50,
       result: { data: { packages: [] } },
+    },
+    {
+      request: { query: ProfessionalsForServiceQuery },
+      variableMatcher: () => true,
+      maxUsageCount: 50,
+      result: {
+        data: {
+          professionalsForService: ['p1', 'p2'].map((id) => ({
+            __typename: 'Professional',
+            id,
+            displayName: id,
+            isFixed: true,
+          })),
+        },
+      },
     },
     {
       request: { query: SuggestProfessionalsQuery },

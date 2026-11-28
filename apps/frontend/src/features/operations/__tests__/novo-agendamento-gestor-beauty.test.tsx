@@ -133,6 +133,12 @@ describe('Novo agendamento: chips de serviço (D-20)', () => {
     expect(within(chips).getByTestId('visit-service-chip-1')).toHaveTextContent('PenteadoR$ 160,00');
   });
 
+  it('sem select de pacote no fim; cada linha tem Serviço | Pacote (D-01)', () => {
+    renderDialog();
+    expect(screen.queryByTestId('visit-package')).toBeNull();
+    expect(screen.getByTestId('visit-line-0-kind-service')).toHaveClass('min-h-[44px]');
+  });
+
   it('nenhum data-testid novo começa com appointment-card-', () => {
     renderDialog({ professionals: pros(2) });
     expect(document.querySelectorAll('[data-testid^="appointment-card-"]')).toHaveLength(0);

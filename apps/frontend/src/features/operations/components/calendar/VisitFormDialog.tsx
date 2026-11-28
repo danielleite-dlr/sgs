@@ -25,6 +25,7 @@ import {
   VisitPackagesQuery,
   type CreateVisitResult,
   type ProfessionalsForServiceResult,
+  type VisitPackageData,
   type VisitPackagesResult,
 } from '../../api/appointments.api';
 import {
@@ -47,8 +48,11 @@ import { maskDateBR, maskTime } from '../../lib/input-masks';
 import { PAYMENT_METHODS } from '../../lib/operations-labels';
 import {
   buildCreateVisitInput,
+  expandPackageAt,
   expandPackageLines,
   lineInterval,
+  packageStartTime,
+  removePackageLines,
   suggestVariant,
   type VisitLine,
 } from '../../lib/visit-form';
@@ -61,6 +65,11 @@ import {
 import type { ScheduleProfessional } from './types';
 
 interface LineState {
+  id: string;
+  /** Modo da linha (D-01): serviço avulso ou pacote. */
+  kind: 'service' | 'package';
+  /** Linha gerada pelo pacote (D-10): serviço travado, sem lixeira. */
+  fromPackage: boolean;
   serviceId: string;
   variantId: string;
   professionalId: string;
@@ -103,8 +112,17 @@ function seedTime(initial?: { hour: number; minute: number }): string {
     : '';
 }
 
+let lineSeq = 0;
+function nextLineId(): string {
+  lineSeq += 1;
+  return `line-${lineSeq}`;
+}
+
 function emptyLine(time: string, professionalId = ''): LineState {
   return {
+    id: nextLineId(),
+    kind: 'service',
+    fromPackage: false,
     serviceId: '',
     variantId: '',
     professionalId,
@@ -119,8 +137,16 @@ interface LineRowProps {
   line: LineState;
   services: ServiceData[];
   professionals: ScheduleProfessional[];
-  lockedService: boolean;
   canRemove: boolean;
+  /** Falso vindo do grupo da noiva (prefill): a linha não oferece pacote. */
+  allowPackage: boolean;
+  packages: VisitPackageData[];
+  /** Já há um pacote no agendamento (D-03). */
+  packageTaken: boolean;
+  packageName: string;
+  showPackageRemove: boolean;
+  onChoosePackage: (id: string) => void;
+  onRemovePackage: () => void;
   dateField?: ReactNode;
   dateBr: string;
   /** Falso vindo do grupo da noiva (prefill): sem pré-seleção. */
@@ -198,13 +224,84 @@ function ProfessionalSegmented({ index, options, value, onPick }: ProfessionalSe
   );
 }
 
+interface KindToggleProps {
+  index: number;
+  value: 'service' | 'package';
+  packageDisabled: boolean;
+  packageTitle: string;
+  onPick: (kind: 'service' | 'package') => void;
+}
+
+// Serviço | Pacote (D-01): radiogroup com setas e alvos de 44 px.
+function KindToggle({ index, value, packageDisabled, packageTitle, onPick }: KindToggleProps) {
+  const options: { kind: 'service' | 'package'; label: string; disabled: boolean }[] = [
+    { kind: 'service', label: 'Serviço', disabled: false },
+    { kind: 'package', label: 'Pacote', disabled: packageDisabled },
+  ];
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    if (!['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(e.key)) return;
+    e.preventDefault();
+    const from = options.findIndex((o) => o.kind === value);
+    const next = (from + 1) % options.length;
+    if (options[next].disabled) return;
+    onPick(options[next].kind);
+    refs.current[next]?.focus();
+  }
+
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Serviço ou pacote"
+      data-testid={`visit-line-${index}-kind`}
+      onKeyDown={onKeyDown}
+      className="grid grid-cols-2 gap-1 rounded-md border border-neutral-200 bg-neutral-100 p-1"
+    >
+      {options.map((o, i) => {
+        const sel = o.kind === value;
+        return (
+          <button
+            key={o.kind}
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            type="button"
+            role="radio"
+            aria-checked={sel}
+            tabIndex={sel ? 0 : -1}
+            disabled={o.disabled}
+            title={o.disabled ? packageTitle : undefined}
+            data-testid={`visit-line-${index}-kind-${o.kind}`}
+            onClick={() => onPick(o.kind)}
+            className={cn(
+              'min-h-[44px] rounded-md px-sm text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+              sel
+                ? 'bg-primary font-semibold text-white'
+                : 'bg-transparent text-neutral-600 hover:bg-white',
+            )}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function LineRow({
   index,
   line,
   services,
   professionals,
-  lockedService,
   canRemove,
+  allowPackage,
+  packages,
+  packageTaken,
+  packageName,
+  showPackageRemove,
+  onChoosePackage,
+  onRemovePackage,
   dateField,
   dateBr,
   suggestEnabled,
@@ -337,6 +434,61 @@ function LineRow({
       role="group"
       aria-label={`Serviço ${index + 1}`}
     >
+      {line.fromPackage ? (
+        <div className="flex flex-wrap items-center justify-between gap-sm">
+          <span
+            data-testid={`visit-line-${index}-package-badge`}
+            className="inline-flex items-center rounded-md bg-primary-100 px-2 py-0.5 text-[12px] font-semibold text-primary-800"
+          >
+            do pacote {packageName}
+          </span>
+          {showPackageRemove && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="min-h-[44px]"
+              data-testid="visit-package-remove"
+              onClick={onRemovePackage}
+            >
+              Remover pacote
+            </Button>
+          )}
+        </div>
+      ) : (
+        allowPackage && (
+          <KindToggle
+            index={index}
+            value={line.kind}
+            packageDisabled={packageTaken || packages.length === 0}
+            packageTitle={
+              packageTaken ? 'Um pacote por agendamento' : 'Nenhum pacote para esta cliente e data'
+            }
+            onPick={(kind) => onChange({ kind })}
+          />
+        )
+      )}
+      {line.kind === 'package' && !line.fromPackage ? (
+        <div>
+          <Label className={LABEL_CLASS} htmlFor={`visit-line-${index}-package`}>
+            Pacote
+          </Label>
+          <select
+            id={`visit-line-${index}-package`}
+            data-testid={`visit-line-${index}-package`}
+            value=""
+            onChange={(e) => e.target.value && onChoosePackage(e.target.value)}
+            className={SELECT_CLASS}
+          >
+            <option value="">Selecione…</option>
+            {packages.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : (
       <div className="flex items-end gap-sm">
         <div className="grid flex-1 grid-cols-1 sm:grid-cols-2 gap-sm">
           <div>
@@ -347,7 +499,7 @@ function LineRow({
               id={`visit-line-${index}-service`}
               data-testid={`visit-line-${index}-service`}
               value={line.serviceId}
-              disabled={lockedService}
+              disabled={line.fromPackage}
               onChange={(e) => {
                 const id = e.target.value;
                 const next = services.find((s) => s.id === id);
@@ -387,7 +539,7 @@ function LineRow({
             </select>
           </div>
         </div>
-        {canRemove && (
+        {canRemove && !line.fromPackage && (
           <Button
             type="button"
             variant="ghost"
@@ -400,6 +552,7 @@ function LineRow({
           </Button>
         )}
       </div>
+      )}
       <div>
         {segmented ? (
           <>
@@ -496,6 +649,7 @@ export function VisitFormDialog({
   const canCreateClient = useHasPermission('client.write');
   const [dateBr, setDateBr] = useState(() => dateToBr(date));
   const [packageId, setPackageId] = useState('');
+  const [packageName, setPackageName] = useState('');
   // Fase 11 G-01: a Assistente tem coluna na grade, mas não é pré-selecionada nem escolhida.
   const serviceProfessionals = useMemo(
     () => professionals.filter((p) => !p.isAssistant),
@@ -542,10 +696,9 @@ export function VisitFormDialog({
   const services = servicesData?.services ?? [];
   const selectedPackage = packagesData?.packages.find((p) => p.id === packageId) ?? null;
 
-  // Trocou cliente ou data e o pacote escolhido deixou de valer: volta para "Sem pacote".
+  // Trocou cliente ou data e o pacote deixou de valer: saem as linhas do pacote (D-05).
   useEffect(() => {
-    if (packageId && packagesData && !selectedPackage) choosePackage('');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (packageId && packagesData && !selectedPackage) removePackage();
   }, [packagesData, packageId, selectedPackage]);
 
   useEffect(() => {
@@ -563,6 +716,7 @@ export function VisitFormDialog({
         setLines([emptyLine(seedTime(initialTime), seedProfId)]);
       }
       setPackageId('');
+      setPackageName('');
       setError('');
       setDepositOpen(depositAmount !== '');
     }
@@ -647,6 +801,7 @@ export function VisitFormDialog({
     setNewClientPhone('');
     setNewClientError('');
     setPackageId('');
+    setPackageName('');
     setDepositAmount('');
     setDepositMethod('pix');
     setDepositOpen(false);
@@ -663,13 +818,15 @@ export function VisitFormDialog({
     setLines((cur) => cur.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
   }
 
-  function choosePackage(id: string) {
-    setPackageId(id);
+  // D-02: o pacote expande no lugar da linha; D-06: a hora vem da própria linha (ou do fim da
+  // linha de cima, ou 09:00); D-07: depois de expandir, editar uma hora não mexe nas outras.
+  function choosePackageAt(index: number, id: string) {
     const pkg = packagesData?.packages.find((p) => p.id === id);
-    if (!pkg) {
-      setLines([emptyLine(lines[0]?.time ?? '', lines[0]?.professionalId)]);
-      return;
-    }
+    if (!pkg) return;
+    const start = packageStartTime(
+      lines.map((l) => ({ time: l.time, durationMinutes: Number(l.duration) })),
+      index,
+    );
     const expanded = expandPackageLines(
       {
         services: pkg.services.map((s) => ({
@@ -678,23 +835,42 @@ export function VisitFormDialog({
           defaultDurationMinutes: s.service.defaultDurationMinutes,
         })),
       },
-      lines[0]?.time || '09:00',
-      lines[0]?.professionalId ?? '',
-    );
-    setLines(
-      expanded.map((l: VisitLine) => ({
+      start,
+      lines[index]?.professionalId ?? '',
+    ).map(
+      (l: VisitLine): LineState => ({
+        id: nextLineId(),
+        kind: 'service',
+        fromPackage: true,
         serviceId: l.serviceId,
         variantId: '',
         professionalId: l.professionalId,
         professionalTouched: l.professionalId !== '',
         time: l.time,
         duration: String(l.durationMinutes),
-      })),
+      }),
     );
+    setLines((cur) => expandPackageAt(cur, index, expanded));
+    setPackageId(pkg.id);
+    setPackageName(pkg.name);
+  }
+
+  // D-04/D-10: tira só as linhas do pacote; os avulsos ficam.
+  function removePackage() {
+    setLines((cur) => {
+      const first = cur.find((l) => l.fromPackage);
+      return removePackageLines(cur, () => emptyLine(first?.time ?? '', first?.professionalId));
+    });
+    setPackageId('');
+    setPackageName('');
   }
 
   async function handleSave() {
     setError('');
+    if (lines.some((l) => l.kind === 'package' && !l.fromPackage)) {
+      setError('Escolha o pacote ou volte para Serviço.');
+      return;
+    }
     const built = buildCreateVisitInput({
       clientId,
       date: dateBr,
@@ -959,7 +1135,7 @@ export function VisitFormDialog({
                   )}
                 </span>
               ))}
-              {selectedPackage === null && lines.length < 10 && (
+              {lines.length < 10 && (
                 <button
                   type="button"
                   data-testid="visit-add-line"
@@ -978,18 +1154,24 @@ export function VisitFormDialog({
             </div>
             {lines.map((line, i) => (
               <LineRow
-                key={i}
+                key={line.id}
                 index={i}
                 line={line}
                 services={services}
                 professionals={serviceProfessionals}
-                lockedService={selectedPackage !== null}
-                canRemove={selectedPackage === null && lines.length > 1}
+                canRemove={lines.length > 1}
+                allowPackage={!prefill}
+                packages={packagesData?.packages ?? []}
+                packageTaken={packageId !== ''}
+                packageName={packageName}
+                showPackageRemove={line.fromPackage && lines.findIndex((l) => l.fromPackage) === i}
+                onChoosePackage={(id) => choosePackageAt(i, id)}
+                onRemovePackage={removePackage}
                 dateField={i === 0 ? dateField : undefined}
                 dateBr={dateBr}
                 suggestEnabled={!prefill}
                 onChange={(patch) => patchLine(i, patch)}
-                onRemove={() => setLines((cur) => cur.filter((_, idx) => idx !== i))}
+                onRemove={() => setLines((cur) => cur.filter((l) => l.id !== line.id))}
               />
             ))}
           </section>
@@ -1004,26 +1186,6 @@ export function VisitFormDialog({
               {error}
             </p>
           )}
-
-          <div>
-            <Label className={LABEL_CLASS} htmlFor="visit-package">
-              Pacote <span className={OPTIONAL_CLASS}>(opcional)</span>
-            </Label>
-            <select
-              id="visit-package"
-              data-testid="visit-package"
-              value={packageId}
-              onChange={(e) => choosePackage(e.target.value)}
-              className={SELECT_CLASS}
-            >
-              <option value="">Sem pacote</option>
-              {(packagesData?.packages ?? []).map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
 
           <section className="rounded-md border border-neutral-200 bg-neutral-100">
             <button
