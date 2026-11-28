@@ -6,6 +6,7 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
+  Store,
   TriangleAlert,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -93,9 +94,14 @@ export function SidebarNav({
           {/* Nome do estabelecimento acima dos menus, com linha separadora (quick 261127). */}
           <p
             data-testid="sidebar-org"
-            className="mb-sm truncate border-b border-neutral-200 px-sm pb-sm text-body font-semibold text-neutral-800"
+            className="mb-sm flex items-center gap-sm border-b border-neutral-200 px-sm pb-sm text-body font-semibold uppercase tracking-wide text-neutral-800"
           >
-            {brandName(organizationName)}
+            <Store
+              data-testid="sidebar-org-icon"
+              className="h-5 w-5 shrink-0 text-primary-700"
+              aria-hidden
+            />
+            <span className="truncate">{brandName(organizationName)}</span>
           </p>
           <SidebarList
             items={menu}
