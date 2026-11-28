@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 12-04-PLAN.md
-last_updated: "2026-11-28T00:53:38.992Z"
+last_updated: "2026-11-28T01:04:56.813Z"
 last_activity: 2026-11-28
 progress:
   total_phases: 16
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 
 ## Current Position
 
-Phase: 12 (ajustar-cadastro-de-agendamento) — EXECUTING
-Plan: 4 of 4
+Phase: 12
+Plan: Not started
 Plan: 14 of 16
 Plan: 14 of 16
 Plan: 14 of 16
