@@ -33,6 +33,11 @@ Fora do escopo: cliente, sinal e observações (o usuário marcou essas áreas, 
 - **D-08:** O campo Data continua aceitando digitação `dd/mm/aaaa` (máscara atual), com um **ícone de calendário ao lado que abre um calendário do mês** num Popover para clicar no dia, no visual Gestor Beauty (roxo, pt-BR, semana começando no domingo). O dia escolhido preenche o campo no mesmo formato.
 - **D-09:** Não usar `<input type="date">` nativo. Hoje não há componente de calendário no projeto (`components/ui` só tem `popover`). Fica a critério do planner adicionar `react-day-picker` (Calendar do shadcn) ou montar uma grade própria. O componente deve ser reutilizável (`components/ui/calendar` ou `DateField`).
 
+### Decisões após a pesquisa (2026-11-27)
+- **D-10:** As linhas que vieram do pacote **não têm lixeira individual**. Elas levam o selo "do pacote X", e o serviço fica travado, mas horário, duração e profissional são editáveis. Para tirar, só o controle "Remover pacote" (tira todas as linhas do pacote e limpa o `packageId`; os avulsos ficam).
+- **D-11:** Com `prefill` (agendar pelo grupo da noiva), a opção Pacote **não aparece** nas linhas. Os serviços pré-preenchidos devem entrar **em sequência** a partir do horário inicial, não todos no mesmo horário (hoje `VisitFormDialog.tsx:556-561` repete a mesma hora).
+- **D-12:** Caso relatado pelo usuário: no staging, ao escolher o pacote **"Make & Penteado"**, os dois serviços foram para o mesmo horário ("devo ter visto errado"). O plano deve começar reproduzindo esse caso: teste de componente com um pacote de 2 serviços (make + penteado), com e sem horário na linha, e checagem no staging (Playwright temporário ou consulta aos dados do pacote: duração padrão dos serviços, `quantity`, serviço repetido). Corrigir qualquer caminho que dê horário repetido; se não reproduzir, o teste fica como regressão.
+
 ### Claude's Discretion
 - Forma do seletor Serviço | Pacote na linha (abas pequenas, segmented control ou select com tipo), desde que caiba no celular (alvos ≥ 44 px, UX-03/UX-04 da fase 6).
 - Marcação visual das linhas que vieram do pacote.
