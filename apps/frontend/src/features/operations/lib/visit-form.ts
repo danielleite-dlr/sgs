@@ -100,6 +100,16 @@ function addMinutes(time: string, minutes: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
+// Pacote na linha (fase 12): D-02 expande no lugar da linha, D-04 remove só as linhas
+// do pacote, D-06 sequência a partir da hora da linha, D-11 sequência do prefill.
+export const PACKAGE_FALLBACK_TIME = '09:00';
+/** Duração usada sem duração padrão válida: evita dois serviços no mesmo horário (D-12). */
+export const PACKAGE_FALLBACK_MINUTES = 60;
+
+function safeMinutes(m: number): number {
+  return Number.isInteger(m) && m > 0 ? m : PACKAGE_FALLBACK_MINUTES;
+}
+
 /** 1 linha por serviço distinto do pacote, em sequência a partir de startTime. */
 export function expandPackageLines(
   pkg: { services: { serviceId: string; quantity: number; defaultDurationMinutes: number }[] },
@@ -112,16 +122,61 @@ export function expandPackageLines(
   for (const s of pkg.services) {
     if (seen.has(s.serviceId)) continue;
     seen.add(s.serviceId);
+    const minutes = safeMinutes(s.defaultDurationMinutes);
     lines.push({
       serviceId: s.serviceId,
       variantId: null,
       professionalId,
       time: cursor,
-      durationMinutes: s.defaultDurationMinutes,
+      durationMinutes: minutes,
     });
-    cursor = addMinutes(cursor, s.defaultDurationMinutes);
+    cursor = addMinutes(cursor, minutes);
   }
   return lines;
+}
+
+/**
+ * Hora de início do pacote escolhido na linha `index`: a da própria linha; sem ela, o fim da
+ * linha preenchida mais próxima acima; sem nenhuma, o fallback (09:00).
+ */
+export function packageStartTime(
+  rows: { time: string; durationMinutes: number }[],
+  index: number,
+  fallback = PACKAGE_FALLBACK_TIME,
+): string {
+  const own = rows[index];
+  if (own && parseTime(own.time)) return own.time;
+  for (let i = index - 1; i >= 0; i--) {
+    const row = rows[i];
+    if (parseTime(row.time)) return addMinutes(row.time, safeMinutes(row.durationMinutes));
+  }
+  return fallback;
+}
+
+/** Troca só a linha `index` pelas linhas do pacote; as de cima e de baixo ficam iguais (D-02). */
+export function expandPackageAt<L>(lines: L[], index: number, expanded: L[]): L[] {
+  return [...lines.slice(0, index), ...expanded, ...lines.slice(index + 1)];
+}
+
+/** Tira só as linhas do pacote; se nada sobrar, devolve uma linha vazia (D-04, D-10). */
+export function removePackageLines<L extends { fromPackage: boolean }>(
+  lines: L[],
+  makeEmpty: () => L,
+): L[] {
+  const rest = lines.filter((l) => !l.fromPackage);
+  return rest.length > 0 ? rest : [makeEmpty()];
+}
+
+/** Horas em sequência a partir da inicial (prefill, D-11); usado uma vez, sem cascata (D-07). */
+export function sequenceTimes(startTime: string, durations: number[]): string[] {
+  if (!parseTime(startTime)) return durations.map(() => '');
+  const out: string[] = [];
+  let cursor = startTime;
+  for (const d of durations) {
+    out.push(cursor);
+    cursor = addMinutes(cursor, safeMinutes(d));
+  }
+  return out;
 }
 
 /** Fase 2 D-07: sugere a variante pela senioridade do profissional. */
