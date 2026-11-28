@@ -364,3 +364,4 @@ Resume file: None
 | 2026-11-13 | fast | Comanda: crédito do cliente em destaque no pagamento e no card da cliente | ✅ |
 | 2026-11-19 | fast | Comercial como último grupo do menu | ✅ |
 | 2026-11-25 | fast | Tirar warning da ScheduleBridalEventMutation (BridalSchedulePayload não tem o campo; CI frontend-codegen vermelho e agendamento do cronograma quebrado no staging) | ✅ |
+| 261127-vmx | Busca nos campos Serviço e Pacote do agendamento + ícone e caixa alta no nome do estabelecimento | 2026-11-28 | 7421289 | [261127-vmx-busca-nos-selects-de-servi-o-e-pacote-do](./quick/261127-vmx-busca-nos-selects-de-servi-o-e-pacote-do/) |
