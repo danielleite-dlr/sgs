@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 12-03-PLAN.md
-last_updated: "2026-11-28T00:37:42.351Z"
+stopped_at: Completed 12-04-PLAN.md
+last_updated: "2026-11-28T00:53:38.992Z"
 last_activity: 2026-11-28
 progress:
   total_phases: 16
-  completed_phases: 12
+  completed_phases: 13
   total_plans: 198
-  completed_plans: 195
+  completed_plans: 196
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 12 (ajustar-cadastro-de-agendamento) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Plan: 14 of 16
 Plan: 14 of 16
 Plan: 14 of 16
@@ -161,6 +161,7 @@ Progress: [██████████] 100% (Phase 1 of 5)
 | Phase 12 P02 | 10min | 2 tasks | 6 files |
 | Phase 12 P01 | 20min | 2 tasks | 2 files |
 | Phase 12 P03 | 40min | 2 tasks | 3 files |
+| Phase 12 P04 | 40min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -269,6 +270,7 @@ Recent decisions affecting current work:
 - [Phase 11]: 11-04: mudar o dia do evento sem companionsReadyBy zera o campo
 - [Phase 11]: Papel ASSISTANT = linha de sistema em roles, implica isProfessional/isBridalAssistant e zera fixa/atende noiva/categorias; sem login
 - [Phase 12]: DateField com grade de mês própria, sem react-day-picker (D-09)
+- [Phase 12]: Sequência do prefill aplicada uma vez por abertura no efeito do catálogo (sem cascata)
 
 ### Pending Todos
 
@@ -355,8 +357,8 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-11-28T00:37:42.342Z
-Stopped at: Completed 12-03-PLAN.md
+Last session: 2026-11-28T00:53:38.979Z
+Stopped at: Completed 12-04-PLAN.md
 Resume file: None
 | 2026-11-12 | fast | Montar manualmente (noivas) sem duplicar serviços do teste | ✅ |
 | 2026-11-13 | fast | Comanda: crédito do cliente em destaque no pagamento e no card da cliente | ✅ |
