@@ -361,6 +361,8 @@ function LineRow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allowedIds, line.professionalId]);
 
+  const hasVariants = (service?.pricingVariants.length ?? 0) > 0;
+
   function applyVariant(variantId: string, current: ServiceData | undefined) {
     const variant = current?.pricingVariants.find((v) => v.id === variantId);
     const minutes = variant?.durationMinutes ?? current?.defaultDurationMinutes;
@@ -489,7 +491,12 @@ function LineRow({
         </div>
       ) : (
       <div className="flex items-end gap-sm">
-        <div className="grid flex-1 grid-cols-1 sm:grid-cols-2 gap-sm">
+        <div
+          className={cn(
+            'grid flex-1 grid-cols-1 gap-sm',
+            hasVariants && 'sm:grid-cols-2',
+          )}
+        >
           <div>
             <Label className={LABEL_CLASS} htmlFor={`visit-line-${index}-service`}>
               Serviço
@@ -513,25 +520,30 @@ function LineRow({
               className="mt-xs"
             />
           </div>
-          <div>
-            <Label className={LABEL_CLASS} htmlFor={`visit-line-${index}-variant`}>
-              Variante de preço
-            </Label>
-            <select
-              id={`visit-line-${index}-variant`}
-              data-testid={`visit-line-${index}-variant`}
-              value={line.variantId}
-              onChange={(e) => applyVariant(e.target.value, service)}
-              className={SELECT_CLASS}
-            >
-              <option value="">Preço padrão</option>
-              {(service?.pricingVariants ?? []).map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name} — R$ {formatCurrencyDisplay(v.price)}
+          {/* Só aparece quando o serviço tem variante; a opção vazia mostra o preço do serviço. */}
+          {hasVariants && service && (
+            <div>
+              <Label className={LABEL_CLASS} htmlFor={`visit-line-${index}-variant`}>
+                Variante de preço
+              </Label>
+              <select
+                id={`visit-line-${index}-variant`}
+                data-testid={`visit-line-${index}-variant`}
+                value={line.variantId}
+                onChange={(e) => applyVariant(e.target.value, service)}
+                className={SELECT_CLASS}
+              >
+                <option value="">
+                  Preço do serviço — R$ {formatCurrencyDisplay(service.basePrice)}
                 </option>
-              ))}
-            </select>
-          </div>
+                {service.pricingVariants.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name} — R$ {formatCurrencyDisplay(v.price)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
         {canRemove && !line.fromPackage && (
           <Button

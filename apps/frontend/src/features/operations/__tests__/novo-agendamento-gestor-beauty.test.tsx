@@ -18,7 +18,7 @@ const emptyClients: MockedResponse = {
   result: { data: { clients: { __typename: 'ClientsPage', totalCount: 0, rows: [] } } },
 };
 
-function service(id: string, name: string, basePrice: string) {
+function service(id: string, name: string, basePrice: string, pricingVariants: unknown[] = []) {
   return {
     __typename: 'Service',
     id,
@@ -29,7 +29,7 @@ function service(id: string, name: string, basePrice: string) {
     defaultDurationMinutes: 60,
     displayOrder: 1,
     coverImageUrl: null,
-    pricingVariants: [],
+    pricingVariants,
   };
 }
 
@@ -41,7 +41,17 @@ const servicesMock: MockedResponse = {
     data: {
       services: [
         service('s1', 'Maquiagem social', '220.00'),
-        service('s2', 'Penteado', '160.00'),
+        service('s2', 'Penteado', '160.00', [
+          {
+            __typename: 'ServicePricingVariant',
+            id: 'v-longo',
+            name: 'Cabelo longo',
+            durationMinutes: 90,
+            seniorityTier: null,
+            price: '200.00',
+            displayOrder: 1,
+          },
+        ]),
       ],
     },
   },
@@ -440,5 +450,20 @@ describe('Novo agendamento: sugestão de profissional (11 D-08, D-09, D-12)', ()
     for (const r of within(screen.getByTestId('visit-line-0-professional')).getAllByRole('radio')) {
       expect(r).toHaveAttribute('aria-checked', 'false');
     }
+  });
+});
+
+describe('Novo agendamento: variante de preço só quando o serviço tem', () => {
+  it('serviço sem variante não mostra o campo; com variante mostra o preço do serviço', async () => {
+    renderDialog();
+    await pickSearchable('visit-line-0-service', 's1');
+    expect(screen.queryByTestId('visit-line-0-variant')).toBeNull();
+
+    await pickSearchable('visit-line-0-service', 's2');
+    const variant = screen.getByTestId('visit-line-0-variant');
+    const options = within(variant).getAllByRole('option');
+    expect(options[0]).toHaveTextContent('Preço do serviço — R$ 160,00');
+    expect(options[1]).toHaveTextContent('Cabelo longo — R$ 200,00');
+    expect(screen.queryByText('Preço padrão')).toBeNull();
   });
 });
