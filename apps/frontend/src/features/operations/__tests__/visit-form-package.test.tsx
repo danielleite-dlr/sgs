@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { pickSearchable } from '@/test-utils-searchable';
 import userEvent from '@testing-library/user-event';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import { ClientsListQuery } from '@/features/clients/api/clients.api';
@@ -178,8 +179,7 @@ function renderDialog(initialTime?: { hour: number; minute: number; profId?: str
 }
 
 async function chooseService(line: number, id: string, time?: string) {
-  await screen.findByRole('option', { name: 'Escova' });
-  fireEvent.change(screen.getByTestId(`visit-line-${line}-service`), { target: { value: id } });
+  await pickSearchable(`visit-line-${line}-service`, id);
   if (time) fireEvent.change(screen.getByTestId(`visit-line-${line}-time`), { target: { value: time } });
 }
 
@@ -187,9 +187,8 @@ async function choosePackage(user: ReturnType<typeof userEvent.setup>, line: num
   const kind = screen.getByTestId(`visit-line-${line}-kind-package`);
   await waitFor(() => expect(kind).toBeEnabled());
   await user.click(kind);
-  const select = await screen.findByTestId(`visit-line-${line}-package`);
-  await screen.findByRole('option', { name: 'Make & Penteado' });
-  await user.selectOptions(select, 'pkg-mp');
+  await screen.findByTestId(`visit-line-${line}-package`);
+  await pickSearchable(`visit-line-${line}-package`, 'pkg-mp');
 }
 
 const time = (i: number) => (screen.getByTestId(`visit-line-${i}-time`) as HTMLInputElement).value;
@@ -213,8 +212,8 @@ describe('D-12: Make & Penteado em sequência', () => {
     await choosePackage(user, 0);
     expect(time(0)).toBe('10:00');
     expect(time(1)).toBe('11:00');
-    expect(screen.getByTestId('visit-line-0-service')).toHaveValue('s-make');
-    expect(screen.getByTestId('visit-line-1-service')).toHaveValue('s-pent');
+    expect(screen.getByTestId('visit-line-0-service')).toHaveAttribute('data-value', 's-make');
+    expect(screen.getByTestId('visit-line-1-service')).toHaveAttribute('data-value', 's-pent');
     expect(screen.getByTestId('visit-line-0-professional-p1')).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByTestId('visit-line-1-professional-p1')).toHaveAttribute('aria-checked', 'true');
   });
@@ -241,12 +240,12 @@ describe('D-02/D-03: pacote no meio de avulsos, um por agendamento', () => {
 
   it('linhas acima e abaixo ficam iguais; dá para adicionar avulso depois', async () => {
     await setup();
-    expect(screen.getByTestId('visit-line-0-service')).toHaveValue('s-esc');
+    expect(screen.getByTestId('visit-line-0-service')).toHaveAttribute('data-value', 's-esc');
     expect(time(0)).toBe('10:00');
     expect(time(1)).toBe('11:00');
     expect(time(2)).toBe('12:00');
     fireEvent.click(screen.getByTestId('visit-add-line'));
-    expect(screen.getByTestId('visit-line-3-service')).toHaveValue('');
+    expect(screen.getByTestId('visit-line-3-service')).toHaveAttribute('data-value', '');
     expect(screen.getByTestId('visit-line-3-kind-service')).toHaveAttribute('aria-checked', 'true');
   });
 
@@ -288,13 +287,13 @@ describe('D-04: Remover pacote', () => {
     fireEvent.click(screen.getByTestId('visit-add-line'));
     await choosePackage(user, 1);
     fireEvent.click(screen.getByTestId('visit-add-line'));
-    fireEvent.change(screen.getByTestId('visit-line-3-service'), { target: { value: 's-esc' } });
+    await pickSearchable('visit-line-3-service', 's-esc');
 
     await user.click(screen.getByTestId('visit-package-remove'));
     expect(screen.queryByTestId('visit-line-0-package-badge')).toBeNull();
     expect(screen.queryByTestId('visit-package-remove')).toBeNull();
-    expect(screen.getByTestId('visit-line-0-service')).toHaveValue('s-esc');
-    expect(screen.getByTestId('visit-line-1-service')).toHaveValue('s-esc');
+    expect(screen.getByTestId('visit-line-0-service')).toHaveAttribute('data-value', 's-esc');
+    expect(screen.getByTestId('visit-line-1-service')).toHaveAttribute('data-value', 's-esc');
     expect(screen.queryByTestId('visit-line-2-service')).toBeNull();
     expect(screen.getByTestId('visit-line-0-kind-package')).toBeEnabled();
   });
@@ -305,7 +304,7 @@ describe('D-04: Remover pacote', () => {
     await choosePackage(user, 0);
     await user.click(screen.getByTestId('visit-package-remove'));
     expect(screen.queryByTestId('visit-line-1-service')).toBeNull();
-    expect(screen.getByTestId('visit-line-0-service')).toHaveValue('');
+    expect(screen.getByTestId('visit-line-0-service')).toHaveAttribute('data-value', '');
   });
 });
 
@@ -318,7 +317,7 @@ describe('D-05: pacote que deixa de valer na nova data', () => {
     await choosePackage(user, 1);
     fireEvent.change(screen.getByTestId('visit-date'), { target: { value: '07/11/2026' } });
     await waitFor(() => expect(screen.queryByTestId('visit-line-1-package-badge')).toBeNull());
-    expect(screen.getByTestId('visit-line-0-service')).toHaveValue('s-esc');
+    expect(screen.getByTestId('visit-line-0-service')).toHaveAttribute('data-value', 's-esc');
     expect(screen.queryByTestId('visit-line-1-service')).toBeNull();
   });
 });

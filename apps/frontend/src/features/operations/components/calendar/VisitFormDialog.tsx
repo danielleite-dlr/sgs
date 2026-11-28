@@ -17,6 +17,7 @@ import { formatPhoneBr } from '@/lib/format-phone';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DateField } from '@/components/ui/date-field';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
@@ -475,20 +476,16 @@ function LineRow({
           <Label className={LABEL_CLASS} htmlFor={`visit-line-${index}-package`}>
             Pacote
           </Label>
-          <select
+          <SearchableSelect
             id={`visit-line-${index}-package`}
-            data-testid={`visit-line-${index}-package`}
+            testId={`visit-line-${index}-package`}
             value=""
-            onChange={(e) => e.target.value && onChoosePackage(e.target.value)}
-            className={SELECT_CLASS}
-          >
-            <option value="">Selecione…</option>
-            {packages.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+            options={packages.map((p) => ({ value: p.id, label: p.name }))}
+            onChange={(id) => id && onChoosePackage(id)}
+            searchPlaceholder="Buscar pacote…"
+            emptyText="Nenhum pacote encontrado."
+            className="mt-xs"
+          />
         </div>
       ) : (
       <div className="flex items-end gap-sm">
@@ -497,13 +494,13 @@ function LineRow({
             <Label className={LABEL_CLASS} htmlFor={`visit-line-${index}-service`}>
               Serviço
             </Label>
-            <select
+            <SearchableSelect
               id={`visit-line-${index}-service`}
-              data-testid={`visit-line-${index}-service`}
+              testId={`visit-line-${index}-service`}
               value={line.serviceId}
               disabled={line.fromPackage}
-              onChange={(e) => {
-                const id = e.target.value;
+              options={services.map((s) => ({ value: s.id, label: s.name }))}
+              onChange={(id) => {
                 const next = services.find((s) => s.id === id);
                 onChange({
                   serviceId: id,
@@ -511,15 +508,10 @@ function LineRow({
                   ...(next ? { duration: String(next.defaultDurationMinutes) } : {}),
                 });
               }}
-              className={SELECT_CLASS}
-            >
-              <option value="">Selecione…</option>
-              {services.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+              searchPlaceholder="Buscar serviço…"
+              emptyText="Nenhum serviço encontrado."
+              className="mt-xs"
+            />
           </div>
           <div>
             <Label className={LABEL_CLASS} htmlFor={`visit-line-${index}-variant`}>

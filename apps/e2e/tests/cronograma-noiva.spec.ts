@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { pickProfessional } from '../support/agenda-ui';
+import { pickProfessional, pickSearchable } from '../support/agenda-ui';
 import { gql } from '../support/graphql';
 import { createProfessional, ownerToken, type CreatedPro } from '../support/phase3';
 import { firstWednesdayFromNow, setStudioSettings } from '../support/phase4';
@@ -164,7 +164,7 @@ test.describe('Cronograma do dia da noiva e guarda das acompanhantes', () => {
     await expect(page.getByTestId('visit-form')).toBeVisible();
     await page.getByTestId('visit-client-search').fill(group.companionName);
     await page.getByTestId(`visit-client-option-${group.companionClientId}`).click();
-    await page.getByTestId('visit-line-0-service').selectOption(seed.phase3.serviceId);
+    await pickSearchable(page, 'visit-line-0-service', seed.phase3.serviceId);
     await pickProfessional(page, 0, freePro.id);
     await page.getByTestId('visit-submit').click();
   }

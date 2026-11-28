@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { pickSearchable } from '../support/agenda-ui';
 import { openRowActions } from '../support/ui';
 import { gql, expectNoUserErrors } from '../support/graphql';
 import { createProfessional, ownerToken, type CreatedPro } from '../support/phase3';
@@ -119,7 +120,7 @@ test.describe('Prioridade de profissionais e cronograma da noiva (fase 11)', () 
     await expect(page.getByTestId('visit-form')).toBeVisible();
     await page.getByTestId('visit-client-search').fill(group.companionName);
     await page.getByTestId(`visit-client-option-${group.companionClientId}`).click();
-    await page.getByTestId('visit-line-0-service').selectOption(seed.phase3.serviceId);
+    await pickSearchable(page, 'visit-line-0-service', seed.phase3.serviceId);
     await page.getByTestId('visit-submit').click();
     await expect(page.getByTestId('visit-error')).toContainText('saída das acompanhantes');
     await expect(page.getByTestId('visit-error')).toContainText('pronta até 15h');
@@ -133,7 +134,7 @@ test.describe('Prioridade de profissionais e cronograma da noiva (fase 11)', () 
     await expect(page.getByTestId('view-day')).toBeVisible();
     await page.getByRole('button', { name: 'Agendar', exact: true }).click();
     await expect(page.getByTestId('visit-form')).toBeVisible();
-    await page.getByTestId('visit-line-0-service').selectOption(seed.phase3.serviceId);
+    await pickSearchable(page, 'visit-line-0-service', seed.phase3.serviceId);
     await page.getByTestId('visit-line-0-time').fill('10:00');
 
     await expect(page.getByTestId('visit-line-0-suggestion')).toContainText('Sugestão do sistema', {

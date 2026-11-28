@@ -73,7 +73,7 @@ describe('VisitFormDialog — preenchido pelo grupo da noiva', () => {
     );
     expect(await screen.findByTestId('visit-client-selected')).toHaveTextContent('Maria Edileide');
     await waitFor(() => expect(screen.getByTestId('visit-line-0-duration')).toHaveValue('75'));
-    expect(screen.getByTestId('visit-line-0-service')).toHaveValue('make');
+    expect(screen.getByTestId('visit-line-0-service')).toHaveAttribute('data-value', 'make');
   });
 
   function renderSequence(withTime: boolean) {

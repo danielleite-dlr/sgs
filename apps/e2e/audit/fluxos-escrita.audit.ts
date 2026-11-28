@@ -5,6 +5,7 @@ import {
   openAgendaAt,
   pickProfessional,
   slotHeightOf,
+  pickSearchable,
 } from '../support/agenda-ui';
 import {
   createClient,
@@ -86,7 +87,7 @@ test.describe('Fluxos com escrita (somente local semeado, D-12)', () => {
       await c(slot);
       await page.getByTestId('visit-client-search').fill(client.name);
       await c(page.getByTestId(`visit-client-option-${client.id}`));
-      await page.getByTestId('visit-line-0-service').selectOption(seed.phase3.serviceId);
+      await pickSearchable(page, 'visit-line-0-service', seed.phase3.serviceId);
       await pickProfessional(page, 0, pro.id);
       await c(page.getByTestId('visit-submit'));
       await page.getByText(/Comanda C-\d{4}-\d+ aberta/).waitFor({ timeout: 8000 });

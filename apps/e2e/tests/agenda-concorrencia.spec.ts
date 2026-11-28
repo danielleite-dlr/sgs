@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openAgendaAt, pickProfessional } from '../support/agenda-ui';
+import { openAgendaAt, pickProfessional, pickSearchable } from '../support/agenda-ui';
 import {
   createProfessional,
   createVisit,
@@ -61,7 +61,7 @@ test.describe('Agenda: concorrência no mesmo horário (critério #5)', () => {
     await expect(form).toBeVisible();
     await page.getByTestId('visit-client-search').fill(seed.phase3.clientName);
     await page.getByTestId(`visit-client-option-${seed.phase3.clientId}`).click();
-    await page.getByTestId('visit-line-0-service').selectOption(seed.phase3.serviceId);
+    await pickSearchable(page, 'visit-line-0-service', seed.phase3.serviceId);
     await pickProfessional(page, 0, pro.id);
 
     // ... e, antes de salvar, outra pessoa reserva um horário sobreposto (via API)

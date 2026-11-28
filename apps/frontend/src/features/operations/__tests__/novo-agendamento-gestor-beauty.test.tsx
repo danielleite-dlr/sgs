@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { pickSearchable } from '@/test-utils-searchable';
 import userEvent from '@testing-library/user-event';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import { ClientsListQuery } from '@/features/clients/api/clients.api';
@@ -112,13 +113,11 @@ describe('Novo agendamento: cabeçalho e rótulos (D-13, UX-04)', () => {
 describe('Novo agendamento: chips de serviço (D-20)', () => {
   it('mostra nome e preço do serviço escolhido e a contagem', async () => {
     renderDialog();
-    const select = screen.getByTestId('visit-line-0-service');
-    await screen.findByRole('option', { name: 'Maquiagem social' });
     const chips = screen.getByTestId('visit-service-chips');
     expect(chips.querySelectorAll('[data-testid^="visit-service-chip-"]')).toHaveLength(0);
     expect(screen.getByTestId('visit-service-count')).toHaveTextContent('0 selecionados');
 
-    fireEvent.change(select, { target: { value: 's1' } });
+    await pickSearchable('visit-line-0-service', 's1');
     expect(screen.getByTestId('visit-service-count')).toHaveTextContent('1 selecionado');
     const chip = within(chips).getByTestId('visit-service-chip-0');
     expect(chip).toHaveTextContent('Maquiagem social');
@@ -128,7 +127,7 @@ describe('Novo agendamento: chips de serviço (D-20)', () => {
     expect(add).toHaveClass('min-h-[44px]');
     expect(add).toHaveTextContent('Adicionar serviço');
     fireEvent.click(add);
-    fireEvent.change(screen.getByTestId('visit-line-1-service'), { target: { value: 's2' } });
+    await pickSearchable('visit-line-1-service', 's2');
     expect(screen.getByTestId('visit-service-count')).toHaveTextContent('2 selecionados');
     expect(within(chips).getByTestId('visit-service-chip-1')).toHaveTextContent('PenteadoR$ 160,00');
   });
@@ -323,8 +322,7 @@ function withFixed(list: ScheduleProfessional[], fixedIds: string[]): SchedulePr
 }
 
 async function fillLine(time = '09:00') {
-  await screen.findByRole('option', { name: 'Maquiagem social' });
-  fireEvent.change(screen.getByTestId('visit-line-0-service'), { target: { value: 's1' } });
+  await pickSearchable('visit-line-0-service', 's1');
   fireEvent.change(screen.getByTestId('visit-line-0-time'), { target: { value: time } });
 }
 
@@ -405,7 +403,9 @@ describe('Novo agendamento: sugestão de profissional (11 D-08, D-09, D-12)', ()
       prefill: { clientId: 'c1', clientName: 'Noiva', serviceIds: ['s1'] },
       mocks: [suggestMock([suggestion('p2', 'Profissional 2', true, true)], onCall)],
     });
-    await screen.findByRole('option', { name: 'Maquiagem social' });
+    await waitFor(() =>
+      expect(screen.getByTestId('visit-line-0-service')).toHaveAttribute('data-value', 's1'),
+    );
     fireEvent.change(screen.getByTestId('visit-line-0-time'), { target: { value: '09:00' } });
     await new Promise((r) => setTimeout(r, 450));
     expect(onCall).not.toHaveBeenCalled();
@@ -429,8 +429,7 @@ describe('Novo agendamento: sugestão de profissional (11 D-08, D-09, D-12)', ()
     const group = screen.getByTestId('visit-line-0-professional');
     expect(within(group).queryByText('Bia Assistente')).toBeNull();
     expect(within(group).getAllByRole('radio')).toHaveLength(2);
-    await screen.findByRole('option', { name: 'Maquiagem social' });
-    fireEvent.change(screen.getByTestId('visit-line-0-service'), { target: { value: 's1' } });
+    await pickSearchable('visit-line-0-service', 's1');
     expect(within(screen.getByTestId('visit-line-0-professional')).queryByText('Bia Assistente'))
       .toBeNull();
   });

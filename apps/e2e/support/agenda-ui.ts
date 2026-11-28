@@ -70,3 +70,19 @@ export async function openDeposit(page: Page): Promise<void> {
   if ((await t.getAttribute('aria-expanded')) !== 'true') await t.click();
   await expect(page.getByTestId('visit-deposit-amount')).toBeVisible();
 }
+
+/**
+ * Escolhe uma opção num campo com busca do agendamento (Serviço/Pacote da linha):
+ * abre a lista, digita o nome se vier `search` e clica na opção pelo id.
+ */
+export async function pickSearchable(
+  page: Page,
+  testId: string,
+  value: string,
+  search?: string,
+): Promise<void> {
+  await page.getByTestId(testId).click();
+  if (search) await page.getByTestId(`${testId}-search`).fill(search);
+  await page.getByTestId(`${testId}-option-${value}`).click();
+  await expect(page.getByTestId(testId)).toHaveAttribute('data-value', value);
+}

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { pickSearchable } from '../support/agenda-ui';
 import { createClient, createProfessional, ownerToken, type CreatedPro } from '../support/phase3';
 import { createBridalPackage, firstWednesdayFromNow, setStudioSettings } from '../support/phase4';
 import { createAssistantMember, createStudioDebutanteGroup } from '../support/phase11';
@@ -86,7 +87,7 @@ test.describe('Papel Assistente (fase 11, G-01)', () => {
     await expect(page.getByTestId('visit-form')).toBeVisible();
     await page.getByTestId('visit-client-search').fill(client.name);
     await page.getByTestId(`visit-client-option-${client.id}`).click();
-    await page.getByTestId('visit-line-0-service').selectOption(seed.phase3.serviceId);
+    await pickSearchable(page, 'visit-line-0-service', seed.phase3.serviceId);
     await page.getByTestId('visit-line-0-time').fill('11:00');
 
     // a outra profissional aparece (select ou controle segmentado); a Assistente nunca
