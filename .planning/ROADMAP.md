@@ -551,3 +551,13 @@ Ideias estacionadas, sem ordem. Entram no roadmap só quando a usuária promover
 | 3. Core Operations | 0/? | Not started | - |
 | 4. Bridal & Contracts | 16/16 | Complete    | 2026-11-05 |
 | 5. Uso no dia a dia | 1/18 | Complete    | 2026-11-06 |
+
+### Phase 12.1: Desconto no agendamento levado à comanda (INSERTED)
+
+**Goal:** No "Cadastrar agendamento", quem tem a permissão "Conceder desconto" lança um desconto no total (% ou R$) com motivo; a comanda mostra o desconto com quem concedeu, data/hora e motivo, e permite alterar/remover enquanto aberta, com histórico. Comissão continua sobre o valor cheio
+**Requirements**: TBD
+**Depends on:** Phase 12
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 12.1 to break down)

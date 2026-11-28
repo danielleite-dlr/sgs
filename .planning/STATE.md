@@ -295,6 +295,7 @@ Recent decisions affecting current work:
 - Phase 8 added (2026-11-17): App iPhone Gestor Beauty instalável — app web instalável no iPhone (sem App Store/conta Apple) com notificações Web Push (VAPID) ao lado do FCM; botão "Instalar no iPhone" no login
 - Phase 7 added (2026-11-14): App Android "Gestor Beauty" com Capacitor para a equipe do salão — mesmas telas do SGS, só Android, Play Store, push FCM neutro; sem PWA; depois iOS e app Expo como atualização do mesmo appId
 - Phase 12 added (2026-11-18): Ajustar cadastro de agendamento — escopo a detalhar no discuss; depois da fase 11
+- Phase 12.1 inserted after Phase 12: Desconto no agendamento levado à comanda (URGENT)
 
 ### Quick Tasks Completed
 
