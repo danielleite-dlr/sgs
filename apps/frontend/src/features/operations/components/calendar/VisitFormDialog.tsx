@@ -16,6 +16,7 @@ import { toDisplayName } from '@/lib/format-name';
 import { formatPhoneBr } from '@/lib/format-phone';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DateField } from '@/components/ui/date-field';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
@@ -44,7 +45,7 @@ import {
   type ServicesQueryResult,
 } from '@/features/catalog/api/servicos.api';
 import { maskCurrency, formatCurrencyDisplay } from '@/features/catalog/utils/currency-mask';
-import { maskDateBR, maskTime } from '../../lib/input-masks';
+import { maskTime } from '../../lib/input-masks';
 import { PAYMENT_METHODS } from '../../lib/operations-labels';
 import {
   buildCreateVisitInput,
@@ -53,6 +54,7 @@ import {
   lineInterval,
   packageStartTime,
   removePackageLines,
+  sequenceTimes,
   suggestVariant,
   type VisitLine,
 } from '../../lib/visit-form';
@@ -675,6 +677,7 @@ export function VisitFormDialog({
     setAtBottom(el.scrollTop + el.clientHeight >= el.scrollHeight - 8);
   }, []);
   const bodyRef = useRef<HTMLDivElement | null>(null);
+  const prefillSequencePending = useRef(false);
 
   const { data: clientsData } = useQuery<ClientsListResult>(ClientsListQuery, {
     variables: { search: clientSearch || null, limit: 10, offset: 0 },
@@ -704,7 +707,9 @@ export function VisitFormDialog({
   useEffect(() => {
     if (open) {
       setDateBr(dateToBr(date));
+      prefillSequencePending.current = false;
       if (prefill && prefill.serviceIds.length > 0) {
+        prefillSequencePending.current = true;
         pickClient(prefill.clientId, prefill.clientName, null);
         setLines(
           prefill.serviceIds.map((serviceId) => ({
@@ -723,19 +728,29 @@ export function VisitFormDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialTime, prefill]);
 
-  // Serviço pré-preenchido ganha a duração padrão quando o catálogo chega.
+  // Serviço pré-preenchido ganha a duração padrão quando o catálogo chega; no prefill do grupo
+  // da noiva, as horas entram em sequência uma única vez por abertura (D-11, sem cascata).
   useEffect(() => {
     const list = servicesData?.services ?? [];
     if (!open || list.length === 0) return;
-    setLines((prev) =>
-      prev.some((l) => l.serviceId && !l.duration)
+    const sequence = prefillSequencePending.current;
+    prefillSequencePending.current = false;
+    setLines((prev) => {
+      const filled = prev.some((l) => l.serviceId && !l.duration)
         ? prev.map((l) => {
             if (!l.serviceId || l.duration) return l;
             const svc = list.find((x) => x.id === l.serviceId);
             return svc ? { ...l, duration: String(svc.defaultDurationMinutes) } : l;
           })
-        : prev,
-    );
+        : prev;
+      if (!sequence) return filled;
+      const times = sequenceTimes(
+        filled[0]?.time ?? '',
+        filled.map((l) => Number(l.duration)),
+      );
+      if (times.length === 0 || times[0] === '') return filled;
+      return filled.map((l, i) => ({ ...l, time: times[i] }));
+    });
   }, [open, servicesData]);
 
   // Remede o aviso de rolagem quando o conteúdo do corpo muda de altura.
@@ -925,15 +940,13 @@ export function VisitFormDialog({
       <Label className={LABEL_CLASS} htmlFor="visit-date">
         Data
       </Label>
-      <Input
+      <DateField
         id="visit-date"
         data-testid="visit-date"
+        pickerTestId="visit-date-picker"
         value={dateBr}
-        onChange={(e) => setDateBr(maskDateBR(e.target.value))}
-        placeholder="dd/mm/aaaa"
-        inputMode="numeric"
-        maxLength={10}
-        className="mt-xs tabular-nums"
+        onChange={setDateBr}
+        className="mt-xs"
       />
     </div>
   );
